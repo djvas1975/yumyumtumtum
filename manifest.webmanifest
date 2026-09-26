@@ -1,0 +1,65 @@
+{
+  "id": "https://djvas1975.github.io/yumyumtumtum/",
+  "name": "yumyumtumtum",
+  "short_name": "yumyumtumtum",
+  "description": "Save recipes and cooking videos from TikTok, Instagram, YouTube, and any website.",
+  "start_url": "https://djvas1975.github.io/yumyumtumtum/",
+  "scope": "https://djvas1975.github.io/yumyumtumtum/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF7FB",
+  "theme_color": "#E0431F",
+  "categories": [
+    "food",
+    "lifestyle"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Save a recipe",
+      "short_name": "Save",
+      "url": "https://djvas1975.github.io/yumyumtumtum/?add=1",
+      "icons": [
+        {
+          "src": "icons/shortcut-add.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "https://djvas1975.github.io/yumyumtumtum/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}
