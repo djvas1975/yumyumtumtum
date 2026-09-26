@@ -6,8 +6,10 @@
 // Websites: reads the schema.org Recipe data most recipe sites publish, then adds the
 // notes / cookware / ingredient groups that popular recipe-card plugins (WP Recipe Maker,
 // Tasty Recipes, Mediavine Create) show on the page but leave out of that data.
-// TikTok / YouTube / Instagram: reads the caption or description and cover image, and
-// pulls ingredients and steps out of the caption when they're written there.
+// TikTok / YouTube / Instagram / Facebook: reads the whole caption or description (the part
+// hidden behind "more") and the cover image, pulls ingredients and steps out of the caption,
+// and follows a "full recipe" link in it to the recipe site when there is one.
+// Pinterest: follows the pin to the recipe website it came from.
 
 const {
   isChallenge, fromArchive,
@@ -34,10 +36,11 @@ module.exports = async (req, res) => {
 
 async function readRecipe(url, trace) {
   const host = new URL(url).hostname.replace(/^(www|m|mobile)\./, '');
-  if (/(^|\.)tiktok\.com$/.test(host)) return readTikTok(url, trace);
-  if (host === 'youtu.be' || /(^|\.)youtube\.com$/.test(host)) return readYouTube(url);
-  if (/(^|\.)instagram\.com$/.test(host)) return readSocialPage(url, 'instagram');
-  if (/(^|\.)facebook\.com$/.test(host) || host === 'fb.watch') return readSocialPage(url, 'facebook');
+  if (/(^|\.)tiktok\.com$/.test(host)) return withLinkedRecipe(await readTikTok(url, trace), trace);
+  if (host === 'youtu.be' || /(^|\.)youtube\.com$/.test(host)) return withLinkedRecipe(await readYouTube(url), trace);
+  if (/(^|\.)instagram\.com$/.test(host)) return withLinkedRecipe(await readInstagram(url, trace), trace);
+  if (/(^|\.)facebook\.com$/.test(host) || host === 'fb.watch') return withLinkedRecipe(await readSocialPage(url, 'facebook'), trace);
+  if (host === 'pin.it' || /(^|\.)pinterest\.[a-z.]+$/.test(host)) return readPinterest(url, trace);
   return readWebsite(url);
 }
 
@@ -168,25 +171,27 @@ function wprmGroups(html) {
 /* ---------------- TikTok ---------------- */
 async function readTikTok(url, trace) {
   const target = await resolveTikTok(url, trace);
-  // photo posts (slideshows) aren't covered by TikTok's lookup, so read the post's page
-  if (/\/photo\//.test(target)) return readTikTokPage(target, trace);
-  let o;
+  // the post's own page has the whole caption with its line breaks (TikTok's quick lookup squashes it onto one line)
+  let page = null;
+  try { page = await tikTokPage(target, trace); }
+  catch (e) { if (trace) trace.push('page failed: ' + e.message); }
+  if (page && (page.full || /\/photo\//.test(target))) return page.out;
+  if (/\/photo\//.test(target)) throw new Error('TikTok wouldn’t share this post’s details.');
+  let o = null;
   try { o = await fetchJson('https://www.tiktok.com/oembed?url=' + encodeURIComponent(target)); }
-  catch (e) {
-    if (trace) trace.push('oembed failed: ' + e.message + ' for ' + target);
-    try { return await readTikTokPage(target, trace); }
-    catch (e2) { if (trace) trace.push('page failed: ' + e2.message); throw new Error('TikTok wouldn’t share this video’s details.'); }
-  }
+  catch (e) { if (trace) trace.push('oembed failed: ' + e.message + ' for ' + target); }
+  if (!o) { if (page) return page.out; throw new Error('TikTok wouldn’t share this video’s details.'); }
   const out = blank(target);
   out.kind = 'video';
   out.siteName = 'TikTok';
-  out.author = o.author_unique_id ? '@' + o.author_unique_id : (o.author_name || '');
-  out.image = o.thumbnail_url || '';
-  applyCaption(out, decode(o.title || ''));
+  out.author = o.author_unique_id ? '@' + o.author_unique_id : (o.author_name || (page && page.out.author) || '');
+  out.image = o.thumbnail_url || (page && page.out.image) || '';
+  const cap = decode(o.title || '');
+  applyCaption(out, page && page.out.caption.length > cap.length ? page.out.caption : cap);
   return out;
 }
-// Caption, creator, and cover (or first slide) from the post's own page
-async function readTikTokPage(url, trace) {
+// Caption, creator, and cover (or first slide) from the post's own page. full = the page's own data was there.
+async function tikTokPage(url, trace) {
   const { text: html } = await fetchText(url, { trace });
   let item = null;
   const m = html.match(/<script[^>]*id=["']__UNIVERSAL_DATA_FOR_REHYDRATION__["'][^>]*>([\s\S]*?)<\/script>/);
@@ -210,7 +215,7 @@ async function readTikTokPage(url, trace) {
     const slide = (ip.images || [])[0];
     const v = item.video || {};
     image = (slide && ((slide.imageURL && (slide.imageURL.urlList || [])[0]) || (slide.displayImage && (slide.displayImage.urlList || [])[0]))) || v.cover || v.originCover || v.dynamicCover || '';
-    if (trace) trace.push('page data found: ' + (ip.images ? ip.images.length + ' slides' : 'video'));
+    if (trace) trace.push('page data found: ' + (ip.images ? ip.images.length + ' slides' : 'video') + ', caption ' + caption.length + ' chars');
   }
   if (!caption) {
     caption = decode(meta(html, 'og:description') || meta(html, 'description'));
@@ -218,7 +223,7 @@ async function readTikTokPage(url, trace) {
     if (q) caption = q[1];
   }
   if (!image) image = meta(html, 'og:image');
-  if (!author) { const a = url.match(/tiktok\.com\/@([\w.-]+)/); if (a) author = a[1]; }
+  if (!author) { const a = url.match(/tiktok\.com\/@([\w.-]+)/); if (a && a[1] !== 'tiktok') author = a[1]; }
   if (!caption && !image) throw new Error('TikTok wouldn’t share this post’s details.');
   const out = blank(url);
   out.kind = 'video';
@@ -226,7 +231,7 @@ async function readTikTokPage(url, trace) {
   out.author = author ? '@' + String(author).replace(/^@/, '') : '';
   out.image = image;
   applyCaption(out, caption);
-  return out;
+  return { out, full: !!(item && item.desc) };
 }
 
 // Share links (tiktok.com/t/…, vm.tiktok.com/…) point to the full video address; find it.
@@ -279,22 +284,210 @@ function ytId(u) {
   } catch (e) { return ''; }
 }
 
-/* ---------------- Instagram / Facebook (best effort: they often hide posts from servers) ---------------- */
+/* ---------------- Instagram ---------------- */
+// The post page only shows servers a short teaser, but every post also has an embed version with the whole caption.
+async function readInstagram(url, trace) {
+  let code = igCode(url), page = url;
+  if (!code) {
+    // share links (instagram.com/share/…) redirect to the post
+    try { const r = await fetchText(url, { headOnly: true, trace }); page = r.finalUrl; code = igCode(page); }
+    catch (e) { if (trace) trace.push('resolve: ' + e.message); }
+  }
+  let caption = '', image = '', author = '', problem = '';
+  if (code) {
+    try {
+      const { text: html } = await fetchText('https://www.instagram.com/p/' + code + '/embed/captioned/', { trace });
+      const e = igEmbed(html);
+      caption = e.caption; image = e.image; author = e.author;
+      if (trace) trace.push('embed: caption ' + caption.length + ' chars, photo ' + (image ? 'yes' : 'no'));
+    } catch (e) { problem = e.message; if (trace) trace.push('embed failed: ' + e.message); }
+  }
+  if (!caption || !image) {
+    try {
+      const { text: html } = await fetchText(page, { trace });
+      const o = igOg(html);
+      if (!caption) caption = o.caption;
+      if (!image) image = o.image;
+      if (!author) author = o.author;
+    } catch (e) { problem = problem || e.message; if (trace) trace.push('page failed: ' + e.message); }
+  }
+  if (!caption && !image) throw new Error(problem || 'Instagram wouldn’t share this post’s details.');
+  const out = blank(url);
+  out.kind = 'video';
+  out.siteName = 'Instagram';
+  out.author = author ? '@' + author.replace(/^@/, '') : '';
+  out.image = image;
+  applyCaption(out, caption);
+  return out;
+}
+function igCode(u) {
+  const m = String(u).match(/instagram\.com\/(?:[\w.]+\/)?(?:p|reels?|tv)\/([\w-]{5,})/i);
+  return m ? m[1] : '';
+}
+function igEmbed(html) {
+  let caption = '', image = '', author = '';
+  // the post's data, when the embed carries it
+  const cj = html.match(/"contextJSON"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (cj) {
+    try {
+      const media = findObj(JSON.parse(JSON.parse('"' + cj[1] + '"')), o => o.edge_media_to_caption || o.display_url);
+      if (media) {
+        const e = media.edge_media_to_caption && media.edge_media_to_caption.edges && media.edge_media_to_caption.edges[0];
+        caption = (e && e.node && e.node.text) || '';
+        image = media.display_url || media.thumbnail_src || '';
+        author = (media.owner && media.owner.username) || '';
+      }
+    } catch (e) { /* fall through to the page itself */ }
+  }
+  if (!caption) {
+    const m = html.match(/"edge_media_to_caption"\s*:\s*\{\s*"edges"\s*:\s*\[\s*\{\s*"node"\s*:\s*\{\s*"text"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+    if (m) { try { caption = JSON.parse('"' + m[1] + '"'); } catch (e) {} }
+  }
+  if (!caption) {
+    const box = findByClass(html, 'Caption')[0];
+    if (box) {
+      const inner = box
+        .replace(/<a\b[^>]*class=["'][^"']*CaptionUsername[^"']*["'][^>]*>[\s\S]*?<\/a>/i, (m0) => { author = author || clean(decode(m0.replace(/<[^>]+>/g, ''))); return ''; })
+        .replace(/<div\b[^>]*class=["'][^"']*CaptionComments[\s\S]*$/i, '');
+      caption = htmlToLines(inner.replace(/<br\s*\/?>/gi, '\n')).join('\n');
+    }
+  }
+  if (!image) {
+    const tag = (html.match(/<img\b[^>]*class=["'][^"']*EmbeddedMediaImage[^"']*["'][^>]*>/i) || [])[0];
+    if (tag) image = decode(attrOf(tag, 'src'));
+  }
+  if (!author) {
+    const u = findByClass(html, 'UsernameText')[0];
+    if (u) author = clean(decode(u.replace(/<[^>]+>/g, '')));
+  }
+  return { caption: caption.trim(), image, author };
+}
+// the post page's own tags: 68K likes, 526 comments - someone on March 3, 2025: "caption…"
+function igOg(html) {
+  const d = decode(meta(html, 'og:description') || meta(html, 'description')).trim();
+  const t = decode(meta(html, 'og:title')).trim();
+  let caption = '', author = '';
+  const m = d.match(/^[\d,.]+\s*[KkMm]?\s+likes?,\s*[\d,.]+\s*[KkMm]?\s+comments?\s*[-–]\s*([\w.]+)\s+on\s+[^:]{3,40}:\s*["“]?([\s\S]*?)["”]?\.?$/i);
+  if (m) { author = m[1]; caption = m[2]; }
+  else if (!/^[\d,.]+\s*[KkMm]?\s+(likes?|followers?)\b/i.test(d)) caption = d;
+  const tm = t.match(/^(.*?)\s+on\s+Instagram\s*:\s*["“]?([\s\S]*?)["”]?$/i);
+  if (tm && tm[2].length > caption.length) caption = tm[2];
+  return { caption: caption.trim(), author, image: meta(html, 'og:image') };
+}
+
+/* ---------------- Facebook (best effort: it often hides posts from servers) ---------------- */
 async function readSocialPage(url, site) {
   const { text: html, finalUrl } = await fetchText(url);
   const out = blank(finalUrl);
   out.kind = 'video';
-  out.siteName = site === 'instagram' ? 'Instagram' : 'Facebook';
+  out.siteName = 'Facebook';
   out.image = meta(html, 'og:image');
   let cap = decode(meta(html, 'og:description') || meta(html, 'description'));
-  // Instagram: 1,234 likes, 56 comments - user on May 1, 2026: "caption..."
-  const m = cap.match(/^[\d,.\sKkMm]+likes?,.*?:\s*"([\s\S]*)"\.?$/);
-  if (m) cap = m[1];
+  if (/^[\d,.]+\s*[KkMm]?\s+(likes?|views?|reactions?)\b/i.test(cap) && !/\n/.test(cap)) cap = cap.replace(/^[^|·]*[|·]\s*/, '');
   const t = decode(meta(html, 'og:title'));
-  const by = t.match(/^(.*?)\s+on\s+(Instagram|Facebook)/i);
+  const by = t.match(/^(.*?)\s+on\s+Facebook/i);
   if (by) out.author = by[1];
   applyCaption(out, cap);
-  if (!out.title && t) out.title = t.replace(/\s+on\s+(Instagram|Facebook).*$/i, '').slice(0, 120);
+  if (!out.title && t && !/^(facebook|log in|watch)\b/i.test(t)) out.title = t.replace(/\s+on\s+Facebook.*$/i, '').replace(/\s*\|\s*Facebook.*$/i, '').slice(0, 120);
+  return out;
+}
+
+/* ---------------- Pinterest: follow the pin to the recipe it came from ---------------- */
+async function readPinterest(url, trace) {
+  let page = url, id = pinId(url);
+  if (!id) {
+    try { const r = await fetchText(url, { headOnly: true, trace }); page = r.finalUrl; id = pinId(page); }
+    catch (e) { if (trace) trace.push('resolve: ' + e.message); }
+  }
+  let link = '', title = '', desc = '', image = '', author = '';
+  if (id) {
+    try {
+      const j = await fetchJson('https://widgets.pinterest.com/v3/pidgets/pins/info/?pin_ids=' + id);
+      const p = (j && Array.isArray(j.data) && j.data[0]) || {};
+      link = p.link || '';
+      title = p.title || p.grid_title || '';
+      desc = p.description || p.closeup_unified_description || '';
+      const im = p.images || {};
+      image = ((im.orig || im['736x'] || im['564x'] || im['474x'] || im['237x']) || {}).url || '';
+      author = (p.pinner && p.pinner.username) || '';
+      if (trace) trace.push('pin info: link ' + (link || 'none'));
+    } catch (e) { if (trace) trace.push('pin info failed: ' + e.message); }
+  }
+  if (!link || !image) {
+    try {
+      const { text: html } = await fetchText(page, { trace });
+      if (!link) {
+        const found = (html.replace(/\\u002F/gi, '/').replace(/\\\//g, '/').match(/"link"\s*:\s*"(https?:[^"]+)"/g) || [])
+          .map(x => x.replace(/^"link"\s*:\s*"/, '').replace(/"$/, ''))
+          .find(u => !/pinterest\.|pinimg\.com|pin\.it/i.test(u));
+        link = found || meta(html, 'og:see_also') || '';
+      }
+      if (!image) image = meta(html, 'og:image');
+      if (!title) title = decode(meta(html, 'og:title'));
+      if (!desc) desc = decode(meta(html, 'og:description') || meta(html, 'description'));
+    } catch (e) { if (trace) trace.push('pin page failed: ' + e.message); }
+  }
+  link = decode(link);
+  if (link && !/pinterest\.|pin\.it/i.test(link) && !badUrl(link)) {
+    try {
+      const site = await withTimeout(readWebsite(link), 20000);
+      if (site.kind === 'recipe' || realCount(site.ingredients)) {
+        site.recipeUrl = site.finalUrl;
+        site.finalUrl = url;
+        if (!site.image) site.image = image;
+        return site;
+      }
+      if (trace) trace.push('no recipe card at ' + link);
+    } catch (e) { if (trace) trace.push('recipe site failed: ' + e.message); }
+  }
+  const out = blank(url);
+  out.siteName = 'Pinterest';
+  out.author = author;
+  out.image = image;
+  out.title = clean(title).replace(/\s*\|\s*Pinterest.*$/i, '').slice(0, 140);
+  if (link && !/pinterest\.|pin\.it/i.test(link)) out.recipeUrl = link;
+  applyCaption(out, [title, desc].filter(Boolean).join('\n'));
+  return out;
+}
+function pinId(u) {
+  const m = String(u).match(/pinterest\.[a-z.]+\/pin\/(?:[\w-]*--)?(\d{6,})/i);
+  return m ? m[1] : '';
+}
+
+/* ---------------- a "full recipe" link in a caption or description ---------------- */
+const NOT_RECIPE_SITE = /(^|\.)(tiktok|instagram|facebook|fb|youtube|youtu|pinterest|pin|twitter|x|threads|snapchat|linktr|linkin|beacons|stan|campsite|bio|amazon|amzn|a|geni|shopmy|liketk|ltk|shopltk|patreon|spotify|apple|google|goo|walmart|target|instacart|hellofresh|etsy|gofundme|onlyfans|discord|twitch|substack|cash|venmo|paypal)\.[a-z.]+$/i;
+function recipeLinks(text) {
+  const found = String(text || '').match(/\bhttps?:\/\/[^\s"'<>)\]]+|\bwww\.[a-z0-9-]+\.[^\s"'<>)\]]+|\b[a-z0-9-]+\.(?:com|net|org|co|blog|kitchen|recipes|cooking|food)\/[^\s"'<>)\]]+/gi) || [];
+  const out = [];
+  for (let u of found) {
+    u = u.replace(/[.,!?;:…]+$/, '');
+    if (!/^https?:/i.test(u)) u = 'https://' + u;
+    let h;
+    try { h = new URL(u).hostname.replace(/^www\./, ''); } catch (e) { continue; }
+    if (NOT_RECIPE_SITE.test(h) || badUrl(u) || out.includes(u)) continue;
+    out.push(u);
+  }
+  return out.slice(0, 2);
+}
+async function withLinkedRecipe(out, trace) {
+  if (realCount(out.ingredients) >= 3 && out.steps.length) return out;
+  for (const link of recipeLinks([out.caption, out.description].join('\n'))) {
+    try {
+      const site = await withTimeout(readWebsite(link), 15000);
+      if (site.kind !== 'recipe' || !(realCount(site.ingredients) || site.steps.length)) { if (trace) trace.push('no recipe card at ' + link); continue; }
+      if (trace) trace.push('recipe from ' + link);
+      out.recipeUrl = site.finalUrl;
+      out.title = site.title || out.title;
+      if (realCount(site.ingredients) > realCount(out.ingredients)) out.ingredients = site.ingredients;
+      if (site.steps.length > out.steps.length) out.steps = site.steps;
+      out.notes = dedupe(site.notes.concat(out.notes));
+      if (site.equipment.length) out.equipment = site.equipment;
+      ['nutrition', 'meals'].forEach(k => { if (site[k].length) out[k] = site[k]; });
+      ['prepTime', 'cookTime', 'totalTime', 'servings', 'yieldText', 'cuisine', 'description', 'anchor'].forEach(k => { if (site[k]) out[k] = site[k]; });
+      if (!out.image) out.image = site.image;
+      return out;
+    } catch (e) { if (trace) trace.push('link failed: ' + link + ' ' + e.message); }
+  }
   return out;
 }
 
@@ -315,9 +508,22 @@ function blank(finalUrl) {
     finalUrl, kind: 'page', title: '', description: '', image: '', author: '', siteName: '',
     ingredients: [], steps: [], notes: [], equipment: [], nutrition: [],
     prepTime: 0, cookTime: 0, totalTime: 0, yieldText: '', servings: 0, cuisine: '', meals: [],
-    anchor: '', caption: ''
+    anchor: '', caption: '', recipeUrl: ''
   };
 }
 const dedupe = a => a.filter((x, i) => a.indexOf(x) === i);
+const realCount = a => (a || []).filter(x => !/^##\s/.test(x)).length;
+function withTimeout(p, ms) {
+  let t;
+  return Promise.race([p, new Promise((_, rej) => { t = setTimeout(() => rej(new Error('That site took too long to answer.')), ms); })]).finally(() => clearTimeout(t));
+}
+// first object (searching depth-first) that passes test
+function findObj(node, test, depth) {
+  depth = depth || 0;
+  if (!node || typeof node !== 'object' || depth > 12) return null;
+  if (!Array.isArray(node) && test(node)) return node;
+  for (const k of Object.keys(node)) { const r = findObj(node[k], test, depth + 1); if (r) return r; }
+  return null;
+}
 
 module.exports.readRecipe = readRecipe;
