@@ -5,13 +5,14 @@
 
 const { cors, badUrl, fetchText } = require('../lib/parse');
 
-const PEEK_HOSTS = /(^|\.)(delish|foodnetwork|food|allrecipes|simplyrecipes|seriouseats|eatingwell|tasteofhome|thepioneerwoman|tasty|bbcgoodfood|epicurious|budgetbytes|pinchofyum|recipetineats|sallysbakingaddiction|natashaskitchen|spendwithpennies|therecipecritic|tastesbetterfromscratch|onceuponachef|gimmesomeoven|damndelicious|isabeleats|thewoksoflife|justonecookbook|myrecipes|southernliving|foodandwine|bonappetit|tasteatlas|cookieandkate|minimalistbaker|halfbakedharvest|themediterraneandish|cafedelites|dinneratthezoo|iheartnaptime|lecremedelacrumb|mexicanplease|hot-thai-kitchen|hotthaikitchen|maangchi|indianhealthyrecipes|pillsbury|bettycrocker|tablespoon|kraftheinz|myfoodandfamily|mccormick|campbells|goodhousekeeping|countryliving|womansday)\.(com|co|co\.uk|net)$/i;
+const PEEK_HOSTS = /(^|\.)(delish|foodnetwork|food|allrecipes|simplyrecipes|seriouseats|eatingwell|tasteofhome|thepioneerwoman|tasty|bbcgoodfood|epicurious|budgetbytes|pinchofyum|recipetineats|sallysbakingaddiction|natashaskitchen|spendwithpennies|therecipecritic|tastesbetterfromscratch|onceuponachef|gimmesomeoven|damndelicious|isabeleats|thewoksoflife|justonecookbook|myrecipes|southernliving|foodandwine|bonappetit|tasteatlas|cookieandkate|minimalistbaker|halfbakedharvest|themediterraneandish|cafedelites|dinneratthezoo|iheartnaptime|lecremedelacrumb|mexicanplease|hot-thai-kitchen|hotthaikitchen|maangchi|indianhealthyrecipes|pillsbury|bettycrocker|tablespoon|kraftheinz|myfoodandfamily|mccormick|campbells|goodhousekeeping|countryliving|womansday|archive)\.(com|co|co\.uk|net|org)$/i;
 
 module.exports = async (req, res) => {
   if (!cors(req, res)) return;
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   const q = req.query || {};
   if (q.peek) return peek(String(q.peek), String(q.find || ''), res);
+  if (q.peek64) return peek(Buffer.from(String(q.peek64), 'base64url').toString('utf8'), String(q.find || ''), res);
   res.status(200).json({ ok: false, error: 'Not ready yet.' });
 };
 
