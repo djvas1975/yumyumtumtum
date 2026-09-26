@@ -238,6 +238,7 @@ function applyCaption(out, text) {
   out.ingredients = p.ingredients;
   out.steps = p.steps;
   out.notes = p.notes;
+  if (p.equipment && p.equipment.length) out.equipment = p.equipment;
 }
 function blank(finalUrl) {
   return {
