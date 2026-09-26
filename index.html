@@ -1410,8 +1410,16 @@ const looksLikeStep = l => /^(step\s*\d{1,2}\b|\d{1,2}[.)]\s+(?!(cups?|tbsps?|ts
   || (!QTY.test(l) && !UNIT.test(l.slice(0, 25)) && ((l.length > 70 && /[a-z)][.!]\s+[A-Z]/.test(l)) || (STEP_VERB.test(l) && l.split(/\s+/).length >= 4)));
 // "1 cup cheese. Cook on low 6 hrs and serve!" -> the ingredient, and the direction stuck to it
 function peel(l) {
+  const amt = x => QTY.test(x) || UNIT.test(x.slice(0, 30));
+  // a direction that starts mid-line with a capital: "…3/4 cup chicken broth Make sure you taste…"
+  const re = /(?<=[a-z)])\s+(?=[A-Z][a-z]+\b)/g;
+  let c;
+  while ((c = re.exec(l))) {
+    const before = l.slice(0, c.index).trim(), after = l.slice(c.index).trim();
+    if (STEP_VERB.test(after) && !/^\S+\s+[\d½¼¾⅓⅔⅛]/.test(after) && after.split(/\s+/).length >= 4 && amt(before)) return [before, after];
+  }
   const m = l.match(/^(.{3,400}?[a-z)])[.!]\s+([A-Z].{12,})$/);
-  return m && (QTY.test(m[1]) || UNIT.test(m[1].slice(0, 30))) && looksLikeStep(m[2]) ? [m[1], m[2]] : [l, ''];
+  return m && amt(m[1]) && looksLikeStep(m[2]) ? [m[1], m[2]] : [l, ''];
 }
 const addIng = (l, ing, steps) => { const [a, b] = peel(l); splitIng(a).forEach(x => ing.push(x)); if (b) steps.push(b); };
 // one line that holds several ingredients: "🧈 4 tbsp butter 🧅 1 onion" / "2 cups flour, 1 tsp salt, 1 egg" / "…butter 1 onion 3 carrots"
@@ -1441,15 +1449,17 @@ function parseCaption(text) {
        .replace(/\s+(\d{1,2})[.)]\s+(?=[A-Za-z])/g, '\n$1. ')
        .replace(/\s+(?=step\s*\d{1,2}\s*[:.)\-–])/gi, '\n');
   if (flat) {
+    // apps that drop line breaks often leave two spaces where each one was
+    if ((s.match(/\S {2,}\S/g) || []).length >= 2) s = s.replace(/ {2,}/g, '\n');
     // emoji used as bullets: "🍗 2 lb chicken 🧂 1 packet seasoning"
     s = s.replace(/\s*\p{Extended_Pictographic}[\p{Extended_Pictographic}\u200d\ufe0f\u{1F3FB}-\u{1F3FF}\s]*(?=[\d½¼¾⅓⅔⅛])/gu, '\n');
     // "…1 tsp salt Dumplings: 2 cups flour…": a capitalized label with a colon starts a new section
     s = s.replace(/\s+(?=(?:For the [a-z]+(?:\s[a-z]+)?|[A-Z][a-z]+(?:\s[a-z]+){0,2}|[A-Z]{3,}(?:\s[A-Z]{3,}){0,2})\s*[:：]\s)/g, '\n');
   }
   const lines = s.split('\n').map(l => l.trim());
-  const hashOnly = l => /^(#[\p{L}\p{N}_]+\s*)+$/u.test(l);
+  const hashOnly = l => /^(#[\p{L}\p{N}_#]*\s*)+$/u.test(l);
   const body = lines.filter(l => l && !hashOnly(l) && /[\p{L}\p{N}]/u.test(l))
-    .map(l => l.replace(/(\s#[\p{L}\p{N}_]+)+\s*$/u, '').trim()).filter(Boolean);
+    .map(l => l.replace(/(\s+#[\p{L}\p{N}_#]*)+\s*$/u, '').trim()).filter(Boolean);
 
   let mode = '', found = false, sawStepHead = false;
   const ing = [], steps = [], notes = [], pre = [], equip = [];
@@ -1476,7 +1486,7 @@ function parseCaption(text) {
         else { mode = 'ing'; ing.push(cap(h.head)); }
       } else if (h.mode === 'recipe') {
         mode = 'ing';
-        if (h.rest && (looksLikeIng(h.rest) || h.rest.split(',').length >= 3)) add(stripDecor(h.rest));
+        if (h.rest && (QTY.test(h.rest) || UNIT.test(h.rest.slice(0, 30)) || h.rest.split(',').length >= 3)) add(stripDecor(h.rest));
         continue;
       } else {
         mode = h.mode === 'ingsub' ? 'ing' : h.mode;
@@ -1490,9 +1500,9 @@ function parseCaption(text) {
     if (l) add(l);
   }
   const realIng = () => ing.filter(x => !x.startsWith('## ')).length;
-  if (!realIng() || !steps.length) {
+  {
     // lines before (or without) any heading: quantities look like ingredients, numbered lines look like steps
-    const takeSteps = !steps.length, takeIng = !realIng();
+    const takeSteps = !steps.length, takeIng = true;
     const si = [], ii = [], vi = [];
     pre.forEach((l, i) => {
       if (takeSteps && /^\d{1,2}[.)]\s+\D/.test(l) && !UNIT.test(l.slice(0, 18))) si.push(i);
@@ -1503,7 +1513,8 @@ function parseCaption(text) {
     if (!si.length && (ii.length >= 2 || realIng())) si.push(...vi);
     const used = new Set(si.concat(ii.length >= 2 ? ii : []));
     si.sort((a, b) => a - b).forEach(i => steps.push(pre[i].replace(/^\d+[.)]\s*/, '')));
-    if (ii.length >= 2) ii.forEach(i => addIng(pre[i], ing, steps));
+    // they come before any heading, so they go first
+    if (ii.length >= 2) { const front = []; ii.forEach(i => addIng(pre[i], front, steps)); ing.unshift(...front); }
     const rest = pre.filter((l, i) => !used.has(i));
     pre.splice(0, pre.length, ...rest);
   }
@@ -1512,7 +1523,7 @@ function parseCaption(text) {
   const titleLine = (beforeEmoji.length >= 3 ? beforeEmoji : firstLine).replace(/[\p{Extended_Pictographic}\u200d\ufe0f]/gu, '').replace(/^replying to @[\w.]+\s*/i, '').replace(/\s+/g, ' ').trim();
   const sentences = titleLine.split(/(?<=[.!?])\s+/);
   const TITLE_CHATTER = /^(here(’|')?s? (you go|it is|the recipe|how)|you asked|as requested|by request|ok+a?y?|omg|y(’|')?all|guys|hi+|hey+|so+ good|wow)\b/i;
-  let title = (sentences.find(x => !TITLE_CHATTER.test(x) && x.split(' ').length >= 2) || sentences[0]).slice(0, 100).replace(/[.!?\s]+$/, '');
+  let title = (sentences.find(x => !TITLE_CHATTER.test(x) && x.split(' ').length >= 2) || sentences[0]).slice(0, 100).replace(/[.!?:：\s]+$/, '').replace(/\s+(full\s+)?recipe$/i, '');
   if (title.length < 3) title = '';
   // "cook chicken ➡️ scramble eggs ➡️ add rice": one step per arrow; chatter after the last step becomes a note
   if (steps.length === 1 && (steps[0].match(/(\u27a1\ufe0f?|\u2192|->|=>)/g) || []).length >= 2) {

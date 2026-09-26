@@ -296,8 +296,8 @@ async function readInstagram(url, trace) {
   let caption = '', image = '', author = '', problem = '';
   if (code) {
     try {
-      const { text: html } = await fetchText('https://www.instagram.com/p/' + code + '/embed/captioned/', { trace });
-      const e = igEmbed(html);
+      const { text: html, finalUrl } = await fetchText('https://www.instagram.com/p/' + code + '/embed/captioned/', { trace });
+      const e = /accounts\/login/.test(finalUrl) ? { caption: '', image: '', author: '' } : igEmbed(html);
       caption = e.caption; image = e.image; author = e.author;
       if (trace) trace.push('embed: caption ' + caption.length + ' chars, photo ' + (image ? 'yes' : 'no'));
     } catch (e) { problem = e.message; if (trace) trace.push('embed failed: ' + e.message); }
@@ -367,6 +367,8 @@ function igOg(html) {
   const d = decode(meta(html, 'og:description') || meta(html, 'description')).trim();
   const t = decode(meta(html, 'og:title')).trim();
   let caption = '', author = '';
+  // a sign-in page instead of the post
+  if (/\b(log ?in|sign up|create an account)\b/i.test(d + ' ' + t) && !/likes?,/i.test(d)) return { caption: '', author: '', image: '' };
   const m = d.match(/^[\d,.]+\s*[KkMm]?\s+likes?,\s*[\d,.]+\s*[KkMm]?\s+comments?\s*[-–]\s*([\w.]+)\s+on\s+[^:]{3,40}:\s*["“]?([\s\S]*?)["”]?\.?$/i);
   if (m) { author = m[1]; caption = m[2]; }
   else if (!/^[\d,.]+\s*[KkMm]?\s+(likes?|followers?)\b/i.test(d)) caption = d;
@@ -385,6 +387,7 @@ async function readSocialPage(url, site) {
   let cap = decode(meta(html, 'og:description') || meta(html, 'description'));
   if (/^[\d,.]+\s*[KkMm]?\s+(likes?|views?|reactions?)\b/i.test(cap) && !/\n/.test(cap)) cap = cap.replace(/^[^|·]*[|·]\s*/, '');
   const t = decode(meta(html, 'og:title'));
+  if (/accounts\/login|\/login\b/.test(finalUrl) || /^(log ?in|log into facebook|facebook)\b/i.test(t)) throw new Error('Facebook wouldn’t share this post’s details.');
   const by = t.match(/^(.*?)\s+on\s+Facebook/i);
   if (by) out.author = by[1];
   applyCaption(out, cap);
