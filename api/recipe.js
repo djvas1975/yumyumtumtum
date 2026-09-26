@@ -21,18 +21,20 @@ module.exports = async (req, res) => {
   const url = String((req.query && req.query.url) || '').trim();
   const bad = badUrl(url);
   if (bad) { res.status(400).json({ ok: false, error: bad }); return; }
+  const trace = req.query && req.query.debug ? [] : null;
   try {
-    const out = await readRecipe(url);
+    const out = await readRecipe(url, trace);
+    if (trace) out.trace = trace;
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
     res.status(200).json(Object.assign({ ok: true }, out));
   } catch (e) {
-    res.status(200).json({ ok: false, error: (e && e.message) || 'Could not read that page.' });
+    res.status(200).json({ ok: false, error: (e && e.message) || 'Could not read that page.', trace: trace || undefined });
   }
 };
 
-async function readRecipe(url) {
+async function readRecipe(url, trace) {
   const host = new URL(url).hostname.replace(/^(www|m|mobile)\./, '');
-  if (/(^|\.)tiktok\.com$/.test(host)) return readTikTok(url);
+  if (/(^|\.)tiktok\.com$/.test(host)) return readTikTok(url, trace);
   if (host === 'youtu.be' || /(^|\.)youtube\.com$/.test(host)) return readYouTube(url);
   if (/(^|\.)instagram\.com$/.test(host)) return readSocialPage(url, 'instagram');
   if (/(^|\.)facebook\.com$/.test(host) || host === 'fb.watch') return readSocialPage(url, 'facebook');
@@ -164,12 +166,14 @@ function wprmGroups(html) {
 }
 
 /* ---------------- TikTok ---------------- */
-async function readTikTok(url) {
-  let target = url;
-  if (/\/\/(vm|vt)\.tiktok\.com\//i.test(url) || /tiktok\.com\/t\//i.test(url)) {
-    try { target = (await fetchText(url, { headOnly: true })).finalUrl || url; } catch (e) { /* use the short link */ }
+async function readTikTok(url, trace) {
+  const target = await resolveTikTok(url, trace);
+  let o;
+  try { o = await fetchJson('https://www.tiktok.com/oembed?url=' + encodeURIComponent(target)); }
+  catch (e) {
+    if (trace) trace.push('oembed failed: ' + e.message + ' for ' + target);
+    throw new Error('TikTok wouldn’t share this video’s details.');
   }
-  const o = await fetchJson('https://www.tiktok.com/oembed?url=' + encodeURIComponent(target));
   const out = blank(target);
   out.kind = 'video';
   out.siteName = 'TikTok';
@@ -177,6 +181,25 @@ async function readTikTok(url) {
   out.image = o.thumbnail_url || '';
   applyCaption(out, decode(o.title || ''));
   return out;
+}
+// Share links (tiktok.com/t/…, vm.tiktok.com/…) point to the full video address; find it.
+async function resolveTikTok(url, trace) {
+  const full = u => (u.match(/https?:\/\/(?:www\.|m\.)?tiktok\.com\/@[\w.-]+\/(?:video|photo)\/\d+/) || [])[0];
+  if (full(url)) return full(url);
+  try {
+    const r = await fetchText(url, { headOnly: true, trace });
+    if (full(r.finalUrl)) return full(r.finalUrl);
+  } catch (e) { if (trace) trace.push('resolve: ' + e.message); }
+  // some answers are a page instead of a redirect: look inside it for the video address or number
+  try {
+    const r = await fetchText(url, { trace });
+    const html = r.text.replace(/\\u002F/gi, '/').replace(/\\\//g, '/');
+    const f = full(r.finalUrl) || full(html);
+    if (f) return f;
+    const id = (html.match(/\/video\/(\d{15,21})/) || html.match(/"(?:itemId|videoId|aweme_id)"\s*:\s*"?(\d{15,21})/) || [])[1];
+    if (id) return 'https://www.tiktok.com/@tiktok/video/' + id;
+  } catch (e) { if (trace) trace.push('page: ' + e.message); }
+  return url;
 }
 
 /* ---------------- YouTube ---------------- */
