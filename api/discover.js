@@ -49,6 +49,36 @@ const SOURCES = [
   { id: 'indianhealthyrecipes', name: 'Swasthi’s Recipes', kind: 'wp', home: 'https://www.indianhealthyrecipes.com', topics: /indian|curry|masala|tikka|biryani|dal|paneer|naan|korma/ },
   { id: 'themediterraneandish', name: 'The Mediterranean Dish', kind: 'wp', home: 'https://www.themediterraneandish.com', topics: /mediterranean|greek|middle eastern|hummus|falafel|shawarma|gyro|tzatziki|lebanese|moroccan|turkish/ },
   { id: 'dimitrasdishes', name: 'Dimitras Dishes', kind: 'wp', home: 'https://www.dimitrasdishes.com', topics: /greek|mediterranean|gyro|souvlaki|spanakopita|moussaka|tzatziki/ },
+  { id: 'koreanbapsang', name: 'Korean Bapsang', kind: 'wp', test: true, home: 'https://www.koreanbapsang.com' },
+  { id: 'beyondkimchee', name: 'Beyond Kimchee', kind: 'wp', test: true, home: 'https://www.beyondkimchee.com' },
+  { id: 'kimchimari', name: 'Kimchimari', kind: 'wp', test: true, home: 'https://kimchimari.com' },
+  { id: 'pickledplum', name: 'Pickled Plum', kind: 'wp', test: true, home: 'https://pickledplum.com' },
+  { id: 'chopstickchronicles', name: 'Chopstick Chronicles', kind: 'wp', test: true, home: 'https://www.chopstickchronicles.com' },
+  { id: 'omnivorescookbook', name: 'Omnivore’s Cookbook', kind: 'wp', test: true, home: 'https://omnivorescookbook.com' },
+  { id: 'redhousespice', name: 'Red House Spice', kind: 'wp', test: true, home: 'https://redhousespice.com' },
+  { id: 'cookwithmanali', name: 'Cook with Manali', kind: 'wp', test: true, home: 'https://www.cookwithmanali.com' },
+  { id: 'pipingpotcurry', name: 'Piping Pot Curry', kind: 'wp', test: true, home: 'https://www.pipingpotcurry.com' },
+  { id: 'ministryofcurry', name: 'Ministry of Curry', kind: 'wp', test: true, home: 'https://ministryofcurry.com' },
+  { id: 'mygreekdish', name: 'My Greek Dish', kind: 'wp', test: true, home: 'https://www.mygreekdish.com' },
+  { id: 'feelgoodfoodie', name: 'Feel Good Foodie', kind: 'wp', test: true, home: 'https://feelgoodfoodie.net' },
+  { id: 'muybuenocookbook', name: 'Muy Bueno', kind: 'wp', test: true, home: 'https://muybuenoblog.com' },
+  { id: 'mexicoinmykitchen', name: 'Mexico in My Kitchen', kind: 'wp', test: true, home: 'https://www.mexicoinmykitchen.com' },
+  { id: 'maricruzavalos', name: 'Maricruz Avalos', kind: 'wp', test: true, home: 'https://www.maricruzavalos.com' },
+  { id: 'preppykitchen', name: 'Preppy Kitchen', kind: 'wp', test: true, home: 'https://preppykitchen.com' },
+  { id: 'sugarspunrun', name: 'Sugar Spun Run', kind: 'wp', test: true, home: 'https://sugarspunrun.com' },
+  { id: 'handletheheat', name: 'Handle the Heat', kind: 'wp', test: true, home: 'https://handletheheat.com' },
+  { id: 'plainchicken', name: 'Plain Chicken', kind: 'wp', test: true, home: 'https://www.plainchicken.com' },
+  { id: 'thecozycook', name: 'The Cozy Cook', kind: 'wp', test: true, home: 'https://thecozycook.com' },
+  { id: 'iheartrecipes', name: 'I Heart Recipes', kind: 'wp', test: true, home: 'https://iheartrecipes.com' },
+  { id: 'divascancook', name: 'Divas Can Cook', kind: 'wp', test: true, home: 'https://divascancook.com' },
+  { id: 'thaicaliente', name: 'Thai Caliente', kind: 'wp', test: true, home: 'https://www.thaicaliente.com' },
+  { id: 'rachelcooksthai', name: 'Rachel Cooks Thai', kind: 'wp', test: true, home: 'https://rachelcooksthai.com' },
+  { id: 'hungryinthailand', name: 'Hungry in Thailand', kind: 'wp', test: true, home: 'https://hungryinthailand.com' },
+  { id: 'vietworldkitchen', name: 'Viet World Kitchen', kind: 'wp', test: true, home: 'https://www.vietworldkitchen.com' },
+  { id: 'hungryhuy', name: 'Hungry Huy', kind: 'wp', test: true, home: 'https://www.hungryhuy.com' },
+  { id: 'panlasangpinoy', name: 'Panlasang Pinoy', kind: 'wp', test: true, home: 'https://panlasangpinoy.com' },
+  { id: 'kawalingpinoy', name: 'Kawaling Pinoy', kind: 'wp', test: true, home: 'https://www.kawalingpinoy.com' },
+  { id: 'jocooks', name: 'Jo Cooks', kind: 'wp', test: true, home: 'https://www.jocooks.com' },
   { id: 'sallysbakingaddiction', name: 'Sally’s Baking Addiction', kind: 'wp', home: 'https://sallysbakingaddiction.com', topics: /bak|cake|cookie|bread|pie|brownie|muffin|dessert|cheesecake|cupcake|biscuit|roll/ }
 ];
 
@@ -60,10 +90,12 @@ module.exports = async (req, res) => {
   const n = Math.max(1, Math.min(15, parseInt(qp.n, 10) || 8));
   const want = String(qp.src || '').split(',').map(s => s.trim()).filter(Boolean);
   const debug = !!qp.debug;
+  const limit = debug && qp.t ? Math.min(25000, parseInt(qp.t, 10) || SITE_TIMEOUT) : SITE_TIMEOUT;
   let sources;
   if (want.length) sources = SOURCES.filter(s => want.includes(s.id));
-  else if (qp.all) sources = SOURCES.slice();
-  else sources = SOURCES.filter(s => s.core || (q && s.topics && s.topics.test(q.toLowerCase())));
+  else if (qp.all === 'test') sources = SOURCES.filter(s => s.test);
+  else if (qp.all) sources = SOURCES.filter(s => !s.test);
+  else sources = SOURCES.filter(s => !s.test && (s.core || (q && s.topics && s.topics.test(q.toLowerCase()))));
   if (!q) sources = sources.filter(s => s.kind !== 'cdx');
 
   const report = [];
@@ -71,7 +103,7 @@ module.exports = async (req, res) => {
     const t0 = Date.now();
     const trace = debug ? [] : null;
     try {
-      const items = await withTimeout(readSource(s, q, n, trace), SITE_TIMEOUT);
+      const items = await withTimeout(readSource(s, q, n, trace), limit);
       if (debug) report.push({ id: s.id, ms: Date.now() - t0, count: items.length, sample: items.slice(0, 2).map(x => x.url + ' | ' + x.title + ' | ' + (x.image ? 'photo' : 'no photo')), trace });
       return items;
     } catch (e) {
