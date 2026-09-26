@@ -1,7 +1,7 @@
 // yumyumtumtum recipe discovery.
 // GET /api/discover?q=chicken+enchiladas  ->  matching recipes from free recipe sites
 // GET /api/discover                       ->  the newest recipes from those sites
-// Optional: src=delish,tasty (only these sites), n=8 (per site), debug=1 (how each site answered)
+// Optional: sites=delish,tasty (only these sites), n=8 (per site), debug=1 (how each site answered)
 //
 // Each item: { title, url, image, source, sourceName, by }
 // The phone app ranks these by what Dave likes; this only gathers them.
@@ -88,9 +88,9 @@ module.exports = async (req, res) => {
   const qp = req.query || {};
   const q = clean(String(qp.q || '')).slice(0, 80);
   const n = Math.max(1, Math.min(15, parseInt(qp.n, 10) || 8));
-  const want = String(qp.src || '').split(',').map(s => s.trim()).filter(Boolean);
+  const want = String(qp.sites || '').split(',').map(s => s.trim()).filter(Boolean);
   const debug = !!qp.debug;
-  const limit = debug && qp.t ? Math.min(25000, parseInt(qp.t, 10) || SITE_TIMEOUT) : SITE_TIMEOUT;
+  const limit = debug && qp.wait ? Math.min(25000, parseInt(qp.wait, 10) || SITE_TIMEOUT) : SITE_TIMEOUT;
   let sources;
   if (want.length) sources = SOURCES.filter(s => want.includes(s.id));
   else if (qp.all === 'test') sources = SOURCES.filter(s => s.test);
@@ -192,16 +192,19 @@ function cardImage(seg) {
 async function fromWordPress(s, q, n, trace) {
   const url = s.home + '/wp-json/wp/v2/posts?per_page=' + Math.min(20, n + 4)
     + (q ? '&search=' + enc(q) + '&orderby=relevance' : '')
-    + '&_fields=link,title,date,jetpack_featured_media_url,yoast_head_json.og_image';
+    + '&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_media_url,yoast_head_json.og_image,_links,_embedded';
   const { text } = await fetchText(url, { trace, headers: { Accept: 'application/json' } });
   let arr;
   try { arr = JSON.parse(text); } catch (e) { throw new Error('Not a recipe list.'); }
   if (!Array.isArray(arr)) throw new Error('Not a recipe list.');
   return arr.map(p => {
     const og = p.yoast_head_json && Array.isArray(p.yoast_head_json.og_image) && p.yoast_head_json.og_image[0];
+    const fm = p._embedded && Array.isArray(p._embedded['wp:featuredmedia']) && p._embedded['wp:featuredmedia'][0];
+    const sizes = (fm && fm.media_details && fm.media_details.sizes) || {};
+    const pick = sizes.medium_large || sizes.large || sizes['1536x1536'] || sizes.full || null;
     return {
       title: clean(decode(String((p.title && p.title.rendered) || '').replace(/<[^>]+>/g, ' '))),
-      url: p.link, image: p.jetpack_featured_media_url || (og && og.url) || '',
+      url: p.link, image: (pick && pick.source_url) || p.jetpack_featured_media_url || (og && og.url) || (fm && fm.source_url) || '',
       source: s.id, sourceName: s.name, by: ''
     };
   }).filter(x => x.title && x.url && !ROUNDUP.test(x.title)).slice(0, n);
