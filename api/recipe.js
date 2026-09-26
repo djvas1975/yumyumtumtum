@@ -10,6 +10,7 @@
 // pulls ingredients and steps out of the caption when they're written there.
 
 const {
+  isChallenge, fromArchive,
   cors, badUrl, fetchText, fetchJson, decode, clean, htmlToLines, meta, findByClass,
   attrOf, jsonLdBlocks, findRecipe, isoMinutes, pickImage, asArray, mapMeals, parseCaption
 } = require('../lib/parse');
@@ -40,8 +41,22 @@ async function readRecipe(url) {
 
 /* ---------------- websites ---------------- */
 async function readWebsite(url) {
-  const { text: html, finalUrl } = await fetchText(url);
+  let html = '', finalUrl = url, via = 'site', problem = '';
+  try {
+    const r = await fetchText(url);
+    html = r.text; finalUrl = r.finalUrl;
+    if (isChallenge(html)) { html = ''; problem = 'That site blocked the recipe reader.'; }
+  } catch (e) { problem = e.message; }
+  // blocked, or no recipe card in what came back: try the Internet Archive's saved copy
+  if (!html || !findRecipe(jsonLdBlocks(html))) {
+    try {
+      const a = await fromArchive(finalUrl);
+      if (a && !isChallenge(a.html) && (findRecipe(jsonLdBlocks(a.html)) || !html)) { html = a.html; via = 'archive'; }
+    } catch (e) { /* keep what we have */ }
+  }
+  if (!html) throw new Error(problem || 'Couldn’t read that page.');
   const out = blank(finalUrl);
+  out.via = via;
   out.kind = 'page';
   out.siteName = decode(meta(html, 'og:site_name')) || new URL(finalUrl).hostname.replace(/^www\./, '');
   out.title = decode(meta(html, 'og:title')) || decode((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1] || '');
