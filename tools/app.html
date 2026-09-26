@@ -99,6 +99,15 @@ body[data-route="recipe"] #view{padding-bottom:calc(112px + env(safe-area-inset-
 .row .card{flex:0 0 min(44vw,190px);scroll-snap-align:start}
 .row .card.big{flex-basis:min(76vw,330px)}
 .row .coltile{flex:0 0 min(40vw,170px);scroll-snap-align:start}
+.cuis{position:relative;flex:0 0 122px;height:152px;border-radius:18px;overflow:hidden;text-align:left;scroll-snap-align:start;isolation:isolate;background:var(--sunk)}
+.cuis .art svg{width:78%;right:-10%;bottom:auto;top:6%}
+.cuis img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cuis-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,10,20,0) 38%,rgba(20,10,20,.74))}
+.cuis-t{position:absolute;left:12px;right:10px;bottom:11px;display:flex;flex-direction:column;color:#fff}
+.cuis-t b{font:800 17px/1.1 var(--display);letter-spacing:-.01em;text-shadow:0 1px 6px rgba(0,0,0,.3)}
+.cuis-t small{font-size:12px;font-weight:700;opacity:.9}
+.cuis.none .art{filter:saturate(.75)}
+.cuis.none .cuis-t small{opacity:.75}
 
 /* cards */
 .card{position:relative;display:flex;flex-direction:column;gap:8px;cursor:pointer;min-width:0;border-radius:var(--radius)}
@@ -439,7 +448,12 @@ const G = {
   cup:'<path d="M16 16h32l-4 42H20z"/><path d="M18 28h28"/><path d="M34 16l8-12h8"/>',
   cookie:'<circle cx="32" cy="32" r="24"/><circle cx="24" cy="24" r="2.5"/><circle cx="38" cy="22" r="2.5"/><circle cx="40" cy="38" r="2.5"/><circle cx="25" cy="40" r="2.5"/><circle cx="32" cy="31" r="2"/>',
   sandwich:'<path d="M8 28c0-9 11-16 24-16s24 7 24 16z"/><path d="M6 36c4-3 8 3 12 0s8 3 12 0 8 3 12 0 8 3 12 0 4 3 6 0"/><path d="M8 44h48v4a6 6 0 0 1-6 6H14a6 6 0 0 1-6-6z"/>',
-  leaf:'<path d="M12 52C12 28 28 12 54 10c0 26-16 42-42 42z"/><path d="M12 52 38 26"/>'
+  leaf:'<path d="M12 52C12 28 28 12 54 10c0 26-16 42-42 42z"/><path d="M12 52 38 26"/>',
+  taco:'<path d="M6 46a26 24 0 0 1 52 0z"/><path d="M11 40c3-4 6 1 9-3s6 1 9-3 6 1 9-3 6 1 9-3 3 2 5 4"/><circle cx="22" cy="31" r="2"/><circle cx="36" cy="28" r="2"/>',
+  noodles:'<path d="M8 32h48a24 22 0 0 1-48 0z"/><path d="M40 4 28 30M48 6 32 30"/><path d="M18 32c0-6 4-6 4-12M26 32c0-5 3-6 3-10"/>',
+  pizza:'<path d="M10 14c14-6 30-6 44 0L32 58z"/><path d="M10 14c14-6 30-6 44 0"/><circle cx="26" cy="24" r="3"/><circle cx="38" cy="26" r="3"/><circle cx="32" cy="38" r="3"/>',
+  sushi:'<rect x="10" y="24" width="44" height="22" rx="10"/><path d="M26 24v22M38 24v22"/><path d="M14 24c4-6 10-8 18-8s14 2 18 8"/>',
+  flame:'<path d="M32 58c-12 0-18-9-16-19 2-8 9-12 10-22 7 5 8 11 7 16 3-2 5-5 5-9 7 6 10 13 10 19 0 9-7 15-16 15z"/><path d="M32 58c-5 0-8-4-7-8 1-4 5-6 6-11 4 4 8 8 8 12 0 4-3 7-7 7z"/>'
 };
 const MEALS = ['Breakfast','Lunch','Dinner','Dessert','Snack','Side','Drink'];
 const ART = {
@@ -660,7 +674,7 @@ function deleteAsset(id){ if (Store.assets && id) Store.assets.delete(id).catch(
 function maybeDeleteAsset(assetId, exceptId){ if (!list().some(r => r.id !== exceptId && r.photoId === assetId)) deleteAsset(assetId); }
 
 /* ---------- search state ---------- */
-const SEARCH_DEFAULT = () => ({q:'', kind:'', time:0, status:'', meals:[], plats:[], sort:'new'});
+const SEARCH_DEFAULT = () => ({q:'', kind:'', time:0, status:'', cuisine:'', meals:[], plats:[], sort:'new'});
 let S = SEARCH_DEFAULT();
 const SORTS = {new:'Newest first', old:'Oldest first', az:'A to Z', quick:'Quickest', rating:'Highest rated', made:'Most made'};
 function sorted(arr, key){
@@ -675,7 +689,7 @@ function sorted(arr, key){
   }
 }
 function hay(r){
-  return [r.title, r.source, r.cuisine, r.notes, plat(r).name].concat(r.tags || [], r.meal || [], r.ingredients || [], (r.collections || []).map(id => (Store.cols.get(id) || {}).name)).filter(Boolean).join(' \n ').toLowerCase();
+  return [r.title, r.source, r.cuisine || guessCuisine(r), r.notes, plat(r).name].concat(r.tags || [], r.meal || [], r.ingredients || [], (r.collections || []).map(id => (Store.cols.get(id) || {}).name)).filter(Boolean).join(' \n ').toLowerCase();
 }
 function filterList(){
   const toks = S.q.toLowerCase().split(/\s+/).filter(Boolean);
@@ -688,17 +702,84 @@ function filterList(){
     if (S.status === 'fav' && !r.fav) return false;
     if (S.meals.length && !S.meals.some(m => (r.meal || []).indexOf(m) >= 0)) return false;
     if (S.plats.length && S.plats.indexOf(r.platform || 'web') < 0) return false;
+    if (S.cuisine && !inCuisine(r, S.cuisine)) return false;
     if (toks.length) { const h = hay(r); if (!toks.every(x => h.indexOf(x) >= 0)) return false; }
     return true;
   });
 }
-const activeCount = () => (S.kind ? 1 : 0) + (S.time ? 1 : 0) + (S.status ? 1 : 0) + S.meals.length + S.plats.length;
+const activeCount = () => (S.kind ? 1 : 0) + (S.time ? 1 : 0) + (S.status ? 1 : 0) + (S.cuisine ? 1 : 0) + S.meals.length + S.plats.length;
 function fOn(k, v){ if (k === 'meal') return S.meals.indexOf(v) >= 0; if (k === 'plat') return S.plats.indexOf(v) >= 0; if (k === 'time') return S.time === +v; return S[k] === v; }
 function toggleF(k, v){
   if (k === 'meal' || k === 'plat') { const arr = k === 'meal' ? S.meals : S.plats; const i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); return; }
   if (k === 'sort') { S.sort = v; return; }
   if (k === 'time') { v = +v; S.time = S.time === v ? 0 : v; return; }
   S[k] = S[k] === v ? '' : v;
+}
+
+/* ---------- cuisines ---------- */
+// tiles on Home, in this order; [first color, second color, drawing]
+const CUISINE_TILES = [
+  ['Mexican', '#F2653C', '#B5262E', 'taco'], ['Asian', '#F5A63B', '#C0461F', 'noodles'], ['Italian', '#6CBF5A', '#2C7A3E', 'pizza'],
+  ['Chinese', '#E8503A', '#8E1B1B', 'noodles'], ['Japanese', '#F27A8C', '#9C2A4E', 'sushi'], ['Thai', '#7ACB6A', '#2E8757', 'bowl'],
+  ['Korean', '#EF6A4A', '#9E2A22', 'bowl'], ['Vietnamese', '#58C4B4', '#1E7A74', 'noodles'], ['Indian', '#F7B733', '#C9621A', 'bowl'],
+  ['Greek', '#5FA8E8', '#2B5BA8', 'leaf'], ['Mediterranean', '#4FB8C9', '#23707E', 'leaf'], ['Middle Eastern', '#E0A650', '#9A5A1E', 'cookie'],
+  ['American', '#E85A4F', '#2E4A8C', 'sandwich'], ['Southern', '#F0B35A', '#A8581E', 'egg'], ['Cajun', '#E8743B', '#8A2E14', 'bowl'],
+  ['BBQ', '#8A4B2E', '#3E1E12', 'flame'], ['Caribbean', '#FFC24D', '#2E9E6B', 'leaf'], ['French', '#8FA8E8', '#3E4E9E', 'cake'],
+  ['Spanish', '#F7C04A', '#C43A1E', 'bowl']
+];
+// a tile that gathers several cuisines
+const CUISINE_GROUPS = {
+  'Asian': ['asian', 'chinese', 'japanese', 'thai', 'korean', 'vietnamese', 'filipino', 'indian', 'indonesian', 'malaysian', 'taiwanese', 'cantonese', 'szechuan', 'sichuan'],
+  'Mediterranean': ['mediterranean', 'greek', 'middle eastern', 'lebanese', 'turkish', 'moroccan'],
+  'Southern': ['southern', 'soul food'],
+  'BBQ': ['bbq', 'barbecue', 'barbeque']
+};
+// best guess from the recipe's name and tags when it doesn't say its cuisine
+const CUISINE_GUESS = [
+  ['Mexican', /\b(tacos?|birria|enchiladas?|quesadillas?|burritos?|fajitas?|tamales?|pozole|carnitas|guacamole|salsa|tres leches|horchata|elote|chilaquiles|tostadas?|mole|al pastor|carne asada|menudo|sopes?|tex[- ]mex|mexican|churros?|tortillas?|fideo|arroz con pollo)\b/],
+  ['Thai', /\b(pad thai|thai|tom yum|tom kha|green curry|red curry|massaman|larb|pad see ew|panang)\b/],
+  ['Korean', /\b(bulgogi|kimchi|bibimbap|gochujang|japchae|korean|tteokbokki)\b/],
+  ['Vietnamese', /\b(pho|banh mi|vietnamese|bun cha)\b/],
+  ['Japanese', /\b(ramen|sushi|teriyaki|katsu|tempura|miso|udon|onigiri|yakitori|gyoza|donburi|japanese|matcha)\b/],
+  ['Indian', /\b(tikka|masala|biryani|naan|dal|daal|samosas?|paneer|korma|vindaloo|tandoori|indian|chana)\b/],
+  ['Chinese', /\b(fried rice|lo mein|chow mein|kung pao|orange chicken|dumplings?|wontons?|mapo|bao|char siu|egg rolls?|sesame chicken|general tso|sweet and sour|chinese|beef and broccoli)\b/],
+  ['Greek', /\b(gyros?|tzatziki|souvlaki|spanakopita|moussaka|greek)\b/],
+  ['Middle Eastern', /\b(hummus|falafel|shawarma|kebabs?|kabobs?|tabbouleh|baba ganoush|shakshuka)\b/],
+  ['Cajun', /\b(gumbo|jambalaya|etouffee|étouffée|cajun|creole|po'? ?boy)\b/],
+  ['Italian', /\b(pasta|spaghetti|lasagna|risotto|carbonara|alfredo|pizza|gnocchi|marinara|bolognese|tiramisu|focaccia|bruschetta|pesto|ziti|fettuccine|penne|italian|parmigiana|cacio e pepe)\b/],
+  ['Southern', /\b(biscuits|grits|collard|fried chicken|cornbread|chicken and dumplings|hush ?puppies|shrimp and grits)\b/],
+  ['BBQ', /\b(brisket|pulled pork|ribs|bbq|barbecue|smoked)\b/],
+  ['Caribbean', /\b(jerk|plantains?|oxtail|jamaican|cuban|puerto rican|caribbean)\b/],
+  ['French', /\b(croissants?|crepes?|crêpes?|ratatouille|coq au vin|quiche|french toast|french onion|souffle|soufflé)\b/],
+  ['Spanish', /\b(paella|tapas|gazpacho|spanish)\b/],
+  ['American', /\b(burgers?|mac and cheese|meatloaf|wings|hot dogs?|sloppy joes?|pot roast|pancakes|american)\b/]
+];
+function guessCuisine(r){
+  const text = [r.title, (r.tags || []).join(' ')].join(' ').toLowerCase();
+  for (const [name, re] of CUISINE_GUESS) if (re.test(text)) return name;
+  return '';
+}
+const cuisineOf = r => (r.cuisine || guessCuisine(r) || '').toLowerCase();
+function inCuisine(r, name){
+  const c = cuisineOf(r); if (!c) return false;
+  const want = CUISINE_GROUPS[name] || [name.toLowerCase()];
+  return want.some(w => c.indexOf(w) >= 0);
+}
+function cuisineRowHTML(all){
+  const known = CUISINE_TILES.map(t => t[0].toLowerCase());
+  const extra = [];
+  all.forEach(r => { const c = (r.cuisine || '').trim(); if (c && known.indexOf(c.toLowerCase()) < 0 && !CUISINE_TILES.some(t => CUISINE_GROUPS[t[0]] && CUISINE_GROUPS[t[0]].some(w => c.toLowerCase().indexOf(w) >= 0)) && extra.indexOf(c) < 0) extra.push(c); });
+  const tiles = CUISINE_TILES.concat(extra.map(c => [c, '#9575B8', '#3E2A5B', 'bowl'])).map(t => {
+    const items = all.filter(r => inCuisine(r, t[0]));
+    return {t:t, items:items};
+  });
+  const withRecipes = tiles.filter(x => x.items.length), empty = tiles.filter(x => !x.items.length);
+  return '<div class="row scroll-x" data-sx="cuis">' + withRecipes.concat(empty).map(x => {
+    const pic = x.items.find(r => photoSrc(r));
+    return '<button class="cuis' + (x.items.length ? '' : ' none') + '" data-hf="cuisine:' + esc(x.t[0]) + '" aria-label="' + esc(x.t[0]) + ', ' + plural(x.items.length, 'recipe') + '">'
+      + artHTML({a:x.t[1], b:x.t[2], g:x.t[3]}) + (pic ? imgHTML(pic) : '')
+      + '<span class="cuis-shade"></span><span class="cuis-t"><b>' + esc(x.t[0]) + '</b><small>' + (x.items.length ? plural(x.items.length, 'recipe') : 'Nothing yet') + '</small></span></button>';
+  }).join('') + '</div>';
 }
 
 /* ---------- smart collections ---------- */
@@ -784,6 +865,7 @@ V.home = () => {
     + '<button class="searchpill" data-go="search" data-focus="1">' + icon('search') + '<span>Search ' + plural(all.length, 'recipe') + '</span></button>'
     + '<div class="chips scroll-x" data-sx="hq">' + hq.map(x => '<button class="chip" data-hf="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>'
     + sec('Recently saved', rowHTML(all.slice(0, 8), true, 'recent'), {col:'_all'})
+    + sec('Browse by cuisine', cuisineRowHTML(all))
     + sec('Your collections', '<div class="row scroll-x" data-sx="cols">' + cols.map(colTile).join('') + newColTile() + '</div>', {tab:'yums'})
     + (vids.length ? sec('Saved videos', rowHTML(vids, false, 'vids'), {hf:'kind:video'}) : '')
     + (quick.length ? sec('Quick fixes', rowHTML(quick, false, 'quick'), {hf:'time:30'}) : '')
@@ -899,7 +981,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 0.3</p></div>';
+    + '<p class="ver">yumyumtumtum · version 0.4</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -982,6 +1064,7 @@ function quickChipsHTML(){
   const n = activeCount();
   const q = [['kind','video','Videos'],['kind','web','Websites'],['time','30','Under 30 min'],['status','try','Want to try'],['status','made','Made it'],['status','fav','Favorites']];
   return '<button class="chip' + (n ? ' on' : '') + '" data-act="filters">' + icon('sliders') + 'Filters' + (n ? ' · ' + n : '') + '</button>'
+    + (S.cuisine ? '<button class="chip on" data-f="cuisine:' + esc(S.cuisine) + '" aria-label="Remove ' + esc(S.cuisine) + ' filter">' + esc(S.cuisine) + icon('x') + '</button>' : '')
     + q.map(x => '<button class="chip' + (fOn(x[0], x[1]) ? ' on' : '') + '" data-f="' + x[0] + ':' + x[1] + '">' + x[2] + '</button>').join('')
     + MEALS.map(m => '<button class="chip' + (fOn('meal', m) ? ' on' : '') + '" data-f="meal:' + m + '">' + m + '</button>').join('');
 }
@@ -1137,6 +1220,7 @@ function drawFilters(){
   b.innerHTML = g('Type', 'kind', [['video','Videos'],['web','Websites']])
     + g('Source', 'plat', [['tiktok','TikTok'],['instagram','Instagram'],['youtube','YouTube'],['facebook','Facebook'],['pinterest','Pinterest'],['web','Websites'],['none','My own']])
     + g('Meal', 'meal', MEALS.map(m => [m, m]))
+    + g('Cuisine', 'cuisine', CUISINE_TILES.map(t => [t[0], t[0]]))
     + g('Total time', 'time', [['15','15 min or less'],['30','30 min or less'],['60','1 hr or less']])
     + g('Status', 'status', [['try','Want to try'],['made','Made it'],['fav','Favorites']])
     + g('Sort by', 'sort', Object.keys(SORTS).map(k => [k, SORTS[k]]));
@@ -1360,7 +1444,7 @@ function parseCaption(text) {
 
 /* ---------- add / edit ---------- */
 let F = null;
-const CUISINES = ['American','BBQ','Cajun','Caribbean','Chinese','French','Greek','Indian','Italian','Japanese','Korean','Mediterranean','Mexican','Middle Eastern','Southern','Spanish','Thai','Vietnamese'];
+const CUISINES = ['American','Asian','BBQ','Cajun','Caribbean','Chinese','Cuban','Filipino','French','German','Greek','Hawaiian','Indian','Italian','Japanese','Korean','Mediterranean','Mexican','Middle Eastern','Puerto Rican','Salvadoran','Southern','Spanish','Tex-Mex','Thai','Vietnamese'];
 function openEditor(r, pre){
   F = {id:r ? r.id : null, url:r ? (r.url || '') : '', det:(r && r.url) ? detect(r.url) : null, titleAuto:!r, fromShare:false,
     meal:new Set(r ? (r.meal || []) : []), tags:r ? (r.tags || []).slice() : [], cols:new Set(r ? (r.collections || []) : []),
