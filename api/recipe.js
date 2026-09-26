@@ -168,11 +168,14 @@ function wprmGroups(html) {
 /* ---------------- TikTok ---------------- */
 async function readTikTok(url, trace) {
   const target = await resolveTikTok(url, trace);
+  // photo posts (slideshows) aren't covered by TikTok's lookup, so read the post's page
+  if (/\/photo\//.test(target)) return readTikTokPage(target, trace);
   let o;
   try { o = await fetchJson('https://www.tiktok.com/oembed?url=' + encodeURIComponent(target)); }
   catch (e) {
     if (trace) trace.push('oembed failed: ' + e.message + ' for ' + target);
-    throw new Error('TikTok wouldn’t share this video’s details.');
+    try { return await readTikTokPage(target, trace); }
+    catch (e2) { if (trace) trace.push('page failed: ' + e2.message); throw new Error('TikTok wouldn’t share this video’s details.'); }
   }
   const out = blank(target);
   out.kind = 'video';
@@ -182,6 +185,50 @@ async function readTikTok(url, trace) {
   applyCaption(out, decode(o.title || ''));
   return out;
 }
+// Caption, creator, and cover (or first slide) from the post's own page
+async function readTikTokPage(url, trace) {
+  const { text: html } = await fetchText(url, { trace });
+  let item = null;
+  const m = html.match(/<script[^>]*id=["']__UNIVERSAL_DATA_FOR_REHYDRATION__["'][^>]*>([\s\S]*?)<\/script>/);
+  if (m) {
+    try {
+      const scope = JSON.parse(m[1]).__DEFAULT_SCOPE__ || {};
+      const k = Object.keys(scope).find(x => /detail/.test(x) && scope[x] && scope[x].itemInfo);
+      item = k ? scope[k].itemInfo.itemStruct : null;
+    } catch (e) { if (trace) trace.push('page data unreadable'); }
+  }
+  if (!item) {
+    const s2 = html.match(/<script[^>]*id=["']SIGI_STATE["'][^>]*>([\s\S]*?)<\/script>/);
+    if (s2) { try { const im = JSON.parse(s2[1]).ItemModule || {}; item = im[Object.keys(im)[0]] || null; } catch (e) {} }
+  }
+  let caption = '', image = '', author = '';
+  if (item) {
+    caption = item.desc || '';
+    const ip = item.imagePost || {};
+    if (ip.title && caption.indexOf(ip.title) < 0) caption = ip.title + '\n' + caption;
+    author = typeof item.author === 'string' ? item.author : (item.author && item.author.uniqueId) || '';
+    const slide = (ip.images || [])[0];
+    const v = item.video || {};
+    image = (slide && ((slide.imageURL && (slide.imageURL.urlList || [])[0]) || (slide.displayImage && (slide.displayImage.urlList || [])[0]))) || v.cover || v.originCover || v.dynamicCover || '';
+    if (trace) trace.push('page data found: ' + (ip.images ? ip.images.length + ' slides' : 'video'));
+  }
+  if (!caption) {
+    caption = decode(meta(html, 'og:description') || meta(html, 'description'));
+    const q = caption.match(/:\s*["“]([\s\S]*?)["”]\.?\s*(\d[\d.,]*[KkMm]?\s+Likes[\s\S]*)?$/);
+    if (q) caption = q[1];
+  }
+  if (!image) image = meta(html, 'og:image');
+  if (!author) { const a = url.match(/tiktok\.com\/@([\w.-]+)/); if (a) author = a[1]; }
+  if (!caption && !image) throw new Error('TikTok wouldn’t share this post’s details.');
+  const out = blank(url);
+  out.kind = 'video';
+  out.siteName = 'TikTok';
+  out.author = author ? '@' + String(author).replace(/^@/, '') : '';
+  out.image = image;
+  applyCaption(out, caption);
+  return out;
+}
+
 // Share links (tiktok.com/t/…, vm.tiktok.com/…) point to the full video address; find it.
 async function resolveTikTok(url, trace) {
   const full = u => (u.match(/https?:\/\/(?:www\.|m\.)?tiktok\.com\/@[\w.-]+\/(?:video|photo)\/\d+/) || [])[0];
