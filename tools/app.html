@@ -279,6 +279,37 @@ body[data-route="recipe"] .tabbar{display:none}
 .linkbtn.sm{font-size:13px;text-decoration:none}
 .pastebox{display:flex;flex-direction:column;gap:8px}
 
+/* discover */
+.dcard .dnope{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(20,12,26,.52);color:#fff;z-index:2;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.dcard .dnope .ic{width:15px;height:15px;stroke-width:2.6}
+.srcbadge{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);height:24px;padding:0 9px;border-radius:999px;background:rgba(20,12,26,.66);color:#fff;font-size:11.5px;font-weight:800;display:inline-flex;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.meta.why{color:var(--basil);white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.skel{pointer-events:none}
+.skel .media{animation:pulse 1.2s ease-in-out infinite}
+.sk-line{height:12px;border-radius:6px;background:var(--sunk);animation:pulse 1.2s ease-in-out infinite}
+.sk-line.short{width:55%}
+@keyframes pulse{50%{opacity:.5}}
+.dhint{margin:4px 0 14px;color:var(--ink-2);font-size:14px}
+.dhint .ic{width:15px;height:15px;vertical-align:-3px;stroke-width:2.6}
+.morebar{display:flex;justify-content:center;margin-top:22px}
+.dnote{display:flex;flex-direction:column;gap:4px;margin-top:28px;padding:14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:14px}
+.dnote b{color:var(--ink);font-weight:800}
+.morelinks{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.morelinks .chip{text-decoration:none;height:34px;font-size:13px}
+.pv-media{position:relative;aspect-ratio:4/3;border-radius:18px;overflow:hidden;background:var(--sunk);isolation:isolate}
+.pv-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pv-title{font:800 26px/1.1 var(--display);letter-spacing:-.03em;margin:10px 0 6px;overflow-wrap:anywhere}
+.pv-why{color:var(--basil);font-weight:700;font-size:14px}
+.pv-list{margin:0;padding-left:22px}
+.pv-list li{padding:5px 0;line-height:1.45}
+.pv-list .ihead{list-style:none;margin-left:-22px;padding:12px 0 2px;font:800 12.5px/1.2 var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--chili)}
+.pv-steps li{padding:7px 0}
+.pv-nope{display:block;margin:22px auto 4px;color:var(--ink-3)}
+.sh-foot .btn{flex:1;min-width:0;padding-inline:12px}
+.sh-foot .btn span{overflow:hidden;text-overflow:ellipsis}
+.findmore{grid-column:1/-1}
+.taste{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+
 /* empty */
 .empty{text-align:center;padding:44px 12px;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:10px}
 .empty .logo{width:96px;height:96px;border-radius:24px}
@@ -740,6 +771,7 @@ const CUISINE_GROUPS = {
 };
 // best guess from the recipe's name and tags when it doesn't say its cuisine
 const CUISINE_GUESS = [
+  ['Southern', /\bchicken (and|&|n'?) dumplings\b/],
   ['Mexican', /\b(tacos?|birria|enchiladas?|quesadillas?|burritos?|fajitas?|tamales?|pozole|carnitas|guacamole|salsa|tres leches|horchata|elote|chilaquiles|tostadas?|mole|al pastor|carne asada|menudo|sopes?|tex[- ]mex|mexican|churros?|tortillas?|fideo|arroz con pollo)\b/],
   ['Thai', /\b(pad thai|thai|tom yum|tom kha|green curry|red curry|massaman|larb|pad see ew|panang)\b/],
   ['Korean', /\b(bulgogi|kimchi|bibimbap|gochujang|japchae|korean|tteokbokki)\b/],
@@ -845,7 +877,7 @@ function colTile(c){
 const newColTile = () => '<button class="coltile" data-act="newcol"><span class="mosaic none dashed">' + icon('plus') + '</span><span class="ct-name">New collection</span><span class="ct-n">Group recipes your way</span></button>';
 function sec(title, body, link){
   let a = '';
-  if (link) { const attr = link.col ? 'data-col="' + link.col + '"' : link.tab ? 'data-tab="' + link.tab + '"' : 'data-hf="' + link.hf + '"'; a = '<button class="link" ' + attr + '>See all</button>'; }
+  if (link) { const attr = link.col ? 'data-col="' + link.col + '"' : link.tab ? 'data-tab="' + link.tab + '"' : link.go ? 'data-go="' + link.go + '"' : 'data-hf="' + link.hf + '"'; a = '<button class="link" ' + attr + '>See all</button>'; }
   return '<section class="sec"><div class="sec-h"><h2>' + title + '</h2>' + a + '</div>' + body + '</section>';
 }
 const rowHTML = (items, big, key) => '<div class="row scroll-x" data-sx="' + key + '">' + items.map(r => card(r, big)).join('') + '</div>';
@@ -857,7 +889,7 @@ V.home = () => {
   const all = sorted(list(), 'new');
   const head = '<header class="topbar"><div class="wrap brandbar">' + LOGO + '<span class="wordmark"><span class="y">yumyum</span>tumtum</span></div></header>';
   const greet = '<h1 class="greet">' + esc(greeting()) + '</h1><p class="greet-sub">What are we cooking?</p>';
-  if (!all.length) return head + '<div class="wrap">' + greet + '<div class="empty">' + LOGO + '<h3>Your recipe box is empty</h3><p>Tap the + button to save a recipe from TikTok, Instagram, YouTube, Pinterest, or any website.</p><button class="btn primary" data-act="add">' + icon('plus') + 'Save your first recipe</button></div></div>';
+  if (!all.length) return head + '<div class="wrap">' + greet + '<div class="empty">' + LOGO + '<h3>Your recipe box is empty</h3><p>Tap the + button to save a recipe from TikTok, Instagram, YouTube, Pinterest, or any website.</p><button class="btn primary" data-act="add">' + icon('plus') + 'Save your first recipe</button>' + (canRead() ? '<button class="btn ghost" data-go="discover">' + icon('globe') + 'Find new recipes</button>' : '') + '</div></div>';
   const vids = all.filter(isVideo).slice(0, 10);
   const quick = all.filter(r => r.time && r.time <= 30).slice(0, 10);
   const tryIt = all.filter(r => !r.madeCount).slice(0, 10);
@@ -868,6 +900,7 @@ V.home = () => {
     + (installEvt ? '<div class="installcard"><div><b>Get the app</b><span>Home screen icon, plus save straight from TikTok\'s Share button.</span></div><button class="btn primary sm" data-act="install">Install</button></div>' : '')
     + '<button class="searchpill" data-go="search" data-focus="1">' + icon('search') + '<span>Search ' + plural(all.length, 'recipe') + '</span></button>'
     + '<div class="chips scroll-x" data-sx="hq">' + hq.map(x => '<button class="chip" data-hf="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>'
+    + homeDiscoverSec()
     + sec('Recently saved', rowHTML(all.slice(0, 8), true, 'recent'), {col:'_all'})
     + sec('Browse by cuisine', cuisineRowHTML(all))
     + sec('Your collections', '<div class="row scroll-x" data-sx="cols">' + cols.map(colTile).join('') + newColTile() + '</div>', {tab:'yums'})
@@ -981,13 +1014,16 @@ V.me = () => {
     + '<div class="profile"><div class="avatar" aria-hidden="true">' + esc((nm.trim().charAt(0) || 'Y').toUpperCase()) + '</div><div class="field"><label class="lbl" for="myname">Your name</label><input class="inp" id="myname" maxlength="40" value="' + esc(nm) + '" autocomplete="given-name"></div></div>'
     + '<div class="statrow">' + mini(all.length, 'Recipes') + mini(Store.cols.size, 'Collections') + mini(vids, 'Videos') + mini(cooked, 'Times cooked') + '</div>'
     + (installEvt ? '<section class="panel"><h2>Put it on your home screen</h2><p>Installs yumyumtumtum as an app with its own icon. It also shows up when you tap Share in TikTok, Instagram, YouTube, or Chrome.</p><div class="acts"><button class="btn primary" data-act="install">' + icon('download') + 'Install app</button></div></section>' : '')
+    + (canRead() ? (() => { const tc = tasteChips(); return '<section class="panel"><h2>What Discover has learned</h2><p>' + (tc.length ? 'Your Just for you picks lean toward these, based on what you save, cook, rate, open, and skip.' : 'Save, cook, and rate a few recipes and Discover will start picking up what you like.') + '</p>'
+      + (tc.length ? '<div class="taste">' + tc.map(t => '<span class="tool">' + esc(t) + '</span>').join('') + '</div>' : '')
+      + '<div class="acts"><button class="btn ghost" data-go="discover">' + icon('globe') + 'Open Discover</button>' + (Object.keys(tasteStore().w).length || tasteStore().hide.length ? '<button class="btn plain" data-act="tastereset">Start over</button>' : '') + '</div></section>'; })() : '')
     + '<section class="panel"><h2>Backup</h2><p>One file with every recipe, collection, and photo. Keep a copy somewhere safe, like Google Drive or iCloud.</p><div class="acts">'
     + (canBackup ? '<button class="btn primary" data-act="export">' + icon('download') + 'Download backup</button>' : '')
     + '<label class="btn ghost" for="restore">' + icon('upload') + 'Restore a backup</label><input type="file" id="restore" class="vh" accept=".json,application/json"></div>'
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 0.5</p></div>';
+    + '<p class="ver">yumyumtumtum · version 0.6</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1026,6 +1062,7 @@ function show(forward){
   window.scrollTo(0, forward ? 0 : (r.scroll || 0));
 }
 function mountView(r){
+  if (r.name === 'discover') { mountDiscover(r); return; }
   if (r.name !== 'search') return;
   const q = $('#q');
   q.value = S.q;
@@ -1041,7 +1078,7 @@ function refresh(){
     rq = 0;
     const r = cur();
     if (r.name === 'search' && $('#results')) renderResults();
-    else if (!(document.activeElement && document.activeElement.id === 'myname')) {
+    else if (!(document.activeElement && (document.activeElement.id === 'myname' || document.activeElement.id === 'dq'))) {
       const y = window.scrollY; const sx = {};
       $$('[data-sx]').forEach(el => { sx[el.dataset.sx] = el.scrollLeft; });
       $('#view').innerHTML = (V[r.name] || V.home)(r);
@@ -1080,9 +1117,10 @@ function renderResults(){
   $('#rescount').textContent = plural(res.length, 'recipe');
   $('#sortlbl').textContent = SORTS[S.sort];
   const ch = $('#schips'); const sl = ch.scrollLeft; ch.innerHTML = quickChipsHTML(); ch.scrollLeft = sl;
-  box.innerHTML = res.length ? res.map(r => card(r)).join('')
+  const findMore = (S.q.trim().length > 1 && canRead()) ? '<button class="addrow findmore" data-dfind="' + esc(S.q.trim()) + '">' + icon('globe') + 'Find new “' + esc(S.q.trim()) + '” recipes on Delish, Tasty, and more</button>' : '';
+  box.innerHTML = res.length ? res.map(r => card(r)).join('') + findMore
     : '<div class="empty small" style="grid-column:1/-1"><h3>Nothing matches</h3><p>' + (list().length ? 'Try a different word or clear some filters.' : 'Save a recipe with the + button and it will show up here.') + '</p>'
-      + ((activeCount() || S.q) ? '<button class="btn ghost" data-act="clearall">Clear search and filters</button>' : '') + '</div>';
+      + ((activeCount() || S.q) ? '<button class="btn ghost" data-act="clearall">Clear search and filters</button>' : '') + '</div>' + findMore;
   const clr = $('[data-act="qclear"]'); if (clr) clr.hidden = !S.q;
 }
 
@@ -1254,6 +1292,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
+const READER_V = '6'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1263,7 +1302,7 @@ function jumpUrl(r){ return (r.platform === 'web' && r.anchor) ? r.url.replace(/
 async function readLink(url){
   const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 45000);
   try {
-    const res = await fetch(READER + '/api/recipe?url=' + encodeURIComponent(url), {signal:ctrl.signal});
+    const res = await fetch(READER + '/api/recipe?url=' + encodeURIComponent(url) + '&v=' + READER_V, {signal:ctrl.signal});
     const j = await res.json();
     if (!j.ok) throw new Error((j.error || "Couldn't read that page.").replace(/\.?$/, '.'));
     return j;
@@ -1347,6 +1386,398 @@ async function getDetails(id){
   } catch (e) { toast(e.message || "Couldn't read that page."); }
   finally { READING.delete(id); refresh(); }
 }
+
+/* ---------- taste: learns what you like from what you save, cook, rate, open, and skip ---------- */
+// [word used in searches, how to spot it in a recipe name, kind] kinds: p protein, d dish, s style, f flavor
+const TASTE_TERMS = [
+  ['chicken', /\bchicken\b/, 'p'], ['beef', /\b(beef|brisket|chuck roast|short ribs?)\b/, 'p'], ['steak', /\b(steaks?|ribeye|sirloin|flank|carne asada)\b/, 'p'],
+  ['pork', /\b(pork|carnitas|al pastor)\b/, 'p'], ['bacon', /\bbacon\b/, 'p'], ['sausage', /\b(sausages?|chorizo|kielbasa|andouille|brats?)\b/, 'p'],
+  ['ham', /\bham\b/, 'p'], ['turkey', /\bturkey\b/, 'p'], ['lamb', /\blamb\b/, 'p'], ['shrimp', /\b(shrimp|prawns?)\b/, 'p'], ['salmon', /\bsalmon\b/, 'p'],
+  ['fish', /\b(fish|cod|tilapia|halibut|mahi|catfish|snapper)\b/, 'p'], ['tuna', /\btuna\b/, 'p'], ['crab', /\bcrab\b/, 'p'], ['tofu', /\btofu\b/, 'p'],
+  ['eggs', /\beggs?\b(?! rolls?)/, 'p'], ['beans', /\b(beans?|chickpeas?|lentils?)\b/, 'p'],
+  ['meatballs', /\bmeatballs?\b/, 'd'], ['tacos', /\btacos?\b/, 'd'], ['enchiladas', /\benchiladas?\b/, 'd'], ['burritos', /\bburritos?\b/, 'd'], ['quesadillas', /\bquesadillas?\b/, 'd'],
+  ['fajitas', /\bfajitas?\b/, 'd'], ['tamales', /\btamales?\b/, 'd'], ['pozole', /\b(pozole|posole)\b/, 'd'], ['birria', /\bbirria\b/, 'd'], ['nachos', /\bnachos\b/, 'd'],
+  ['tostadas', /\btostadas?\b/, 'd'], ['empanadas', /\bempanadas?\b/, 'd'], ['soup', /\bsoups?\b/, 'd'], ['stew', /\bstews?\b/, 'd'],
+  ['chili', /\bchili\b(?! (powder|flakes|oil|crisp|sauce|lime))/, 'd'], ['curry', /\bcurr(y|ies)\b/, 'd'], ['chowder', /\bchowder\b/, 'd'],
+  ['pasta', /\b(pasta|spaghetti|penne|rigatoni|fettuccine|linguine|ziti|orzo|tortellini|ravioli|gnocchi)\b/, 'd'], ['lasagna', /\blasagna\b/, 'd'],
+  ['mac and cheese', /\bmac(aroni)? (and|&|n) cheese\b/, 'd'], ['noodles', /\b(noodles?|lo mein|chow mein|pad thai|pancit)\b/, 'd'], ['ramen', /\bramen\b/, 'd'], ['pho', /\bpho\b/, 'd'],
+  ['fried rice', /\bfried rice\b/, 'd'], ['stir fry', /\bstir[- ]?fr(y|ied)\b/, 'd'], ['bowls', /\bbowls?\b/, 'd'], ['salad', /\bsalads?\b/, 'd'],
+  ['sandwiches', /\b(sandwich(es)?|sliders?|hoagies?|panini|grilled cheese|sloppy joes?)\b/, 'd'], ['burgers', /\bburgers?\b/, 'd'], ['pizza', /\b(pizzas?|flatbreads?)\b/, 'd'],
+  ['casserole', /\b(casseroles?|bake)\b/, 'd'], ['dumplings', /\b(dumplings?|potstickers?|gyoza|wontons?)\b/, 'd'], ['wings', /\bwings?\b/, 'd'], ['meatloaf', /\bmeatloaf\b/, 'd'],
+  ['pot pie', /\bpot pies?\b/, 'd'], ['gumbo', /\b(gumbo|jambalaya|etouffee|étouffée)\b/, 'd'], ['ribs', /\bribs\b/, 'd'], ['pot roast', /\b(pot roast|roast beef)\b/, 'd'],
+  ['dip', /\bdips?\b/, 'd'], ['potatoes', /\bpotato(es)?\b/, 'd'], ['cornbread', /\bcornbread\b/, 'd'], ['biscuits', /\bbiscuits?\b/, 'd'], ['bread', /\b(bread|rolls|focaccia|naan)\b/, 'd'],
+  ['egg rolls', /\b((egg|spring) rolls?|lumpia)\b/, 'd'], ['kabobs', /\b(kabobs?|kebabs?|skewers?|satay|souvlaki)\b/, 'd'], ['gyros', /\b(gyros?|shawarma)\b/, 'd'], ['risotto', /\brisotto\b/, 'd'],
+  ['pancakes', /\b(pancakes?|waffles?|french toast|crepes?)\b/, 'd'], ['breakfast', /\b(breakfast|brunch|omelets?|omelettes?|frittatas?|quiche)\b/, 'd'], ['oatmeal', /\boat(meal|s)\b/, 'd'],
+  ['cake', /\bcakes?\b/, 'd'], ['cookies', /\bcookies?\b/, 'd'], ['pie', /\bpies?\b/, 'd'], ['brownies', /\b(brownies?|blondies?)\b/, 'd'], ['cheesecake', /\bcheesecakes?\b/, 'd'],
+  ['muffins', /\b(cupcakes?|muffins?)\b/, 'd'], ['cobbler', /\b(cobblers?|crumbles?)\b/, 'd'], ['pudding', /\b(pudding|flan|custard|tres leches)\b/, 'd'], ['churros', /\bchurros?\b/, 'd'],
+  ['smoothies', /\b(smoothies?|milkshakes?)\b/, 'd'], ['drinks', /\b(margaritas?|cocktails?|mocktails?|lemonade|agua fresca|horchata|sangria|punch)\b/, 'd'],
+  ['air fryer', /\bair[- ]?fr(yer|ied)\b/, 's'], ['slow cooker', /\b(slow[- ]cooker|crock[- ]?pot)\b/, 's'], ['instant pot', /\b(instant pot|pressure cooker)\b/, 's'],
+  ['one pot', /\bone[- ](pot|pan|skillet)\b/, 's'], ['sheet pan', /\bsheet[- ]pan\b/, 's'], ['grilled', /\bgrill(ed|ing)?\b/, 's'], ['smoked', /\bsmoked?\b/, 's'],
+  ['fried', /\b(deep[- ]?)?fried\b(?! rice)/, 's'], ['no bake', /\bno[- ]bake\b/, 's'], ['healthy', /\b(healthy|low[- ]carb|keto|high[- ]protein|skinny)\b/, 's'],
+  ['vegetarian', /\b(vegetarian|veggie|meatless|vegan)\b/, 's'],
+  ['spicy', /\b(spicy|jalape[nñ]os?|chipotle|sriracha|habanero|buffalo|nashville hot)\b/, 'f'], ['garlic', /\bgarlic\b/, 'f'], ['lemon', /\blemons?\b/, 'f'], ['honey', /\bhoney\b/, 'f'],
+  ['bbq', /\b(bbq|barbecue)\b/, 'f'], ['cajun', /\b(cajun|creole)\b/, 'f'], ['teriyaki', /\bteriyaki\b/, 'f'], ['creamy', /\b(creamy|alfredo|marry me|tuscan)\b/, 'f'],
+  ['cheesy', /\b(cheesy|parmesan|queso|cheddar)\b/, 'f'], ['coconut', /\bcoconut\b/, 'f'], ['peanut', /\bpeanut\b/, 'f'], ['chocolate', /\bchocolate\b/, 'f'], ['pumpkin', /\bpumpkin\b/, 'f'],
+  ['apple', /\bapples?\b/, 'f'], ['cinnamon', /\bcinnamon\b/, 'f'], ['strawberry', /\bstrawberr(y|ies)\b/, 'f'], ['pesto', /\bpesto\b/, 'f'], ['ranch', /\branch\b/, 'f']
+];
+const TERM_KIND = {}; TASTE_TERMS.forEach(t => { TERM_KIND[t[0]] = t[2]; });
+function termsOf(text){ const t = ' ' + String(text || '').toLowerCase() + ' '; return TASTE_TERMS.filter(x => x[1].test(t)).map(x => x[0]); }
+function recipeCuisine(r){ const c = (r.cuisine || guessCuisine(r) || '').trim(); return c ? c.toLowerCase() : ''; }
+const tasteStore = () => Object.assign({w:{}, hide:[]}, Store.settings.taste || {});
+// weight of every food word, cuisine, and site, from the recipe box plus what you've tapped and skipped
+function tasteProfile(){
+  const w = {}, ex = {}, exW = {};
+  const add = (k, v, title) => { w[k] = (w[k] || 0) + v; if (title && v > (exW[k] || 0)) { exW[k] = v; ex[k] = title; } };
+  const t0 = Date.now();
+  list().forEach(r => {
+    if (r.sample) return;
+    let s = 1 + (r.fav ? 1 : 0) + Math.min(r.madeCount || 0, 3) * 0.7;
+    if ((r.rating || 0) >= 4) s += (r.rating - 3) * 0.6; else if (r.rating && r.rating <= 2) s -= 1.6;
+    const age = Math.max(0, (t0 - Date.parse(r.createdAt || 0)) / 864e5);
+    if (isFinite(age)) s *= 1 + 0.5 * Math.exp(-age / 45);
+    const own = termsOf([r.title, (r.tags || []).join(' ')].join(' '));
+    own.forEach(k => add(k, s * (TERM_KIND[k] === 'd' || TERM_KIND[k] === 'p' ? 1.5 : 0.8), r.title));
+    termsOf((r.ingredients || []).slice(0, 12).join(' ')).filter(k => TERM_KIND[k] === 'p' && own.indexOf(k) < 0).forEach(k => add(k, s * 0.35, r.title));
+    const c = recipeCuisine(r); if (c) add('cuisine:' + c, s * 1.2, r.title);
+    if (r.platform === 'web') { const h = hostOf(r.url); if (h) add('site:' + h, s * 0.3); }
+  });
+  const T = tasteStore();
+  Object.keys(T.w).forEach(k => add(k, T.w[k]));
+  return {w:w, ex:ex};
+}
+function learn(it, amount){
+  const T = tasteStore(); const w = Object.assign({}, T.w);
+  const bump = (k, v) => { w[k] = Math.max(-6, Math.min(6, Math.round(((w[k] || 0) + v) * 100) / 100)); };
+  termsOf(it.title).forEach(k => bump(k, amount * (TERM_KIND[k] === 'd' || TERM_KIND[k] === 'p' ? 1 : 0.5)));
+  const c = guessCuisine({title:it.title}); if (c) bump('cuisine:' + c.toLowerCase(), amount * 0.6);
+  bump('site:' + hostOf(it.url), amount * 0.3);
+  putSettings({taste:Object.assign({}, T, {w:w})});
+}
+const SEASONS = [['winter', ['soup', 'chili', 'casserole']], ['winter', ['soup', 'stew', 'chocolate']], ['spring', ['stew', 'lemon', 'pasta']],
+  ['spring', ['lemon', 'salad', 'easter']], ['spring', ['grilled', 'salad', 'tacos']], ['summer', ['grilled', 'salad', 'no bake']],
+  ['summer', ['grilled', 'bbq', 'salad']], ['summer', ['grilled', 'corn', 'peach']], ['fall', ['soup', 'chili', 'apple']],
+  ['fall', ['soup', 'pumpkin', 'chili']], ['fall', ['slow cooker', 'thanksgiving', 'soup']], ['winter', ['holiday cookies', 'soup', 'casserole']]];
+// what to look for: your top dish, your top cuisine with your top protein, and one seasonal pick for something new
+function forYouQueries(P){
+  const top = kind => Object.keys(P.w).filter(k => (kind === 'c' ? k.indexOf('cuisine:') === 0 : TERM_KIND[k] === kind) && P.w[k] >= 0.8).sort((a, b) => P.w[b] - P.w[a]);
+  const dishes = top('d'), prots = top('p'), styles = top('s'), cuis = top('c');
+  const q = [];
+  if (dishes[0]) q.push(dishes[0]);
+  if (cuis[0]) q.push(cuis[0].slice(8) + ' ' + (prots[0] || 'dinner'));
+  if (prots[0]) q.push(prots[0] + ' ' + (dishes[1] || styles[0] || 'dinner'));
+  if (dishes[1] && q.length < 3) q.push(dishes[1]);
+  if (!q.length) q.push('easy dinner', 'chicken');
+  const season = SEASONS[new Date().getMonth()];
+  const pick = season[1][new Date().getDate() % 3];
+  const out = q.filter((x, i) => q.indexOf(x) === i).slice(0, 3);
+  if (!out.some(x => x.indexOf(pick) >= 0)) out.push(pick);
+  return {queries:out, seasonal:pick, season:season[0]};
+}
+const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
+const shortT = s => { s = String(s || ''); return s.length > 34 ? s.slice(0, 32).replace(/\s+\S*$/, '') + '…' : s; };
+function dayJitter(s){ let h = 0; const k = s + new Date().toDateString(); for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) | 0; return ((h >>> 0) % 1000) / 2000; }
+// best first, with a mix of sites and dishes, and a short reason for each pick
+function rankItems(items, P, opts){
+  opts = opts || {};
+  const saved = new Set(list().map(r => r.url ? normUrl(r.url) : '').filter(Boolean));
+  const hide = new Set(tasteStore().hide);
+  const qWords = opts.q ? opts.q.toLowerCase().split(/\s+/).filter(x => x.length > 2).map(x => x.length > 4 ? x.replace(/(es|s)$/, '') : x) : [];
+  const scored = [];
+  items.forEach(it => {
+    const k = normUrl(it.url);
+    if (saved.has(k) || hide.has(k) || !it.title) return;
+    const low = it.title.toLowerCase();
+    const terms = termsOf(it.title);
+    const cu = guessCuisine({title:it.title});
+    if (cu) terms.push('cuisine:' + cu.toLowerCase());
+    let s = 0;
+    terms.forEach(t => { s += (P.w[t] || 0) * (t.indexOf('cuisine:') === 0 ? 0.8 : 1); });
+    // the reason names the most specific thing you like about it: a dish or cuisine before a plain ingredient
+    const rankOf = t => t.indexOf('cuisine:') === 0 ? 3 : TERM_KIND[t] === 'd' ? 4 : TERM_KIND[t] === 'p' ? 1 : 2;
+    let best = '', bv = 0;
+    terms.filter(t => (P.w[t] || 0) >= 1).forEach(t => { if (!best || rankOf(t) > rankOf(best) || (rankOf(t) === rankOf(best) && P.w[t] > P.w[best])) best = t; });
+    if (best) bv = P.w[best];
+    s += (P.w['site:' + hostOf(it.url)] || 0) * 0.3;
+    if (qWords.length) { const m = qWords.filter(x => low.indexOf(x) >= 0).length; s += m * 40 + (m === qWords.length ? 60 : 0); }
+    s += Math.min(it.hits || 0, 3) * 0.5;
+    if (!it.image) s -= 2;
+    s += dayJitter(it.url);
+    // why: short, for cards. whyLong: for the preview
+    let why = '', whyLong = '';
+    if (bv >= 1) {
+      const ex = P.ex[best];
+      if (best.indexOf('cuisine:') === 0) { why = 'More ' + cap1(best.slice(8)); whyLong = why + (ex ? ', like your ' + ex : ''); }
+      else if (TERM_KIND[best] === 'p') { why = 'You like ' + best; whyLong = 'You save a lot of ' + best + ' recipes'; }
+      else if (ex) { why = 'Like your ' + shortT(ex); whyLong = 'Because you saved ' + ex; }
+      else { why = 'You like ' + best; whyLong = why; }
+    } else if (opts.seasonal && it.q === opts.seasonal) { why = 'Good for ' + opts.season; whyLong = 'Something new for ' + opts.season; }
+    scored.push({it:it, s:s, terms:terms, why:why, whyLong:whyLong, key:low.replace(/[^a-z0-9]+/g, ' ').trim()});
+  });
+  scored.sort((a, b) => b.s - a.s);
+  // keep a mix: each pick from the same site, or sharing the same ingredient or dish as ones above it, counts a little less
+  const out = [], perSrc = {}, perTerm = {}, names = new Set();
+  while (scored.length && out.length < 240) {
+    let bi = 0, bs = -1e9;
+    for (let i = 0; i < Math.min(scored.length, 40); i++) {
+      const x = scored[i];
+      let pen = (perSrc[x.it.source] || 0) * 0.9 + (names.has(x.key) ? 3 : 0);
+      x.terms.forEach(t => { pen += (perTerm[t] || 0) * 0.18 * Math.max(1, Math.min(P.w[t] || 0, 8)); });
+      if (x.s - pen > bs) { bs = x.s - pen; bi = i; }
+    }
+    const x = scored.splice(bi, 1)[0];
+    out.push(Object.assign({}, x.it, {why:x.why, whyLong:x.whyLong}));
+    perSrc[x.it.source] = (perSrc[x.it.source] || 0) + 1;
+    x.terms.forEach(t => { perTerm[t] = (perTerm[t] || 0) + 1; });
+    names.add(x.key);
+  }
+  return out;
+}
+
+/* ---------- discover: free recipes from Delish, Tasty, and popular recipe blogs ---------- */
+const DISC = {cache:new Map(), feeds:{}, byId:new Map(), read:new Map(), savedNow:new Map()};
+const DISC_LS = 'yyt-discover-v1';
+const discId = u => { let h = 0; for (let i = 0; i < u.length; i++) h = (h * 33 + u.charCodeAt(i)) | 0; return 'd' + (h >>> 0).toString(36); };
+async function fetchDiscover(q){
+  const key = (q || '').toLowerCase();
+  const c = DISC.cache.get(key);
+  if (c && Date.now() - c.t < 3 * 3600e3) return c.items;
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 25000);
+  try {
+    const res = await fetch(READER + '/api/discover?' + (q ? 'q=' + encodeURIComponent(q) + '&' : '') + 'n=8&v=' + READER_V, {signal:ctrl.signal});
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || "Couldn't load recipes.");
+    const items = (j.items || []).filter(x => x && x.url && x.title).map(x => Object.assign({}, x, {q:q || ''}));
+    DISC.cache.set(key, {t:Date.now(), items:items});
+    return items;
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('The recipe sites took too long to answer.');
+    if (e instanceof TypeError) throw new Error("Couldn't reach the recipe finder. Check your connection.");
+    throw e;
+  } finally { clearTimeout(tm); }
+}
+const CUISINE_Q = {'Asian':'asian', 'Middle Eastern':'middle eastern', 'BBQ':'bbq', 'American':'american comfort food'};
+async function buildFeed(key){
+  const P = tasteProfile();
+  let queries, opts = {};
+  if (key === 'foryou') { const f = forYouQueries(P); queries = [''].concat(f.queries); opts.seasonal = f.seasonal; opts.season = f.season; }
+  else if (key === 'new') queries = [''];
+  else if (key.indexOf('c:') === 0) { const c = key.slice(2); queries = [CUISINE_Q[c] || c.toLowerCase()]; }
+  else { opts.q = key.slice(2); queries = [opts.q]; }
+  const res = await Promise.allSettled(queries.map(fetchDiscover));
+  const ok = res.filter(r => r.status === 'fulfilled').map(r => r.value);
+  if (!ok.length) throw res[0].reason;
+  const byUrl = new Map();
+  ok.forEach(l => l.forEach(it => {
+    const k = normUrl(it.url); const x = byUrl.get(k);
+    if (x) { if (it.q) x.hits++; if (!x.image && it.image) x.image = it.image; if (!x.q) x.q = it.q; }
+    else byUrl.set(k, Object.assign({}, it, {hits:it.q ? 1 : 0}));
+  }));
+  return rankItems(Array.from(byUrl.values()), P, opts);
+}
+function remember(items){ items.forEach(it => { it.id = it.id || discId(it.url); DISC.byId.set(it.id, it); }); return items; }
+const tasteSig = () => forYouQueries(tasteProfile()).queries.join('|');
+function loadFeed(key, force){
+  const f = DISC.feeds[key] || {};
+  if (f.loading || !canRead()) return;
+  const sig = key === 'foryou' ? tasteSig() : '';
+  if (!force && f.items && !f.stale && f.sig === sig && Date.now() - (f.t || 0) < 6 * 3600e3) return;
+  if (!force && f.error && f.sig === sig && Date.now() - (f.t || 0) < 60e3) return;
+  DISC.feeds[key] = Object.assign({}, f, {loading:true, error:''});
+  redrawDiscover();
+  buildFeed(key).then(items => {
+    DISC.feeds[key] = {items:remember(items), t:Date.now(), sig:sig, loading:false, error:''};
+    if (key === 'foryou') writeLS(DISC_LS, {t:Date.now(), sig:sig, items:items.slice(0, 60)});
+  }).catch(e => {
+    DISC.feeds[key] = Object.assign({}, DISC.feeds[key], {loading:false, t:Date.now(), sig:sig, error:(e && e.message) || "Couldn't load recipes."});
+  }).then(redrawDiscover);
+}
+// last "For you" list, so it shows instantly next time while a fresh one loads
+function restoreFeed(){
+  const s = readLS(DISC_LS);
+  if (s && Array.isArray(s.items) && s.items.length) DISC.feeds.foryou = {items:remember(s.items), t:s.t || 0, sig:s.sig || '', stale:true, loading:false, error:''};
+}
+function feedItems(key){
+  const f = DISC.feeds[key]; if (!f || !f.items) return [];
+  const saved = new Set(list().map(r => r.url ? normUrl(r.url) : '').filter(Boolean));
+  const hide = new Set(tasteStore().hide);
+  return f.items.filter(it => { const k = normUrl(it.url); return !hide.has(k) && (!saved.has(k) || DISC.savedNow.has(k)); });
+}
+function redrawDiscover(){
+  const r = cur();
+  if (r.name === 'discover' && $('#dfeed')) { $('#dfeed').innerHTML = discFeedHTML(r); return; }
+  if (r.name === 'home') refresh();
+}
+const savedIdFor = it => { const k = normUrl(it.url); const r = list().find(x => x.url && normUrl(x.url) === k); return r ? r.id : ''; };
+function dcard(it, inRow){
+  const sid = savedIdFor(it);
+  const img = it.image ? '<img data-dimg src="' + esc(it.image) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '';
+  return '<article class="card dcard" data-dopen="' + esc(it.id) + '" tabindex="0" role="link" aria-label="' + esc(it.title) + '">'
+    + '<div class="media">' + artHTML(ART._) + img + '<span class="srcbadge">' + esc(it.sourceName || hostOf(it.url)) + '</span></div>'
+    + '<button class="heart' + (sid ? ' on' : '') + '" data-dsave="' + esc(it.id) + '" aria-label="' + (sid ? 'Saved. Open it' : 'Save to your Yums') + '">' + icon(sid ? 'heartf' : 'heart') + '</button>'
+    + (sid ? '' : '<button class="dnope" data-dnope="' + esc(it.id) + '" aria-label="Not for me">' + icon('x') + '</button>')
+    + '<div class="card-body"><h3>' + esc(it.title) + '</h3><p class="meta' + (it.why ? ' why' : '') + '">' + esc(it.why || it.sourceName || '') + '</p></div></article>';
+}
+const skelCards = (n) => Array.from({length:n}, () => '<div class="card skel" aria-hidden="true"><div class="media"></div><div class="sk-line"></div><div class="sk-line short"></div></div>').join('');
+function homeDiscoverSec(){
+  if (!canRead()) return '';
+  const f = DISC.feeds.foryou;
+  if (!f || !f.loading) setTimeout(() => loadFeed('foryou'), 0);
+  const items = feedItems('foryou').slice(0, 10);
+  if (!items.length && f && f.error) return '';
+  const body = '<div class="row scroll-x" data-sx="disc">' + (items.length ? items.map(it => dcard(it, true)).join('') : skelCards(3, true)) + '</div>';
+  return sec('Just for you', body, {go:'discover'});
+}
+const DISC_TABS = [['foryou', 'For you'], ['new', 'Newest']].concat(CUISINE_TILES.map(t => ['c:' + t[0], t[0]]));
+const MORE_SITES = [['Food Network', q => 'https://www.foodnetwork.com/search/' + encodeURIComponent(q.replace(/\s+/g, '-')) + '-', 'https://www.foodnetwork.com/recipes'],
+  ['Allrecipes', q => 'https://www.allrecipes.com/search?q=' + encodeURIComponent(q), 'https://www.allrecipes.com/'],
+  ['Simply Recipes', q => 'https://www.simplyrecipes.com/search?q=' + encodeURIComponent(q), 'https://www.simplyrecipes.com/'],
+  ['Serious Eats', q => 'https://www.seriouseats.com/search?q=' + encodeURIComponent(q), 'https://www.seriouseats.com/']];
+V.discover = (rt) => {
+  const key = rt.key || 'foryou';
+  const q = key.indexOf('q:') === 0 ? key.slice(2) : '';
+  const head = backBar('<div class="ph-t"><h1 class="title sm">Discover</h1><p class="ph-sub">Free recipes, picked for you</p></div>');
+  if (!canRead()) return head + '<div class="wrap"><div class="empty"><h3>Open the app on your phone</h3><p>Discover finds new recipes from Delish, Tasty, and popular recipe blogs. It works in the yumyumtumtum app on your home screen.</p></div></div>';
+  return head + '<div class="wrap">'
+    + '<div class="searchbox">' + icon('search') + '<input id="dq" type="search" enterkeyhint="search" placeholder="Search Delish, Tasty, and 30 more" autocomplete="off" aria-label="Search recipe sites" value="' + esc(q) + '"></div>'
+    + '<div class="chips scroll-x" data-sx="dtabs">' + (q ? '<button class="chip on" data-dk="foryou" aria-label="Clear search">' + esc(q) + icon('x') + '</button>' : '')
+    + DISC_TABS.map(t => '<button class="chip' + (!q && key === t[0] ? ' on' : '') + '" data-dk="' + esc(t[0]) + '">' + esc(t[1]) + '</button>').join('') + '</div>'
+    + '<div id="dfeed">' + discFeedHTML(rt) + '</div></div>';
+};
+function discFeedHTML(rt){
+  const key = rt.key || 'foryou';
+  const f = DISC.feeds[key] || {};
+  const q = key.indexOf('q:') === 0 ? key.slice(2) : key.indexOf('c:') === 0 ? key.slice(2) : '';
+  const items = feedItems(key);
+  const shown = rt.shown || 24;
+  let h = '';
+  if (key === 'foryou') h += '<p class="dhint">' + (list().some(r => !r.sample) ? 'Picked from what you save, cook, and rate. Tap ' + icon('x') + ' on anything that\'s not your thing and it learns.' : 'Save a few recipes you like and these picks get more personal.') + '</p>';
+  if (f.loading && !items.length) h += '<div class="grid">' + skelCards(6) + '</div>';
+  else if (f.error && !items.length) h += '<div class="empty small"><h3>Couldn\'t load recipes</h3><p>' + esc(f.error) + '</p><button class="btn ghost" data-act="dretry">Try again</button></div>';
+  else if (!items.length) h += '<div class="empty small"><h3>Nothing found</h3><p>' + (q ? 'Try a shorter search, like one main ingredient or dish.' : 'Check back in a bit.') + '</p></div>';
+  else {
+    h += (f.loading ? '<p class="readst"><span class="spin sm"></span>Finding more…</p>' : '')
+      + '<div class="grid">' + items.slice(0, shown).map(it => dcard(it)).join('') + '</div>'
+      + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '');
+  }
+  h += '<div class="dnote"><b>Also try</b><span>These sites don\'t let outside apps search them, but you can search there and tap Share, then yumyumtumtum, to save a recipe.</span><div class="morelinks">'
+    + MORE_SITES.map(s => '<a class="chip" href="' + esc(q ? s[1](q) : s[2]) + '" target="_blank" rel="noopener noreferrer">' + esc(s[0]) + icon('ext') + '</a>').join('') + '</div></div>';
+  return h;
+}
+function mountDiscover(r){
+  const input = $('#dq'); if (!input) return;
+  input.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const v = input.value.trim().slice(0, 80);
+    r.key = v ? 'q:' + v : 'foryou'; r.shown = 24;
+    input.blur();
+    show(false);
+  });
+  input.addEventListener('search', () => { if (!input.value.trim() && (r.key || '').indexOf('q:') === 0) { r.key = 'foryou'; show(false); } });
+  loadFeed(r.key || 'foryou');
+}
+// the preview: reads the whole recipe before you decide
+function openDiscover(id){
+  const it = DISC.byId.get(id); if (!it) return;
+  learn(it, 0.25);
+  const k = normUrl(it.url);
+  const draw = () => {
+    const box = $('#sheet .sheet'); if (!box) return;
+    box.innerHTML = previewHTML(it);
+  };
+  openSheet(previewHTML(it), {full:true, label:it.title, onRefresh:draw});
+  if (!DISC.read.has(k)) {
+    DISC.read.set(k, {loading:true});
+    readLink(it.url).then(j => { DISC.read.set(k, {j:j}); }).catch(e => { DISC.read.set(k, {error:e.message || "Couldn't read that page."}); }).then(() => { if (sheetRefresh) sheetRefresh(); });
+  }
+}
+function previewHTML(it){
+  const st = DISC.read.get(normUrl(it.url)) || {};
+  const j = st.j;
+  const sid = savedIdFor(it);
+  const img = (j && j.image) || it.image;
+  const site = it.sourceName || hostOf(it.url);
+  let body = '<div class="pv-media">' + artHTML(ART._) + (img ? '<img data-dimg src="' + esc(img) + '" alt="" referrerpolicy="no-referrer">' : '') + '</div>'
+    + '<p class="eyebrow" style="margin-top:14px"><span class="pchip">' + icon('globe') + esc(site) + '</span>' + (j && j.author ? '<span class="src">By ' + esc(j.author.replace(/^by\s+/i, '')) + '</span>' : '') + '</p>'
+    + '<h3 class="pv-title">' + esc((j && j.title) || it.title) + '</h3>'
+    + (it.why ? '<p class="pv-why">' + esc(it.whyLong || it.why) + '</p>' : '');
+  if (st.loading) body += '<p class="readst"><span class="spin sm"></span>Reading the recipe from ' + esc(site) + '…</p>';
+  else if (st.error) body += '<p class="readst bad">' + esc(st.error) + ' You can still save it, or open it on ' + esc(site) + '.</p>';
+  if (j) {
+    const ing = j.ingredients || [], steps = j.steps || [];
+    const nI = countItems(ing), nS = countItems(steps);
+    body += '<div class="stats" style="margin-top:14px">' + stat(timeShort(j.totalTime), 'Total time') + stat(j.servings || '—', 'Servings') + stat(nI || '—', 'Ingredients') + stat(nS || '—', 'Steps') + '</div>'
+      + (j.description ? '<p class="desc" data-act="desc" style="margin-top:14px">' + esc(j.description) + '</p>' : '');
+    if (nI) body += '<div class="block"><h2>Ingredients</h2><ul class="pv-list">' + ing.map(x => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+    if (nS) {
+      const first = steps.filter(x => !isHead(x)).slice(0, 3);
+      body += '<div class="block"><h2>Directions</h2><ol class="pv-list pv-steps">' + first.map(x => '<li>' + esc(x) + '</li>').join('') + '</ol>'
+        + (nS > 3 ? '<p class="hint">Plus ' + plural(nS - 3, 'more step') + '. Save it to see them all.</p>' : '') + '</div>';
+    }
+    if (!nI && !nS) body += '<p class="readst">No recipe card on that page. Open it on ' + esc(site) + ' to read it.</p>';
+  }
+  if (!sid) body += '<button class="linkbtn sm pv-nope" data-dnope="' + esc(it.id) + '">Not for me</button>';
+  return '<div class="grab" aria-hidden="true"></div><div class="sh-head"><h2>Recipe</h2><button class="iconbtn" data-act="closesheet" aria-label="Close">' + icon('x') + '</button></div>'
+    + '<div class="sh-body">' + body + '</div>'
+    + '<div class="sh-foot"><a class="btn ghost" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">' + icon('ext') + '<span>' + esc(site.length > 14 ? 'Open the site' : 'Open on ' + site) + '</span></a>'
+    + (sid ? '<button class="btn primary" data-open="' + esc(sid) + '">' + icon('heartf') + 'Saved · Open</button>' : '<button class="btn primary" data-dsave="' + esc(it.id) + '">' + icon('heart') + 'Save to Yums</button>') + '</div>';
+}
+async function saveDiscovered(id){
+  const it = DISC.byId.get(id); if (!it) return;
+  const have = savedIdFor(it);
+  if (have) { closeSheet(); go({name:'recipe', id:have}); return; }
+  const d = detect(it.url); if (!d) return;
+  const st = DISC.read.get(normUrl(it.url)) || {};
+  const r0 = {id:uid(), title:it.title.slice(0, 140), url:d.url, platform:d.platform, source:d.source, meal:[], time:0, servings:0, cuisine:'', tags:[], collections:[],
+    ingredients:[], steps:[], srcNotes:[], equipment:[], notes:'', photoId:null, photoKey:null, photoData:null, photoUrl:null,
+    rating:0, fav:false, madeCount:0, createdAt:now(), sample:false, found:'discover'};
+  const r = st.j ? Object.assign(r0, importFields(r0, st.j)) : r0;
+  if (!r.siteName) r.siteName = it.sourceName || '';
+  DISC.savedNow.set(normUrl(it.url), r.id);
+  putRecipe(r);
+  learn(it, 0.5);
+  toast('Saved to your Yums', {label:'Open', fn:() => { closeSheet(); go({name:'recipe', id:r.id}); }});
+  const img = (st.j && st.j.image) || it.image;
+  if (img) {
+    let ph = null;
+    try { ph = await savePhotoFromUrl(img); } catch (e) {}
+    const cur0 = Store.recipes.get(r.id);
+    if (cur0 && !hasOwnPhoto(cur0)) putRecipe(Object.assign({}, cur0, ph || {photoUrl:img}));
+    else if (ph && ph.photoKey) delPhotoKey(ph.photoKey);
+  }
+  if (!st.j) { try { const j = await readLink(it.url); DISC.read.set(normUrl(it.url), {j:j}); await enrichRecipe(r.id, j); } catch (e) {} }
+}
+function hideDiscovered(id){
+  const it = DISC.byId.get(id); if (!it) return;
+  const T = tasteStore(); const k = normUrl(it.url);
+  const hide = T.hide.filter(x => x !== k).concat([k]).slice(-500);
+  putSettings({taste:Object.assign({}, T, {hide:hide})});
+  learn(it, -0.6);
+  closeSheet();
+  redrawDiscover();
+  toast("Got it. You'll see less like that.", {label:'Undo', fn:() => {
+    const T2 = tasteStore();
+    putSettings({taste:Object.assign({}, T2, {hide:T2.hide.filter(x => x !== k)})});
+    learn(it, 0.6);
+    redrawDiscover();
+  }});
+}
+// "What Discover has learned" on the Me tab
+function tasteChips(){
+  const P = tasteProfile();
+  return Object.keys(P.w).filter(k => k.indexOf('site:') !== 0 && P.w[k] >= 1).sort((a, b) => P.w[b] - P.w[a]).slice(0, 10)
+    .map(k => k.indexOf('cuisine:') === 0 ? cap1(k.slice(8)) : cap1(k));
+}
+async function resetTaste(){
+  const ok = await confirmBox({title:'Start Discover over?', msg:'Clears what Discover learned from your taps and skips. Picks will still follow the recipes you save.', ok:'Start over', danger:false});
+  if (!ok) return;
+  putSettings({taste:{w:{}, hide:[]}});
+  DISC.feeds = {}; DISC.cache.clear();
+  try { localStorage.removeItem(DISC_LS); } catch (e) {}
+  toast('Discover will start fresh');
+}
+
+restoreFeed();
 
 /* the same text reader the recipe reader uses, for pasted recipe text */
 /* ---- captions (TikTok / Instagram / YouTube descriptions) ---- */
@@ -1902,12 +2333,20 @@ const A = {
   'f-newcol': () => { if (!F) return; F.showNew = !F.showNew; renderFCols(); if (F.showNew) setTimeout(() => $('#f-newcol').focus(), 30); },
   'f-addcol': () => fAddCol(),
   export: () => exportBackup(),
-  rmexamples: () => removeExamples()
+  rmexamples: () => removeExamples(),
+  dretry: () => { const r = cur(); loadFeed(r.key || 'foryou', true); },
+  dmore: () => { const r = cur(); r.shown = (r.shown || 24) + 24; redrawDiscover(); },
+  tastereset: () => resetTaste()
 };
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump]');
+  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump]');
   if (!t) return;
   const d = t.dataset;
+  if (d.dsave) { e.preventDefault(); saveDiscovered(d.dsave); return; }
+  if (d.dnope) { e.preventDefault(); hideDiscovered(d.dnope); return; }
+  if (d.dopen) { openDiscover(d.dopen); return; }
+  if (d.dk) { const r = cur(); r.key = d.dk; r.shown = 24; r.scroll = 0; if (d.dk.indexOf('c:') === 0) { const T = tasteStore(), k = 'cuisine:' + d.dk.slice(2).toLowerCase(); putSettings({taste:Object.assign({}, T, {w:Object.assign({}, T.w, {[k]:Math.min(6, (T.w[k] || 0) + 0.2)})})}); } show(false); return; }
+  if (d.dfind) { go({name:'discover', key:'q:' + d.dfind}); return; }
   if (d.fav) { e.preventDefault(); toggleFav(d.fav); return; }
   if (d.open) { go({name:'recipe', id:d.open}); return; }
   if (d.tab) { if (cur().name === d.tab && stack.length === 1) { window.scrollTo({top:0, behavior:'smooth'}); return; } go({name:d.tab}); return; }
@@ -1929,7 +2368,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (!$('#modal').hidden) closeModal(false); else if (!$('#sheet').hidden) closeSheet(); return; }
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('article[data-open]')) { e.preventDefault(); e.target.click(); }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('article[data-open],article[data-dopen]')) { e.preventDefault(); e.target.click(); }
 });
 document.addEventListener('change', e => {
   const t = e.target;
@@ -1937,7 +2376,12 @@ document.addEventListener('change', e => {
   else if (t.id === 'myname') { const v = t.value.trim().slice(0, 40); if (v !== (Store.settings.name || '')) { putSettings({name:v}); toast('Name saved'); } }
   else if (t.id === 'restore') { const f = t.files && t.files[0]; t.value = ''; if (f) restoreBackup(f); }
 });
-document.addEventListener('error', e => { const t = e.target; if (t && t.tagName === 'IMG' && t.hasAttribute('data-ph')) t.remove(); }, true);
+document.addEventListener('error', e => {
+  const t = e.target; if (!t || t.tagName !== 'IMG') return;
+  if (t.hasAttribute('data-ph')) { t.remove(); return; }
+  // recipe-site photos that won't load straight onto the phone go through the reader instead
+  if (t.hasAttribute('data-dimg')) { if (!t.dataset.tried && canRead()) { t.dataset.tried = '1'; t.src = READER + '/api/image?url=' + encodeURIComponent(t.getAttribute('src')); } else t.remove(); }
+}, true);
 
 /* ---------- install + sharing (installed phone app only) ---------- */
 let installEvt = null;

@@ -141,7 +141,7 @@ function cardsFromPage(html, s) {
     const seg = html.slice(h.at, Math.min(j < hits.length ? hits[j].at : html.length, h.at + 6000));
     const all = hits.filter(x => x.url === h.url).map(x => x.tag).join(' ');
     const title = cardTitle(all, seg, h.url);
-    if (!title) continue;
+    if (!title || ROUNDUP.test(title)) continue;
     out.push({ title, url: h.url, image: cardImage(seg), source: s.id, sourceName: s.name, by: '' });
   }
   return out;
@@ -194,7 +194,7 @@ async function fromWordPress(s, q, n, trace) {
   }).filter(x => x.title && x.url && !ROUNDUP.test(x.title)).slice(0, n);
 }
 // "25 Best Chicken Recipes", gift guides, meal plans: not a single recipe
-const ROUNDUP = /^\d+\+?\s|\b(recipes|ideas|roundup|round-up|meal plan|gift guide|giveaway|what i ate|favorites of|best of \d{4}|menu)\b/i;
+const ROUNDUP = /^(over |top |the |our )?\d+\+?\s|\b(recipes|ideas|roundup|round-up|meal plan|gift guide|giveaway|what i ate|favorites of|best of \d{4}|menu|everything you need to know|guide to|lunchbox|freezer stash|what (is|are) )\b|^what (is|are)\b|\?$/i;
 
 /* ---------- helpers ---------- */
 const SMALL = new Set(['a', 'an', 'and', 'or', 'the', 'of', 'with', 'in', 'on', 'for', 'to', 'at', 'by', 'de', 'la', 'con', 'y']);
