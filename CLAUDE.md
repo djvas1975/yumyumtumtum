@@ -108,8 +108,11 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   whole caption in the page's own data, then in Facebook's embed page (`plugins/video.php` or
   `plugins/post.php` with `show_text=true`). If it still only has the start, it drops the half line,
   sets `captionCut`, and the recipe page says so. Photo: og:image, else the video's cover from the
-  page data. Built Sept 26, 2026 against fake pages; not yet confirmed on a live Facebook post
-  (the foodiligence Korean Popcorn Chicken reel was the problem case).
+  page data. Confirmed live Sept 26, 2026 on the foodiligence Korean Popcorn Chicken post
+  (`facebook.com/foodiligence/posts/1520738373405084`): the preview stopped at 202 characters, the
+  page data had the whole 422-character caption (15 ingredients) and a photo. Reel share links
+  (`facebook.com/share/r/…`, `/reel/…`) not yet checked live. That creator keeps the directions
+  behind "check my bio", so there are no steps to find in the caption.
 - **Caption parser:** handles headings like "Ingredients", "Soup base:", "Dumplings:", "For the
   sauce", captions squashed onto one line (two spaces count as a line break), emoji bullets,
   arrow steps, "Step 1", directions written as sentences, trailing hashtags, calorie lines, and
