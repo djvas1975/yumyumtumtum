@@ -39,7 +39,7 @@ async function readRecipe(url, trace) {
   if (/(^|\.)tiktok\.com$/.test(host)) return withLinkedRecipe(await readTikTok(url, trace), trace);
   if (host === 'youtu.be' || /(^|\.)youtube\.com$/.test(host)) return withLinkedRecipe(await readYouTube(url), trace);
   if (/(^|\.)instagram\.com$/.test(host)) return withLinkedRecipe(await readInstagram(url, trace), trace);
-  if (/(^|\.)facebook\.com$/.test(host) || host === 'fb.watch') return withLinkedRecipe(await readSocialPage(url, 'facebook'), trace);
+  if (/(^|\.)facebook\.com$/.test(host) || host === 'fb.watch') return withLinkedRecipe(await readFacebook(url, trace), trace);
   if (host === 'pin.it' || /(^|\.)pinterest\.[a-z.]+$/.test(host)) return readPinterest(url, trace);
   return readWebsite(url);
 }
@@ -378,21 +378,128 @@ function igOg(html) {
 }
 
 /* ---------------- Facebook (best effort: it often hides posts from servers) ---------------- */
-async function readSocialPage(url, site) {
-  const { text: html, finalUrl } = await fetchText(url);
+// The page's preview text is usually cut off ("…1/2 tsp..."). The whole caption is often still in
+// the page's own data, or in Facebook's embed version of the post, so look there before giving up.
+async function readFacebook(url, trace) {
+  const { text: html, finalUrl } = await fetchText(url, { trace });
   const out = blank(finalUrl);
   out.kind = 'video';
   out.siteName = 'Facebook';
-  out.image = meta(html, 'og:image');
   let cap = decode(meta(html, 'og:description') || meta(html, 'description'));
   if (/^[\d,.]+\s*[KkMm]?\s+(likes?|views?|reactions?)\b/i.test(cap) && !/\n/.test(cap)) cap = cap.replace(/^[^|·]*[|·]\s*/, '');
   const t = decode(meta(html, 'og:title'));
   if (/accounts\/login|\/login\b/.test(finalUrl) || /^(log ?in|log into facebook|facebook)\b/i.test(t)) throw new Error('Facebook wouldn’t share this post’s details.');
-  const by = t.match(/^(.*?)\s+on\s+Facebook/i);
-  if (by) out.author = by[1];
+  const by = t.match(/^(.*?)\s+on\s+Facebook/i) || t.match(/^[^|]*\|\s*By\s+(.+?)\s*\|/i);
+  if (by) out.author = by[1].trim();
+  let image = meta(html, 'og:image') || fbThumb(html);
+  if (trace) trace.push('preview: caption ' + cap.length + ' chars' + (isCut(cap) ? ' (cut off)' : '') + ', photo ' + (image ? 'yes' : 'no'));
+
+  if (isCut(cap) || !cap) {
+    const full = longerText(html, cap);
+    if (full) { cap = full; if (trace) trace.push('whole caption from the page data: ' + cap.length + ' chars'); }
+  }
+  if (isCut(cap) || !cap || !image) {
+    const kind = /\/(reel|videos?|watch)\b|fb\.watch|[?&]v=\d/.test(finalUrl + ' ' + url) ? 'video' : 'post';
+    const embed = 'https://www.facebook.com/plugins/' + kind + '.php?href=' + encodeURIComponent(finalUrl) + '&show_text=true&width=500';
+    try {
+      const { text: eh } = await fetchText(embed, { trace });
+      if (isCut(cap) || !cap) {
+        const full = longerText(eh, cap) || embedText(eh, cap);
+        if (full) { cap = full; if (trace) trace.push('whole caption from the embed: ' + cap.length + ' chars'); }
+      }
+      if (!image) image = fbThumb(eh) || embedImage(eh);
+    } catch (e) { if (trace) trace.push('embed failed: ' + e.message); }
+  }
+  out.image = image ? decode(image) : '';
   applyCaption(out, cap);
-  if (!out.title && t && !/^(facebook|log in|watch)\b/i.test(t)) out.title = t.replace(/\s+on\s+Facebook.*$/i, '').replace(/\s*\|\s*Facebook.*$/i, '').slice(0, 120);
+  if (isCut(cap)) {
+    // the last line stops mid-word: leave it out rather than save "1/2 tsp..."
+    const trim = a => { if (a.length && /(\.\.\.|…)\s*$/.test(a[a.length - 1])) a.pop(); };
+    trim(out.ingredients); trim(out.steps); trim(out.notes);
+    out.captionCut = true;
+  }
+  if (!out.title && t && !/^(facebook|log in|watch)\b/i.test(t)) out.title = t.replace(/\s+on\s+Facebook.*$/i, '').replace(/\s*\|\s*Facebook.*$/i, '').split('|')[0].trim().slice(0, 120);
   return out;
+}
+const isCut = s => /(\.\.\.|…)\s*$/.test(String(s || '').trim());
+const squash = s => String(s || '').replace(/\s+/g, ' ').trim();
+// A longer copy of the cut-off caption somewhere in the page's data (a JSON text value that starts the same way).
+function longerText(html, teaser) {
+  const start = squash(String(teaser || '').replace(/(\.\.\.|…)\s*$/, ''));
+  if (start.length < 25) return '';
+  const key = start.slice(0, 40);
+  // search for a plain-text run from the start of the caption (JSON may escape emoji and slashes)
+  const run = (start.match(/[A-Za-z0-9][A-Za-z0-9 ,.!?'&()]{11,}/) || [])[0];
+  if (!run) return '';
+  const probe = run.slice(0, 24);
+  let best = '', from = 0, hits = 0;
+  while (hits < 60) {
+    const i = html.indexOf(probe, from);
+    if (i < 0) break;
+    hits++; from = i + probe.length;
+    // walk back to the opening quote of this text value, then forward to its closing quote
+    let a = i;
+    while (a > 0 && i - a < 600 && !(html[a] === '"' && html[a - 1] !== '\\')) a--;
+    if (html[a] !== '"') continue;
+    // only text values inside a data block ({"text":"…"}), not HTML attributes or page text
+    if (!/[:\[,]\s*$/.test(html.slice(Math.max(0, a - 20), a))) continue;
+    let b = a + 1;
+    while (b < html.length && b - a < 30000) {
+      if (html[b] === '\\') { b += 2; continue; }
+      if (html[b] === '"') break;
+      b++;
+    }
+    let val;
+    try { val = JSON.parse('"' + html.slice(a + 1, b) + '"'); } catch (e) { continue; }
+    if (/<\/?[a-z][^>]*>/i.test(val)) continue;
+    const sq = squash(val);
+    const at = sq.indexOf(key);
+    if (at < 0 || at > 120 || sq.length <= start.length + 5 || isCut(val)) continue;
+    // text before the caption (a name or a label) is dropped
+    const w = val.indexOf(key.split(' ')[0]);
+    const text = at > 0 && w > 0 ? val.slice(w) : val;
+    if (text.length > best.length) best = text;
+  }
+  return best;
+}
+// The caption as shown in Facebook's embed page (its HTML text), when it isn't in a data block.
+function embedText(html, teaser) {
+  const start = squash(String(teaser || '').replace(/(\.\.\.|…)\s*$/, ''));
+  if (start.length < 25) return '';
+  const key = start.slice(0, 30);
+  const lines = htmlToLines(html.replace(/<(span|div)\b[^>]*class=["'][^"']*text_exposed_hide[^"']*["'][^>]*>[\s\S]*?<\/\1>/gi, ' '));
+  const i = lines.findIndex(l => squash(l).includes(key));
+  if (i < 0) return '';
+  const STOP = /^([\d.,]+\s*[KkMm]?\s*(likes?|comments?|shares?|views?|reactions?)|like|comment|share|facebook|log in|see more|watch on facebook|view more comments)\b/i;
+  const keep = [];
+  for (let j = i; j < lines.length && keep.length < 200; j++) {
+    if (STOP.test(lines[j])) break;
+    if (/^(\.\.\.|…)$/.test(lines[j])) continue;
+    keep.push(j === i ? lines[j].slice(Math.max(0, lines[j].indexOf(key.split(' ')[0]))) : lines[j]);
+  }
+  const text = keep.join('\n');
+  return squash(text).length > start.length + 5 && !isCut(text) ? text : '';
+}
+// The video's cover picture from the page data.
+function fbThumb(html) {
+  const re = /"(preferred_thumbnail|thumbnailImage|previewImage|first_frame_thumbnail|image)"\s*:\s*(?:\{\s*"image"\s*:\s*)?\{?\s*(?:"uri"\s*:\s*)?"(https?:\\?\/\\?\/[^"]*?(?:scontent|fbcdn)[^"]*)"/g;
+  let m, fallback = '';
+  while ((m = re.exec(html))) {
+    let u;
+    try { u = JSON.parse('"' + m[2] + '"'); } catch (e) { continue; }
+    if (/[sp]\d{2,3}x\d{2,3}|profile|emoji/i.test(u)) continue; // small profile pictures
+    if (m[1] !== 'image') return u;
+    fallback = fallback || u;
+  }
+  return fallback;
+}
+function embedImage(html) {
+  const imgs = html.match(/<img\b[^>]*>/gi) || [];
+  for (const tag of imgs) {
+    const src = decode(attrOf(tag, 'src'));
+    if (/scontent|fbcdn/.test(src) && !/[sp]\d{2,3}x\d{2,3}|\/rsrc\.php|profile|emoji/i.test(src)) return src;
+  }
+  return '';
 }
 
 /* ---------------- Pinterest: follow the pin to the recipe it came from ---------------- */
@@ -511,7 +618,7 @@ function blank(finalUrl) {
     finalUrl, kind: 'page', title: '', description: '', image: '', author: '', siteName: '',
     ingredients: [], steps: [], notes: [], equipment: [], nutrition: [],
     prepTime: 0, cookTime: 0, totalTime: 0, yieldText: '', servings: 0, cuisine: '', meals: [],
-    anchor: '', caption: '', recipeUrl: ''
+    anchor: '', caption: '', captionCut: false, recipeUrl: ''
   };
 }
 const dedupe = a => a.filter((x, i) => a.indexOf(x) === i);

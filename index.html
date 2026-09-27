@@ -279,6 +279,7 @@ body[data-route="recipe"] .tabbar{display:none}
 .capbox summary::-webkit-details-marker{display:none}
 .capbox summary span{font:800 13px var(--body);color:var(--chili)}
 .capbox[open] summary span.more,.capbox:not([open]) summary span.less{display:none}
+.cutnote{margin-top:12px;padding:10px 12px;border-radius:12px;background:var(--surface);border:1px dashed var(--line);font-size:13.5px;line-height:1.45;color:var(--ink-2)}
 .caption{white-space:pre-wrap;padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-size:14px;line-height:1.5;max-height:340px;overflow:auto;overflow-wrap:anywhere}
 .readst{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;font-weight:700;color:var(--ink-2)}
 .readst.ok{color:var(--basil)}
@@ -529,6 +530,10 @@ const PLAT = {
 const plat = r => PLAT[r.platform] || PLAT.web;
 const isVideo = r => !!plat(r).video;
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+function cutNote(r){
+  const name = (PLAT[r.platform] || {}).name || 'The site';
+  return '<p class="cutnote">' + esc(name) + ' only shared the start of this caption, so some of the recipe may be missing. Tap <b>View on ' + esc(name) + '</b> below to see the rest.</p>';
+}
 function ctaParts(r){
   switch (r.platform) {
     case 'web': return [r.anchor ? 'Jump to the recipe on' : 'Open the original on', (r.siteName && r.siteName.length < 28) ? r.siteName : (hostOf(r.url) || 'the website')];
@@ -982,7 +987,8 @@ V.recipe = (rt) => {
   if (jumps.length > 1) h += '<div class="jumps scroll-x">' + jumps.map(x => '<button class="chip" data-jump="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
   // ingredients
   if (nIng) h += '<div class="block" id="sec-ing"><h2>Ingredients <span class="muted">' + nIng + '</span></h2><ul class="ing">'
-    + ing.map((x, i) => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li><label><input type="checkbox" data-chk="' + i + '"' + (checked[i] ? ' checked' : '') + '><span>' + esc(x) + '</span></label></li>').join('') + '</ul></div>';
+    + ing.map((x, i) => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li><label><input type="checkbox" data-chk="' + i + '"' + (checked[i] ? ' checked' : '') + '><span>' + esc(x) + '</span></label></li>').join('') + '</ul>'
+    + (r.captionCut ? cutNote(r) : '') + '</div>';
   else if (!wantsMore) h += '<div class="block" id="sec-ing"><h2>Ingredients</h2><button class="addrow" data-act="edit" data-id="' + esc(r.id) + '">' + icon('plus') + 'Add the ingredients, or paste the recipe text</button></div>';
   // directions
   if (nSteps) {
@@ -991,7 +997,7 @@ V.recipe = (rt) => {
       + steps.map((x, i) => isHead(x) ? '<li class="shead">' + esc(x.slice(3)) + '</li>' : '<li class="step' + (checked['s' + i] ? ' done' : '') + '" data-step="' + i + '"><span class="num">' + (++n) + '</span><p>' + esc(x) + '</p></li>').join('')
       + '</ol><p class="hint" style="margin-top:8px">Tap a step to check it off.</p></div>';
   } else if (r.caption && !nIng) {
-    h += '<div class="block" id="sec-steps"><h2>From the ' + (isVideo(r) ? 'video' : 'post') + '\'s caption</h2><p class="caption">' + esc(r.caption) + '</p></div>';
+    h += '<div class="block" id="sec-steps"><h2>From the ' + (isVideo(r) ? 'video' : 'post') + '\'s caption</h2><p class="caption">' + esc(r.caption) + '</p>' + (r.captionCut ? cutNote(r) : '') + '</div>';
   } else if (!wantsMore) {
     h += '<div class="block" id="sec-steps"><h2>Directions</h2><button class="addrow" data-act="edit" data-id="' + esc(r.id) + '">' + icon('plus') + 'Add the directions' + (r.url ? ', or open the original below' : '') + '</button></div>';
   }
@@ -1035,7 +1041,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 0.7</p></div>';
+    + '<p class="ver">yumyumtumtum · version 0.8</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1304,7 +1310,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '6'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '7'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1361,8 +1367,30 @@ function importFields(r, j){
   ['description', 'author', 'siteName', 'anchor', 'caption', 'recipeUrl'].forEach(k => setIf(k, j[k]));
   if (j.caption && r.caption && j.caption.length > r.caption.length + 20) u.caption = j.caption;
   if (j.title && looksGeneric(r)) u.title = j.title.slice(0, 140);
+  // the lists came from an earlier read of the same caption (or a cut-off start of it) and weren't
+  // changed since: use the new read, which may have the whole caption or read it better
+  if (r.caption && j.caption && fromLastRead(r) && sq(j.caption).startsWith(sq(r.caption).replace(/(\.\.\.|…)$/, '').slice(0, 200))) {
+    const ni = (j.ingredients || []).slice(0, 200), ns = (j.steps || []).slice(0, 150);
+    if (countItems(ni) && JSON.stringify(ni) !== JSON.stringify(r.ingredients || [])) u.ingredients = ni;
+    if (countItems(ns) && JSON.stringify(ns) !== JSON.stringify(r.steps || [])) u.steps = ns;
+    if (j.title && r.title !== j.title && sq(r.caption).startsWith(sq(r.title))) u.title = j.title.slice(0, 140);
+  }
+  if (r.captionCut && !j.captionCut) u.captionCut = false;
+  else if (j.captionCut && (!r.caption || !j.caption || j.caption.length >= r.caption.length)) u.captionCut = true;
+  if (u.ingredients || u.steps) u.impSig = listSig(u.ingredients || r.ingredients, u.steps || r.steps);
   u.importedAt = now();
   return u;
+}
+const sq = s => String(s || '').replace(/\s+/g, ' ').trim();
+function listSig(ing, steps){
+  const t = JSON.stringify([ing || [], steps || []]); let h = 5381;
+  for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+  return h.toString(36) + '.' + t.length;
+}
+// ingredients and steps are still exactly what a link read gave (older saves have no record, so trust the import)
+function fromLastRead(r){
+  if (!r.importedAt) return false;
+  return r.impSig ? r.impSig === listSig(r.ingredients, r.steps) : true;
 }
 async function enrichRecipe(id, j){
   const r0 = Store.recipes.get(id); if (!r0) return null;
@@ -1805,7 +1833,8 @@ const HEADS = [
 const QTY = /^([\d½¼¾⅓⅔⅛⅜⅝⅞]|a (cup|pinch|dash|handful|few|couple)|an? \d|one |two |three |pinch|dash|handful|salt|pepper)/i;
 const UNIT = /\b(cups?|tbsps?|tablespoons?|tsps?|teaspoons?|oz|ounces?|lbs?|pounds?|grams?|g|kg|ml|liters?|cloves?|cans?|sticks?|slices?|pinch|dash|bunch)\b/i;
 // where a new ingredient starts inside a run-together list: "…butter 1 onion 3 carrots…"
-const AMOUNT_AT = /(?<!\b(?:at|for|to|into|about|around|or|and|by|x|in|of|over|under|than|until|with|per|approx|approximately|plus|cut|makes|serves|feeds|yields?)\s+)(?<![,(\/:-])\s+(?=(?:\d+\s\d\/\d|\d+\/\d+|\d+(?:\.\d+)?|[½¼¾⅓⅔⅛⅜⅝⅞])\s*(?:[-–]\s*\d+\s*)?(?!(?:hrs?|hours?|mins?|minutes?|secs?|seconds?|degrees?|days?|weeks?|servings?|people|times?|x)\b)[A-Za-z(])/gi;
+// (not after "cut into", "about", etc., and not "1 in pieces" / "2 inch cubes")
+const AMOUNT_AT = /(?<!\b(?:at|for|to|into|about|around|or|and|by|x|in|of|over|under|than|until|with|per|approx|approximately|plus|cut|makes|serves|feeds|yields?))(?<![,(\/:-])\s+(?=(?:\d+\s\d\/\d|\d+\/\d+|\d+(?:\.\d+)?|[½¼¾⅓⅔⅛⅜⅝⅞])\s*(?:[-–]\s*\d+\s*)?(?!(?:hrs?|hours?|mins?|minutes?|secs?|seconds?|degrees?|days?|weeks?|servings?|people|times?|x|in|inch|inches|cm|mm)\b)[A-Za-z(])/gi;
 const STEP_VERB = /^(melt|add|cook|bake|mix|stir|combine|heat|preheat|bring|pour|place|season|whisk|roast|simmer|boil|drop|cover|serve|let|in a|in the|once|then|after|while|remove|transfer|toss|fry|air fry|sear|brown|saut[eé]|blend|chop|dice|mince|slice|cut|marinate|layer|spread|fold|roll|knead|shape|finish|start|first|next|finally|reduce|return|set|spoon|sprinkle|drizzle|squeeze|shred|dump|throw|put|grab|make|enjoy)\b/i;
 const NOT_A_LABEL = /^(bake|cook|fry|air fry|grill|boil|simmer|mix|stir|add|combine|heat|preheat|roast|toss|season|marinate|blend|whisk|chill|let|then|next|finally|first|step|pour|place|put|transfer|remove|cover|reduce|bring|serve|enjoy|note|ps|p\.s|edit|update|follow|comment|save|share|link|shop|music|song|sound|song credit|credit|me|you|us)\b/i;
 
@@ -1886,6 +1915,10 @@ function parseCaption(text) {
     s = s.replace(/\s*\p{Extended_Pictographic}[\p{Extended_Pictographic}\u200d\ufe0f\u{1F3FB}-\u{1F3FF}\s]*(?=[\d½¼¾⅓⅔⅛])/gu, '\n');
     // "…1 tsp salt Dumplings: 2 cups flour…": a capitalized label with a colon starts a new section
     s = s.replace(/\s+(?=(?:For the [a-z]+(?:\s[a-z]+)?|[A-Z][a-z]+(?:\s[a-z]+){0,2}|[A-Z]{3,}(?:\s[A-Z]{3,}){0,2})\s*[:：]\s)/g, '\n');
+    // "- 1.5 lbs chicken - 4 tbsp soy sauce": dashes used as bullets (but not "2 - 3 cups")
+    if ((s.match(/(?<![\d½¼¾⅓⅔⅛])\s[-–]\s+[\d½¼¾⅓⅔⅛]/g) || []).length >= 2) s = s.replace(/(?<![\d½¼¾⅓⅔⅛])\s+[-–]\s+(?=[\d½¼¾⅓⅔⅛])/g, '\n- ');
+    // "…Korean Popcorn Chicken Check my bio for the full recipe!" ends the title line
+    s = s.replace(/\s+(?=(?:check (?:out )?my bio|link in (?:my )?bio|(?:full |written )+recipe (?:is )?(?:in|on|at) |recipe (?:is )?in (?:my )?bio|follow (?:me )?for )\b)/gi, '\n');
   }
   const lines = s.split('\n').map(l => l.trim());
   const hashOnly = l => /^(#[\p{L}\p{N}_#]*\s*)+$/u.test(l);
@@ -1955,6 +1988,9 @@ function parseCaption(text) {
   const sentences = titleLine.split(/(?<=[.!?])\s+/);
   const TITLE_CHATTER = /^(here(’|')?s? (you go|it is|the recipe|how)|you asked|as requested|by request|ok+a?y?|omg|y(’|')?all|guys|hi+|hey+|so+ good|wow)\b/i;
   let title = (sentences.find(x => !TITLE_CHATTER.test(x) && x.split(' ').length >= 2) || sentences[0]).slice(0, 100).replace(/[.!?:：\s]+$/, '').replace(/\s+(full\s+)?recipe$/i, '');
+  // a series name with the dish after it: "Recipes every home cook should know. Ep 20: Korean Popcorn Chicken"
+  const ep = titleLine.match(/\b(?:ep(?:isode)?|part|pt|day|no)\.?\s*#?\d{1,4}\s*[:：|\-–—]\s*([^.!?|#\n]{3,80})/i);
+  if (ep && /\p{L}{3}/u.test(ep[1])) title = ep[1].trim().replace(/[.!?:：,\s]+$/, '').replace(/\s+(full\s+)?recipe$/i, '');
   if (title.length < 3) title = '';
   // "cook chicken ➡️ scramble eggs ➡️ add rice": one step per arrow; chatter after the last step becomes a note
   if (steps.length === 1 && (steps[0].match(/(\u27a1\ufe0f?|\u2192|->|=>)/g) || []).length >= 2) {
@@ -2135,7 +2171,9 @@ function renderDet(){
     const parts = foundList({ingredients:F.imp.ingredients, steps:F.imp.steps, srcNotes:F.imp.notes, equipment:F.imp.equipment}, !!F.photoKey && F.uploadedLocal.indexOf(F.photoKey) >= 0);
     st = parts.length ? '<p class="readst ok">' + icon('check') + 'Got ' + esc(joinList(parts)) + (F.imp.via === 'archive' ? ' (from a saved copy of the page)' : '') + '</p>'
       : (F.imp.caption ? '<p class="readst">Got the caption, but no ingredient list in it. The full caption is saved with the recipe so you can read it.</p>' : '<p class="readst">No recipe card on that page. Add the details below, or use Paste recipe text.</p>');
-  } else if (F.readState === 'failed') st = '<p class="readst bad">' + esc(F.readMsg) + ' You can still save it, or use Paste recipe text. <button type="button" class="linkbtn sm" data-act="f-reread">Try again</button></p>';
+  }
+  if (F.readState === 'done' && F.imp && F.imp.captionCut) st += '<p class="readst">' + esc(p.name) + ' only shared the start of the caption, so some of the recipe may be missing.</p>';
+  if (F.readState === 'failed') st = '<p class="readst bad">' + esc(F.readMsg) + ' You can still save it, or use Paste recipe text. <button type="button" class="linkbtn sm" data-act="f-reread">Try again</button></p>';
   box.innerHTML = '<p class="detect">' + icon(p.ic) + '<span>' + esc(p.name) + (extra ? ' · ' + esc(extra) : '') + '</span></p>' + st
     + (dup ? '<div class="warn">You already saved this one: <button type="button" class="linkbtn" data-open="' + esc(dup.id) + '">' + esc(dup.title) + '</button></div>' : '');
 }
@@ -2224,10 +2262,12 @@ function saveEditor(){
   });
   // details that came with the link (byline, nutrition, jump spot) stay with that link
   const sameLink = base && base.url && d && normUrl(base.url) === normUrl(d.url);
-  if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt'].forEach(k => { delete r[k]; });
+  if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'captionCut', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt', 'impSig'].forEach(k => { delete r[k]; });
   if (F.imp && d && normUrl(F.lastReadUrl || '') === normUrl(d.url)) {
     const j = F.imp;
     ['description', 'author', 'siteName', 'anchor', 'caption', 'recipeUrl', 'yieldText'].forEach(k => { if (j[k] && !r[k]) r[k] = j[k]; });
+    r.captionCut = !!j.captionCut;
+    r.impSig = listSig(j.ingredients, j.steps);
     if ((j.nutrition || []).length && !(r.nutrition || []).length) r.nutrition = j.nutrition;
     if (j.prepTime && !r.prepTime) r.prepTime = j.prepTime;
     if (j.cookTime && !r.cookTime) r.cookTime = j.cookTime;

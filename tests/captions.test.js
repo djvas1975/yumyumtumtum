@@ -184,6 +184,31 @@ Add the butter and garlic and toss for 1 minute more.`;
   ok(yt.recipeUrl === 'https://blog.example.com/chicken-dumplings' && yt.ingredients.length === 4 && yt.steps.length === 2 && yt.anchor === 'wprm-recipe-container-77', 'youtube: reads the recipe linked in the description -> ' + J([yt.recipeUrl, yt.ingredients.length, yt.anchor]));
   ok(/i\.ytimg\.com/.test(yt.image), 'youtube: keeps the video picture');
 
+  // ---------- Facebook: the preview text is cut off, the whole caption is elsewhere ----------
+  const fbCap = 'The recipes every home cook should know. Ep 20: Korean Popcorn Chicken 🍗\n\nCheck my bio for the full written recipe!\n\n- 1.5 lbs boneless, cut into 1 in pieces\n- 4 tbsp soy sauce\n- 1 large egg\n- 1/2 tsp salt\n- 1/4 tsp black pepper\n- 1 tsp garlic powder\n- 1/2 cup potato starch\n- 1/4 cup gochujang\n- 2 tbsp brown sugar\n- 2 tbsp honey\n- 1 tbsp rice vinegar\n\n1. Marinate the chicken in soy sauce, egg, salt, pepper and garlic powder for 20 minutes.\n2. Toss in potato starch and fry at 350F until golden.\n3. Simmer the gochujang, brown sugar, honey and vinegar, then toss the chicken in the sauce.';
+  const fbTeaser = fbCap.slice(0, fbCap.indexOf('1/2 tsp salt') + 7) + '...';
+  const attr = s => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+  const fbJson = s => JSON.stringify(s).replace(/[\u007f-￿]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).replace(/\//g, '\\/');
+  const fbHead = (img) => '<html><head><meta property="og:title" content="Foodiligence on Facebook"><meta property="og:description" content="' + attr(fbTeaser) + '">' + (img ? '<meta property="og:image" content="https://scontent.xx.fbcdn.net/v/og.jpg?a=1&amp;b=2">' : '') + '</head><body>';
+  pages['https://www.facebook.com/foodiligence/posts/111/'] = fbHead(false)
+    + '<script type="application/json">{"x":{"profile_picture":{"uri":"https:\\/\\/scontent.xx.fbcdn.net\\/v\\/p40x40\\/me.jpg"},"preferred_thumbnail":{"image":{"uri":"https:\\/\\/scontent.xx.fbcdn.net\\/v\\/thumb.jpg"}},"message":{"text":' + fbJson(fbCap) + '}}}</script></body></html>';
+  pages['https://www.facebook.com/reel/222'] = fbHead(true) + '<div>Sorry, nothing to see here</div></body></html>';
+  pages['https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent('https://www.facebook.com/reel/222') + '&show_text=true&width=500'] =
+    '<html><body><div class="userContent"><p>' + fbCap.split('\n\n').map(b => b.replace(/\n/g, '<br />')).join('</p><p>').replace('1/2 tsp salt', '1/2 tsp salt<span class="text_exposed_hide">...</span>') + '</p></div><div>81K likes</div><div>Watch on Facebook</div></body></html>';
+  pages['https://www.facebook.com/reel/333'] = fbHead(true) + '</body></html>';
+
+  const fb1 = await readRecipe('https://www.facebook.com/foodiligence/posts/111/');
+  ok(fb1.title === 'Korean Popcorn Chicken' && real(fb1.ingredients).length === 11 && fb1.ingredients[0] === '1.5 lbs boneless, cut into 1 in pieces' && fb1.steps.length === 3 && !fb1.captionCut, 'facebook: whole caption from the page data -> ' + J([fb1.title, fb1.ingredients.length, fb1.steps.length, fb1.captionCut]));
+  ok(fb1.image === 'https://scontent.xx.fbcdn.net/v/thumb.jpg' && fb1.author === 'Foodiligence', 'facebook: cover from the page data, not the profile picture -> ' + fb1.image);
+  const fb2 = await readRecipe('https://www.facebook.com/reel/222');
+  ok(real(fb2.ingredients).length === 11 && fb2.steps.length === 3 && !fb2.captionCut && /og\.jpg\?a=1&b=2/.test(fb2.image), 'facebook: whole caption from the embed page -> ' + J([fb2.ingredients.length, fb2.steps.length]));
+  const fb3 = await readRecipe('https://www.facebook.com/reel/333');
+  ok(fb3.captionCut && fb3.title === 'Korean Popcorn Chicken' && J(fb3.ingredients) === J(['1.5 lbs boneless, cut into 1 in pieces', '4 tbsp soy sauce', '1 large egg']), 'facebook: only the cut-off preview -> flagged, half line dropped -> ' + J(fb3.ingredients));
+  const fl = P.parseCaption(fbCap.replace(/\n+/g, ' '));
+  ok(fl.title === 'Korean Popcorn Chicken' && real(fl.ingredients).length === 11 && fl.steps.length === 3, 'dash bullets on one line -> ' + J([fl.title, fl.ingredients.length, fl.steps.length]));
+  const cut1 = P.parseCaption('Easy dinner\n1 lb chicken, cut into 1 in pieces\n2 cups rice');
+  ok(J(cut1.ingredients) === J(['1 lb chicken, cut into 1 in pieces', '2 cups rice']), '"cut into 1 in pieces" stays one line -> ' + J(cut1.ingredients));
+
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);
 })();

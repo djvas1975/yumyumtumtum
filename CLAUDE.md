@@ -3,7 +3,7 @@
 Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **0.7**.
+Current version: **0.8**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -31,7 +31,7 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 
 ---
 
-## What the app does (v0.7)
+## What the app does (v0.8)
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
   Recently saved, **Browse by cuisine** (scrollable tiles: Mexican, Asian, Italian, Chinese,
   Japanese, Thai, Korean, Vietnamese, Indian, Greek, Mediterranean, Middle Eastern, American,
@@ -78,7 +78,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js` changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js`
-5. App changes: bump the version text in `V.me` (`version 0.7`).
+5. App changes: bump the version text in `V.me` (`version 0.8`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -103,11 +103,20 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   Tested on a real Crack Chicken Penne post (13 ingredients, 7 steps).
 - **YouTube:** the description, plus it follows a "full recipe" link to the recipe site.
 - **Pinterest:** follows the pin to the site it came from. Tested: an Add a Pinch enchiladas pin.
-- **Facebook:** best effort, because Facebook often hides posts from outside apps.
+- **Facebook:** best effort, because Facebook often hides posts from outside apps. The page's
+  preview text is usually cut off ("…1/2 tsp..."), so the reader (v0.8, `READER_V` 7) looks for the
+  whole caption in the page's own data, then in Facebook's embed page (`plugins/video.php` or
+  `plugins/post.php` with `show_text=true`). If it still only has the start, it drops the half line,
+  sets `captionCut`, and the recipe page says so. Photo: og:image, else the video's cover from the
+  page data. Built Sept 26, 2026 against fake pages; not yet confirmed on a live Facebook post
+  (the foodiligence Korean Popcorn Chicken reel was the problem case).
 - **Caption parser:** handles headings like "Ingredients", "Soup base:", "Dumplings:", "For the
   sauce", captions squashed onto one line (two spaces count as a line break), emoji bullets,
   arrow steps, "Step 1", directions written as sentences, trailing hashtags, calorie lines, and
-  "Follow for more" chatter.
+  "Follow for more" chatter, dash bullets on one line, "cut into 1 in pieces" kept whole, and a
+  series name before the dish ("Ep 20: Korean Popcorn Chicken" becomes the title).
+- **Fill in missing details** replaces the ingredients and steps (and an automatic title) when they
+  still match what an earlier read gave (`impSig`) and the new read covers the same caption or more.
 
 ## Discover: how it works
 - **Sites that answer (33):** Delish, The Pioneer Woman, and Tasty (their own search pages).
