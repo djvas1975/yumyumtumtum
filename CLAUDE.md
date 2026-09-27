@@ -3,7 +3,7 @@
 Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **0.8**.
+Current version: **0.9**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -31,7 +31,7 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 
 ---
 
-## What the app does (v0.8)
+## What the app does (v0.9)
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
   Recently saved, **Browse by cuisine** (scrollable tiles: Mexican, Asian, Italian, Chinese,
   Japanese, Thai, Korean, Vietnamese, Indian, Greek, Mediterranean, Middle Eastern, American,
@@ -50,8 +50,13 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
   sorting, plus a **Find new recipes on Delish, Tasty, and more** button.
 - **Discover** (Home > Just for you > See all): free recipes from 33 sites, search, Newest, and
   cuisine chips. Tap a card for a full preview, one tap saves it, ✕ = "Not for me".
-- **Me:** name, stats, **What Discover has learned** (with Start over), backup and restore,
-  remove examples, storage info.
+- **What can I cook?** (green card on Home, or long-press the app icon): Dave adds what's in
+  his kitchen (type it, or tap foods). It shows his saved recipes and new ones from the recipe
+  sites that he can make, each marked "Ready to cook" or "Need honey, gochujang", with a
+  "Ready to cook only" filter. Basics (salt, pepper, oil, water, butter, sugar, flour) count as
+  on hand and can be changed. Recipe pages and Discover previews say "You have 7 of 9. Need …".
+- **Me:** name, stats, **What it's learned you like** (taste chips, **Foods you don't eat**
+  list, Start over), backup and restore, remove examples, storage info.
 - Works offline once installed (service worker). Long-press the icon for a quick Save shortcut.
 
 ## How it's built
@@ -63,10 +68,12 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 | `api/recipe.js` | Recipe reader: `GET /api/recipe?url=...` (add `&debug=1` for a trace). |
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
+| `api/cook.js` | What can I cook: `GET /api/cook?q=chicken broccoli|eggs rice` (up to 4 searches split on `|`, `n=24`, `debug=1`). Searches the Discover sites, reads each recipe's ingredient list, returns `{title,url,image,source,sourceName,ingredients,totalTime,servings}`. |
+| `lib/pantry.js` | Ingredient reader and kitchen matcher (about 200 foods, longest match wins, families like "beans" or "broth"). |
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, archive fallback. |
-| `tools/sync_caption.py` | Copies the caption parser from lib/parse.js into app.html (the app reuses it for Paste recipe text). |
-| `tests/reader.test.js`, `tests/captions.test.js` | Offline tests with fake pages and real captions. |
-| `vercel.json` | Function time limits (reader 60 s, Discover 30 s). |
+| `tools/sync_caption.py` | Copies the caption parser (lib/parse.js) and the kitchen matcher (lib/pantry.js) into app.html. |
+| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js` | Offline tests with fake pages, real captions, and ingredient matching. |
+| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s). |
 | `icons/` | App icons. `tools/make_photo_icons.py` makes the current ones from `tools/icon-art.jpg`. |
 
 Browsers can only call the reader from the app's own site (CORS allows https://djvas1975.github.io),
@@ -75,10 +82,10 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 
 ## Making a change (the routine)
 1. Edit `tools/app.html` for the app, or `api/` and `lib/` for the reader or Discover.
-2. If the caption section of `lib/parse.js` changed, run `python3 tools/sync_caption.py`.
+2. If the caption section of `lib/parse.js` or anything in `lib/pantry.js` changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
-4. Test: `node tests/reader.test.js && node tests/captions.test.js`
-5. App changes: bump the version text in `V.me` (`version 0.8`).
+4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js`
+5. App changes: bump the version text in `V.me` (`version 0.9`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -150,6 +157,27 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   It picks searches (top dish, top cuisine with top protein, one seasonal pick), ranks the
   results with a mix of sites and dishes, and shows a reason like "Like your Chicken & Dumplings".
   Taps and skips are stored in `Store.settings.taste`.
+- **Foods you don't eat** (`Store.settings.taste.never`, v0.9): plain foods ("olives") or groups
+  (Seafood, Shellfish, Pork, Red meat, Spicy food, Nuts, Dairy, Mushrooms, see `NEVER_GROUPS`).
+  Checked with the kitchen matcher, so "olives" doesn't block olive oil. Applied to Just for
+  you, every Discover tab and search, the For you searches, and What can I cook web results
+  (titles and ingredient lists). Previews warn when a recipe has one. Start over keeps the list.
+
+## What can I cook: how it works (added Sept 27, 2026)
+- The kitchen list is `Store.settings.pantry = {items:[{id,name,t}], basics:[ids]}` on the phone.
+  Typed foods map to a known food (`lookupFood`: "hamburger" is ground beef, "cheddar" is
+  cheese); unknown ones are kept as their own words and still match ("spam").
+- Saved recipes are checked on the phone with `matchRecipe(ingredients, pantry, title)`: optional
+  lines (garnish, "to serve", a Toppings section) and basics don't count; "or" lines need one;
+  a recipe that just says "broth" or "cheese" takes any kind; if the list names no meat, the
+  title's meat counts ("Korean Popcorn Chicken"). Shown if it uses something you have and is
+  missing 4 or fewer (or has half). Saved recipes with no ingredient list are counted and noted.
+- New recipes: the phone builds up to 4 searches (`cookQueries`: favorite meats with a veggie or
+  starch, the top meat with a dish Dave likes, then pairs of sides), calls `/api/cook`, and
+  shows ones missing 3 or fewer (or 60% there). Ranking: ready first, fewest missing, then taste.
+  Results are cached on the phone for 6 hours (`yyt-cook-v1`) and on Vercel for 6 hours.
+- Live check Sept 27, 2026: `q=chicken broccoli` read 10 sites and 24 recipe pages with no
+  errors in about 1 to 2 seconds.
 
 ## App icon status
 - **In use (v0.7, Sept 26, 2026):** Dave's own pick, a 3D-cartoon "pigging out" picture of him
@@ -175,7 +203,8 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - For looks, show a picture and let him choose. He'll say plainly when something misses.
 
 ## Ideas not built yet
-- Meal planner and shopping list (Yummly had both).
+- Meal planner and shopping list (Yummly had both). A "Need …" list from What can I cook is
+  a natural first shopping list.
 - "More like this" row on a recipe page.
 - Scale servings and convert units.
 - YouTube cooking videos in Discover.

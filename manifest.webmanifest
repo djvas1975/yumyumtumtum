@@ -51,6 +51,18 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "What can I cook?",
+      "short_name": "What can I cook",
+      "url": "https://djvas1975.github.io/yumyumtumtum/?cook=1",
+      "icons": [
+        {
+          "src": "icons/shortcut-cook.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "share_target": {

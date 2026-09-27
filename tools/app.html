@@ -398,6 +398,43 @@ textarea.inp{height:auto;min-height:92px;padding:12px 14px;line-height:1.45;resi
 .panel .acts{display:flex;flex-wrap:wrap;gap:10px}
 .panel .hint{margin-top:10px}
 .ver{margin-top:24px;text-align:center;color:var(--ink-3);font-size:13px;font-weight:600}
+.kitcard{display:flex;align-items:center;gap:12px;width:100%;margin-top:16px;padding:12px 14px 12px 12px;border-radius:18px;background:var(--basil-soft);color:var(--ink);text-align:left;cursor:pointer}
+.kitcard .kc-ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:var(--basil);color:#fff;flex:none}
+.kitcard .kc-ic .ic{width:25px;height:25px}
+.kitcard .kc-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.kitcard b{font:700 17px/1.2 var(--display);letter-spacing:-.01em}
+.kitcard small{font-size:13px;line-height:1.35;color:var(--ink-2);font-weight:600}
+.kitcard > .ic{width:20px;height:20px;color:var(--ink-3);flex:none}
+.ic.flip{transform:scaleX(-1)}
+.addbox{padding-right:5px;margin-top:14px}
+.addbox > .ic{width:20px;height:20px;flex:none}
+.addbox .btn{flex:none}
+.psug{margin-top:10px}
+.psug:empty{display:none}
+.kintro{margin-top:14px}
+.ksec{margin-top:20px}
+.kchip{height:34px;padding:0 10px 0 13px}
+.kquick{margin-top:14px;padding:13px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line)}
+.kquick summary{font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px}
+.kquick summary::-webkit-details-marker{display:none}
+.kquick summary::after{content:'';margin-left:auto;margin-right:4px;flex:none;width:8px;height:8px;border-right:2px solid var(--ink-3);border-bottom:2px solid var(--ink-3);transform:translateY(-3px) rotate(45deg);transition:transform .15s}
+.kquick[open] summary::after{transform:translateY(2px) rotate(-135deg)}
+.kquick .ks-t{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.kquick .kbl{font-weight:600;color:var(--ink-2);font-size:13.5px;line-height:1.35}
+.kquick .hint{margin:10px 0 10px}
+.kgrp{margin:14px 0 8px;font-size:12px;font-weight:800;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em}
+.kstat{display:flex;align-items:center;gap:4px;margin-top:4px;font-size:13px;font-weight:800;line-height:1.3}
+.kstat .ic{width:15px;height:15px;stroke-width:2.8;flex:none}
+.kstat.ok{color:var(--basil)}
+.kstat.need{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--chili)}
+.kq{margin-top:16px}
+.kq .ic{width:14px;height:14px;vertical-align:-2px;stroke-width:2.6}
+.khave{display:flex;align-items:center;gap:6px;margin:-2px 0 12px;font-size:14px;font-weight:700;color:var(--ink-2)}
+.khave.ok{color:var(--basil)}
+.khave.warn{margin-top:14px;color:var(--chili)}
+.khave .ic{width:17px;height:17px;stroke-width:2.8;flex:none}
+.subh{font:700 16px/1.25 var(--display);margin:20px 0 4px}
+.nquick{margin-top:12px}
 .installcard{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:12px 12px 12px 16px;border-radius:16px;background:var(--chili-soft);color:var(--ink)}
 .installcard div{flex:1;min-width:0;display:flex;flex-direction:column}
 .installcard b{font-weight:800}
@@ -894,7 +931,7 @@ V.home = () => {
   const all = sorted(list(), 'new');
   const head = '<header class="topbar"><div class="wrap brandbar">' + LOGO + '<span class="wordmark"><span class="y">yumyum</span>tumtum</span></div></header>';
   const greet = '<h1 class="greet">' + esc(greeting()) + '</h1><p class="greet-sub">What are we cooking?</p>';
-  if (!all.length) return head + '<div class="wrap">' + greet + '<div class="empty">' + LOGO + '<h3>Your recipe box is empty</h3><p>Tap the + button to save a recipe from TikTok, Instagram, YouTube, Pinterest, or any website.</p><button class="btn primary" data-act="add">' + icon('plus') + 'Save your first recipe</button>' + (canRead() ? '<button class="btn ghost" data-go="discover">' + icon('globe') + 'Find new recipes</button>' : '') + '</div></div>';
+  if (!all.length) return head + '<div class="wrap">' + greet + kitchenCardHTML() + '<div class="empty">' + LOGO + '<h3>Your recipe box is empty</h3><p>Tap the + button to save a recipe from TikTok, Instagram, YouTube, Pinterest, or any website.</p><button class="btn primary" data-act="add">' + icon('plus') + 'Save your first recipe</button>' + (canRead() ? '<button class="btn ghost" data-go="discover">' + icon('globe') + 'Find new recipes</button>' : '') + '</div></div>';
   const vids = all.filter(isVideo).slice(0, 10);
   const quick = all.filter(r => r.time && r.time <= 30).slice(0, 10);
   const tryIt = all.filter(r => !r.madeCount).slice(0, 10);
@@ -905,6 +942,7 @@ V.home = () => {
     + (installEvt ? '<div class="installcard"><div><b>Get the app</b><span>Home screen icon, plus save straight from TikTok\'s Share button.</span></div><button class="btn primary sm" data-act="install">Install</button></div>' : '')
     + '<button class="searchpill" data-go="search" data-focus="1">' + icon('search') + '<span>Search ' + plural(all.length, 'recipe') + '</span></button>'
     + '<div class="chips scroll-x" data-sx="hq">' + hq.map(x => '<button class="chip" data-hf="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>'
+    + kitchenCardHTML()
     + homeDiscoverSec()
     + sec('Recently saved', rowHTML(all.slice(0, 8), true, 'recent'), {col:'_all'})
     + sec('Browse by cuisine', cuisineRowHTML(all))
@@ -974,7 +1012,7 @@ V.recipe = (rt) => {
   const jumps = [['sec-ing', 'Ingredients', nIng], ['sec-steps', 'Directions', nSteps], ['sec-tips', 'Notes & tips', tips.length], ['sec-equip', 'Cookware', eq.length], ['sec-nut', 'Nutrition', nut.length]].filter(x => x[2]);
   if (jumps.length > 1) h += '<div class="jumps scroll-x">' + jumps.map(x => '<button class="chip" data-jump="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
   // ingredients
-  if (nIng) h += '<div class="block" id="sec-ing"><h2>Ingredients <span class="muted">' + nIng + '</span></h2><ul class="ing">'
+  if (nIng) h += '<div class="block" id="sec-ing"><h2>Ingredients <span class="muted">' + nIng + '</span></h2>' + (hasKitchen() ? khaveHTML(kitchenMatch(r)) : '') + '<ul class="ing">'
     + ing.map((x, i) => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li><label><input type="checkbox" data-chk="' + i + '"' + (checked[i] ? ' checked' : '') + '><span>' + esc(x) + '</span></label></li>').join('') + '</ul>'
     + (r.captionCut ? cutNote(r) : '') + '</div>';
   else if (!wantsMore) h += '<div class="block" id="sec-ing"><h2>Ingredients</h2><button class="addrow" data-act="edit" data-id="' + esc(r.id) + '">' + icon('plus') + 'Add the ingredients, or paste the recipe text</button></div>';
@@ -1020,16 +1058,14 @@ V.me = () => {
     + '<div class="profile"><div class="avatar" aria-hidden="true">' + esc((nm.trim().charAt(0) || 'Y').toUpperCase()) + '</div><div class="field"><label class="lbl" for="myname">Your name</label><input class="inp" id="myname" maxlength="40" value="' + esc(nm) + '" autocomplete="given-name"></div></div>'
     + '<div class="statrow">' + mini(all.length, 'Recipes') + mini(Store.cols.size, 'Collections') + mini(vids, 'Videos') + mini(cooked, 'Times cooked') + '</div>'
     + (installEvt ? '<section class="panel"><h2>Put it on your home screen</h2><p>Installs yumyumtumtum as an app with its own icon. It also shows up when you tap Share in TikTok, Instagram, YouTube, or Chrome.</p><div class="acts"><button class="btn primary" data-act="install">' + icon('download') + 'Install app</button></div></section>' : '')
-    + (canRead() ? (() => { const tc = tasteChips(); return '<section class="panel"><h2>What Discover has learned</h2><p>' + (tc.length ? 'Your Just for you picks lean toward these, based on what you save, cook, rate, open, and skip.' : 'Save, cook, and rate a few recipes and Discover will start picking up what you like.') + '</p>'
-      + (tc.length ? '<div class="taste">' + tc.map(t => '<span class="tool">' + esc(t) + '</span>').join('') + '</div>' : '')
-      + '<div class="acts"><button class="btn ghost" data-go="discover">' + icon('globe') + 'Open Discover</button>' + (Object.keys(tasteStore().w).length || tasteStore().hide.length ? '<button class="btn plain" data-act="tastereset">Start over</button>' : '') + '</div></section>'; })() : '')
+    + tastePanel()
     + '<section class="panel"><h2>Backup</h2><p>One file with every recipe, collection, and photo. Keep a copy somewhere safe, like Google Drive or iCloud.</p><div class="acts">'
     + (canBackup ? '<button class="btn primary" data-act="export">' + icon('download') + 'Download backup</button>' : '')
     + '<label class="btn ghost" for="restore">' + icon('upload') + 'Restore a backup</label><input type="file" id="restore" class="vh" accept=".json,application/json"></div>'
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 0.8</p></div>';
+    + '<p class="ver">yumyumtumtum · version 0.9</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1069,6 +1105,7 @@ function show(forward){
 }
 function mountView(r){
   if (r.name === 'discover') { mountDiscover(r); return; }
+  if (r.name === 'cook') { mountCook(r); return; }
   if (r.name !== 'search') return;
   const q = $('#q');
   q.value = S.q;
@@ -1084,7 +1121,7 @@ function refresh(){
     rq = 0;
     const r = cur();
     if (r.name === 'search' && $('#results')) renderResults();
-    else if (!(document.activeElement && (document.activeElement.id === 'myname' || document.activeElement.id === 'dq'))) {
+    else if (!(document.activeElement && ['myname', 'dq', 'pq', 'neverin'].indexOf(document.activeElement.id) >= 0)) {
       const y = window.scrollY; const sx = {};
       $$('[data-sx]').forEach(el => { sx[el.dataset.sx] = el.scrollLeft; });
       $('#view').innerHTML = (V[r.name] || V.home)(r);
@@ -1298,7 +1335,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '7'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '8'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1451,7 +1488,7 @@ const TASTE_TERMS = [
 const TERM_KIND = {}; TASTE_TERMS.forEach(t => { TERM_KIND[t[0]] = t[2]; });
 function termsOf(text){ const t = ' ' + String(text || '').toLowerCase() + ' '; return TASTE_TERMS.filter(x => x[1].test(t)).map(x => x[0]); }
 function recipeCuisine(r){ const c = (r.cuisine || guessCuisine(r) || '').trim(); return c ? c.toLowerCase() : ''; }
-const tasteStore = () => Object.assign({w:{}, hide:[]}, Store.settings.taste || {});
+const tasteStore = () => Object.assign({w:{}, hide:[], never:[]}, Store.settings.taste || {});
 // weight of every food word, cuisine, and site, from the recipe box plus what you've tapped and skipped
 function tasteProfile(){
   const w = {}, ex = {}, exW = {};
@@ -1487,7 +1524,7 @@ const SEASONS = [['winter', ['soup', 'chili', 'casserole']], ['winter', ['soup',
   ['fall', ['soup', 'pumpkin', 'chili']], ['fall', ['slow cooker', 'thanksgiving', 'soup']], ['winter', ['holiday cookies', 'soup', 'casserole']]];
 // what to look for: your top dish, your top cuisine with your top protein, and one seasonal pick for something new
 function forYouQueries(P){
-  const top = kind => Object.keys(P.w).filter(k => (kind === 'c' ? k.indexOf('cuisine:') === 0 : TERM_KIND[k] === kind) && P.w[k] >= 0.8).sort((a, b) => P.w[b] - P.w[a]);
+  const top = kind => Object.keys(P.w).filter(k => (kind === 'c' ? k.indexOf('cuisine:') === 0 : TERM_KIND[k] === kind) && P.w[k] >= 0.8 && !neverHit(k.replace(/^cuisine:/, ''))).sort((a, b) => P.w[b] - P.w[a]);
   const dishes = top('d'), prots = top('p'), styles = top('s'), cuis = top('c');
   const q = [];
   if (dishes[0]) q.push(dishes[0]);
@@ -1496,7 +1533,8 @@ function forYouQueries(P){
   if (dishes[1] && q.length < 3) q.push(dishes[1]);
   if (!q.length) q.push('easy dinner', 'chicken');
   const season = SEASONS[new Date().getMonth()];
-  const pick = season[1][new Date().getDate() % 3];
+  const picks = season[1].filter(x => !neverHit(x));
+  const pick = picks.length ? picks[new Date().getDate() % picks.length] : season[1][0];
   const out = q.filter((x, i) => q.indexOf(x) === i).slice(0, 3);
   if (!out.some(x => x.indexOf(pick) >= 0)) out.push(pick);
   return {queries:out, seasonal:pick, season:season[0]};
@@ -1513,7 +1551,7 @@ function rankItems(items, P, opts){
   const scored = [];
   items.forEach(it => {
     const k = normUrl(it.url);
-    if (saved.has(k) || hide.has(k) || !it.title) return;
+    if (saved.has(k) || hide.has(k) || !it.title || neverHit(it.title)) return;
     const low = it.title.toLowerCase();
     const terms = termsOf(it.title);
     const cu = guessCuisine({title:it.title});
@@ -1603,7 +1641,7 @@ async function buildFeed(key){
   return rankItems(Array.from(byUrl.values()), P, opts);
 }
 function remember(items){ items.forEach(it => { it.id = it.id || discId(it.url); DISC.byId.set(it.id, it); }); return items; }
-const tasteSig = () => forYouQueries(tasteProfile()).queries.join('|');
+const tasteSig = () => forYouQueries(tasteProfile()).queries.join('|') + '|' + neverList().join(',');
 function loadFeed(key, force){
   const f = DISC.feeds[key] || {};
   if (f.loading || !canRead()) return;
@@ -1628,10 +1666,11 @@ function feedItems(key){
   const f = DISC.feeds[key]; if (!f || !f.items) return [];
   const saved = new Set(list().map(r => r.url ? normUrl(r.url) : '').filter(Boolean));
   const hide = new Set(tasteStore().hide);
-  return f.items.filter(it => { const k = normUrl(it.url); return !hide.has(k) && (!saved.has(k) || DISC.savedNow.has(k)); });
+  return f.items.filter(it => { const k = normUrl(it.url); return !hide.has(k) && (!saved.has(k) || DISC.savedNow.has(k)) && !neverHit(it.title); });
 }
 function redrawDiscover(){
   const r = cur();
+  if (r.name === 'cook') { redrawCook(); return; }
   if (r.name === 'discover' && $('#dfeed')) { $('#dfeed').innerHTML = discFeedHTML(r); return; }
   if (r.name === 'home') refresh();
 }
@@ -1678,7 +1717,7 @@ function discFeedHTML(rt){
   const items = feedItems(key);
   const shown = rt.shown || 24;
   let h = '';
-  if (key === 'foryou') h += '<p class="dhint">' + (list().some(r => !r.sample) ? 'Picked from what you save, cook, and rate. Tap ' + icon('x') + ' on anything that\'s not your thing and it learns.' : 'Save a few recipes you like and these picks get more personal.') + '</p>';
+  if (key === 'foryou') h += '<p class="dhint">' + (list().some(r => !r.sample) ? 'Picked from what you save, cook, and rate. Tap ' + icon('x') + ' on anything that\'s not your thing and it learns. Foods you never eat go in Me.' : 'Save a few recipes you like and these picks get more personal.') + '</p>';
   if (f.loading && !items.length) h += '<div class="grid">' + skelCards(6) + '</div>';
   else if (f.error && !items.length) h += '<div class="empty small"><h3>Couldn\'t load recipes</h3><p>' + esc(f.error) + '</p><button class="btn ghost" data-act="dretry">Try again</button></div>';
   else if (!items.length) h += '<div class="empty small"><h3>Nothing found</h3><p>' + (q ? 'Try a shorter search, like one main ingredient or dish.' : 'Check back in a bit.') + '</p></div>';
@@ -1736,7 +1775,9 @@ function previewHTML(it){
     const nI = countItems(ing), nS = countItems(steps);
     body += '<div class="stats" style="margin-top:14px">' + stat(timeShort(j.totalTime), 'Total time') + stat(j.servings || '—', 'Servings') + stat(nI || '—', 'Ingredients') + stat(nS || '—', 'Steps') + '</div>'
       + (j.description ? '<p class="desc" data-act="desc" style="margin-top:14px">' + esc(j.description) + '</p>' : '');
-    if (nI) body += '<div class="block"><h2>Ingredients</h2><ul class="pv-list">' + ing.map(x => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+    const nv = neverHit(j.title || it.title, ing);
+    if (nv) body += '<p class="khave warn">Heads up: this has ' + esc(nv) + ', which you don\'t eat.</p>';
+    if (nI) body += '<div class="block"><h2>Ingredients</h2>' + (hasKitchen() ? khaveHTML(matchRecipe(ing, myPantry(), j.title || it.title)) : '') + '<ul class="pv-list">' + ing.map(x => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
     if (nS) {
       const first = steps.filter(x => !isHead(x)).slice(0, 3);
       body += '<div class="block"><h2>Directions</h2><ol class="pv-list pv-steps">' + first.map(x => '<li>' + esc(x) + '</li>').join('') + '</ol>'
@@ -1759,6 +1800,7 @@ async function saveDiscovered(id){
   const r0 = {id:uid(), title:it.title.slice(0, 140), url:d.url, platform:d.platform, source:d.source, meal:[], time:0, servings:0, cuisine:'', tags:[], collections:[],
     ingredients:[], steps:[], srcNotes:[], equipment:[], notes:'', photoId:null, photoKey:null, photoData:null, photoUrl:null,
     rating:0, fav:false, madeCount:0, createdAt:now(), sample:false, found:'discover'};
+  if (!st.j && Array.isArray(it.ingredients) && it.ingredients.length) r0.ingredients = it.ingredients.slice(0, 200);
   const r = st.j ? Object.assign(r0, importFields(r0, st.j)) : r0;
   if (!r.siteName) r.siteName = it.sourceName || '';
   DISC.savedNow.set(normUrl(it.url), r.id);
@@ -1790,22 +1832,328 @@ function hideDiscovered(id){
     redrawDiscover();
   }});
 }
-// "What Discover has learned" on the Me tab
+// "What it's learned you like" on the Me tab, with the foods you don't eat
+function tastePanel(){
+  const tc = tasteChips(); const nv = neverList(); const T = tasteStore();
+  const quick = NEVER_QUICK.filter(q => !nv.some(n => n.toLowerCase() === q.toLowerCase()));
+  return '<section class="panel" id="tastepanel"><h2>What it\'s learned you like</h2><p>' + (tc.length ? 'Suggestions in Just for you, Discover, and What can I cook lean toward these. It learns from what you save, cook, rate, open, and skip.' : 'Save, cook, and rate a few recipes and suggestions will start leaning toward what you like.') + '</p>'
+    + (tc.length ? '<div class="taste">' + tc.map(t => '<span class="tool">' + esc(t) + '</span>').join('') + '</div>' : '')
+    + '<h3 class="subh">Foods you don\'t eat</h3><p>Recipes with these never get suggested.</p>'
+    + (nv.length ? '<div class="taste">' + nv.map(n => '<button class="chip on" data-nrm="' + esc(n) + '" aria-label="Take ' + esc(n) + ' off the list">' + esc(cap1(n)) + icon('x') + '</button>').join('') + '</div>' : '')
+    + '<div class="searchbox addbox">' + icon('plus') + '<input id="neverin" type="text" enterkeyhint="done" autocomplete="off" maxlength="40" placeholder="Add a food, like mushrooms" aria-label="Add a food you don\'t eat"><button class="btn sm primary" data-act="nvadd">Add</button></div>'
+    + (quick.length ? '<div class="wrapchips nquick">' + quick.map(q => '<button class="chip dashed" data-nv="' + esc(q) + '">' + icon('plus') + esc(q) + '</button>').join('') + '</div>' : '')
+    + '<div class="acts" style="margin-top:16px">' + (canRead() ? '<button class="btn ghost" data-go="discover">' + icon('globe') + 'Open Discover</button>' : '') + (Object.keys(T.w).length || T.hide.length ? '<button class="btn plain" data-act="tastereset">Start over</button>' : '') + '</div></section>';
+}
 function tasteChips(){
   const P = tasteProfile();
   return Object.keys(P.w).filter(k => k.indexOf('site:') !== 0 && P.w[k] >= 1).sort((a, b) => P.w[b] - P.w[a]).slice(0, 10)
     .map(k => k.indexOf('cuisine:') === 0 ? cap1(k.slice(8)) : cap1(k));
 }
 async function resetTaste(){
-  const ok = await confirmBox({title:'Start Discover over?', msg:'Clears what Discover learned from your taps and skips. Picks will still follow the recipes you save.', ok:'Start over', danger:false});
+  const ok = await confirmBox({title:'Start over?', msg:'Clears what it learned from your taps and skips. Picks will still follow the recipes you save, and your list of foods you don\'t eat stays.', ok:'Start over', danger:false});
   if (!ok) return;
-  putSettings({taste:{w:{}, hide:[]}});
+  putSettings({taste:{w:{}, hide:[], never:neverList()}});
   DISC.feeds = {}; DISC.cache.clear();
   try { localStorage.removeItem(DISC_LS); } catch (e) {}
-  toast('Discover will start fresh');
+  toast('Suggestions will start fresh');
 }
 
 restoreFeed();
+
+/* ---------- what can I cook: your kitchen, checked against your recipes and the recipe sites ---------- */
+const pantryStore = () => { const p = Store.settings.pantry || {}; return {items:Array.isArray(p.items) ? p.items.filter(x => x && x.id) : [], basics:Array.isArray(p.basics) ? p.basics : DEFAULT_BASICS.slice()}; };
+const pantrySig = () => { const p = pantryStore(); return p.items.map(x => x.id).sort().join(',') + '|' + p.basics.slice().sort().join(','); };
+let PANTRY_P = {sig:'', P:null};
+function myPantry(){ const sig = pantrySig(); if (PANTRY_P.sig !== sig || !PANTRY_P.P) { const p = pantryStore(); PANTRY_P = {sig:sig, P:makePantry(p.items, p.basics)}; } return PANTRY_P.P; }
+const hasKitchen = () => pantryStore().items.length > 0;
+const MATCHES = new Map();
+function kitchenMatch(r){
+  const k = (r.id || r.url) + '|' + (r.updatedAt || '') + '|' + pantrySig();
+  let m = MATCHES.get(k);
+  if (!m) { if (MATCHES.size > 1500) MATCHES.clear(); m = matchRecipe(r.ingredients || [], myPantry(), r.title); MATCHES.set(k, m); }
+  return m;
+}
+function putPantry(u){ putSettings({pantry:Object.assign({}, pantryStore(), u)}); redrawCook(); scheduleCook(); }
+function addPantry(text){
+  const parts = String(text || '').split(/[,\n;]+/).map(s => s.replace(/^\s*(and|or)\s+/i, '').trim()).filter(Boolean).slice(0, 30);
+  const items = pantryStore().items.slice(), added = [];
+  parts.forEach(t => { const f = lookupFood(t.slice(0, 40)); if (!f || items.some(x => x.id === f.id)) return; items.push({id:f.id, name:f.name, t:now()}); added.push(f.name); });
+  if (added.length) putPantry({items:items});
+  return added;
+}
+function addPantryId(id){ const items = pantryStore().items; if (!items.some(x => x.id === id)) putPantry({items:items.concat([{id:id, name:LABEL[id] || id, t:now()}])}); }
+function removePantry(id){
+  const before = pantryStore().items; const x = before.find(y => y.id === id); if (!x) return;
+  putPantry({items:before.filter(y => y.id !== id)});
+  toast('Took out ' + x.name.toLowerCase(), {label:'Undo', fn:() => { const now0 = pantryStore().items; if (!now0.some(y => y.id === id)) putPantry({items:now0.concat([x])}); }});
+}
+function togglePantry(id){ if (pantryStore().items.some(x => x.id === id)) removePantry(id); else addPantryId(id); }
+function toggleBasic(id){ const b = pantryStore().basics; putPantry({basics:b.indexOf(id) >= 0 ? b.filter(x => x !== id) : b.concat([id])}); }
+function clearPantry(){
+  const before = pantryStore().items; if (!before.length) return;
+  putPantry({items:[]});
+  toast('Kitchen cleared', {label:'Undo', fn:() => putPantry({items:before})});
+}
+const lc = s => /^[A-Z][a-z]/.test(s) ? s.charAt(0).toLowerCase() + s.slice(1) : s;
+// how much you like a recipe's name, from the taste profile
+function tasteOf(title, P){
+  let s = 0;
+  termsOf(title).forEach(t => { s += P.w[t] || 0; });
+  const cu = guessCuisine({title:title}); if (cu) s += (P.w['cuisine:' + cu.toLowerCase()] || 0) * 0.8;
+  return s;
+}
+
+/* foods you don't eat: never suggested anywhere */
+const NEVER_GROUPS = {
+  'seafood':{ids:['shrimp', 'salmon', 'tuna', 'fish', 'crab', 'shellfish', 'fish sauce', 'oyster sauce'], words:['seafood', 'fish', 'shrimp', 'prawns?', 'salmon', 'tuna', 'crab', 'lobster', 'scallops?', 'clams?', 'mussels', 'calamari', 'poke', 'ceviche', 'sushi', 'scampi']},
+  'shellfish':{ids:['shrimp', 'crab', 'shellfish', 'oyster sauce'], words:['shrimp', 'prawns?', 'crab', 'lobster', 'scallops?', 'clams?', 'mussels', 'oysters?', 'calamari', 'shellfish', 'scampi']},
+  'pork':{ids:['pork', 'bacon', 'ham', 'ground pork', 'sausage'], words:['pork', 'bacon', 'ham', 'carnitas', 'chorizo', 'pancetta', 'prosciutto', 'al pastor']},
+  'red meat':{ids:['beef', 'ground beef', 'lamb', 'pork', 'ground pork'], words:['beef', 'steaks?', 'burgers?', 'lamb', 'brisket', 'meatballs?', 'meatloaf', 'pork', 'carne asada', 'bulgogi', 'short ribs']},
+  'spicy food':{ids:['chiles', 'hot sauce', 'sriracha', 'red pepper flakes', 'cayenne', 'gochujang', 'chipotle in adobo', 'chili oil'], words:['spicy', 'buffalo', 'nashville hot', 'diablo', 'jalapenos?', 'habaneros?', 'chipotle', 'sriracha', 'firecracker', 'hot sauce', 'hot honey']},
+  'nuts':{ids:['nuts', 'peanuts', 'peanut butter'], words:['nuts?', 'peanuts?', 'almonds?', 'walnuts?', 'pecans?', 'cashews?', 'pistachios?', 'hazelnuts?', 'praline']},
+  'dairy':{ids:['milk', 'cheese', 'mozzarella', 'parmesan', 'feta', 'goat cheese', 'cotija', 'ricotta', 'heavy cream', 'sour cream', 'cream cheese', 'yogurt', 'butter', 'buttermilk', 'canned milk', 'ice cream', 'whipped cream'], words:['cheesy', 'cheese', 'creamy', 'alfredo', 'queso', 'cheesecake']},
+  'mushrooms':{ids:['mushrooms', 'cream of mushroom'], words:['mushrooms?']}
+};
+const NEVER_QUICK = ['Mushrooms', 'Seafood', 'Shellfish', 'Pork', 'Red meat', 'Spicy food', 'Nuts', 'Dairy', 'Olives', 'Cilantro', 'Onion', 'Coconut'];
+const neverList = () => tasteStore().never || [];
+let NEVER_R = {sig:null};
+function neverRules(){
+  const list = neverList(); const sig = list.join('|');
+  if (NEVER_R.sig === sig) return NEVER_R;
+  const ids = new Set(), words = [];
+  list.forEach(n => {
+    const k = normFood(n); const g = NEVER_GROUPS[k];
+    if (g) { g.ids.forEach(i => ids.add(i)); words.push(...g.words); return; }
+    const f = lookupFood(k);
+    if (f && f.id.indexOf('x:') !== 0) ids.add(f.id);
+    else { const w = singularWords(k).join(' ').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); if (w) words.push(w + '(e?s)?'); }
+  });
+  NEVER_R = {sig:sig, ids:ids, re:words.length ? new RegExp('(?<![a-z])(' + words.join('|') + ')(?![a-z])') : null, cache:new Map()};
+  return NEVER_R;
+}
+// the food you don't eat that's in this recipe, or ''
+function neverHit(title, ingredients){
+  const R = neverRules(); if (!R.sig) return '';
+  const text = [title].concat(ingredients || []).join(' ; ');
+  if (R.cache.has(text)) return R.cache.get(text);
+  let hit = '';
+  const m = R.re && normFood(text).match(R.re);
+  if (m) hit = m[1];
+  else { const id = foodsIn(text).find(x => R.ids.has(x) || (FAMILY[x] && R.ids.has(FAMILY[x]))); if (id) hit = LABEL[id].toLowerCase(); }
+  if (R.cache.size > 3000) R.cache.clear();
+  R.cache.set(text, hit);
+  return hit;
+}
+function addNever(text){
+  const t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 40); if (!t) return;
+  const T = tasteStore(); const list = T.never || [];
+  if (list.some(x => x.toLowerCase() === t.toLowerCase())) return;
+  putSettings({taste:Object.assign({}, T, {never:list.concat([t])})});
+  toast("Won't suggest " + t.toLowerCase() + ' anymore');
+}
+function removeNever(t){ const T = tasteStore(); putSettings({taste:Object.assign({}, T, {never:(T.never || []).filter(x => x !== t)})}); }
+
+/* searching the recipe sites for what you have */
+const SEARCH_WORD = {'beef':'steak', 'chiles':'jalapeno', 'canned tomatoes':'tomatoes', 'pasta sauce':'marinara', 'cream of chicken':'cream of chicken', 'kale':'greens', 'squash':'squash', 'cotija':'cotija', 'biscuits':'biscuits', 'white beans':'white beans'};
+const PLAIN = new Set(['onion', 'garlic', 'ginger', 'lemon', 'lime', 'green onions', 'cilantro', 'parsley', 'basil', 'mint', 'dill', 'celery', 'carrots']);
+function cookQueries(){
+  const p = pantryStore(); const P = tasteProfile();
+  const word = x => x.id.indexOf('x:') === 0 ? x.id.slice(2) : (SEARCH_WORD[x.id] || x.id);
+  const like = x => termsOf(word(x) + ' ' + x.name).reduce((s, t) => s + (P.w[t] || 0), 0);
+  const known = p.items.filter(x => !neverHit(x.name));
+  // what you like most first; otherwise what you typed first. Veggies before starches before cheese, eggs after real meat.
+  const byLike = (a, bonus) => a.map((x, i) => ({x:x, s:like(x) + (bonus ? bonus(x) : 0) - i * 0.01})).sort((a2, b2) => b2.s - a2.s).map(y => y.x);
+  const meats = byLike(known.filter(x => KIND[x.id] === 'p' || x.id === 'eggs'), x => x.id === 'eggs' ? -0.5 : 0);
+  const sides = byLike(known.filter(x => (KIND[x.id] === 'v' || KIND[x.id] === 'c' || x.id === 'cheese') && !PLAIN.has(x.id)), x => KIND[x.id] === 'v' ? 0.3 : KIND[x.id] === 'c' ? 0.15 : 0);
+  const rest = byLike(known.filter(x => x.id.indexOf('x:') === 0));
+  const q = [];
+  meats.slice(0, 2).forEach((m, i) => { const s = sides[i] || sides[0]; q.push(word(m) + (s ? ' ' + word(s) : '')); });
+  // a dish you like, made with your favorite of what you have
+  if (meats[0]) {
+    const dish = Object.keys(P.w).filter(k => TERM_KIND[k] === 'd' && P.w[k] >= 1 && !neverHit(k)).sort((a, b) => P.w[b] - P.w[a])[0];
+    if (dish && !q.some(x => x.indexOf(dish) >= 0)) q.push(word(meats[0]) + ' ' + dish);
+  }
+  if (meats[2]) q.push(word(meats[2]));
+  if (q.length < 2 && sides.length >= 2) q.push(word(sides[0]) + ' ' + word(sides[1]));
+  if (q.length < 2 && rest[0]) q.push(word(rest[0]));
+  if (!q.length && known[0]) q.push(word(known[0]));
+  return q.map(x => x.toLowerCase().replace(/[|]/g, ' ').replace(/\s+/g, ' ').trim()).filter((x, i, a) => x && a.indexOf(x) === i).slice(0, 4);
+}
+const COOK = {key:'', qs:[], items:null, loading:false, error:'', t:0};
+const COOK_LS = 'yyt-cook-v1';
+let cookTimer = 0;
+function scheduleCook(ms){ clearTimeout(cookTimer); cookTimer = setTimeout(() => { if (cur().name === 'cook') loadCook(false); }, ms == null ? 2000 : ms); }
+async function loadCook(force){
+  if (!canRead()) return;
+  const qs = cookQueries(); const key = qs.join('|');
+  if (!qs.length) { Object.assign(COOK, {key:'', qs:[], items:null, loading:false, error:''}); redrawCook(); return; }
+  if (!force && key === COOK.key && (COOK.loading || (COOK.items && !COOK.error && Date.now() - COOK.t < 6 * 3600e3))) return;
+  Object.assign(COOK, {key:key, qs:qs, loading:true, error:''});
+  redrawCook();
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 40000);
+  try {
+    const res = await fetch(READER + '/api/cook?q=' + encodeURIComponent(key) + '&v=' + READER_V, {signal:ctrl.signal});
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || "Couldn't search the recipe sites.");
+    if (COOK.key !== key) return;
+    const items = remember((j.items || []).filter(x => x && x.url && x.title && Array.isArray(x.ingredients)));
+    Object.assign(COOK, {items:items, t:Date.now()});
+    writeLS(COOK_LS, {key:key, qs:qs, t:COOK.t, items:items.slice(0, 40)});
+  } catch (e) {
+    if (COOK.key !== key) return;
+    COOK.error = e && e.name === 'AbortError' ? 'The recipe sites took too long to answer.' : e instanceof TypeError ? "Couldn't reach the recipe finder. Check your connection." : ((e && e.message) || "Couldn't search the recipe sites.");
+  } finally {
+    clearTimeout(tm);
+    if (COOK.key === key) { COOK.loading = false; redrawCook(); }
+  }
+}
+function restoreCook(){ const s = readLS(COOK_LS); if (s && s.key && Array.isArray(s.items)) Object.assign(COOK, {key:s.key, qs:s.qs || s.key.split('|'), items:remember(s.items), t:s.t || 0}); }
+function redrawCook(){
+  const r = cur();
+  if (r.name === 'cook') { const k = $('#pkit'), c = $('#cookres'); if (k) k.innerHTML = kitchenHTML(r); if (c) c.innerHTML = cookResultsHTML(r); return; }
+  if (r.name === 'home') refresh();
+}
+
+/* what you can make */
+function savedMatches(){
+  const P = tasteProfile();
+  const all = list().filter(r => !r.sample);
+  const withList = all.filter(r => countItems(r.ingredients) >= 2);
+  const rows = withList.map(r => ({r:r, m:kitchenMatch(r), s:tasteOf(r.title, P) + (r.fav ? 2 : 0) + Math.min(r.madeCount || 0, 3) * 0.7 + Math.max(0, (r.rating || 0) - 3)}))
+    .filter(x => x.m.uses.length && x.m.need && (x.m.missing.length <= 4 || x.m.pct >= 0.5))
+    .sort((a, b) => (b.m.ready - a.m.ready) || (a.m.missing.length - b.m.missing.length) || (b.s - a.s) || (b.m.pct - a.m.pct));
+  return {rows:rows, noList:all.length - withList.length};
+}
+function webMatches(){
+  if (!COOK.items) return [];
+  const P = tasteProfile();
+  const saved = new Set(list().map(r => r.url ? normUrl(r.url) : '').filter(Boolean));
+  const hide = new Set(tasteStore().hide);
+  return COOK.items.filter(it => { const k = normUrl(it.url); return !hide.has(k) && (!saved.has(k) || DISC.savedNow.has(k)) && !neverHit(it.title, it.ingredients); })
+    .map(it => ({it:it, m:kitchenMatch(it), s:tasteOf(it.title, P)}))
+    .filter(x => x.m.uses.length && x.m.need >= 3 && (x.m.missing.length <= 3 || x.m.pct >= 0.6))
+    .sort((a, b) => (b.m.ready - a.m.ready) || (a.m.missing.length - b.m.missing.length) || (b.s - a.s) || (b.m.pct - a.m.pct));
+}
+function kstatHTML(m){
+  if (m.ready) return '<p class="kstat ok">' + icon('check') + 'Ready to cook</p>';
+  const miss = m.missing.map(lc);
+  return '<p class="kstat need">Need ' + esc(miss.slice(0, 3).join(', ')) + (miss.length > 3 ? ' +' + (miss.length - 3) + ' more' : '') + '</p>';
+}
+function kcardSaved(x){
+  const r = x.r, m = x.m;
+  return '<article class="card kcard" data-open="' + esc(r.id) + '" tabindex="0" role="link" aria-label="' + esc(r.title || 'Untitled') + '">' + media(r)
+    + '<button class="heart' + (r.fav ? ' on' : '') + '" data-fav="' + esc(r.id) + '" aria-pressed="' + (!!r.fav) + '" aria-label="' + (r.fav ? 'Remove from Favorites' : 'Add to Favorites') + '">' + icon(r.fav ? 'heartf' : 'heart') + '</button>'
+    + '<div class="card-body"><h3>' + esc(r.title || 'Untitled') + '</h3>' + kstatHTML(m) + '<p class="meta">' + esc(['Have ' + m.have + ' of ' + m.need, r.time ? fmtTime(r.time) : ''].filter(Boolean).join(' · ')) + '</p></div></article>';
+}
+function kcardWeb(x){
+  const it = x.it, m = x.m;
+  const sid = savedIdFor(it);
+  const img = it.image ? '<img data-dimg src="' + esc(it.image) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '';
+  return '<article class="card dcard kcard" data-dopen="' + esc(it.id) + '" tabindex="0" role="link" aria-label="' + esc(it.title) + '">'
+    + '<div class="media">' + artHTML(ART._) + img + '<span class="srcbadge">' + esc(it.sourceName || hostOf(it.url)) + '</span></div>'
+    + '<button class="heart' + (sid ? ' on' : '') + '" data-dsave="' + esc(it.id) + '" aria-label="' + (sid ? 'Saved. Open it' : 'Save to your Yums') + '">' + icon(sid ? 'heartf' : 'heart') + '</button>'
+    + (sid ? '' : '<button class="dnope" data-dnope="' + esc(it.id) + '" aria-label="Not for me">' + icon('x') + '</button>')
+    + '<div class="card-body"><h3>' + esc(it.title) + '</h3>' + kstatHTML(m) + '<p class="meta">' + esc(['Have ' + m.have + ' of ' + m.need, it.totalTime ? fmtTime(it.totalTime) : ''].filter(Boolean).join(' · ')) + '</p></div></article>';
+}
+V.cook = (rt) => {
+  const head = backBar('<div class="ph-t"><h1 class="title sm">What can I cook?</h1><p class="ph-sub">With what\'s in your kitchen</p></div>');
+  return head + '<div class="wrap">'
+    + '<div class="searchbox addbox">' + icon('plus') + '<input id="pq" type="text" enterkeyhint="done" autocomplete="off" autocapitalize="none" maxlength="200" placeholder="Add food, like chicken or rice" aria-label="Add food you have"><button class="btn sm primary" data-act="padd">Add</button></div>'
+    + '<div id="psug" class="wrapchips psug"></div>'
+    + '<div id="pkit">' + kitchenHTML(rt) + '</div>'
+    + '<div id="cookres">' + cookResultsHTML(rt) + '</div></div>';
+};
+function kitchenHTML(rt){
+  const p = pantryStore(); const has = new Set(p.items.map(x => x.id));
+  let h = '';
+  if (p.items.length) {
+    h += '<div class="sec-h ksec"><h2>In your kitchen <span class="muted">' + p.items.length + '</span></h2><button class="link" data-act="pclear">Clear all</button></div>'
+      + '<div class="wrapchips">' + p.items.map(x => '<button class="chip on kchip" data-prm="' + esc(x.id) + '" aria-label="Take out ' + esc(x.name) + '">' + esc(x.name) + icon('x') + '</button>').join('') + '</div>';
+  } else h += '<p class="dhint kintro">Type what you have, or tap foods below. It checks your saved recipes and 30+ recipe sites for things you can make, with the ones you\'d probably like first.</p>';
+  const open = !p.items.length || rt.quickOpen;
+  h += '<details class="kquick" id="kquick"' + (open ? ' open' : '') + '><summary>' + (p.items.length ? 'Add more foods' : 'Tap what you have') + '</summary>'
+    + QUICK_FOODS.map(g => '<p class="kgrp">' + esc(g[0]) + '</p><div class="wrapchips">' + g[1].map(id => '<button class="chip' + (has.has(id) ? ' on' : '') + '" data-pq="' + esc(id) + '" aria-pressed="' + has.has(id) + '">' + esc(LABEL[id]) + '</button>').join('') + '</div>').join('')
+    + '</details>';
+  const b = new Set(p.basics);
+  h += '<details class="kquick" id="kbasics"' + (rt.basicsOpen ? ' open' : '') + '><summary><span class="ks-t">Always on hand<small class="kbl">' + esc(cap1(BASIC_CHOICES.filter(id => b.has(id)).map(id => LABEL[id].toLowerCase()).join(', ')) || 'Nothing yet') + '</small></span></summary>'
+    + '<p class="hint">These count as things you have, so a recipe isn\'t marked short on salt or oil. Tap to change.</p><div class="wrapchips">'
+    + BASIC_CHOICES.map(id => '<button class="chip' + (b.has(id) ? ' on' : '') + '" data-pb="' + esc(id) + '" aria-pressed="' + b.has(id) + '">' + esc(LABEL[id]) + '</button>').join('') + '</div></details>';
+  return h;
+}
+function cookResultsHTML(rt){
+  if (!hasKitchen()) return '';
+  const only = !!rt.readyOnly;
+  const S0 = savedMatches(); const W0 = webMatches();
+  const S1 = only ? S0.rows.filter(x => x.m.ready) : S0.rows, W1 = only ? W0.filter(x => x.m.ready) : W0;
+  const nReady = S0.rows.filter(x => x.m.ready).length + W0.filter(x => x.m.ready).length;
+  const shown = rt.shown || 12, wshown = rt.wshown || 12;
+  let h = '<div class="chips"><button class="chip' + (only ? ' on' : '') + '" data-act="cookready" aria-pressed="' + only + '">' + icon('check') + 'Ready to cook only' + (nReady ? ' · ' + nReady : '') + '</button></div>';
+  // your recipes
+  h += '<section class="sec"><div class="sec-h"><h2>Your recipes</h2>' + (S1.length ? '<span class="muted">' + S1.length + '</span>' : '') + '</div>';
+  if (S1.length) h += '<div class="grid">' + S1.slice(0, shown).map(kcardSaved).join('') + '</div>' + (S1.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="cookmore">Show more</button></div>' : '');
+  else h += '<p class="dhint">' + (only && S0.rows.length ? 'None of your saved recipes are ready with just these. Turn off Ready to cook only to see the close ones.' : list().some(r => !r.sample) ? 'None of your saved recipes use these yet.' : 'Once you save recipes, the ones you can make show up here.') + '</p>';
+  if (S0.noList) h += '<p class="hint">' + plural(S0.noList, 'saved recipe') + (S0.noList === 1 ? ' doesn\'t' : ' don\'t') + ' have an ingredient list yet, so ' + (S0.noList === 1 ? 'it isn\'t' : 'they aren\'t') + ' checked. Open one and tap ⋯ then Fill in missing details.</p>';
+  h += '</section>';
+  // new recipes from the sites
+  h += '<section class="sec"><div class="sec-h"><h2>New recipes to try</h2>' + (W1.length ? '<span class="muted">' + W1.length + '</span>' : '') + '</div>';
+  if (!canRead()) h += '<p class="dhint">Open yumyumtumtum from your home screen to search the recipe sites too.</p>';
+  else {
+    if (COOK.loading) h += '<p class="readst"><span class="spin sm"></span>' + (COOK.items ? 'Updating for what you added…' : 'Checking Delish, Tasty, and 30 more sites…') + '</p>';
+    if (COOK.error && !COOK.loading) h += '<div class="empty small"><h3>Couldn\'t search the sites</h3><p>' + esc(COOK.error) + '</p><button class="btn ghost" data-act="cookretry">Try again</button></div>';
+    if (W1.length) h += '<div class="grid">' + W1.slice(0, wshown).map(kcardWeb).join('') + '</div>' + (W1.length > wshown ? '<div class="morebar"><button class="btn ghost" data-act="cookwmore">Show more</button></div>' : '');
+    else if (COOK.loading && !COOK.items) h += '<div class="grid">' + skelCards(4) + '</div>';
+    else if (COOK.items && !COOK.error) h += '<p class="dhint">' + (only && W0.length ? 'Nothing from the sites is ready with just these. Turn off Ready to cook only to see the close ones.' : 'Nothing close enough on the recipe sites yet. Add a few more foods, like a meat and a veggie.') + '</p>';
+    if (COOK.qs.length && COOK.items) h += '<p class="hint kq">Searched for ' + esc(joinList(COOK.qs)) + '. Tap ' + icon('x') + ' on anything that\'s not your thing and it learns.</p>';
+  }
+  return h + '</section>';
+}
+function mountCook(r){
+  const input = $('#pq'); if (!input) return;
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); A.padd(); } });
+  input.addEventListener('input', () => drawSug(input.value));
+  if (hasKitchen()) scheduleCook(COOK.items ? 300 : 0);
+}
+// suggestions while typing
+function drawSug(v){
+  const box = $('#psug'); if (!box) return;
+  const t = normFood(v); if (t.length < 2) { box.innerHTML = ''; return; }
+  const p = pantryStore(); const has = new Set(p.items.map(x => x.id).concat(p.basics));
+  const out = foodsIn(v).filter(id => !has.has(id));
+  // names that start with what you typed first, shortest first ("chick" -> Chicken before Chicken broth)
+  FOODS.map(f => { const lab = f[1].toLowerCase(); return {id:f[0], lab:lab, r:lab.indexOf(t) === 0 ? 0 : lab.split(/\s+/).some(w => w.indexOf(t) === 0) ? 1 : 9}; })
+    .filter(x => x.r < 9 && !has.has(x.id) && out.indexOf(x.id) < 0).sort((a, b) => a.r - b.r || a.lab.length - b.lab.length)
+    .forEach(x => { if (out.length < 8) out.push(x.id); });
+  box.innerHTML = out.slice(0, 8).map(id => '<button class="chip dashed" data-psug="' + esc(id) + '">' + icon('plus') + esc(LABEL[id]) + '</button>').join('');
+}
+// the Home card
+function kitchenCardHTML(){
+  const p = pantryStore();
+  let sub = 'Tell it what\'s in your fridge and it finds recipes you can make';
+  if (p.items.length) {
+    const ready = list().filter(r => !r.sample && countItems(r.ingredients) >= 2 && kitchenMatch(r).ready).length;
+    sub = ready ? plural(ready, 'saved recipe') + ' ready to cook with what you have' : 'See what you can make with your ' + plural(p.items.length, 'food');
+  }
+  return '<button class="kitcard" data-go="cook"><span class="kc-ic">' + icon('pot') + '</span><span class="kc-t"><b>What can I cook?</b><small>' + esc(sub) + '</small></span>' + icon('back', 'flip') + '</button>';
+}
+// "You have 7 of 9" on a recipe
+function khaveHTML(m){
+  if (!m || !m.need) return '';
+  return '<p class="khave' + (m.ready ? ' ok' : '') + '">' + (m.ready ? icon('check') + 'You have everything for this' : 'You have ' + m.have + ' of ' + m.need + '. Need ' + esc(joinList(m.missing.map(lc))) + '.') + '</p>';
+}
+restoreCook();
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-pq],[data-prm],[data-pb],[data-psug],[data-nv],[data-nrm]'); if (!t) return;
+  const d = t.dataset;
+  if (d.pq) togglePantry(d.pq);
+  else if (d.prm) removePantry(d.prm);
+  else if (d.pb) toggleBasic(d.pb);
+  else if (d.psug) { addPantryId(d.psug); const i = $('#pq'); if (i) i.value = ''; drawSug(''); }
+  else if (d.nv) addNever(d.nv);
+  else if (d.nrm) removeNever(d.nrm);
+});
+// keep the keyboard up while adding foods
+document.addEventListener('pointerdown', e => { if (e.target.closest('[data-psug],[data-act="padd"]') && document.activeElement && document.activeElement.id === 'pq') e.preventDefault(); });
+document.addEventListener('toggle', e => { const t = e.target; if (t.id === 'kquick') cur().quickOpen = t.open; else if (t.id === 'kbasics') cur().basicsOpen = t.open; }, true);
 
 /* the same text reader the recipe reader uses, for pasted recipe text */
 /* ---- captions (TikTok / Instagram / YouTube descriptions) ---- */
@@ -2018,6 +2366,350 @@ function parseCaption(text) {
   const leftover = pre.slice(1).filter(l => !META.test(l));
   return { title, ingredients: ingOut, steps: stepsOut, equipment: equip.map(tidy).filter(Boolean), notes: notes.map(tidy).filter(Boolean).concat(leftover.length && (ingOut.length || stepsOut.length) ? leftover : []) };
 }
+
+/* the same ingredient reader the tests use, for "What can I cook?" */
+/* ---- pantry: what can I cook ---- */
+// [id, label, kind, pattern, family]
+// kind: p protein, v veggies and fruit, d dairy and eggs, c pasta rice and bread, s sauces and cans, h herbs and spices, b basics
+// A line is read by its longest matches, so "chicken broth" wins over "chicken" and "peanut butter" over "butter".
+const FOODS = [
+  // broths and soups
+  ['chicken broth', 'Chicken broth', 's', 'chicken (broth|stock|bouillon( cubes?| powder)?|base)|caldo de pollo|knorr( chicken)?( bouillon)?|better than bouillon( chicken)?', 'broth'],
+  ['beef broth', 'Beef broth', 's', 'beef (broth|stock|bouillon( cubes?| powder)?|base|consomme)', 'broth'],
+  ['vegetable broth', 'Vegetable broth', 's', '(vegetable|veggie) (broth|stock|bouillon)', 'broth'],
+  ['broth', 'Broth', 's', '(low sodium )?(broth|stock|bouillon( cubes?)?)', 'broth'],
+  ['cream of chicken', 'Cream of chicken soup', 's', '(condensed )?cream of chicken( soup)?', 'cream soup'],
+  ['cream of mushroom', 'Cream of mushroom soup', 's', '(condensed )?cream of (mushroom|celery)( soup)?', 'cream soup'],
+  // oils
+  ['sesame oil', 'Sesame oil', 's', '(toasted )?sesame oil'],
+  ['chili oil', 'Chili oil', 's', 'chil(i|e) (crisp|oil)|chili garlic oil'],
+  ['oil', 'Cooking oil', 'b', '((extra virgin |light )?olive|vegetable|canola|avocado|peanut|coconut|neutral|cooking|frying|sunflower|corn|grapeseed) oil|oil|evoo|cooking spray|nonstick spray|shortening|lard|crisco'],
+  // sauces, cans, and jars
+  ['soy sauce', 'Soy sauce', 's', '(low sodium |reduced sodium |light |dark |regular )?soy sauce|tamari|shoyu|(coconut|liquid) aminos'],
+  ['fish sauce', 'Fish sauce', 's', 'fish sauce'],
+  ['oyster sauce', 'Oyster sauce', 's', 'oyster sauce'],
+  ['hoisin', 'Hoisin sauce', 's', 'hoisin( sauce)?'],
+  ['teriyaki', 'Teriyaki sauce', 's', 'teriyaki( sauce| marinade| glaze)?'],
+  ['worcestershire', 'Worcestershire', 's', 'worcestershire( sauce)?'],
+  ['gochujang', 'Gochujang', 's', 'gochujang( paste)?|korean (red )?chil(i|e) paste'],
+  ['sriracha', 'Sriracha or chili sauce', 's', 'sriracha|chil(i|e) garlic sauce|sambal( oelek)?|sweet chil(i|e) sauce|chil(i|e) sauce'],
+  ['hot sauce', 'Hot sauce', 's', 'hot sauce|tabasco|frank\'?s( red hot)?|cholula|valentina|tapatio|buffalo( wing)? sauce|wing sauce'],
+  ['chipotle in adobo', 'Chipotles in adobo', 's', 'chipotles?( peppers?)? in adobo( sauce)?|adobo sauce'],
+  ['enchilada sauce', 'Enchilada sauce', 's', '(red |green )?enchilada sauce'],
+  ['bbq sauce', 'BBQ sauce', 's', '(bbq|barbecue|barbeque) sauce|sweet baby ray\'?s'],
+  ['curry paste', 'Curry paste', 's', '((red|green|yellow|massaman|panang|thai) )?curry paste'],
+  ['pesto', 'Pesto', 's', '(basil )?pesto'],
+  ['tomato paste', 'Tomato paste', 's', 'tomato paste'],
+  ['tomato sauce', 'Tomato sauce', 's', 'tomato (sauce|puree)|passata', 'tomato sauce'],
+  ['pasta sauce', 'Marinara or pasta sauce', 's', 'marinara( sauce)?|(pasta|spaghetti|pizza|vodka|alfredo) sauce|ragu|prego', 'tomato sauce'],
+  ['canned tomatoes', 'Canned tomatoes', 'v', '((canned|can of|cans of|petite) )?(diced|crushed|stewed|whole peeled|peeled|fire roasted|san marzano|petite diced)( fire roasted)? tomatoes|rotel|ro tel|diced tomatoes (and|with) (green )?chil(i|e)s', 'tomatoes'],
+  ['sun dried tomatoes', 'Sun-dried tomatoes', 'v', 'sun dried tomatoes'],
+  ['ketchup', 'Ketchup', 's', 'ketchup|catsup'],
+  ['salsa', 'Salsa', 's', '(chunky |mild |medium |hot )?salsa( verde| roja)?|pico de gallo|picante sauce'],
+  ['mustard', 'Mustard', 's', '(dijon |yellow |spicy brown |whole grain |stone ground |honey |dry )?mustard( powder)?|dijon'],
+  ['mayo', 'Mayo', 's', 'mayo(nnaise)?|kewpie|miracle whip|aioli'],
+  ['ranch', 'Ranch', 's', 'ranch( dressing| seasoning( mix)?| mix| packet| dip)?|hidden valley'],
+  ['italian dressing', 'Italian dressing', 's', 'italian dressing|zesty italian|vinaigrette|salad dressing'],
+  ['honey', 'Honey', 's', 'honey'],
+  ['maple syrup', 'Maple syrup', 's', '(pure )?maple syrup|pancake syrup'],
+  ['corn syrup', 'Corn syrup', 's', '(light |dark )?corn syrup|karo'],
+  ['rice vinegar', 'Rice vinegar', 's', '(seasoned )?rice (wine )?vinegar', 'vinegar'],
+  ['balsamic', 'Balsamic vinegar', 's', 'balsamic( vinegar| glaze| reduction)?', 'vinegar'],
+  ['vinegar', 'Vinegar', 's', '(apple cider |white |red wine |white wine |distilled |cider |sherry )?vinegar', 'vinegar'],
+  ['rice wine', 'Mirin or rice wine', 's', 'mirin|rice wine|shaoxing( wine)?|sake|cooking wine'],
+  ['wine', 'Wine', 's', '(dry )?(white|red) wine|wine'],
+  ['beer', 'Beer', 's', 'beer|lager'],
+  ['coconut milk', 'Coconut milk', 's', '(canned |full fat |light |unsweetened )?coconut (milk|cream)'],
+  ['peanut butter', 'Peanut butter', 's', '(creamy |crunchy |natural )?peanut butter'],
+  ['tahini', 'Tahini', 's', 'tahini'],
+  ['hummus', 'Hummus', 's', 'hummus'],
+  ['miso', 'Miso', 's', '(white |red |yellow )?miso( paste)?'],
+  ['kimchi', 'Kimchi', 's', 'kimchi'],
+  ['pickles', 'Pickles', 's', '(dill )?pickles?|pickle relish|relish'],
+  ['olives', 'Olives', 's', '(black |kalamata |green |sliced |pitted )?olives'],
+  ['capers', 'Capers', 's', 'capers'],
+  ['water chestnuts', 'Water chestnuts', 's', 'water chestnuts'],
+  ['cornstarch', 'Cornstarch', 's', 'corn ?starch|potato starch|arrowroot( powder)?|tapioca (starch|flour)'],
+  ['baking powder', 'Baking powder', 's', 'baking powder'],
+  ['baking soda', 'Baking soda', 's', 'baking soda|bicarbonate of soda'],
+  ['yeast', 'Yeast', 's', '(active dry |instant |rapid rise )?yeast'],
+  ['vanilla', 'Vanilla', 's', '(pure )?vanilla( extract| bean| paste)?'],
+  ['chocolate', 'Chocolate', 's', '(semi sweet |semisweet |bittersweet |dark |milk |white )?chocolate( chips| chunks| bars?)?'],
+  ['cocoa', 'Cocoa powder', 's', '(unsweetened |dutch process )?cocoa( powder)?'],
+  ['peanuts', 'Peanuts', 's', '(roasted |crushed |chopped |dry roasted |salted )?peanuts'],
+  ['nuts', 'Nuts', 's', '(chopped |toasted |sliced |slivered )?(almonds|walnuts|pecans|cashews|pistachios|pine nuts|hazelnuts|macadamia( nuts)?|mixed nuts|nuts)'],
+  ['coconut', 'Shredded coconut', 's', '(shredded |sweetened |unsweetened |toasted |flaked )?coconut( flakes)?'],
+  ['crackers', 'Crackers', 's', 'crackers|saltines|ritz( crackers)?|graham crackers'],
+  // herbs and spices
+  ['garlic powder', 'Garlic powder', 'h', 'garlic powder|granulated garlic|garlic salt'],
+  ['onion powder', 'Onion powder', 'h', 'onion powder|dried minced onion|onion flakes|dehydrated onion'],
+  ['chili powder', 'Chili powder', 'h', '(ancho |chipotle )?chil(i|e) powder|chipotle powder'],
+  ['cumin', 'Cumin', 'h', '(ground )?cumin( seeds?)?|comino'],
+  ['paprika', 'Paprika', 'h', '(smoked |sweet |hot |spanish |hungarian )?paprika'],
+  ['oregano', 'Oregano', 'h', '(dried |mexican |fresh )?oregano'],
+  ['italian seasoning', 'Italian seasoning', 'h', 'italian (seasoning|herbs|herb blend)|herbes de provence'],
+  ['cinnamon', 'Cinnamon', 'h', '(ground )?cinnamon( sticks?)?'],
+  ['nutmeg', 'Nutmeg', 'h', '(ground )?nutmeg'],
+  ['red pepper flakes', 'Red pepper flakes', 'h', '(crushed )?red pepper flakes|crushed red pepper|chil(i|e) flakes|gochugaru'],
+  ['cayenne', 'Cayenne', 'h', '(ground )?cayenne( pepper)?'],
+  ['white pepper', 'White pepper', 'h', '(ground )?white pepper|lemon pepper( seasoning)?'],
+  ['curry powder', 'Curry powder', 'h', 'curry powder|garam masala|(ground )?turmeric'],
+  ['ground ginger', 'Ground ginger', 'h', 'ground ginger|ginger powder'],
+  ['cajun seasoning', 'Cajun seasoning', 'h', '(cajun|creole|blackening) seasoning|old bay( seasoning)?|tony chachere\'?s'],
+  ['taco seasoning', 'Taco seasoning', 'h', '(taco|fajita|burrito) seasoning( mix| packet)?'],
+  ['seasoned salt', 'Seasoned salt', 'h', 'season(ed|ing) salt|lawry\'?s|adobo( seasoning| all purpose seasoning)?|sazon( goya)?|everything bagel seasoning|celery salt|onion salt'],
+  ['sesame seeds', 'Sesame seeds', 'h', '(toasted |black |white )?sesame seeds|furikake'],
+  ['cilantro', 'Cilantro', 'h', '(fresh )?cilantro( leaves)?|coriander leaves'],
+  ['parsley', 'Parsley', 'h', '(fresh |flat leaf |italian |dried )?parsley( flakes)?'],
+  ['basil', 'Basil', 'h', '(fresh |thai |dried |sweet )?basil( leaves)?'],
+  ['mint', 'Mint', 'h', '(fresh )?mint( leaves)?'],
+  ['dill', 'Dill', 'h', '(fresh |dried )?dill( weed)?'],
+  ['rosemary', 'Rosemary', 'h', '(fresh |dried )?rosemary'],
+  ['thyme', 'Thyme', 'h', '(fresh |dried )?thyme( leaves)?'],
+  ['bay leaves', 'Bay leaves', 'h', '(dried )?bay (leaf|leaves)'],
+  // dairy and eggs
+  ['cream cheese', 'Cream cheese', 'd', '(softened )?cream cheese|neufchatel|mascarpone'],
+  ['sour cream', 'Sour cream', 'd', 'sour cream|crema( mexicana)?|creme fraiche'],
+  ['ice cream', 'Ice cream', 'd', '(vanilla )?ice cream|gelato'],
+  ['whipped cream', 'Whipped cream', 'd', 'whipped (cream|topping)|cool whip|reddi whip'],
+  ['canned milk', 'Evaporated or condensed milk', 'd', '(sweetened )?condensed milk|evaporated milk|lechera'],
+  ['heavy cream', 'Heavy cream', 'd', 'heavy (whipping )?cream|whipping cream|double cream|light cream|half and half|cream'],
+  ['buttermilk', 'Buttermilk', 'd', 'buttermilk'],
+  ['milk', 'Milk', 'd', '(whole |2% |skim |low fat |oat |almond |soy |dairy free |warm |cold |evaporated )?milk'],
+  ['yogurt', 'Yogurt', 'd', '(plain |greek |vanilla |whole milk )*yogh?urt'],
+  ['parmesan', 'Parmesan', 'd', '(grated |shredded |fresh |freshly grated )?(parmesan|parmigiano( reggiano)?|pecorino( romano)?|grana padano|romano)( cheese)?'],
+  ['mozzarella', 'Mozzarella', 'd', '(fresh |shredded |low moisture |part skim |whole milk )*mozzarella( cheese| pearls| balls)?|burrata|string cheese', 'cheese'],
+  ['feta', 'Feta', 'd', '(crumbled )?feta( cheese)?'],
+  ['goat cheese', 'Goat or blue cheese', 'd', '(crumbled )?(goat|blue) cheese|chevre|gorgonzola'],
+  ['cotija', 'Cotija or queso fresco', 'd', '(crumbled )?(cotija( cheese)?|queso fresco|queso blanco)'],
+  ['ricotta', 'Ricotta', 'd', '(whole milk )?ricotta( cheese)?|cottage cheese'],
+  ['cheese', 'Cheese', 'd', '((sharp|mild|white|extra sharp|shredded|sliced|grated|cubed|freshly shredded) )*((cheddar|monterey jack|pepper jack|colby( jack)?|provolone|gouda|gruyere|havarti|muenster|oaxaca|asadero|chihuahua|mexican( style)?( blend)?|mexican four|italian blend|fiesta blend|taco blend|velveeta|nacho)( cheese( blend| sauce| dip)?)?|(american|swiss|jack) cheese|cheese( blend| slices| sauce)?|queso( dip)?)', 'cheese'],
+  ['eggs', 'Eggs', 'd', '(large |medium |hard boiled |beaten )?eggs?( yolks?| whites?)?|egg (yolks?|whites?|wash)'],
+  ['butter', 'Butter', 'b', '(unsalted |salted |melted |softened |cold |cubed )?butter|margarine|ghee'],
+  // meat, fish, and beans
+  ['sausage', 'Sausage', 'p', '((italian|breakfast|smoked|pork|turkey|chicken|andouille|polish|sweet italian|hot italian|mild italian) )*sausages?( links| patties| meat)?|chorizo|kielbasa|andouille|bratwursts?|brats|hot dogs?|franks|frankfurters|(lil|little) smokies'],
+  ['ham', 'Ham', 'p', '(diced |cooked |spiral |deli |smoked )?ham( steak| hock| bone)?|prosciutto|canadian bacon'],
+  ['bacon', 'Bacon', 'p', '(thick cut |turkey |center cut |cooked |crumbled )?bacon( bits)?|pancetta|salt pork'],
+  ['ground beef', 'Ground beef', 'p', '(lean |extra lean |\\d+% lean )?ground (beef|chuck|sirloin|round)|hamburger( meat)?|beef mince|minced beef|burger (patties|meat)'],
+  ['ground turkey', 'Ground turkey', 'p', '(lean )?ground turkey|turkey mince'],
+  ['ground pork', 'Ground pork', 'p', 'ground pork|pork mince|minced pork'],
+  ['chicken', 'Chicken', 'p', '((boneless|skinless|bone in|skin on|rotisserie|cooked|shredded|ground|raw|frozen|diced|leftover) )*chicken( breasts?| thighs?| tenders?| tenderloins?| cutlets?| drumsticks?| legs?| leg quarters| quarters?| wings?| meat| pieces| strips| breast halves)?|rotisserie|drumsticks|chicken wings'],
+  ['turkey', 'Turkey', 'p', '(cooked |leftover |deli )?turkey( breast| legs?| wings?| thighs?| meat)?'],
+  ['pork', 'Pork', 'p', '(boneless )?pork( chops?| loin| tenderloin| shoulder| butt| belly| ribs?| roast| steaks?)?|baby back ribs|spare ribs|carnitas'],
+  ['beef', 'Steak or beef', 'p', '((beef|flank|skirt|sirloin|ribeye|rib eye|strip|cube|chuck|round|flat iron|tri tip|new york|top sirloin) )?steaks?|beef( chuck( roast)?| roast| stew meat| brisket| short ribs?| tenderloin| shank| cheeks| strips| sirloin)?|chuck roast|pot roast|stew meat|brisket|short ribs|flank|carne asada|tri tip|oxtails?|arrachera|london broil|prime rib|roast beef'],
+  ['lamb', 'Lamb', 'p', 'lamb( chops?| shoulder| leg| shank| meat)?|ground lamb|mutton'],
+  ['shrimp', 'Shrimp', 'p', '((jumbo|large|medium|small|raw|cooked|frozen|peeled|deveined|peeled and deveined) )*(shrimp|prawns?)'],
+  ['salmon', 'Salmon', 'p', '(fresh |frozen |smoked )?salmon( fillets?)?|lox'],
+  ['tuna', 'Tuna', 'p', '(canned |ahi |albacore |sushi grade )?tuna( steaks?)?'],
+  ['fish', 'White fish', 'p', '(white )?fish( fillets?)?|cod|tilapia|halibut|mahi( mahi)?|catfish|snapper|swai|pollock|haddock|sea bass|flounder|sole|trout'],
+  ['crab', 'Crab', 'p', '(imitation |lump |fresh )?crab( meat| legs)?|krab'],
+  ['shellfish', 'Shellfish', 'p', 'clams|mussels|scallops|lobster( tails?)?|oysters|calamari|squid|octopus'],
+  ['tofu', 'Tofu', 'p', '(firm |extra firm |silken |soft )?tofu|tempeh'],
+  ['green beans', 'Green beans', 'v', '(fresh |frozen |canned )?(green beans|string beans|haricots? verts)'],
+  ['bean sprouts', 'Bean sprouts', 'v', '(mung )?bean sprouts'],
+  ['black beans', 'Black beans', 'p', '(canned )?black beans', 'beans'],
+  ['pinto beans', 'Pinto beans', 'p', '(canned )?pinto beans|charro beans|frijoles', 'beans'],
+  ['refried beans', 'Refried beans', 'p', 'refried beans', 'beans'],
+  ['kidney beans', 'Kidney beans', 'p', '((red|dark red|light red) )?kidney beans', 'beans'],
+  ['white beans', 'White beans', 'p', '(cannellini|navy|great northern|white|butter|lima) beans|black eyed peas', 'beans'],
+  ['beans', 'Beans', 'p', '(canned |dried |baked |ranch style |chili |pork and )?beans', 'beans'],
+  ['chickpeas', 'Chickpeas', 'p', '(canned )?(chickpeas|garbanzo( beans)?)'],
+  ['lentils', 'Lentils', 'p', '(red |green |brown |black |french )?lentils|dal|daal'],
+  // veggies and fruit
+  ['green onions', 'Green onions', 'v', 'green onions?|scallions?|spring onions?|chives'],
+  ['onion', 'Onion', 'v', '((yellow|white|red|sweet|vidalia|spanish|large|small|medium|diced|chopped) )*onions?|shallots?|leeks?|pearl onions'],
+  ['garlic', 'Garlic', 'v', '(fresh |minced |roasted |chopped )?garlic( cloves?| bulbs?| heads?| paste)?|cloves? (of )?garlic'],
+  ['ginger', 'Ginger', 'v', '(fresh |minced |grated )?ginger( root| paste)?'],
+  ['chiles', 'Jalapeños or chiles', 'v', '((fresh|pickled|canned|diced|roasted|dried|green) )*(jalapenos?|serranos?|habaneros?|poblanos?|anaheims?|hatch chiles?|fresno( chiles?)?|thai chil(i|e)s?|bird\'?s eye chil(i|e)s?|green chil(i|e)s|chil(i|e) peppers?|chil(i|e)s|scotch bonnets?|chipotles?|guajillos?|anchos?|pasillas?|chiles de arbol|arbol chiles)( peppers?)?', 'chiles'],
+  ['bell pepper', 'Bell pepper', 'v', '((red|green|yellow|orange|sweet|mini|mini sweet|large|diced) )*bell peppers?|(red|green|yellow|orange|sweet|mini sweet|mini) peppers?|peppers|capsicum'],
+  ['tomatillos', 'Tomatillos', 'v', 'tomatillos?'],
+  ['tomatoes', 'Tomatoes', 'v', '((fresh|ripe|roma|plum|cherry|grape|heirloom|beefsteak|large|medium|diced|chopped) )*tomato(es)?', 'tomatoes'],
+  ['sweet potatoes', 'Sweet potatoes', 'v', 'sweet potato(es)?|yams?'],
+  ['potatoes', 'Potatoes', 'v', '((russet|red|yukon gold|gold|baby|new|fingerling|white|idaho|large|medium) )*potato(es)?|russets|hash browns|tater tots|french fries|(instant )?(mashed )?potato flakes'],
+  ['carrots', 'Carrots', 'v', '(baby |shredded |matchstick |large )?carrots?'],
+  ['celery', 'Celery', 'v', 'celery( stalks?| ribs?)?'],
+  ['broccoli', 'Broccoli', 'v', 'broccoli( florets| crowns)?|broccolini'],
+  ['cauliflower', 'Cauliflower', 'v', 'cauliflower( rice| florets)?|riced cauliflower'],
+  ['spinach', 'Spinach', 'v', '(baby |fresh |frozen )?spinach'],
+  ['kale', 'Kale or greens', 'v', '(baby )?kale|collard greens|collards|swiss chard|chard|mustard greens|turnip greens'],
+  ['lettuce', 'Lettuce', 'v', '(romaine |iceberg |butter |shredded )?lettuce|romaine|arugula|salad greens|mixed greens|spring mix'],
+  ['cabbage', 'Cabbage', 'v', '(green |red |purple |napa |savoy |shredded )?cabbage|coleslaw mix|slaw mix'],
+  ['bok choy', 'Bok choy', 'v', '(baby )?bok choy|pak choi'],
+  ['zucchini', 'Zucchini', 'v', 'zucchinis?|courgettes?|yellow squash|summer squash'],
+  ['squash', 'Squash or pumpkin', 'v', '(butternut|acorn|spaghetti|delicata|kabocha) squash|pumpkin( puree)?|squash'],
+  ['mushrooms', 'Mushrooms', 'v', '((baby bella|cremini|button|white|shiitake|portobello|oyster|dried|sliced) )*mushrooms?'],
+  ['corn', 'Corn', 'v', '((sweet|frozen|canned|creamed|fire roasted) )*corn( kernels| on the cob)?|elote|corn cobs?|ears? of corn'],
+  ['peas', 'Peas', 'v', '((frozen|green|sweet) )?peas( and carrots)?|snow peas|snap peas|sugar snap peas|edamame'],
+  ['cucumber', 'Cucumber', 'v', '(english |persian )?cucumbers?'],
+  ['avocado', 'Avocado', 'v', '(ripe )?avocados?|guacamole'],
+  ['asparagus', 'Asparagus', 'v', 'asparagus'],
+  ['brussels sprouts', 'Brussels sprouts', 'v', 'brussels? sprouts'],
+  ['eggplant', 'Eggplant', 'v', 'eggplants?|aubergines?'],
+  ['radishes', 'Radishes', 'v', 'radish(es)?|daikon'],
+  ['lemon', 'Lemon', 'v', 'lemons?( juice| zest| wedges| slices)?|lemon juice'],
+  ['lime', 'Lime', 'v', '(key )?limes?( juice| zest| wedges)?'],
+  ['orange', 'Orange', 'v', 'oranges?( juice| zest)?|orange juice|mandarin( oranges)?|clementines?'],
+  ['apple', 'Apples', 'v', 'apples?|granny smith|honeycrisp|applesauce|apple (juice|cider)'],
+  ['banana', 'Bananas', 'v', '(ripe )?bananas?'],
+  ['berries', 'Berries', 'v', '(fresh |frozen )?(strawberr(y|ies)|blueberr(y|ies)|raspberr(y|ies)|blackberr(y|ies)|mixed berries|berries|cranberr(y|ies))'],
+  ['pineapple', 'Pineapple', 'v', 'pineapple( chunks| tidbits| juice)?'],
+  ['mango', 'Mango', 'v', 'mangos?|mangoes'],
+  ['peaches', 'Peaches', 'v', 'peach(es)?|nectarines?'],
+  // pasta, rice, and bread
+  ['rice noodles', 'Rice noodles', 'c', 'rice (noodles|sticks|vermicelli)|vermicelli( noodles)?|pad thai noodles|pho noodles', 'noodles'],
+  ['rice paper', 'Rice paper', 'c', 'rice paper( wrappers?| sheets)?'],
+  ['wrappers', 'Wonton or egg roll wrappers', 'c', '(wonton|egg roll|spring roll|dumpling|gyoza|potsticker) (wrappers?|skins?)'],
+  ['egg noodles', 'Egg noodles', 'c', '(wide |extra wide )?egg noodles', 'noodles'],
+  ['pasta', 'Pasta', 'c', '((dry|dried|uncooked|cooked|whole wheat) )*(pasta|spaghetti|penne( pasta)?|rigatoni|fettuccine|fettucine|linguine|macaroni|elbows?( macaroni)?|ziti|rotini|farfalle|bow ties?( pasta)?|orzo|(pasta |jumbo |medium )?shells|lasagna (noodles|sheets)|tortellini|ravioli|gnocchi|angel hair|bucatini|cavatappi|orecchiette|pappardelle|capellini|ditalini|campanelle|fusilli|manicotti)'],
+  ['noodles', 'Noodles', 'c', '((ramen|udon|soba|lo mein|chow mein|yakisoba|instant|asian|wheat|stir fry|fresh) )?noodles|ramen|udon|soba', 'noodles'],
+  ['rice', 'Rice', 'c', '((white|brown|jasmine|basmati|long grain|short grain|sushi|arborio|cooked|uncooked|leftover|day old|instant|minute) )*rice'],
+  ['quinoa', 'Quinoa', 'c', 'quinoa'],
+  ['couscous', 'Couscous', 'c', '(pearl )?couscous'],
+  ['oats', 'Oats', 'c', '(rolled |old fashioned |quick |steel cut )?oats|oatmeal'],
+  ['tortilla chips', 'Tortilla chips', 'c', 'tortilla chips|corn chips|fritos|doritos'],
+  ['tortillas', 'Tortillas', 'c', '((flour|corn|street taco|street|soft taco|low carb|whole wheat|small|large|burrito size|fajita size) )*tortillas?|taco shells?|tostadas?( shells)?'],
+  ['breadcrumbs', 'Breadcrumbs', 'c', '(panko |italian |seasoned |plain |dry |fresh )?bread ?crumbs|panko'],
+  ['biscuits', 'Canned biscuits', 'c', '(refrigerated |canned |flaky |buttermilk )?biscuits?( dough)?|grands|crescent (rolls?|dough|sheets?)'],
+  ['pizza dough', 'Pizza dough', 'c', 'pizza (dough|crust)'],
+  ['pie crust', 'Pie crust', 'c', '(refrigerated )?pie (crusts?|shells?|dough)|puff pastry|phyllo|filo|graham cracker crust'],
+  ['bread', 'Bread', 'c', '((sandwich|french|italian|sourdough|white|wheat|whole wheat|crusty|day old) )?(bread|toast)|(hamburger |hot dog |slider |brioche )?buns?|(dinner|sub|hoagie|hawaiian|brioche|kaiser|bolillo) rolls|baguettes?|ciabatta|brioche|pita( bread)?|naan|english muffins?|bagels?|croissants?|flatbreads?|texas toast|bolillos?'],
+  ['cornmeal', 'Cornmeal or masa', 'c', 'corn ?meal|masa( harina)?|polenta|grits|cornbread mix|jiffy( mix)?'],
+  // basics most kitchens have
+  ['salt', 'Salt', 'b', '(kosher |sea |table |flaky |fine |coarse )?salt'],
+  ['pepper', 'Black pepper', 'b', '(freshly )?(cracked |ground )?(black )?pepper|peppercorns'],
+  ['water', 'Water', 'b', '(hot |warm |cold |boiling |ice )?water|ice( cubes)?'],
+  ['sugar', 'Sugar', 'b', '(granulated |white |cane )?sugar'],
+  ['brown sugar', 'Brown sugar', 's', '(light |dark |packed )*brown sugar'],
+  ['powdered sugar', 'Powdered sugar', 's', 'powdered sugar|confectioners\'? sugar|icing sugar'],
+  ['flour', 'Flour', 'b', '((all purpose|ap|self rising|bread|whole wheat|cake|plain|almond|unbleached) )?flour']
+];
+const FAMILY = {}, LABEL = {}, KIND = {};
+FOODS.forEach(f => { LABEL[f[0]] = f[1]; KIND[f[0]] = f[2]; if (f[4]) FAMILY[f[0]] = f[4]; });
+// families where a general word in your kitchen covers the specific kinds ("cheese" covers cheddar or mozzarella)
+const LOOSE = new Set(['cheese', 'beans', 'broth', 'chiles', 'tomatoes', 'noodles', 'cream soup']);
+const FOOD_RE = FOODS.map(f => [f[0], new RegExp('(?<![a-z])(?:' + f[3] + ')(?![a-z])', 'g')]);
+
+const normFood = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/[’‘`]/g, '\'').replace(/&/g, ' and ').replace(/[-–—_]/g, ' ').replace(/\s+/g, ' ').trim();
+// every food named in a piece of text, longest matches first so they don't overlap
+function foodsIn(text) {
+  const s = ' ' + normFood(text) + ' ';
+  const hits = [];
+  for (const [id, re] of FOOD_RE) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(s))) {
+      if (!m[0].trim()) { re.lastIndex++; continue; }
+      hits.push({ id, a: m.index, b: m.index + m[0].length });
+    }
+  }
+  hits.sort((x, y) => (y.b - y.a) - (x.b - x.a) || x.a - y.a);
+  const taken = [], out = [];
+  for (const h of hits) {
+    if (taken.some(t => h.a < t.b && t.a < h.b)) continue;
+    taken.push(h);
+    out.push(h);
+  }
+  return out.sort((x, y) => x.a - y.a).map(h => h.id).filter((id, i, a) => a.indexOf(id) === i);
+}
+// what you typed into your kitchen list -> {id, name}
+function lookupFood(text) {
+  const t = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!t) return null;
+  const ids = foodsIn(t);
+  const name = t.charAt(0).toUpperCase() + t.slice(1);
+  if (ids.length) return { id: ids[0], name: name.length > 30 ? LABEL[ids[0]] : name };
+  return { id: 'x:' + singularWords(t).join(' '), name };
+}
+const singularWords = s => normFood(s).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(w => w.length > 1).map(w => w.length > 4 && /[^s]es$/.test(w) && !/(ves|ies)$/.test(w) ? w.replace(/es$/, '') : w.length > 3 ? w.replace(/(?<!s)s$/, '') : w);
+const OPTIONAL = /\b(optional|for (garnish|serving|topping|dipping|the top)|to (serve|garnish)|garnish(es|ing)?|if (desired|you like)|as desired)\b/i;
+const EXTRA_HEAD = /garnish|topping|to serve|for serving|optional|extras?|sides?|to finish|drizzle/i;
+const UNITS_WORDS = /^(\d[\d\/.,]*|[½¼¾⅓⅔⅛]|a|an|one|two|three|four|five|six|cups?|c|tbsps?|tablespoons?|tsps?|teaspoons?|oz|ounces?|lbs?|pounds?|grams?|g|kg|ml|liters?|l|cans?|jars?|packages?|pkgs?|packets?|bags?|boxes?|bunch(es)?|cloves?|sticks?|slices?|pieces?|pinch(es)?|dash(es)?|handfuls?|sprigs?|heads?|large|medium|small|fresh|frozen|thawed|canned|dried|cooked|raw|ripe|chopped|diced|minced|sliced|shredded|grated|boneless|skinless|about|of|to|and|or|plus|x|inch|in|cut|into)$/i;
+// the plain name of an ingredient line nothing above recognized: "2 cups frozen edamame, thawed" -> "edamame"
+function coreName(line) {
+  const t = normFood(line).replace(/\([^)]*\)/g, ' ').split(/,| \- |;|\bfor\b/)[0];
+  const words = t.split(/\s+/).filter(Boolean);
+  while (words.length && UNITS_WORDS.test(words[0])) words.shift();
+  const out = words.join(' ').replace(/[^a-z0-9 '%]/g, '').trim();
+  return /[a-z]{3}/.test(out) && out.length <= 40 ? out : '';
+}
+// one ingredient line -> the foods it needs. "or" lines need just one of them.
+function readIngredient(line, underExtra) {
+  const s = String(line || '');
+  const ids = foodsIn(s);
+  const optional = !!underExtra || OPTIONAL.test(s);
+  const alt = / or |\/(?![\d])/.test(normFood(s)) && ids.length > 1;
+  return { ids, alt, optional, core: ids.length ? '' : coreName(s) };
+}
+// what's in your kitchen: [{id, name}] plus the basics you always have
+function makePantry(items, basics) {
+  const ids = new Set(), custom = [];
+  (items || []).forEach(x => { if (!x || !x.id) return; if (x.id.indexOf('x:') === 0) custom.push(x.id.slice(2).split(' ')); else ids.add(x.id); });
+  const base = new Set((basics || []).filter(Boolean));
+  return { ids, base, custom };
+}
+function pantryHas(P, id) {
+  if (P.ids.has(id) || P.base.has(id)) return true;
+  const fam = FAMILY[id];
+  if (!fam) return false;
+  if (id === fam) { for (const x of P.ids) if (FAMILY[x] === fam) return true; return false; }
+  return LOOSE.has(fam) && P.ids.has(fam);
+}
+const customHas = (P, text) => { const w = ' ' + singularWords(text).join(' ') + ' '; return P.custom.some(c => c.length && c.every(x => w.indexOf(' ' + x + ' ') >= 0)); };
+// a recipe's ingredient list against your kitchen. The title counts too when it names a meat the
+// list forgot ("Korean Popcorn Chicken" with "1.5 lbs boneless, cut into pieces").
+function matchRecipe(ingredients, P, title) {
+  const groups = new Map(); // key -> {label, have, optional, basic}
+  const uses = new Set();
+  let extra = false;
+  const listed = new Set();
+  (ingredients || []).forEach(l => foodsIn(l).forEach(id => listed.add(id)));
+  const hasMeat = Array.from(listed).some(id => KIND[id] === 'p');
+  const fromTitle = title && !hasMeat ? foodsIn(title).filter(id => KIND[id] === 'p').slice(0, 1) : [];
+  fromTitle.concat(ingredients || []).forEach(line => {
+    const l = String(line || '');
+    if (/^##\s/.test(l)) { extra = EXTRA_HEAD.test(l); return; }
+    const r = readIngredient(l, extra);
+    const add = (key, label, have, basic) => {
+      const g = groups.get(key);
+      if (g) { g.have = g.have || have; g.optional = g.optional && r.optional; return; }
+      groups.set(key, { label, have, optional: r.optional, basic });
+    };
+    if (!r.ids.length) {
+      if (!r.core || /^(boneless|skinless|meat|protein|vegetables?|veggies|toppings?|garnish|seasonings?|spices?|sauce|filling|marinade|dough|batter)$/.test(r.core)) return;
+      const have = customHas(P, l);
+      add('x:' + r.core, r.core.charAt(0).toUpperCase() + r.core.slice(1), have, false);
+      return;
+    }
+    const mine = r.ids.filter(id => pantryHas(P, id));
+    mine.forEach(id => { if (!P.base.has(id) || P.ids.has(id)) uses.add(id); });
+    const cust = !mine.length && customHas(P, l);
+    if (r.alt) {
+      const basic = r.ids.some(id => P.base.has(id));
+      add(r.ids.slice().sort().join('|'), r.ids.map(id => LABEL[id]).join(' or '), !!mine.length || cust, basic);
+    } else r.ids.forEach(id => add(id, LABEL[id], pantryHas(P, id) || cust, P.base.has(id) && !P.ids.has(id)));
+  });
+  let need = 0, have = 0;
+  const missing = [];
+  groups.forEach(g => {
+    if (g.optional || g.basic) return;
+    need++;
+    if (g.have) have++; else missing.push(g.label);
+  });
+  const mineUsed = Array.from(uses).filter(id => KIND[id] !== 'b');
+  return { need, have, missing, uses: mineUsed, ready: need > 0 && !missing.length, pct: need ? have / need : 0 };
+}
+// things to tap-add, grouped
+const QUICK_FOODS = [
+  ['Meat & protein', ['chicken', 'ground beef', 'beef', 'pork', 'bacon', 'sausage', 'ground turkey', 'shrimp', 'salmon', 'fish', 'eggs', 'tofu', 'black beans', 'pinto beans']],
+  ['Veggies & fruit', ['onion', 'garlic', 'bell pepper', 'chiles', 'tomatoes', 'potatoes', 'broccoli', 'carrots', 'celery', 'spinach', 'mushrooms', 'corn', 'zucchini', 'avocado', 'lettuce', 'cabbage', 'green onions', 'cilantro', 'lemon', 'lime']],
+  ['Dairy', ['cheese', 'milk', 'heavy cream', 'sour cream', 'cream cheese', 'parmesan', 'mozzarella', 'cotija', 'yogurt']],
+  ['Rice, pasta & bread', ['rice', 'pasta', 'tortillas', 'bread', 'noodles', 'biscuits', 'tortilla chips', 'oats']],
+  ['Sauces & cans', ['chicken broth', 'canned tomatoes', 'tomato sauce', 'pasta sauce', 'salsa', 'enchilada sauce', 'soy sauce', 'bbq sauce', 'hot sauce', 'honey', 'taco seasoning', 'cream of chicken', 'ranch', 'mayo', 'ketchup']]
+];
+const BASIC_CHOICES = ['salt', 'pepper', 'oil', 'water', 'butter', 'sugar', 'flour', 'garlic powder', 'onion powder', 'brown sugar', 'baking powder', 'baking soda', 'vanilla', 'cumin', 'chili powder', 'paprika', 'oregano', 'italian seasoning', 'cinnamon', 'red pepper flakes', 'soy sauce', 'ketchup', 'mustard', 'mayo', 'vinegar'];
+const DEFAULT_BASICS = ['salt', 'pepper', 'oil', 'water', 'butter', 'sugar', 'flour'];
+/* ---- end pantry ---- */
 
 /* ---------- add / edit ---------- */
 let F = null;
@@ -2320,6 +3012,8 @@ async function restoreBackup(file){
     putRecipe(r);
   }
   if (o.settings && typeof o.settings.name === 'string') putSettings({name:o.settings.name.slice(0, 40)});
+  if (o.settings && o.settings.pantry && Array.isArray(o.settings.pantry.items) && !hasKitchen()) putSettings({pantry:o.settings.pantry});
+  if (o.settings && o.settings.taste && Array.isArray(o.settings.taste.never)) { const T = tasteStore(); putSettings({taste:Object.assign({}, T, {never:neverList().concat(o.settings.taste.never.filter(x => typeof x === 'string' && !neverList().some(y => y.toLowerCase() === x.toLowerCase())))})}); }
   toast('Backup restored');
 }
 async function removeExamples(){
@@ -2376,8 +3070,16 @@ const A = {
   rmexamples: () => removeExamples(),
   dretry: () => { const r = cur(); loadFeed(r.key || 'foryou', true); },
   dmore: () => { const r = cur(); r.shown = (r.shown || 24) + 24; redrawDiscover(); },
-  tastereset: () => resetTaste()
+  tastereset: () => resetTaste(),
+  padd: () => { const i = $('#pq'); if (!i) return; const v = i.value; if (!v.trim()) { i.focus(); return; } const added = addPantry(v); i.value = ''; drawSug(''); if (!added.length) toast('Already in your kitchen'); },
+  pclear: () => clearPantry(),
+  cookready: () => { const r = cur(); r.readyOnly = !r.readyOnly; redrawCook(); },
+  cookmore: () => { const r = cur(); r.shown = (r.shown || 12) + 12; redrawCook(); },
+  cookwmore: () => { const r = cur(); r.wshown = (r.wshown || 12) + 12; redrawCook(); },
+  cookretry: () => loadCook(true),
+  nvadd: () => { const i = $('#neverin'); if (!i) return; const v = i.value.trim(); if (!v) { i.focus(); return; } i.value = ''; i.blur(); addNever(v); }
 };
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.id === 'neverin') { e.preventDefault(); A.nvadd(); } });
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump]');
   if (!t) return;
@@ -2436,8 +3138,8 @@ async function installApp(){
 function readShare(){
   if (window.top !== window) return null;
   let p; try { p = new URLSearchParams(location.search); } catch (e) { return null; }
-  const out = {add:p.has('add'), title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
-  if (!out.add && !out.title && !out.text && !out.url) return null;
+  const out = {add:p.has('add'), cook:p.has('cook'), title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
+  if (!out.add && !out.cook && !out.title && !out.text && !out.url) return null;
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   return out;
 }
@@ -2492,7 +3194,8 @@ async function boot(){
   }
   await startLocal();
   show(true);
-  if (share) openEditor(null, (share.title || share.text || share.url) ? share : null);
+  if (share && share.cook && !share.add) go({name:'cook'});
+  else if (share) openEditor(null, (share.title || share.text || share.url) ? share : null);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 $('#tabs').innerHTML = navHTML();

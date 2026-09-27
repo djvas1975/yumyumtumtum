@@ -35,6 +35,7 @@ const J = x => JSON.stringify(x);
     ['5 cloves garlic', 'garlic'],
     ['1/2 cup potato starch', 'cornstarch'],
     ['2 cups frozen edamame, thawed', 'peas'],
+    ['1 cup frozen peas and carrots', 'peas'],
     ['1 cup spam, cubed', 'core:spam']
   ];
   cases.forEach(([l, want]) => ok(read(l) === want, 'reads "' + l + '" -> ' + read(l)));
