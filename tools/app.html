@@ -1788,7 +1788,7 @@ const HEADS = [
   [/^((quick|easy|simple|full|the|recipe|cooking)\s+)?(instructions?|directions?|method|steps?|how to( make)?( it| them| this)?|how i made (it|this|them)|how i make (it|this|them)|preparation|to make)$/i, 'step'],
   [/^(notes?|tips?|pro tips?|chef(’|')?s tips?|substitutions?|swaps?|variations?|storage|to store|leftovers|recipe notes|make ahead)$/i, 'note'],
   [/^(equipment|cookware|tools|you(’|')?ll also need)$/i, 'equip'],
-  [/^(nutrition( facts| information| info)?|macros( per serving)?|protein|carbs|fat|fiber|sugar|sodium|course|cuisine|keywords?|author|prep( time)?|cook( time)?|total( time)?|time|servings|serves|serving size|yield|makes|calories|cals)$/i, 'skip']
+  [/^(nutrition( facts| information| info)?|macros( per serving)?|protein|carbs|fat|fiber|sugar|sodium|course|cuisine|keywords?|author|prep( time)?|cook( time)?|total( time)?|time|servings|serves|serving size|yield|makes|calories|cals|kcal|nutrition per serving)$/i, 'skip']
 ];
 const QTY = /^([\d½¼¾⅓⅔⅛⅜⅝⅞]|a (cup|pinch|dash|handful|few|couple)|an? \d|one |two |three |pinch|dash|handful|salt|pepper)/i;
 const UNIT = /\b(cups?|tbsps?|tablespoons?|tsps?|teaspoons?|oz|ounces?|lbs?|pounds?|grams?|g|kg|ml|liters?|cloves?|cans?|sticks?|slices?|pinch|dash|bunch)\b/i;

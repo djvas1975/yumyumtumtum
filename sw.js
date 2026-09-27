@@ -1,5 +1,5 @@
 // yumyumtumtum offline support. VERSION changes on every build so phones pick up updates.
-const VERSION = 'yyt-20260926-153357';
+const VERSION = 'yyt-20260926-191625';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
