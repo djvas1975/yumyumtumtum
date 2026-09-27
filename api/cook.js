@@ -1,5 +1,5 @@
 // yumyumtumtum "What can I cook?"
-// GET /api/cook?q=chicken+broccoli&q=chicken+rice  ->  recipes from the free recipe sites that fit those
+// GET /api/cook?q=chicken+broccoli|chicken+rice  ->  recipes from the free recipe sites that fit those
 // searches, each with its ingredient list, so the phone can check them against what's in the kitchen.
 // Options: n=24 (how many recipes to read, 6 to 30), debug=1 (how each site and page answered)
 //
@@ -17,7 +17,8 @@ module.exports = async (req, res) => {
   if (!cors(req, res)) return;
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   const qp = req.query || {};
-  const qs = [].concat(qp.q || []).map(x => clean(String(x)).toLowerCase().slice(0, 60)).filter(Boolean)
+  // several searches: q=chicken broccoli|ground beef potatoes (or q repeated)
+  const qs = [].concat(qp.q || []).flatMap(x => String(x).split('|')).map(x => clean(x).toLowerCase().slice(0, 60)).filter(Boolean)
     .filter((x, i, a) => a.indexOf(x) === i).slice(0, 4);
   if (!qs.length) { res.status(400).json({ ok: false, error: 'Tell me what you have first.' }); return; }
   const n = Math.max(6, Math.min(30, parseInt(qp.n, 10) || 24));
