@@ -72,7 +72,7 @@ const J = x => JSON.stringify(x);
   ]);
   const page = (name, ing) => '<html><head><script type="application/ld+json">' + JSON.stringify({ '@type': 'Recipe', name, image: 'https://x/big.jpg', recipeIngredient: ing, totalTime: 'PT25M', recipeYield: '4 servings' }) + '</script></head></html>';
   const pages = {
-    'https://www.recipetineats.com/chicken-broccoli-stir-fry/': page('Chicken and Broccoli Stir Fry', ['1 lb chicken breast', '3 cups broccoli florets', '3 tbsp soy sauce', '1 tbsp cornstarch']),
+    'https://www.recipetineats.com/chicken-broccoli-stir-fry/': page('Chicken and Broccoli Stir Fry Recipe by Tasty', ['1 lb chicken breast', '3 cups broccoli florets', '3 tbsp soy sauce', '1 tbsp cornstarch']),
     'https://www.recipetineats.com/lemon-cake/': page('Lemon Cake', ['2 cups flour'])
   };
   global.fetch = async (url) => {

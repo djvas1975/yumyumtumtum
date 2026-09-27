@@ -97,7 +97,7 @@ async function quickRecipe(url) {
   const y = asArray(r.recipeYield).map(v => String(v)).join(' ');
   const sv = parseInt((y.match(/\d+/) || [])[0], 10);
   return {
-    title: clean(decode(r.name)),
+    title: clean(decode(r.name)).replace(/\s+recipe by [\w .'&-]+$/i, '').replace(/\s+recipe$/i, ''),
     image: pickImage(r.image) || '',
     ingredients: asArray(r.recipeIngredient).map(s => clean(decode(String(s)))).filter(Boolean).slice(0, 80),
     totalTime: isoMinutes(r.totalTime) || (isoMinutes(r.prepTime) + isoMinutes(r.cookTime)),
