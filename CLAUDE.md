@@ -3,7 +3,7 @@
 Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **0.6**.
+Current version: **0.7**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -31,7 +31,7 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 
 ---
 
-## What the app does (v0.6)
+## What the app does (v0.7)
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
   Recently saved, **Browse by cuisine** (scrollable tiles: Mexican, Asian, Italian, Chinese,
   Japanese, Thai, Korean, Vietnamese, Indian, Greek, Mediterranean, Middle Eastern, American,
@@ -67,7 +67,7 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 | `tools/sync_caption.py` | Copies the caption parser from lib/parse.js into app.html (the app reuses it for Paste recipe text). |
 | `tests/reader.test.js`, `tests/captions.test.js` | Offline tests with fake pages and real captions. |
 | `vercel.json` | Function time limits (reader 60 s, Discover 30 s). |
-| `icons/` | App icons. `tools/make_mascot.py` draws the current one. |
+| `icons/` | App icons. `tools/make_photo_icons.py` makes the current ones from `tools/icon-art.jpg`. |
 
 Browsers can only call the reader from the app's own site (CORS allows https://djvas1975.github.io),
 so other websites can't use it as a free proxy. Direct requests with no browser origin (like
@@ -78,7 +78,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js` changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js`
-5. App changes: bump the version text in `V.me` (`version 0.6`).
+5. App changes: bump the version text in `V.me` (`version 0.7`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -140,23 +140,21 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   Taps and skips are stored in `Store.settings.taste`.
 
 ## App icon status
-- **In use:** the painted-cartoon chubby chef mascot (headband, big mustache, chopsticks,
-  spilled ramen bowl on an orange tile). Dave approved it earlier. It's drawn by
-  `tools/make_mascot.py`.
-- **Dave wants a chubby version of himself with the soup bowl. Two attempts were rejected:**
-  1. A hand-drawn cartoon Dave (`tools/make_dave_icons.py`, four poses). Verdict: didn't look like him.
-  2. Five versions built from his selfie (painted, comic-book, fogged glasses, two pig
-     versions). Verdict: "garbage". Nothing from this round is in the project, and Dave's
-     photo is not in the public repo.
-- **Suggested next try:** Dave makes or picks artwork he actually likes (an AI image app or an
-  artist), then attaches it and asks Claude to install it. Claude then:
-  1. Makes the rounded icons `icons/icon-512.png` and `icon-192.png`.
-  2. Makes `icon-maskable-512.png` and `icon-maskable-192.png`, with the art shrunk to about
-     80% so Android's round crop doesn't clip it.
-  3. Makes `logo-128.png` and swaps the embedded `LOGO` image in app.html.
-  4. Rebuilds and pushes.
-
-  On the phone, remove and re-add the home-screen icon to see the new one.
+- **In use (v0.7, Sept 26, 2026):** Dave's own pick, a 3D-cartoon "pigging out" picture of him
+  (glasses, gray goatee, napkin bib, giant burrito, ramen with chopsticks, orange background).
+  He made it in ChatGPT from his selfie. The full-size art is `tools/icon-art.jpg`.
+- `tools/make_photo_icons.py [picture]` makes everything from it: rounded `icon-512/192.png`,
+  `icon-maskable-512/192.png` (art at 82% so Android's round crop keeps his head and the food,
+  edges filled by stretching the picture's own edges), `logo-128.png`, and swaps the embedded
+  `LOGO` in app.html (a 256px JPEG). Pass a preview path as a second argument for a check sheet.
+  To change the icon again, attach the new picture and run it with that file.
+- Older icons, kept only for history: the drawn chef mascot (`tools/make_mascot.py`) and the
+  rejected hand-drawn Dave (`tools/make_dave_icons.py`). Claude-drawn portraits of Dave were
+  rejected twice. For likeness art, use a picture Dave makes or picks himself.
+- Installed phone icon: Chrome on Android checks the manifest when the app is opened (at most
+  once every 24 hours), then swaps the icon after the app is closed and the phone is plugged in
+  on Wi-Fi (web.dev "How Chrome handles updates to the web app manifest"). To force it sooner,
+  back up first (Me > Download backup), then remove and re-add the home-screen icon.
 
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.
@@ -169,4 +167,3 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - "More like this" row on a recipe page.
 - Scale servings and convert units.
 - YouTube cooking videos in Discover.
-- A new app icon, once Dave has art he likes.
