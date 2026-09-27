@@ -1,6 +1,13 @@
 {
   "functions": {
-    "api/recipe.js": { "maxDuration": 60 },
-    "api/discover.js": { "maxDuration": 30 }
+    "api/recipe.js": {
+      "maxDuration": 60
+    },
+    "api/discover.js": {
+      "maxDuration": 30
+    },
+    "api/cook.js": {
+      "maxDuration": 45
+    }
   }
 }

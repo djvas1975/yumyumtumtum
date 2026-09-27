@@ -214,3 +214,4 @@ function withTimeout(p, ms) {
 
 module.exports.SOURCES = SOURCES;
 module.exports.cardsFromPage = cardsFromPage;
+module.exports.readSource = readSource;
