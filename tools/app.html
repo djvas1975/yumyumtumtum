@@ -1132,7 +1132,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 1.1</p></div>';
+    + '<p class="ver">yumyumtumtum · version 1.1.1</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -2524,14 +2524,19 @@ function tlAdd(){
   TL = null;
 }
 
-/* ---------- deals: your stores' weekly ads, Food 4 Less sale prices (Kroger's official data), and deals you save ---------- */
+/* ---------- deals: your stores' weekly ads and deals you save ----------
+   Kroger-family sale prices (api/deals.js) only work for a store whose chain has kroger:true. The Manteca
+   Food 4 Less is run by PAQ, Inc. (an employee-owned franchisee), not Kroger, so Kroger has no prices for it
+   (checked Sept 28, 2026: Kroger's store finder listed nothing within 15 miles of 95336). The Kroger chain
+   stays hidden in case Dave ever adds a Ralphs or Kroger store. */
 // weekly ad and deals pages for the chains we know
 const CHAINS = {
-  food4less:{name:'Food 4 Less', kroger:true, ad:'https://www.food4less.com/weeklyad', deals:'https://www.food4less.com/pr/weekly-digital-deals'},
+  food4less:{name:'Food 4 Less', ad:'https://myfood4less.com/store/food4less/flyers/weekly'},
   safeway:{name:'Safeway', ad:'https://www.safeway.com/weeklyad/', deals:'https://www.safeway.com/shop/deals/sale-prices.html'},
   raleys:{name:'Raley’s', ad:'https://www.raleys.com/weekly-ad', deals:'https://www.raleys.com/something-extra/offers-and-savings'},
   savemart:{name:'Save Mart', ad:'https://savemart.com/flyers', deals:'https://shop.savemart.com/store/savemart/collections/rc-weekly-ad'},
-  other:{name:'Other store'}
+  other:{name:'Other store'},
+  kroger:{name:'Ralphs or Kroger', kroger:true, hidden:true, ad:'https://www.kroger.com/weeklyad', deals:'https://www.kroger.com/pr/weekly-digital-deals'}
 };
 const DEFAULT_STORES = [
   {id:'s-f4l', chain:'food4less', name:'Food 4 Less', where:'Yosemite & Spreckels', address:'131 Spreckels Ave, Manteca, CA 95336', phone:'(209) 823-0806'},
@@ -2570,7 +2575,7 @@ async function krogerCall(params){
   try {
     const res = await fetch(READER + '/api/deals?' + params + '&v=' + READER_V, {signal:ctrl.signal, headers:{'x-kroger-id':k.id || '', 'x-kroger-secret':k.secret || ''}});
     const j = await res.json();
-    if (!j.ok) throw new Error(j.error || "Couldn't get Food 4 Less prices.");
+    if (!j.ok) throw new Error(j.error || "Couldn't get Kroger prices.");
     if (!!j.test !== !!DEALS.test) { DEALS.test = !!j.test; saveDealsLS(); }
     return j;
   } catch (e) {
@@ -2644,10 +2649,10 @@ function dealsBodyHTML(rt){
 }
 function krogerNote(){
   if (!krogerStores().length) return '';
-  if (!hasKroger()) return '<div class="getcard dconnect"><div><b>Turn on Food 4 Less sale prices</b><span>Free from Kroger (they own Food 4 Less). Takes about 10 minutes, one time.</span></div><button class="btn primary sm" data-act="kconnect">Set up</button></div>';
+  if (!hasKroger()) return '<div class="getcard dconnect"><div><b>Turn on Kroger sale prices</b><span>Free from Kroger. Takes about 10 minutes, one time.</span></div><button class="btn primary sm" data-act="kconnect">Set up</button></div>';
   if (DEALS.test) return '<div class="getcard dconnect"><div><b>These Kroger keys are for testing</b><span>They came from Kroger\'s test area, so prices may not be real. Make the app again under Production and paste the new keys.</span></div><button class="btn primary sm" data-act="kconnect">Fix</button></div>';
   const need = krogerStores().filter(s => !s.loc);
-  if (need.length) return '<div class="getcard dconnect"><div><b>Pick your Food 4 Less</b><span>So prices match your store.</span></div><button class="btn primary sm" data-act="kfind" data-id="' + esc(need[0].id) + '">Find it</button></div>';
+  if (need.length) return '<div class="getcard dconnect"><div><b>Pick your ' + esc(need[0].name) + '</b><span>So prices match your store.</span></div><button class="btn primary sm" data-act="kfind" data-id="' + esc(need[0].id) + '">Find it</button></div>';
   return '';
 }
 function dealRowHTML(d){ return '<div class="drow">' + icon('tag') + '<div><b>' + esc(d.price) + (d.reg ? ' <s>' + esc(d.reg) + '</s>' : '') + ' at ' + esc(d.store) + '</b><small>' + esc(d.name) + (d.saved ? ' · you saved this' : '') + '</small></div></div>'; }
@@ -2657,12 +2662,12 @@ function forListHTML(){
   const err = krogerStores().map(s => DEALS.error['l' + s.id]).filter(Boolean)[0];
   let h = krogerNote();
   if (!items.length) return h + '<div class="empty small"><h3>Nothing on your list yet</h3><p>Add things to your grocery list and any deals on them show up here.</p><button class="btn ghost" data-tab="list">' + icon('cart') + 'Open grocery list</button></div>' + otherStoresNote();
-  if (loading) h += '<p class="readst"><span class="spin sm"></span>Checking Food 4 Less prices…</p>';
+  if (loading) h += '<p class="readst"><span class="spin sm"></span>Checking Kroger prices…</p>';
   if (err && !loading) h += '<p class="readst bad">' + esc(err) + ' <button class="linkbtn sm" data-act="dlistretry">Try again</button></p>';
   const withDeals = items.map(x => ({x:x, d:dealsFor(x)}));
   const found = withDeals.filter(y => y.d.length), none = withDeals.filter(y => !y.d.length);
   const live = hasKroger() && krogerStores().some(s => s.loc);
-  if (!live && !found.length) return h + '<p class="dhint">' + (myDeals().length ? 'None of the deals you saved match your list right now.' : 'When Food 4 Less sale prices are on, or you save a deal you spot in a weekly ad, any deals on your ' + plural(items.length, 'item') + ' show up here.') + '</p>' + otherStoresNote();
+  if (!live && !found.length) return h + '<p class="dhint">' + (myDeals().length ? 'None of the deals you saved match your list right now.' : 'When you save a deal you spot in a weekly ad, it shows up here if it matches something on your list.') + '</p>' + otherStoresNote();
   h += '<section class="sec"><div class="sec-h"><h2>On sale</h2>' + (found.length ? '<span class="muted">' + found.length + '</span>' : '') + '</div>'
     + (found.length ? found.map(y => '<div class="dcardl"><b>' + esc(y.x.name) + '</b>' + y.d.slice(0, 3).map(dealRowHTML).join('') + '</div>').join('') : '<p class="dhint">' + (loading ? 'Looking…' : 'No deals found yet for what\'s on your list.') + '</p>')
     + '</section>';
@@ -2713,7 +2718,7 @@ function saleCardHTML(x){
 }
 function storesHTML(){
   const stores = myStores();
-  return '<p class="dhint">Your stores, in the order they show up. Food 4 Less sale prices come from Kroger. The others link to their own weekly ads.</p>'
+  return '<p class="dhint">Your stores, in the order they show up. The buttons open each store\'s own weekly ad.</p>'
     + stores.map(s => {
       const c = CHAINS[s.chain] || {};
       return '<div class="panel stcard"><div class="sthead"><div><h2>' + esc(s.name) + '</h2><p>' + esc([s.where, s.address].filter(Boolean).join(' · ')) + '</p></div><button class="iconbtn" data-stmenu="' + esc(s.id) + '" aria-label="Options for ' + esc(storeLabel(s)) + '">' + icon('more') + '</button></div>'
@@ -2725,7 +2730,7 @@ function storesHTML(){
         + '</div>';
     }).join('')
     + '<div class="morebar"><button class="btn ghost" data-act="storenew">' + icon('plus') + 'Add a store</button></div>'
-    + (hasKroger() ? '<p class="hint" style="text-align:center">Kroger keys saved. <button class="linkbtn sm" data-act="kconnect">Change</button></p>' : '');
+    + (hasKroger() && krogerStores().length ? '<p class="hint" style="text-align:center">Kroger keys saved. <button class="linkbtn sm" data-act="kconnect">Change</button></p>' : '');
 }
 function mountDeals(r){
   if (!hasKroger()) return;
@@ -2752,7 +2757,7 @@ let SF = null;
 function openStoreForm(id){
   const s = id ? storeBy(id) : null;
   SF = {id:id || '', chain:s ? s.chain : 'safeway'};
-  const chainBtns = () => Object.keys(CHAINS).map(k => '<button type="button" class="chip' + (SF.chain === k ? ' on' : '') + '" data-sfchain="' + k + '">' + esc(CHAINS[k].name) + '</button>').join('');
+  const chainBtns = () => Object.keys(CHAINS).filter(k => !CHAINS[k].hidden || SF.chain === k).map(k => '<button type="button" class="chip' + (SF.chain === k ? ' on' : '') + '" data-sfchain="' + k + '">' + esc(CHAINS[k].name) + '</button>').join('');
   openSheet(sheetHead(s ? 'Edit store' : 'Add a store') + '<div class="sh-body">'
     + '<div class="field"><span class="lbl">Store</span><div class="wrapchips" id="sfchains">' + chainBtns() + '</div></div>'
     + '<div class="field"><label class="lbl" for="sf-name">Name</label><input class="inp" id="sf-name" maxlength="40" value="' + esc(s ? s.name : 'Safeway') + '"></div>'
@@ -2801,16 +2806,16 @@ function saveDealForm(){
 function removeDeal(id){ const before = Store.settings.mydeals || []; putSettings({mydeals:before.filter(d => d.id !== id)}); redrawDeals(); redrawList(); toast('Deal removed', {label:'Undo', fn:() => { putSettings({mydeals:before}); redrawDeals(); }}); }
 function openKroger(){
   const k = krogerKeys();
-  openSheet(sheetHead('Food 4 Less sale prices') + '<div class="sh-body">'
-    + '<p class="dhint">Food 4 Less is owned by Kroger, and Kroger gives out its prices for free to apps like this one. You just need your own free key. One time, about 10 minutes.</p>'
+  openSheet(sheetHead('Kroger sale prices') + '<div class="sh-body">'
+    + '<p class="dhint">Kroger gives out prices for its own stores (Ralphs, Kroger, and others) for free to apps like this one. You just need your own free key. One time, about 10 minutes.</p>'
     + '<ol class="ksteps"><li>Go to <a href="https://developer.kroger.com/" target="_blank" rel="noopener noreferrer">developer.kroger.com</a> and create a free account (or sign in).</li>'
-    + '<li>Create an app. Call it <b>yumyumtumtum</b>. If it asks for a redirect link, use <b>https://djvas1975.github.io/yumyumtumtum/</b>. If it asks which APIs, pick <b>Products</b> and <b>Locations</b>. If it asks Production or Certification, pick <b>Production</b>.</li>'
+    + '<li>Create an app with a name nobody else would use (names must be unique). Pick <b>Production</b>, then the <b>Products</b> and <b>Locations</b> APIs. Leave the sign-in (consent) section blank, and tap <b>Register</b>.</li>'
     + '<li>Copy the app\'s <b>Client ID</b> and <b>Client Secret</b> into the boxes below.</li></ol>'
     + '<p class="hint">The buttons on Kroger\'s site may be named a little differently. If you get stuck, send Claude a screenshot.</p>'
     + '<div class="field"><label class="lbl" for="kc-id">Client ID</label><input class="inp" id="kc-id" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(k.id || '') + '"></div>'
     + '<div class="field"><label class="lbl" for="kc-secret">Client Secret</label><input class="inp" id="kc-secret" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(k.secret || '') + '"></div>'
     + '<p class="hint">Saved on this phone and in your backups. It only lets the app read Kroger\'s prices, nothing about you.</p>'
-    + '</div><div class="sh-foot">' + (k.id ? '<button class="btn ghost" data-act="kforget">Remove keys</button>' : '<button class="btn ghost" data-act="closesheet">Cancel</button>') + '<button class="btn primary" data-act="ksave">Save</button></div>', {full:true, label:'Food 4 Less sale prices'});
+    + '</div><div class="sh-foot">' + (k.id ? '<button class="btn ghost" data-act="kforget">Remove keys</button>' : '<button class="btn ghost" data-act="closesheet">Cancel</button>') + '<button class="btn primary" data-act="ksave">Save</button></div>', {full:true, label:'Kroger sale prices'});
 }
 async function saveKroger(){
   const id = $('#kc-id').value.trim(), secret = $('#kc-secret').value.trim();

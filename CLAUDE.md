@@ -3,7 +3,7 @@
 Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.1**.
+Current version: **1.1.1**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -72,10 +72,14 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
   (131 Spreckels Ave, at Yosemite), Safeway (1187 S Main St), Raley's (1280 Lathrop Rd), Save Mart
   (1172 N Main St), Save Mart (1431 W Yosemite Ave), all Manteca. Addresses and phones checked
   Sept 28, 2026 on each chain's own store page or listings. Dave can add, edit, reorder, or remove
-  stores. Each has Weekly ad and All deals buttons (the chain's official pages), Map, and Call.
-  Food 4 Less sale prices come from Kroger's official free API once Dave pastes his own Kroger
-  developer keys (Deals > Set up). The other chains don't offer deals data, so Dave saves deals he
-  spots ("Save a deal"), and they show on his list until the end date.
+  stores. Each has Weekly ad and All deals buttons (the chain's official pages; Food 4 Less has only
+  its weekly ad at myfood4less.com), Map, and Call. None of these chains share deals data, so Dave
+  saves deals he spots ("Save a deal"), and they show on his list until the end date.
+  **The Manteca Food 4 Less is not Kroger's.** It's run by PAQ, Inc. of Lodi, an employee-owned
+  franchisee (Manteca Chamber listing; Progressive Grocer: Kroger "doesn't have any administrative
+  control over PAQ's Food 4 Less stores"). v1.1 wrongly assumed Kroger and had Dave make Kroger keys;
+  with his real keys Kroger's store finder answered but listed no stores within 15 miles of 95336.
+  v1.1.1 points Food 4 Less at PAQ's weekly ad and hides the Kroger parts.
 - **Me:** name, stats, **What it's learned you like** (taste chips, **Foods you don't eat**
   list, Start over), backup and restore, remove examples, storage info.
 - Works offline once installed (service worker). Long-press the icon for Save and What can I cook shortcuts.
@@ -107,7 +111,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js` or anything in `lib/pantry.js` changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/deals.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.1`).
+5. App changes: bump the version text in `V.me` (`version 1.1.1`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -239,18 +243,24 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   official ad links are in `CHAINS` (Food 4 Less, Safeway, Raley's, Save Mart, Other with its own link).
   A Kroger-family store keeps its Kroger `loc` (locationId). Saved deals: `Store.settings.mydeals`
   `{id, text, food, price, reg, store, ends}` (end date defaults to next Tuesday).
-- Kroger keys: `Store.settings.kroger = {id, secret}`, entered on the phone and kept in backups. After
-  saving, the app looks up Food 4 Less near 95336 and picks the one on Spreckels, or shows a list.
+- Kroger prices (dormant since v1.1.1): only for a store whose chain has `kroger:true`. The only such
+  chain is the hidden `kroger` one ("Ralphs or Kroger"), not offered in Add a store. Keys:
+  `Store.settings.kroger = {id, secret}`, kept in backups. Dave made a Production app
+  (`djvas1975recipes`) on Sept 28, 2026 and saved its keys on his phone; the name "yumyumtumtum" was
+  already taken on Kroger's side. After saving, the app looks up stores near the store's ZIP and
+  matches the street, or shows a list.
   This week's sales = 28 everyday searches (`WEEK_TERMS`), cached 12 hours; list prices cached 12 hours
   per item (`yyt-deals-v1` in localStorage).
 - Kroger's API gives the regular and promo price per store (`items[0].price.regular/promo`, promo 0 =
   no sale, and a `locationId` is required to get any price). Scope `product.compact`, client
-  credentials. Checked against Kroger's docs; **not yet tested live**, because Dave didn't have keys
-  yet on Sept 28, 2026. The first real run is the check.
+  credentials. Dave's real keys were accepted on Sept 28, 2026 (the store finder answered with no
+  error), but no price lookup has run live, since there's no Kroger store near him.
 - Flipp was considered for Safeway/Raley's/Save Mart ads and ruled out: its terms forbid scraping.
-- Setup steps shown to Dave: developer.kroger.com, create an app named yumyumtumtum, redirect
-  https://djvas1975.github.io/yumyumtumtum/, APIs Products and Locations, environment Production,
-  then paste the Client ID and Secret.
+- Kroger setup steps (Deals > Set up, only shown with a Kroger store): developer.kroger.com, create an
+  app with a unique name, Production, APIs Products (Public) and Locations (Public), leave the consent
+  section blank, Register, then paste the client_id and client_secret.
+- Ideas for real Safeway/Raley's/Save Mart/Food 4 Less prices: none found from official sources. Their
+  sites block automated reading, and Flipp's terms forbid scraping.
 
 ## App icon status
 - **In use (v0.7, Sept 26, 2026):** Dave's own pick, a 3D-cartoon "pigging out" picture of him

@@ -134,9 +134,9 @@ and you can add anything else too. Tap **Done shopping** to move what's in the c
 your kitchen.
 
 The **Deals** tab has weekly ads for your stores (Food 4 Less, Safeway, Raley's, and both
-Save Marts to start, and you can add more). Food 4 Less sale prices come straight from
-Kroger's free developer service once you add your own key. For the others, tap the weekly
-ad and save any deal you spot, and it shows up next to that item on your list.
+Save Marts to start, and you can add more). None of these stores share their deals with
+apps, so tap a weekly ad and save any deal you spot. It shows up next to that item on your
+list until the sale ends.
 
 ## Where recipes are stored
 On the phone itself (works offline). Nothing is uploaded anywhere. Use
