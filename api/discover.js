@@ -65,6 +65,43 @@ const SOURCES = [
   { id: 'iheartrecipes', name: 'I Heart Recipes', kind: 'wp', home: 'https://iheartrecipes.com', topics: SOUTH },
   { id: 'divascancook', name: 'Divas Can Cook', kind: 'wp', home: 'https://divascancook.com', topics: SOUTH },
   { id: 'handletheheat', name: 'Handle the Heat', kind: 'wp', home: 'https://handletheheat.com', topics: BAKE }
+  // being tried out: only used when asked for by name (sites=...)
+  { id: 'dinneratthezoo', name: 'Dinner at the Zoo', kind: 'wp', home: 'https://www.dinneratthezoo.com', trial: true },
+  { id: 'thecozycook', name: 'The Cozy Cook', kind: 'wp', home: 'https://thecozycook.com', trial: true },
+  { id: 'cookingclassy', name: 'Cooking Classy', kind: 'wp', home: 'https://www.cookingclassy.com', trial: true },
+  { id: 'lilluna', name: 'Lil’ Luna', kind: 'wp', home: 'https://lilluna.com', trial: true },
+  { id: 'wellplated', name: 'Well Plated', kind: 'wp', home: 'https://www.wellplated.com', trial: true },
+  { id: 'chefsavvy', name: 'Chef Savvy', kind: 'wp', home: 'https://chefsavvy.com', trial: true },
+  { id: 'saltandlavender', name: 'Salt & Lavender', kind: 'wp', home: 'https://www.saltandlavender.com', trial: true },
+  { id: 'bellyfull', name: 'Belly Full', kind: 'wp', home: 'https://bellyfull.net', trial: true },
+  { id: 'plainchicken', name: 'Plain Chicken', kind: 'wp', home: 'https://www.plainchicken.com', trial: true },
+  { id: 'thechunkychef', name: 'The Chunky Chef', kind: 'wp', home: 'https://www.thechunkychef.com', trial: true },
+  { id: 'lecremedelacrumb', name: 'Creme de la Crumb', kind: 'wp', home: 'https://www.lecremedelacrumb.com', trial: true },
+  { id: 'gimmesomeoven', name: 'Gimme Some Oven', kind: 'wp', home: 'https://www.gimmesomeoven.com', trial: true },
+  { id: 'melskitchencafe', name: 'Mel’s Kitchen Cafe', kind: 'wp', home: 'https://www.melskitchencafe.com', trial: true },
+  { id: 'thestayathomechef', name: 'The Stay at Home Chef', kind: 'wp', home: 'https://thestayathomechef.com', trial: true },
+  { id: 'dinnerthendessert', name: 'Dinner, then Dessert', kind: 'wp', home: 'https://dinnerthendessert.com', trial: true },
+  { id: 'addapinch', name: 'Add a Pinch', kind: 'wp', home: 'https://addapinch.com', trial: true },
+  { id: 'sixsistersstuff', name: 'Six Sisters’ Stuff', kind: 'wp', home: 'https://www.sixsistersstuff.com', trial: true },
+  { id: 'julieseatsandtreats', name: 'Julie’s Eats & Treats', kind: 'wp', home: 'https://www.julieseatsandtreats.com', trial: true },
+  { id: 'bowlofdelicious', name: 'Bowl of Delicious', kind: 'wp', home: 'https://www.bowlofdelicious.com', trial: true },
+  { id: 'chelseasmessyapron', name: 'Chelsea’s Messy Apron', kind: 'wp', home: 'https://www.chelseasmessyapron.com', trial: true },
+  { id: 'kitchenfunwithmy3sons', name: 'Kitchen Fun With My 3 Sons', kind: 'wp', home: 'https://www.kitchenfunwithmy3sons.com', trial: true },
+  { id: 'southernbite', name: 'Southern Bite', kind: 'wp', home: 'https://southernbite.com', trial: true },
+  { id: 'spicysouthernkitchen', name: 'Spicy Southern Kitchen', kind: 'wp', home: 'https://spicysouthernkitchen.com', trial: true },
+  { id: 'jessicagavin', name: 'Jessica Gavin', kind: 'wp', home: 'https://www.jessicagavin.com', trial: true },
+  { id: 'inspiredtaste', name: 'Inspired Taste', kind: 'wp', home: 'https://www.inspiredtaste.net', trial: true },
+  { id: 'keviniscooking', name: 'Kevin Is Cooking', kind: 'wp', home: 'https://keviniscooking.com', trial: true },
+  { id: 'muybueno', name: 'Muy Bueno', kind: 'wp', home: 'https://muybuenoblog.com', trial: true },
+  { id: 'mamamaggieskitchen', name: 'Mama Maggie’s Kitchen', kind: 'wp', home: 'https://mamamaggieskitchen.com', trial: true },
+  { id: 'chilipeppermadness', name: 'Chili Pepper Madness', kind: 'wp', home: 'https://www.chilipeppermadness.com', trial: true },
+  { id: 'heygrillhey', name: 'Hey Grill Hey', kind: 'wp', home: 'https://heygrillhey.com', trial: true },
+  { id: 'preppykitchen', name: 'Preppy Kitchen', kind: 'wp', home: 'https://preppykitchen.com', trial: true },
+  { id: 'sugarspunrun', name: 'Sugar Spun Run', kind: 'wp', home: 'https://sugarspunrun.com', trial: true },
+  { id: 'bakerbynature', name: 'Baker by Nature', kind: 'wp', home: 'https://bakerbynature.com', trial: true },
+  { id: 'tastesoflizzyt', name: 'Tastes of Lizzy T', kind: 'wp', home: 'https://www.tastesoflizzyt.com', trial: true },
+  { id: 'thegirlwhoateeverything', name: 'The Girl Who Ate Everything', kind: 'wp', home: 'https://www.the-girl-who-ate-everything.com', trial: true },
+  { id: 'persnicketyplates', name: 'Persnickety Plates', kind: 'wp', home: 'https://www.persnicketyplates.com', trial: true },
 ];
 // Food Network, Allrecipes, Simply Recipes, Serious Eats and some blogs turn servers away, so they're left out here.
 // The app offers a button to search them in the browser instead, and reading a single recipe from them still works.
@@ -80,7 +117,7 @@ module.exports = async (req, res) => {
   const limit = debug && qp.wait ? Math.min(25000, parseInt(qp.wait, 10) || SITE_TIMEOUT) : SITE_TIMEOUT;
   let sources;
   if (want.length) sources = SOURCES.filter(s => want.includes(s.id));
-  else if (qp.all) sources = SOURCES.slice();
+  else if (qp.all) sources = SOURCES.filter(s => !s.trial);
   else sources = SOURCES.filter(s => s.core || (q && s.topics && s.topics.test(q.toLowerCase())));
 
   const report = [];
