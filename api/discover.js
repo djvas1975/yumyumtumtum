@@ -64,7 +64,7 @@ const SOURCES = [
   { id: 'dimitrasdishes', name: 'Dimitras Dishes', kind: 'wp', home: 'https://www.dimitrasdishes.com', topics: GREEK },
   { id: 'iheartrecipes', name: 'I Heart Recipes', kind: 'wp', home: 'https://iheartrecipes.com', topics: SOUTH },
   { id: 'divascancook', name: 'Divas Can Cook', kind: 'wp', home: 'https://divascancook.com', topics: SOUTH },
-  { id: 'handletheheat', name: 'Handle the Heat', kind: 'wp', home: 'https://handletheheat.com', topics: BAKE }
+  { id: 'handletheheat', name: 'Handle the Heat', kind: 'wp', home: 'https://handletheheat.com', topics: BAKE },
   // being tried out: only used when asked for by name (sites=...)
   { id: 'dinneratthezoo', name: 'Dinner at the Zoo', kind: 'wp', home: 'https://www.dinneratthezoo.com', trial: true },
   { id: 'thecozycook', name: 'The Cozy Cook', kind: 'wp', home: 'https://thecozycook.com', trial: true },
