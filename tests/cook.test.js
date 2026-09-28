@@ -49,7 +49,25 @@ const J = x => JSON.stringify(x);
   const P = X.makePantry(['chicken thighs', 'eggs', 'soy sauce', 'honey', 'ketchup', 'garlic', 'rice'].map(X.lookupFood), X.DEFAULT_BASICS);
   const korean = ['1.5 lbs boneless, cut into 1 in pieces', '4 tbsp soy sauce', '1 large egg', '1/2 tsp salt', '1/4 tsp black pepper', '1 tsp garlic powder', '1/2 cup potato starch', '1/4 cup gochujang', '2 tbsp brown sugar', '2 tbsp honey', '1 tbsp rice vinegar', '1 tbsp ketchup', '1 tbsp sesame oil', '5 cloves garlic', '1 tbsp butter'];
   const m1 = X.matchRecipe(korean, P, 'Korean Popcorn Chicken');
-  ok(m1.need === 12 && m1.have === 6 && J(m1.missing) === J(['Garlic powder', 'Cornstarch', 'Gochujang', 'Brown sugar', 'Rice vinegar', 'Sesame oil']), 'Korean popcorn chicken: chicken from the title, basics skipped -> ' + J(m1));
+  ok(m1.need === 11 && m1.have === 6 && J(m1.missing) === J(['Cornstarch', 'Gochujang', 'Brown sugar', 'Rice vinegar', 'Sesame oil']) && J(m1.spices) === J(['Garlic powder']), 'Korean popcorn chicken: chicken from the title, basics skipped, spices apart -> ' + J(m1));
+  // spices are listed apart, and "Usual spices" covers them
+  const tacos = ['1 lb ground beef', '8 small tortillas', '1 tbsp chili powder', '1 tsp cumin', '1 tsp paprika', '1/2 tsp garlic powder', '2 tbsp tomato paste', 'shredded cheese, for serving'];
+  const t1 = X.matchRecipe(tacos, X.makePantry(['ground beef', 'tortillas', 'tomato paste'].map(X.lookupFood), X.DEFAULT_BASICS), 'Ground Beef Tacos');
+  ok(t1.main && !t1.ready && t1.spices.length === 4 && t1.need === 3, 'tacos: have the main stuff, 4 spices to check -> ' + J(t1));
+  const t2 = X.matchRecipe(tacos, X.makePantry(['ground beef', 'tortillas', 'tomato paste'].map(X.lookupFood), X.DEFAULT_BASICS.concat(['spices'])), 'Ground Beef Tacos');
+  ok(t2.ready && !t2.spices.length, 'tacos: ready when usual spices are on hand');
+  // several foods typed at once
+  ok(J(X.splitFoods('chicken rice beans cheese').map(x => x.id)) === J(['chicken', 'rice', 'beans', 'cheese']), 'typed without commas: chicken rice beans cheese -> 4 foods');
+  ok(J(X.splitFoods('chicken spam rice').map(x => x.id)) === J(['chicken', 'x:spam', 'rice']), 'typed without commas keeps unknown foods -> ' + J(X.splitFoods('chicken spam rice')));
+  ok(X.splitFoods('boneless skinless chicken thighs').length === 1 && X.splitFoods('half and half')[0].id === 'heavy cream' && X.splitFoods('cream of chicken soup').length === 1, 'one food stays one food');
+  // categories
+  const cat = (t, c) => J(X.recipeCats({ title: t, category: c || '' }));
+  [['Cheesy Salsa Chicken and Rice', '', '["main"]'], ['Creamy Chicken & Wild Rice Soup', '', '["soups"]'], ['Chocolate Chip Cookies', '', '["desserts","baking"]'],
+   ['Banana Bread', '', '["baking","bread"]'], ['Mexican Rice', 'Side Dish', '["sides"]'], ['Garlic Mashed Potatoes', '', '["sides"]'], ['Buffalo Chicken Dip', '', '["apps"]'],
+   ['Easy Salsa', '', '["apps"]'], ['Breakfast Burritos', '', '["breakfast"]'], ['Taco Salad', '', '["salads"]'], ['Horchata', '', '["drinks"]'], ['Chicken Pot Pie', '', '["main"]'],
+   ['Chili Lime Chicken', '', '["main"]'], ['Beef Chili', '', '["soups"]'], ['Egg Rolls', '', '["apps"]'], ['Dinner Rolls', '', '["baking","bread"]'], ['Honey Garlic Chicken', 'Main Course', '["main"]']]
+    .forEach(([t, c, want]) => ok(cat(t, c) === want, 'category of "' + t + '" -> ' + cat(t, c)));
+  ok(J(X.recipeCats({ title: 'Grandma\'s Special', meal: ['Dessert'] })) === '["desserts"]', 'saved recipe meal type counts');
   const ench = ['## For the enchiladas', '2 cups shredded chicken', '10 corn tortillas', '2 cups shredded Mexican cheese', '1 (10 oz) can red enchilada sauce', '## Toppings', 'sour cream', 'sliced green onions', 'cilantro'];
   const m2 = X.matchRecipe(ench, X.makePantry(['chicken', 'tortillas', 'cheese', 'enchilada sauce'].map(X.lookupFood), X.DEFAULT_BASICS));
   ok(m2.ready && m2.need === 4, 'enchiladas: toppings section is optional, ready to cook -> ' + J(m2));
@@ -91,6 +109,8 @@ const J = x => JSON.stringify(x);
   ok(r1.code === 200 && it.length === 1 && it[0].title === 'Chicken and Broccoli Stir Fry' && it[0].ingredients.length === 4 && it[0].totalTime === 25 && it[0].servings === 4, 'cook: finds the recipe and reads its ingredients, skips roundups and short lists -> ' + J(it.map(x => [x.title, x.ingredients.length])));
   ok(it[0].image === 'https://www.recipetineats.com/a.jpg' && it[0].sourceName === 'RecipeTin Eats', 'cook: keeps the card photo and site name');
   ok(/s-maxage/.test(r1.headers['Cache-Control']) && J(r1.body.q) === J(['chicken broccoli', 'chicken rice']), 'cook: several searches in one q, answers cached -> ' + J(r1.body.q));
+  const r3 = await call({ q: 'chicken broccoli', have: 'chicken,broccoli,soy sauce' });
+  ok(r3.code === 200 && r3.body.items.length === 1, 'cook: takes the kitchen list');
   const r2 = await call({});
   ok(r2.code === 400, 'cook: asks for something to search');
   const mm = X.matchRecipe(it[0].ingredients, X.makePantry(['chicken', 'broccoli', 'soy sauce'].map(X.lookupFood), X.DEFAULT_BASICS), it[0].title);

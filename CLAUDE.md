@@ -3,7 +3,7 @@
 Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **0.9**.
+Current version: **1.0**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -31,12 +31,15 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 
 ---
 
-## What the app does (v0.9)
+## What the app does (v1.0)
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
   Recently saved, **Browse by cuisine** (scrollable tiles: Mexican, Asian, Italian, Chinese,
   Japanese, Thai, Korean, Vietnamese, Indian, Greek, Mediterranean, Middle Eastern, American,
-  Southern, Cajun, BBQ, Caribbean, French, Spanish), collections, saved videos, quick fixes,
-  still want to try, cook it again.
+  Southern, Cajun, BBQ, Caribbean, French, Spanish), **Browse by category** (Main dishes, Sides,
+  Appetizers, Soups & stews, Salads, Breakfast, Desserts, Baking, Bread, Drinks), collections,
+  saved videos, quick fixes, still want to try, cook it again.
+- **Category page** (tap a category tile): "What can I make?" card, Dave's saved recipes in that
+  category, and "New ideas for you" from the recipe sites, ranked by his taste.
 - **Save a recipe:** the + button, or **Share > yumyumtumtum** from TikTok, Instagram, YouTube,
   Chrome, etc. (Android share target). The link is read automatically: photo, ingredients (with
   groups like "For the sauce"), directions, notes and substitutions, cookware, nutrition,
@@ -52,12 +55,14 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
   cuisine chips. Tap a card for a full preview, one tap saves it, ✕ = "Not for me".
 - **What can I cook?** (green card on Home, or long-press the app icon): Dave adds what's in
   his kitchen (type it, or tap foods). It shows his saved recipes and new ones from the recipe
-  sites that he can make, each marked "Ready to cook" or "Need honey, gochujang", with a
-  "Ready to cook only" filter. Basics (salt, pepper, oil, water, butter, sugar, flour) count as
-  on hand and can be changed. Recipe pages and Discover previews say "You have 7 of 9. Need …".
+  sites, each marked "Ready to cook", "Have the main stuff" (only spices missing), or "Need
+  honey, gochujang", with category chips (All, Main dishes, Sides, …) and a "Ready to cook only"
+  filter. Typing "chicken rice beans cheese" without commas adds four foods. Basics (salt,
+  pepper, oil, water, butter, sugar, flour) count as on hand; "Usual spices" can be turned on.
+  Recipe pages and Discover previews say "You have 7 of 9. Need … Spices: …".
 - **Me:** name, stats, **What it's learned you like** (taste chips, **Foods you don't eat**
   list, Start over), backup and restore, remove examples, storage info.
-- Works offline once installed (service worker). Long-press the icon for a quick Save shortcut.
+- Works offline once installed (service worker). Long-press the icon for Save and What can I cook shortcuts.
 
 ## How it's built
 | File | Purpose |
@@ -68,8 +73,8 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 | `api/recipe.js` | Recipe reader: `GET /api/recipe?url=...` (add `&debug=1` for a trace). |
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
-| `api/cook.js` | What can I cook: `GET /api/cook?q=chicken broccoli|eggs rice` (up to 4 searches split on `|`, `n=24`, `debug=1`). Searches the Discover sites, reads each recipe's ingredient list, returns `{title,url,image,source,sourceName,ingredients,totalTime,servings}`. |
-| `lib/pantry.js` | Ingredient reader and kitchen matcher (about 200 foods, longest match wins, families like "beans" or "broth"). |
+| `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
+| `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, and `recipeCats` (recipe categories). |
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, archive fallback. |
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js) and the kitchen matcher (lib/pantry.js) into app.html. |
 | `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js` | Offline tests with fake pages, real captions, and ingredient matching. |
@@ -85,7 +90,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js` or anything in `lib/pantry.js` changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js`
-5. App changes: bump the version text in `V.me` (`version 0.9`).
+5. App changes: bump the version text in `V.me` (`version 1.0`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -129,10 +134,14 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   still match what an earlier read gave (`impSig`) and the new read covers the same caption or more.
 
 ## Discover: how it works
-- **Sites that answer (33):** Delish, The Pioneer Woman, and Tasty (their own search pages).
+- **Sites that answer (50):** Delish, The Pioneer Woman, and Tasty (their own search pages).
   RecipeTin Eats, Spend With Pennies, Cafe Delites, Damn Delicious, Pinch of Yum, Once Upon a
-  Chef, and Jo Cooks (WordPress search). Cuisine specialists are asked only when a search
-  matches their food:
+  Chef, and Jo Cooks (WordPress search). Added Sept 27, 2026 (`wide: true`, asked in every
+  search): Chef Savvy, Salt & Lavender, Inspired Taste, Jessica Gavin, Southern Bite, The Girl
+  Who Ate Everything, Carlsbad Cravings, Kristine's Kitchen, Life In The Lofthouse, Recipes From
+  A Pantry, Six Sisters' Stuff, Skinnytaste, Joyful Healthy Eats, The Anthony Kitchen, Coop Can
+  Cook, Butter Be Ready, plus Baker by Nature for baking. Cuisine specialists are asked only when
+  a search matches their food (or, in What can I cook, when it's a cuisine Dave likes):
   - Mexican: Mexican Please, Mexico in My Kitchen, Maricruz Avalos
   - Chinese: The Woks of Life, Omnivore's Cookbook
   - Japanese: Pickled Plum, Chopstick Chronicles
@@ -152,6 +161,17 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
     Dish, and a few more.
   - Searching Food Network and Allrecipes through the Internet Archive was tried. It took over
     9 seconds, too slow.
+  - Tried Sept 27, 2026 and blocked (403): Add a Pinch, Belly Full, Bowl of Delicious, Chelsea's
+    Messy Apron, Chili Pepper Madness, Cooking Classy, Dinner at the Zoo, Dinner then Dessert,
+    Gimme Some Oven, Hey Grill Hey, Julie's Eats & Treats, Kevin Is Cooking, Kitchen Fun With My
+    3 Sons, Creme de la Crumb, Lil' Luna, Mel's Kitchen Cafe, Muy Bueno, Persnickety Plates, Plain
+    Chicken, Preppy Kitchen, Spicy Southern Kitchen, Sugar Spun Run, Tastes of Lizzy T, The Chunky
+    Chef, The Cozy Cook, The Stay at Home Chef, Well Plated, Averie Cooks, Cookies and Cups, Cooking
+    with Karli, Easy Chicken Recipes, Grandbaby Cakes, Half Baked Harvest, Hilda's Kitchen, Kitchen
+    Sanctuary, Mom On Timeout, RecipeGirl, Sugar and Soul, The Salty Marshmallow, The Seasoned Mom.
+    Mama Maggie's Kitchen timed out; Taste of Home's search returns no recipes.
+  - To try more sites: add them to `SOURCES` in api/discover.js with `trial: true` and call
+    `/api/discover?q=chicken&n=3&debug=1&sites=trial`. Keep the ones with results as `wide: true`.
 - **"Learns what Dave likes":** runs on the phone, free, no AI service. It weighs food words,
   cuisines, and sites from what Dave saves, favorites, rates, marks made, opens, and skips.
   It picks searches (top dish, top cuisine with top protein, one seasonal pick), ranks the
@@ -163,21 +183,36 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   you, every Discover tab and search, the For you searches, and What can I cook web results
   (titles and ingredient lists). Previews warn when a recipe has one. Start over keeps the list.
 
-## What can I cook: how it works (added Sept 27, 2026)
+## What can I cook: how it works (built Sept 27, 2026; widened the same night)
 - The kitchen list is `Store.settings.pantry = {items:[{id,name,t}], basics:[ids]}` on the phone.
   Typed foods map to a known food (`lookupFood`: "hamburger" is ground beef, "cheddar" is
-  cheese); unknown ones are kept as their own words and still match ("spam").
-- Saved recipes are checked on the phone with `matchRecipe(ingredients, pantry, title)`: optional
-  lines (garnish, "to serve", a Toppings section) and basics don't count; "or" lines need one;
-  a recipe that just says "broth" or "cheese" takes any kind; if the list names no meat, the
-  title's meat counts ("Korean Popcorn Chicken"). Shown if it uses something you have and is
-  missing 4 or fewer (or has half). Saved recipes with no ingredient list are counted and noted.
-- New recipes: the phone builds up to 4 searches (`cookQueries`: favorite meats with a veggie or
-  starch, the top meat with a dish Dave likes, then pairs of sides), calls `/api/cook`, and
-  shows ones missing 3 or fewer (or 60% there). Ranking: ready first, fewest missing, then taste.
-  Results are cached on the phone for 6 hours (`yyt-cook-v1`) and on Vercel for 6 hours.
-- Live check Sept 27, 2026: `q=chicken broccoli` read 10 sites and 24 recipe pages with no
-  errors in about 1 to 2 seconds.
+  cheese); unknown ones are kept as their own words and still match ("spam"). `splitFoods`
+  splits "chicken rice beans cheese" into four.
+- `matchRecipe(ingredients, pantry, title)` returns `need/have/missing` for real ingredients and
+  `spices` (dried spices and seasonings) apart. `main` = nothing but spices missing ("Have the
+  main stuff"); `ready` = nothing missing. Optional lines (garnish, "to serve", a Toppings
+  section) and basics don't count; "or" lines need one; a recipe that just says "broth" or
+  "cheese" takes any kind; if the list names no meat, the title's meat counts. The "Usual
+  spices" basic (`spices`) treats all spices as on hand.
+- First version (v0.9) only showed recipes missing 3 or fewer, which hid almost everything: a
+  live check with a 12-food kitchen read 40 real recipes (10 to 21 ingredients each) and only
+  2 passed, mostly because of spices. Since v1.0 every recipe that uses something you have is
+  shown, sorted by fewest real ingredients missing, then fewest spices, then taste, then how
+  much of your kitchen it uses.
+- Searches (`cookQueries(cat)`): All = each of the top 3 meats alone, top 2 meats with a side,
+  top meats with dishes Dave likes, and "meat casserole" (legumes and eggs after real meat).
+  Categories have their own searches ("chicken soup", "potato soup", "chili"; "rice side dish";
+  "cheese dip"; "breakfast burritos"; "banana dessert"; "homemade bread"; "agua fresca"…).
+  The phone sends `have`, `b`, and `x` (Dave's top 2 cuisines) to `/api/cook`, which asks the
+  26 general sites plus matching cuisine sites, merges up to ~900 candidates, reads the 44 most
+  promising (favoring your foods in the name), and sorts them by match.
+- Categories come from `recipeCats({title, category, tags, meal})`: the recipe card's
+  recipeCategory and keywords, the saved recipe's meal type, and words in the name ("Salsa
+  Chicken" is a main dish, "Easy Salsa" is an appetizer).
+- Results are cached on the phone per search (`COOK.cache`, and the last one in `yyt-cook-v2`)
+  for 6 hours, and on Vercel for 6 hours.
+- Live check Sept 27, 2026 (v0.9 endpoint): 5 searches, 880 candidates, 40 recipes read, no
+  errors, 8.6 seconds.
 
 ## App icon status
 - **In use (v0.7, Sept 26, 2026):** Dave's own pick, a 3D-cartoon "pigging out" picture of him

@@ -7,8 +7,8 @@
 //   have  what's in the kitchen (food ids or plain words, comma separated): used to pick which
 //         recipes to read first and to sort the answer. The phone checks them again itself.
 //   b     the basics always on hand (default salt, pepper, oil, water, butter, sugar, flour)
-//   x     extra sites to ask (ids from api/discover.js), for cuisines Dave likes
-//   n     how many recipes to read (12 to 48, default 40)
+//   x     extra sites to ask: site ids from api/discover.js, or cuisines Dave likes ("mexican,korean")
+//   n     how many recipes to read (12 to 48, default 44)
 //   debug=1  how each site and page answered, and how each recipe matched
 //
 // Each item: { title, url, image, source, sourceName, ingredients, category, cuisine, totalTime, servings }
@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
   if (!qs.length) { res.status(400).json({ ok: false, error: 'Tell me what you have first.' }); return; }
   const have = list(qp.have, 40);
   const extra = list(qp.x, 8);
-  const n = Math.max(12, Math.min(48, parseInt(qp.n, 10) || 40));
+  const n = Math.max(12, Math.min(48, parseInt(qp.n, 10) || 44));
   const debug = !!qp.debug;
   const t0 = Date.now();
   const report = debug ? { searches: [], pages: [] } : null;
@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
   const kitchen = K.makePantry(have.map(h => K.LABEL[h] ? { id: h } : K.lookupFood(h)), basics);
 
   // 1. search the sites: the main ones, the extra general ones, the cuisine sites that fit, and any asked for
-  const siteFor = q => SOURCES.filter(s => !s.trial && (s.core || s.wide || extra.indexOf(s.id) >= 0 || (s.topics && s.topics.test(q))));
+  const siteFor = q => SOURCES.filter(s => !s.trial && (s.core || s.wide || extra.indexOf(s.id) >= 0 || (s.topics && (s.topics.test(q) || extra.some(x => s.topics.test(x))))));
   const jobs = [];
   qs.forEach((q, qi) => siteFor(q).forEach(s => jobs.push({ q, qi, s })));
   const found = await Promise.all(jobs.map(async j => {
