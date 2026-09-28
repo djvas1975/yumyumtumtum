@@ -88,6 +88,7 @@ body[data-route="recipe"] #view{padding-bottom:calc(112px + env(safe-area-inset-
 .scroll-x::after{content:"";flex:0 0 1px}
 .chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-weight:700;font-size:14px;color:var(--ink-2);white-space:nowrap}
 .chip .ic{width:16px;height:16px}
+a.chip{text-decoration:none}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip.dashed{border-style:dashed;background:transparent}
 .wrapchips{display:flex;flex-wrap:wrap;gap:8px}
@@ -155,10 +156,10 @@ body[data-route="recipe"] #view{padding-bottom:calc(112px + env(safe-area-inset-
 
 /* tab bar */
 .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;padding-bottom:env(safe-area-inset-bottom,0px);background:var(--nav-bg);-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);border-top:1px solid var(--line)}
-.tabs{max-width:560px;margin-inline:auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:center;height:64px;padding-inline:8px}
+.tabs{max-width:560px;margin-inline:auto;display:grid;grid-template-columns:repeat(7,1fr);align-items:center;height:64px;padding-inline:8px}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;height:100%;color:var(--ink-3);font-size:11px;font-weight:800;letter-spacing:.02em}
 .tab.on{color:var(--chili)}
-.addbtn{justify-self:center;width:58px;height:58px;border-radius:20px;background:var(--chili);color:#fff;display:grid;place-items:center;box-shadow:0 8px 20px rgba(224,67,31,.38);transform:translateY(-14px)}
+.addbtn{justify-self:center;width:54px;height:54px;border-radius:20px;background:var(--chili);color:#fff;display:grid;place-items:center;box-shadow:0 8px 20px rgba(224,67,31,.38);transform:translateY(-14px)}
 .addbtn:active{background:var(--chili-press)}
 .addbtn .ic{width:28px;height:28px;stroke-width:2.6}
 body[data-route="recipe"] .tabbar{display:none}
@@ -429,6 +430,64 @@ textarea.inp{height:auto;min-height:92px;padding:12px 14px;line-height:1.45;resi
 .kstat.need{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--chili)}
 .kq{margin-top:16px}
 .ccats{padding-top:18px}
+.tab{position:relative}
+.tbadge{position:absolute;top:7px;left:calc(50% + 5px);min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--chili);color:#fff;font-size:10.5px;font-weight:800;line-height:17px;text-align:center}
+.tolist{margin-top:14px}
+.gsum{margin:12px 0 2px;color:var(--ink-2);font-size:14px;font-weight:700}
+.gsec{margin-top:18px}
+.gsec h2{font:800 12.5px/1.2 var(--body);letter-spacing:.07em;text-transform:uppercase;color:var(--chili);margin-bottom:4px}
+.gitem{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.gcheck{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:transparent;margin-top:1px}
+.gcheck .ic{width:16px;height:16px;stroke-width:3}
+.gitem.done .gcheck{background:var(--basil);border-color:var(--basil);color:#fff}
+.gtext{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;cursor:pointer}
+.gtext b{font-weight:700;font-size:16px}
+.gtext small{color:var(--ink-3);font-size:13px;font-weight:600;overflow-wrap:anywhere}
+.gitem.done .gtext b{text-decoration:line-through;color:var(--ink-3)}
+.gdeal{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;margin-top:3px;padding:3px 9px;border-radius:999px;background:var(--basil-soft);color:var(--basil);font-size:12.5px;font-weight:800}
+.gdeal .ic{width:13px;height:13px;flex:none}
+.gx{flex:none;width:32px;height:32px;display:grid;place-items:center;color:var(--ink-3);border-radius:50%}
+.gx .ic{width:17px;height:17px}
+.tl{display:flex;flex-direction:column}
+.tlrow{display:flex;align-items:flex-start;flex-wrap:wrap;gap:10px;width:100%;padding:11px 2px;border-bottom:1px solid var(--line);text-align:left}
+.tlbox{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--line);display:grid;place-items:center;color:#fff}
+.tlbox .ic{width:15px;height:15px;stroke-width:3}
+.tlrow.on .tlbox{background:var(--chili);border-color:var(--chili)}
+.tlrow.have:not(.on) .tlbox{background:var(--basil-soft);border-color:var(--basil-soft);color:var(--basil)}
+.tltext{flex:1;min-width:0;line-height:1.4}
+.tlrow.have:not(.on) .tltext{text-decoration:line-through;color:var(--ink-3)}
+.tltag{flex:none;font-size:12px;font-weight:800;color:var(--ink-3);padding-top:3px}
+.tltag.ok{color:var(--basil)}
+.tlrow .gdeal{margin-left:36px}
+.dsub{margin-top:2px}
+.dconnect{margin-top:16px}
+.drow{display:flex;align-items:flex-start;gap:10px;padding:8px 0}
+.drow > .ic{width:17px;height:17px;color:var(--basil);flex:none;margin-top:2px}
+.drow > div{flex:1;min-width:0;display:flex;flex-direction:column}
+.drow b{font-weight:800}
+.drow s{color:var(--ink-3);font-weight:600}
+.drow small{color:var(--ink-3);font-size:13px;font-weight:600}
+.dcardl{padding:12px 14px;margin-bottom:10px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.dcardl > b{font-size:16px}
+.dbtns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:10px}
+.scard{border-radius:14px;background:var(--surface);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column}
+.scard img,.scard .simg{width:100%;aspect-ratio:1;object-fit:contain;background:#fff}
+.sbody{padding:10px;display:flex;flex-direction:column;gap:3px}
+.sprice{font-size:17px;color:var(--basil)}
+.sprice s{color:var(--ink-3);font-size:13px;font-weight:600}
+.soff{font-size:12px;font-weight:800;color:var(--chili)}
+.sbody p{font-size:13.5px;line-height:1.35;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.sbody .linkbtn .ic{width:14px;height:14px;vertical-align:-2px}
+.dsaved{margin-top:6px}
+.stcard .sthead{display:flex;align-items:flex-start;gap:10px}
+.stcard .sthead > div{flex:1;min-width:0}
+.stcard .sthead p{margin-bottom:12px;font-size:14px}
+.ksteps{margin:0 0 14px;padding-left:20px;line-height:1.5;overflow-wrap:anywhere}
+.ksteps li{margin-bottom:8px}
+.ksteps a{color:var(--chili);font-weight:800}
+.mi.rot90 .ic{transform:rotate(90deg)}
+.mi small{color:var(--ink-3);font-weight:600}
 .kmeta{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .khave span{min-width:0}
 .kq .ic{width:14px;height:14px;vertical-align:-2px;stroke-width:2.6}
@@ -509,6 +568,9 @@ const I = {
   download:'<path d="M12 4v11M7 10.5l5 4.5 5-4.5M5 20h14"/>',
   upload:'<path d="M12 20V9M7 13.5 12 9l5 4.5M5 4h14"/>',
   sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  cart:'<path d="M3 4h2.2l2.3 11h10.2l2.1-8H6.4"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="16.5" cy="19.5" r="1.4"/>',
+  tag:'<path d="M3.5 12.3V4.5a1 1 0 0 1 1-1h7.8l8.2 8.2a1.4 1.4 0 0 1 0 2l-6.8 6.8a1.4 1.4 0 0 1-2 0z"/><circle cx="8.2" cy="8.2" r="1.5"/>',
+  phone:'<path d="M5.5 3.5h3l1.5 4-2 1.3a11 11 0 0 0 7.2 7.2l1.3-2 4 1.5v3a1.5 1.5 0 0 1-1.6 1.5A16.5 16.5 0 0 1 4 5.1a1.5 1.5 0 0 1 1.5-1.6z"/>',
   pot:'<path d="M4 10h16v6.5A3.5 3.5 0 0 1 16.5 20h-9A3.5 3.5 0 0 1 4 16.5z"/><path d="M2 10h20M9 6.5c0-1 1-1.2 1-2.5M14 6.5c0-1 1-1.2 1-2.5"/>',
   image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
   link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
@@ -1018,6 +1080,7 @@ V.recipe = (rt) => {
   // ingredients
   if (nIng) h += '<div class="block" id="sec-ing"><h2>Ingredients <span class="muted">' + nIng + '</span></h2>' + (hasKitchen() ? khaveHTML(kitchenMatch(r)) : '') + '<ul class="ing">'
     + ing.map((x, i) => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li><label><input type="checkbox" data-chk="' + i + '"' + (checked[i] ? ' checked' : '') + '><span>' + esc(x) + '</span></label></li>').join('') + '</ul>'
+    + '<button class="btn ghost wide tolist" data-act="tolist" data-id="' + esc(r.id) + '">' + icon('cart') + 'Add to grocery list</button>'
     + (r.captionCut ? cutNote(r) : '') + '</div>';
   else if (!wantsMore) h += '<div class="block" id="sec-ing"><h2>Ingredients</h2><button class="addrow" data-act="edit" data-id="' + esc(r.id) + '">' + icon('plus') + 'Add the ingredients, or paste the recipe text</button></div>';
   // directions
@@ -1069,12 +1132,12 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 1.0</p></div>';
+    + '<p class="ver">yumyumtumtum · version 1.1</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
 /* ---------- navigation ---------- */
-const TABS = ['home', 'search', 'yums', 'me'];
+const TABS = ['home', 'search', 'yums', 'list', 'deals', 'me'];
 let stack = [{name:'home'}];
 let pushed = 0;
 const cur = () => stack[stack.length - 1];
@@ -1110,6 +1173,8 @@ function show(forward){
 function mountView(r){
   if (r.name === 'discover') { mountDiscover(r); return; }
   if (r.name === 'cook') { mountCook(r); return; }
+  if (r.name === 'list') { mountList(r); return; }
+  if (r.name === 'deals') { mountDeals(r); return; }
   if (r.name === 'cat') { loadFeed('k:' + r.key); return; }
   if (r.name !== 'search') return;
   const q = $('#q');
@@ -1126,7 +1191,7 @@ function refresh(){
     rq = 0;
     const r = cur();
     if (r.name === 'search' && $('#results')) renderResults();
-    else if (!(document.activeElement && ['myname', 'dq', 'pq', 'neverin'].indexOf(document.activeElement.id) >= 0)) {
+    else if (!(document.activeElement && ['myname', 'dq', 'pq', 'neverin', 'gq'].indexOf(document.activeElement.id) >= 0)) {
       const y = window.scrollY; const sx = {};
       $$('[data-sx]').forEach(el => { sx[el.dataset.sx] = el.scrollLeft; });
       $('#view').innerHTML = (V[r.name] || V.home)(r);
@@ -1141,13 +1206,16 @@ function refresh(){
 function navHTML(){
   return '<button class="tab" data-tab="home">' + icon('home') + '<span>Home</span></button>'
     + '<button class="tab" data-tab="search">' + icon('search') + '<span>Search</span></button>'
-    + '<button class="addbtn" data-act="add" aria-label="Save a recipe">' + icon('plus') + '</button>'
     + '<button class="tab" data-tab="yums">' + icon('yums') + '<span>Yums</span></button>'
+    + '<button class="addbtn" data-act="add" aria-label="Save a recipe">' + icon('plus') + '</button>'
+    + '<button class="tab" data-tab="list">' + icon('cart') + '<span>List</span><b class="tbadge" id="lbadge" hidden></b></button>'
+    + '<button class="tab" data-tab="deals">' + icon('tag') + '<span>Deals</span></button>'
     + '<button class="tab" data-tab="me">' + icon('user') + '<span>Me</span></button>';
 }
 function updateNav(){
   const n = cur().name; const active = n === 'col' ? 'yums' : n;
   $$('.tab').forEach(b => { const on = b.dataset.tab === active; b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  const lb = $('#lbadge'); if (lb) { const n = groceryList().filter(x => !x.done).length; lb.hidden = !n; lb.textContent = n > 99 ? '99+' : n; }
 }
 
 /* ---------- search rendering ---------- */
@@ -1340,7 +1408,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '9'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '10'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1786,7 +1854,7 @@ function previewHTML(it){
       + (j.description ? '<p class="desc" data-act="desc" style="margin-top:14px">' + esc(j.description) + '</p>' : '');
     const nv = neverHit(j.title || it.title, ing);
     if (nv) body += '<p class="khave warn">Heads up: this has ' + esc(nv) + ', which you don\'t eat.</p>';
-    if (nI) body += '<div class="block"><h2>Ingredients</h2>' + (hasKitchen() ? khaveHTML(matchRecipe(ing, myPantry(), j.title || it.title)) : '') + '<ul class="pv-list">' + ing.map(x => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
+    if (nI) body += '<div class="block"><h2>Ingredients</h2>' + (hasKitchen() ? khaveHTML(matchRecipe(ing, myPantry(), j.title || it.title)) : '') + '<button class="btn ghost sm tolist" data-act="tolistp" data-id="' + esc(it.id) + '">' + icon('cart') + 'Add to grocery list</button><ul class="pv-list">' + ing.map(x => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
     if (nS) {
       const first = steps.filter(x => !isHead(x)).slice(0, 3);
       body += '<div class="block"><h2>Directions</h2><ol class="pv-list pv-steps">' + first.map(x => '<li>' + esc(x) + '</li>').join('') + '</ol>'
@@ -2286,8 +2354,18 @@ function catFeedHTML(rt){
     + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '');
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-pq],[data-prm],[data-pb],[data-psug],[data-nv],[data-nrm],[data-cc],[data-catgo],[data-cookcat]'); if (!t) return;
+  const t = e.target.closest('[data-pq],[data-prm],[data-pb],[data-psug],[data-nv],[data-nrm],[data-cc],[data-catgo],[data-cookcat],[data-gtoggle],[data-grm],[data-tlrow],[data-dtab],[data-dst],[data-dadd],[data-dealrm],[data-stmenu],[data-sfchain],[data-kloc]'); if (!t) return;
   const d = t.dataset;
+  if (d.gtoggle) { toggleGrocery(d.gtoggle); return; }
+  if (d.grm) { removeGrocery(d.grm); return; }
+  if (d.tlrow != null) { tlToggle(+d.tlrow); return; }
+  if (d.dtab) { const r = cur(); r.dtab = d.dtab; r.wshown = 24; show(false); return; }
+  if (d.dst != null) { const r = cur(); r.dstore = d.dst; r.wshown = 24; redrawDeals(); mountDeals(r); window.scrollTo(0, 0); return; }
+  if (d.dadd) { const n = addGroceryText(d.dadd.replace(/,/g, ' ')); toast(n.length ? 'Added to your list' : 'Already on your list', {label:'Open list', fn:() => go({name:'list'})}); return; }
+  if (d.dealrm) { removeDeal(d.dealrm); return; }
+  if (d.stmenu) { storeMenu(d.stmenu); return; }
+  if (d.sfchain) { if (!SF) return; SF.chain = d.sfchain; const nm = $('#sf-name'); if (nm && (!nm.value.trim() || Object.keys(CHAINS).some(k => CHAINS[k].name === nm.value.trim()))) nm.value = d.sfchain === 'other' ? '' : CHAINS[d.sfchain].name; SF.redrawChains(); return; }
+  if (d.kloc) { setKrogerLoc(d.id, d.kloc); closeSheet(); toast('Store picked'); return; }
   if (d.cc != null) { const r = cur(); if ((r.cat || '') === d.cc) return; r.cat = d.cc; r.shown = 12; r.wshown = 12; redrawCook(); clearTimeout(cookTimer); loadCook(false); return; }
   if (d.catgo) { go({name:'cat', key:d.catgo}); return; }
   if (d.cookcat != null) { go({name:'cook', cat:d.cookcat}); return; }
@@ -2301,6 +2379,465 @@ document.addEventListener('click', e => {
 // keep the keyboard up while adding foods
 document.addEventListener('pointerdown', e => { if (e.target.closest('[data-psug],#pqform button') && document.activeElement && document.activeElement.id === 'pq') e.preventDefault(); });
 document.addEventListener('toggle', e => { const t = e.target; if (t.id === 'kquick') cur().quickOpen = t.open; else if (t.id === 'kbasics') cur().basicsOpen = t.open; }, true);
+
+/* ---------- grocery list: add from recipes (what you have is checked off for you) or type anything ---------- */
+const groceryList = () => (Array.isArray(Store.settings.grocery) ? Store.settings.grocery : []).filter(x => x && x.id);
+function putGrocery(items){ putSettings({grocery:items}); redrawList(); }
+const capWord = t => { t = String(t || '').trim(); return t.charAt(0).toUpperCase() + t.slice(1); };
+// the words to search a store for: "Chicken thighs" -> "chicken thighs", a recipe line -> its food
+function groceryTerm(x){ return String(x.name || '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 40); }
+function addGroceryText(text){
+  const parts = String(text || '').split(/[,\n;]+/).map(s => s.trim()).filter(Boolean).slice(0, 30);
+  const items = groceryList().slice(), added = [];
+  parts.forEach(p => {
+    const name = capWord(p.slice(0, 60));
+    const f = lookupFood(p) || {id:''};
+    if (items.some(x => !x.done && x.name.toLowerCase() === name.toLowerCase())) return;
+    items.push({id:uid(), name:name, food:f.id, detail:'', recipes:[], done:false, t:now()});
+    added.push(name);
+  });
+  if (added.length) putGrocery(items);
+  return added;
+}
+// rows from a recipe: [{food, name, detail}]; the same food already on the list gets the recipe added to it
+function addGroceryRows(rows, recipe){
+  const items = groceryList().slice(); let n = 0;
+  rows.forEach(r => {
+    const same = items.find(x => !x.done && ((r.food && x.food === r.food && r.food.indexOf('x:') !== 0) || x.name.toLowerCase() === r.name.toLowerCase()));
+    if (same) {
+      const i = items.indexOf(same);
+      const recipes = (same.recipes || []).concat(recipe && !(same.recipes || []).some(q => q.title === recipe.title) ? [recipe] : []);
+      items[i] = Object.assign({}, same, {recipes:recipes, detail:[same.detail, r.detail].filter(Boolean).filter((v, k, a) => a.indexOf(v) === k).join('; ').slice(0, 200)});
+    } else { items.push({id:uid(), name:r.name, food:r.food, detail:r.detail || '', recipes:recipe ? [recipe] : [], done:false, t:now()}); n++; }
+  });
+  putGrocery(items);
+  return n;
+}
+function toggleGrocery(id){ putGrocery(groceryList().map(x => x.id === id ? Object.assign({}, x, {done:!x.done, doneAt:x.done ? null : now()}) : x)); }
+function removeGrocery(id){
+  const before = groceryList(); const x = before.find(y => y.id === id); if (!x) return;
+  putGrocery(before.filter(y => y.id !== id));
+  toast('Took ' + x.name.toLowerCase() + ' off the list', {label:'Undo', fn:() => { if (!groceryList().some(y => y.id === id)) putGrocery(groceryList().concat([x])); }});
+}
+// done shopping: what you checked off goes into your kitchen (for What can I cook) and off the list
+async function doneShopping(){
+  const done = groceryList().filter(x => x.done); if (!done.length) return;
+  const ok = await confirmBox({title:'Done shopping?', msg:'Takes the ' + plural(done.length, 'item') + ' you checked off off the list and adds them to your kitchen, so What can I cook knows you have them.', ok:'Done', danger:false});
+  if (!ok) return;
+  const kitchen = pantryStore().items.slice();
+  done.forEach(x => { if (x.food && KIND[x.food] !== 'b' && !kitchen.some(k => k.id === x.food)) kitchen.push({id:x.food, name:x.food.indexOf('x:') === 0 ? x.name : (LABEL[x.food] || x.name), t:now()}); });
+  putSettings({pantry:Object.assign({}, pantryStore(), {items:kitchen})});
+  putGrocery(groceryList().filter(x => !x.done));
+  toast('Put away. Your kitchen is up to date.');
+}
+function listText(){
+  const items = groceryList().filter(x => !x.done);
+  const by = {}; items.forEach(x => { const a = aisleOf(x.food, x.name); (by[a] = by[a] || []).push(x); });
+  return AISLES.filter(a => by[a]).map(a => a + '\n' + by[a].map(x => '- ' + x.name).join('\n')).join('\n\n');
+}
+async function shareList(){
+  const text = 'Grocery list\n\n' + listText();
+  closeSheet();
+  if (navigator.share) { try { await navigator.share({title:'Grocery list', text:text}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  copyText(text);
+}
+function redrawList(){ const r = cur(); if (r.name === 'list') { const b = $('#glist'); if (b) b.innerHTML = listBodyHTML(r); } updateNav(); }
+function dealBadgeHTML(x){
+  const d = dealsFor(x)[0]; if (!d) return '';
+  return '<span class="gdeal">' + icon('tag') + esc(d.price + ' at ' + d.store + (d.reg ? ' (reg ' + d.reg + ')' : '')) + '</span>';
+}
+function gitemHTML(x){
+  const recipes = (x.recipes || []).map(r => r.title).filter(Boolean);
+  const sub = [x.detail && x.detail.toLowerCase() !== x.name.toLowerCase() ? x.detail : '', recipes.length ? 'for ' + joinList(recipes.map(t => shortT(t))) : ''].filter(Boolean).join(' · ');
+  return '<div class="gitem' + (x.done ? ' done' : '') + '"><button class="gcheck" data-gtoggle="' + esc(x.id) + '" aria-pressed="' + !!x.done + '" aria-label="' + (x.done ? 'Uncheck ' : 'Check off ') + esc(x.name) + '">' + icon('check') + '</button>'
+    + '<div class="gtext" data-gtoggle="' + esc(x.id) + '"><b>' + esc(x.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + (x.done ? '' : dealBadgeHTML(x)) + '</div>'
+    + '<button class="gx" data-grm="' + esc(x.id) + '" aria-label="Remove ' + esc(x.name) + '">' + icon('x') + '</button></div>';
+}
+V.list = (rt) => {
+  return '<header class="topbar"><div class="wrap headrow"><h1 class="title">Grocery list</h1><button class="iconbtn" data-act="listmenu" aria-label="List options">' + icon('more') + '</button></div></header>'
+    + '<div class="wrap"><form class="searchbox addbox" id="gform" autocomplete="off">' + icon('plus') + '<input id="gq" type="text" enterkeyhint="done" autocomplete="off" maxlength="200" placeholder="Add milk, paper towels…" aria-label="Add an item"><button type="submit" class="btn sm primary">Add</button></form>'
+    + '<div id="glist">' + listBodyHTML(rt) + '</div></div>';
+};
+function listBodyHTML(rt){
+  const all = groceryList(); const todo = all.filter(x => !x.done), done = all.filter(x => x.done);
+  if (!all.length) return '<div class="empty small"><h3>Your list is empty</h3><p>Add things here, or tap <b>Add to grocery list</b> on any recipe. What you already have gets checked off for you.</p></div>';
+  const by = {}; todo.forEach(x => { const a = aisleOf(x.food, x.name); (by[a] = by[a] || []).push(x); });
+  const nDeals = todo.filter(x => dealsFor(x).length).length;
+  let h = '<p class="gsum">' + plural(todo.length, 'thing') + ' to get' + (done.length ? ' · ' + done.length + ' in the cart' : '') + (nDeals ? ' · <button class="linkbtn sm" data-tab="deals">' + plural(nDeals, 'deal') + '</button>' : '') + '</p>';
+  AISLES.filter(a => by[a]).forEach(a => { h += '<section class="gsec"><h2>' + esc(a) + '</h2>' + by[a].map(gitemHTML).join('') + '</section>'; });
+  if (done.length) h += '<section class="gsec gdone"><h2>In the cart</h2>' + done.map(gitemHTML).join('') + '</section>'
+    + '<div class="morebar"><button class="btn primary" data-act="gdone">' + icon('check') + 'Done shopping</button></div>';
+  return h;
+}
+function mountList(){
+  const f = $('#gform'); if (!f) return;
+  f.addEventListener('submit', e => { e.preventDefault(); const i = $('#gq'); const v = i.value; if (!v.trim()) { i.focus(); return; } const added = addGroceryText(v); i.value = ''; if (!added.length) toast('That\'s already on your list'); });
+  loadListDeals();
+}
+function listMenu(){
+  const all = groceryList();
+  menuSheet([all.some(x => !x.done) ? mi('glistshare', 'copy', 'Share or copy the list') : '', all.some(x => x.done) ? mi('glistclearc', 'check', 'Clear what\'s checked off') : '', all.length ? mi('glistclear', 'trash', 'Clear the whole list', '', 'danger') : ''].filter(Boolean), 'List options');
+}
+async function clearList(checkedOnly){
+  closeSheet();
+  const before = groceryList(); const keep = checkedOnly ? before.filter(x => !x.done) : [];
+  if (!checkedOnly) { const ok = await confirmBox({title:'Clear the whole list?', msg:'Takes everything off your grocery list.', ok:'Clear'}); if (!ok) return; }
+  putGrocery(keep);
+  toast(checkedOnly ? 'Cleared what was checked off' : 'List cleared', {label:'Undo', fn:() => putGrocery(before)});
+}
+
+/* "Add to grocery list" from a recipe: what you have is already checked off, what you need is picked */
+let TL = null;
+function openToList(o){
+  const P = myPantry(); const onList = groceryList().filter(x => !x.done);
+  let extra = false;
+  const rows = [];
+  (o.ingredients || []).forEach(line => {
+    const l = String(line || '').trim(); if (!l) return;
+    if (/^##\s/.test(l)) { extra = EXTRA_HEAD.test(l); rows.push({head:l.slice(3)}); return; }
+    const r = readIngredient(l, extra);
+    let food = r.ids[0] || '';
+    if (!food && r.core) food = 'x:' + singularWords(r.core).join(' ');
+    const have = r.ids.length ? (r.alt ? r.ids.some(id => pantryHas(P, id)) : r.ids.every(id => pantryHas(P, id))) : customHas(P, l);
+    const name = r.ids.length ? r.ids.map(id => foodName(l, id)).join(r.alt ? ' or ' : ' and ') : capWord(r.core || l);
+    const listed = onList.some(x => (food && x.food === food && food.indexOf('x:') !== 0) || x.name.toLowerCase() === name.toLowerCase());
+    rows.push({line:l, food:food, name:name, have:have, listed:listed, optional:r.optional, spice:r.ids.length && r.ids.every(id => SPICE.has(id)), add:!have && !listed && !r.optional});
+  });
+  TL = {rows:rows, recipe:{id:o.id || '', title:o.title || ''}};
+  openSheet(toListHTML(), {full:true, label:'Add to grocery list'});
+}
+function toListHTML(){
+  const rows = TL.rows; const n = rows.filter(r => r.add).length; const nHave = rows.filter(r => r.have).length;
+  const body = '<p class="dhint">' + (TL.recipe.title ? esc(TL.recipe.title) + '. ' : '') + (nHave ? 'What you already have is checked off. ' : '') + 'Tap to change what goes on the list.</p><div class="tl">'
+    + rows.map((r, i) => r.head ? '<p class="kgrp">' + esc(r.head) + '</p>' : '<button class="tlrow' + (r.add ? ' on' : '') + (r.have ? ' have' : '') + '" data-tlrow="' + i + '" aria-pressed="' + r.add + '"><span class="tlbox">' + (r.add ? icon('plus') : r.have ? icon('check') : '') + '</span><span class="tltext">' + esc(r.line) + '</span>'
+      + (r.have ? '<span class="tltag ok">Have it</span>' : r.listed ? '<span class="tltag">On your list</span>' : r.optional ? '<span class="tltag">Optional</span>' : r.spice ? '<span class="tltag">Spice</span>' : '')
+      + (r.add ? dealBadgeHTML({name:r.name, food:r.food}) : '') + '</button>').join('') + '</div>';
+  return sheetHead('Add to grocery list') + '<div class="sh-body">' + body + '</div><div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="tladd"' + (n ? '' : ' disabled') + '>' + icon('cart') + (n ? 'Add ' + plural(n, 'item') : 'Nothing picked') + '</button></div>';
+}
+function tlToggle(i){ const r = TL && TL.rows[i]; if (!r || r.head) return; r.add = !r.add; const b = $('#sheet .sheet'); if (b) { const y = ($('.sh-body', b) || {}).scrollTop || 0; b.innerHTML = toListHTML(); const sb = $('.sh-body', b); if (sb) sb.scrollTop = y; } }
+function tlAdd(){
+  if (!TL) return;
+  const rows = TL.rows.filter(r => r.add).map(r => ({food:r.food, name:r.food && r.food.indexOf('x:') !== 0 && !/ (or|and) /.test(r.name) ? r.name : capWord(r.name), detail:r.line}));
+  const n = addGroceryRows(rows, TL.recipe.title ? TL.recipe : null);
+  closeSheet();
+  toast(n ? 'Added ' + plural(n, 'item') + ' to your list' : 'Already on your list', {label:'Open list', fn:() => go({name:'list'})});
+  TL = null;
+}
+
+/* ---------- deals: your stores' weekly ads, Food 4 Less sale prices (Kroger's official data), and deals you save ---------- */
+// weekly ad and deals pages for the chains we know
+const CHAINS = {
+  food4less:{name:'Food 4 Less', kroger:true, ad:'https://www.food4less.com/weeklyad', deals:'https://www.food4less.com/pr/weekly-digital-deals'},
+  safeway:{name:'Safeway', ad:'https://www.safeway.com/weeklyad/', deals:'https://www.safeway.com/shop/deals/sale-prices.html'},
+  raleys:{name:'Raley’s', ad:'https://www.raleys.com/weekly-ad', deals:'https://www.raleys.com/something-extra/offers-and-savings'},
+  savemart:{name:'Save Mart', ad:'https://savemart.com/flyers', deals:'https://shop.savemart.com/store/savemart/collections/rc-weekly-ad'},
+  other:{name:'Other store'}
+};
+const DEFAULT_STORES = [
+  {id:'s-f4l', chain:'food4less', name:'Food 4 Less', where:'Yosemite & Spreckels', address:'131 Spreckels Ave, Manteca, CA 95336', phone:'(209) 823-0806'},
+  {id:'s-safeway', chain:'safeway', name:'Safeway', where:'S Main St', address:'1187 S Main St, Manteca, CA 95337', phone:'(209) 824-1144'},
+  {id:'s-raleys', chain:'raleys', name:'Raley’s', where:'Lathrop Rd', address:'1280 Lathrop Rd, Manteca, CA 95336', phone:'(209) 825-0242'},
+  {id:'s-savemart-main', chain:'savemart', name:'Save Mart', where:'N Main St', address:'1172 N Main St, Manteca, CA 95336', phone:'(209) 239-2267'},
+  {id:'s-savemart-yosemite', chain:'savemart', name:'Save Mart', where:'W Yosemite Ave', address:'1431 W Yosemite Ave, Manteca, CA 95337', phone:'(209) 823-1768'}
+];
+const myStores = () => Array.isArray(Store.settings.stores) ? Store.settings.stores : DEFAULT_STORES;
+const storeBy = id => myStores().find(s => s.id === id);
+const storeLabel = s => s ? s.name + (s.where ? ' (' + s.where + ')' : '') : 'a store';
+const storeShort = s => s ? s.name : '';
+const adLink = s => s.ad || (CHAINS[s.chain] || {}).ad || '';
+const dealsLink = s => s.deals || (CHAINS[s.chain] || {}).deals || '';
+const mapLink = s => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(s.name + ' ' + (s.address || ''));
+function putStores(list){ putSettings({stores:list}); redrawDeals(); }
+const krogerKeys = () => Store.settings.kroger || {};
+const hasKroger = () => !!(krogerKeys().id && krogerKeys().secret);
+const krogerStores = () => myStores().filter(s => (CHAINS[s.chain] || {}).kroger);
+
+// deals you saved from a weekly ad: {id, text, food, price, reg, store, ends}
+const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const myDeals = () => (Array.isArray(Store.settings.mydeals) ? Store.settings.mydeals : []).filter(d => d && d.id && (!d.ends || d.ends >= today()));
+function nextTuesday(){ const d = new Date(); const add = (2 - d.getDay() + 7) % 7 || 7; d.setDate(d.getDate() + add); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+const money = n => '$' + (+n).toFixed(2);
+const endsText = d => { if (!d) return ''; const x = new Date(d + 'T12:00:00'); return 'through ' + x.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'}); };
+
+// sale prices from Kroger, cached on the phone
+const DEALS = {week:{}, list:{}, loading:{}, error:{}};
+const DEALS_LS = 'yyt-deals-v1';
+(function(){ const s = readLS(DEALS_LS); if (s) { DEALS.week = s.week || {}; DEALS.list = s.list || {}; DEALS.test = !!s.test; } })();
+const saveDealsLS = () => writeLS(DEALS_LS, {week:DEALS.week, list:DEALS.list, test:!!DEALS.test});
+async function krogerCall(params){
+  const k = krogerKeys();
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 40000);
+  try {
+    const res = await fetch(READER + '/api/deals?' + params + '&v=' + READER_V, {signal:ctrl.signal, headers:{'x-kroger-id':k.id || '', 'x-kroger-secret':k.secret || ''}});
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || "Couldn't get Food 4 Less prices.");
+    if (!!j.test !== !!DEALS.test) { DEALS.test = !!j.test; saveDealsLS(); }
+    return j;
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('Kroger took too long to answer.');
+    if (e instanceof TypeError) throw new Error("Couldn't reach the deals finder. Check your connection.");
+    throw e;
+  } finally { clearTimeout(tm); }
+}
+// this week's sales at a Kroger-family store: the everyday things people buy
+const WEEK_TERMS = ['chicken', 'ground beef', 'steak', 'pork', 'bacon', 'sausage', 'eggs', 'milk', 'cheese', 'butter', 'yogurt', 'bread', 'tortillas', 'rice', 'pasta', 'beans', 'cereal', 'coffee', 'fruit', 'vegetables', 'potatoes', 'avocados', 'chips', 'soda', 'ice cream', 'frozen pizza', 'paper towels', 'laundry detergent'];
+async function loadWeek(s, force){
+  if (!s.loc || !hasKroger() || DEALS.loading['w' + s.id]) return;
+  const w = DEALS.week[s.id];
+  if (!force && w && w.loc === s.loc && Date.now() - w.t < 12 * 3600e3) return;
+  DEALS.loading['w' + s.id] = true; DEALS.error['w' + s.id] = ''; redrawDeals();
+  try {
+    const j = await krogerCall('loc=' + encodeURIComponent(s.loc) + '&q=' + encodeURIComponent(WEEK_TERMS.join('|')));
+    const seen = new Set(), items = [];
+    WEEK_TERMS.forEach(t => ((j.results[t] || {}).sale || []).forEach(x => { if (!seen.has(x.id)) { seen.add(x.id); items.push(Object.assign({}, x, {term:t})); } }));
+    items.sort((a, b) => (b.regular - b.promo) / b.regular - (a.regular - a.promo) / a.regular);
+    DEALS.week[s.id] = {t:Date.now(), loc:s.loc, items:items};
+    saveDealsLS();
+  } catch (e) { DEALS.error['w' + s.id] = e.message; }
+  DEALS.loading['w' + s.id] = false; redrawDeals();
+}
+// sales for what's on your grocery list
+async function loadListDeals(force){
+  if (!hasKroger()) return;
+  const terms = groceryList().filter(x => !x.done).map(groceryTerm).filter(Boolean);
+  for (const s of krogerStores().filter(x => x.loc)) {
+    if (DEALS.loading['l' + s.id]) continue;
+    const have = DEALS.list[s.id] && DEALS.list[s.id].loc === s.loc ? DEALS.list[s.id] : {loc:s.loc, results:{}};
+    const stale = terms.filter(t => force || !have.results[t] || Date.now() - have.results[t].t > 12 * 3600e3).slice(0, 30);
+    if (!stale.length) continue;
+    DEALS.loading['l' + s.id] = true; redrawDeals();
+    try {
+      const j = await krogerCall('loc=' + encodeURIComponent(s.loc) + '&all=1&q=' + encodeURIComponent(stale.join('|')));
+      stale.forEach(t => { const r = j.results[t] || {sale:[]}; have.results[t] = {t:Date.now(), sale:r.sale || [], best:r.best || null}; });
+      DEALS.list[s.id] = have; saveDealsLS();
+    } catch (e) { DEALS.error['l' + s.id] = e.message; }
+    DEALS.loading['l' + s.id] = false; redrawDeals(); redrawList();
+  }
+}
+// deals for one grocery item, best first: {price, reg, store, name, saved}
+function dealsFor(x){
+  const out = [];
+  const words = singularWords(x.name).filter(w => w.length > 2);
+  myDeals().forEach(d => {
+    const dw = singularWords(d.text);
+    if ((x.food && d.food && x.food === d.food && x.food.indexOf('x:') !== 0) || (words.length && words.every(w => dw.indexOf(w) >= 0))) out.push({price:d.price, reg:d.reg || '', store:storeShort(storeBy(d.store)), name:d.text, saved:true});
+  });
+  krogerStores().forEach(s => {
+    const r = DEALS.list[s.id] && DEALS.list[s.id].loc === s.loc && DEALS.list[s.id].results[groceryTerm(x)];
+    const d = r && r.sale && r.sale[0];
+    if (d) out.push({price:money(d.promo), reg:money(d.regular), store:storeShort(s), name:d.name + (d.size ? ', ' + d.size : ''), kroger:true});
+  });
+  return out;
+}
+function redrawDeals(){ const r = cur(); if (r.name === 'deals') { const b = $('#dbody'); if (b) b.innerHTML = dealsBodyHTML(r); } }
+
+const DTABS = [['list', 'For my list'], ['week', 'This week'], ['stores', 'My stores']];
+V.deals = (rt) => {
+  const t = rt.dtab || 'list';
+  return '<header class="topbar"><div class="wrap"><h1 class="title">Deals</h1><p class="ph-sub dsub">Weekly ads and sales at your stores</p>'
+    + '<div class="chips">' + DTABS.map(x => '<button class="chip' + (t === x[0] ? ' on' : '') + '" data-dtab="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div></header>'
+    + '<div class="wrap" id="dbody">' + dealsBodyHTML(rt) + '</div>';
+};
+function dealsBodyHTML(rt){
+  const t = rt.dtab || 'list';
+  return t === 'week' ? weekHTML(rt) : t === 'stores' ? storesHTML() : forListHTML();
+}
+function krogerNote(){
+  if (!krogerStores().length) return '';
+  if (!hasKroger()) return '<div class="getcard dconnect"><div><b>Turn on Food 4 Less sale prices</b><span>Free from Kroger (they own Food 4 Less). Takes about 10 minutes, one time.</span></div><button class="btn primary sm" data-act="kconnect">Set up</button></div>';
+  if (DEALS.test) return '<div class="getcard dconnect"><div><b>These Kroger keys are for testing</b><span>They came from Kroger\'s test area, so prices may not be real. Make the app again under Production and paste the new keys.</span></div><button class="btn primary sm" data-act="kconnect">Fix</button></div>';
+  const need = krogerStores().filter(s => !s.loc);
+  if (need.length) return '<div class="getcard dconnect"><div><b>Pick your Food 4 Less</b><span>So prices match your store.</span></div><button class="btn primary sm" data-act="kfind" data-id="' + esc(need[0].id) + '">Find it</button></div>';
+  return '';
+}
+function dealRowHTML(d){ return '<div class="drow">' + icon('tag') + '<div><b>' + esc(d.price) + (d.reg ? ' <s>' + esc(d.reg) + '</s>' : '') + ' at ' + esc(d.store) + '</b><small>' + esc(d.name) + (d.saved ? ' · you saved this' : '') + '</small></div></div>'; }
+function forListHTML(){
+  const items = groceryList().filter(x => !x.done);
+  const loading = krogerStores().some(s => DEALS.loading['l' + s.id]);
+  const err = krogerStores().map(s => DEALS.error['l' + s.id]).filter(Boolean)[0];
+  let h = krogerNote();
+  if (!items.length) return h + '<div class="empty small"><h3>Nothing on your list yet</h3><p>Add things to your grocery list and any deals on them show up here.</p><button class="btn ghost" data-tab="list">' + icon('cart') + 'Open grocery list</button></div>' + otherStoresNote();
+  if (loading) h += '<p class="readst"><span class="spin sm"></span>Checking Food 4 Less prices…</p>';
+  if (err && !loading) h += '<p class="readst bad">' + esc(err) + ' <button class="linkbtn sm" data-act="dlistretry">Try again</button></p>';
+  const withDeals = items.map(x => ({x:x, d:dealsFor(x)}));
+  const found = withDeals.filter(y => y.d.length), none = withDeals.filter(y => !y.d.length);
+  const live = hasKroger() && krogerStores().some(s => s.loc);
+  if (!live && !found.length) return h + '<p class="dhint">' + (myDeals().length ? 'None of the deals you saved match your list right now.' : 'When Food 4 Less sale prices are on, or you save a deal you spot in a weekly ad, any deals on your ' + plural(items.length, 'item') + ' show up here.') + '</p>' + otherStoresNote();
+  h += '<section class="sec"><div class="sec-h"><h2>On sale</h2>' + (found.length ? '<span class="muted">' + found.length + '</span>' : '') + '</div>'
+    + (found.length ? found.map(y => '<div class="dcardl"><b>' + esc(y.x.name) + '</b>' + y.d.slice(0, 3).map(dealRowHTML).join('') + '</div>').join('') : '<p class="dhint">' + (loading ? 'Looking…' : 'No deals found yet for what\'s on your list.') + '</p>')
+    + '</section>';
+  if (none.length && live) h += '<section class="sec"><div class="sec-h"><h2>No sale right now</h2><span class="muted">' + none.length + '</span></div><p class="dhint">' + esc(joinList(none.map(y => y.x.name))) + '</p></section>';
+  return h + otherStoresNote();
+}
+function otherStoresNote(){
+  const others = myStores().filter(s => !(CHAINS[s.chain] || {}).kroger);
+  if (!others.length) return '';
+  return '<section class="sec"><div class="sec-h"><h2>Check these weekly ads</h2></div><p class="dhint">' + esc(joinList(Array.from(new Set(others.map(s => s.name))))) + ' don\'t share their deals with apps. Tap a weekly ad, and save any deal you spot so it shows on your list.</p>'
+    + '<div class="wrapchips">' + others.map(s => adLink(s) ? '<a class="chip" href="' + esc(adLink(s)) + '" target="_blank" rel="noopener noreferrer">' + esc(storeLabel(s)) + icon('ext') + '</a>' : '').join('') + '</div>'
+    + '<div class="morebar"><button class="btn ghost" data-act="dealnew">' + icon('plus') + 'Save a deal I spotted</button></div></section>';
+}
+function weekHTML(rt){
+  const st = rt.dstore || '';
+  const stores = myStores();
+  let h = '<div class="chips scroll-x" data-sx="dst"><button class="chip' + (!st ? ' on' : '') + '" data-dst="">All stores</button>' + stores.map(s => '<button class="chip' + (st === s.id ? ' on' : '') + '" data-dst="' + esc(s.id) + '">' + esc(storeLabel(s)) + '</button>').join('') + '</div>';
+  const show = st ? stores.filter(s => s.id === st) : stores;
+  h += krogerNote();
+  show.forEach(s => {
+    const k = (CHAINS[s.chain] || {}).kroger;
+    h += '<section class="sec"><div class="sec-h"><h2>' + esc(storeLabel(s)) + '</h2></div><div class="dbtns">'
+      + (adLink(s) ? '<a class="btn ghost sm" href="' + esc(adLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('ext') + 'Weekly ad</a>' : '')
+      + (dealsLink(s) ? '<a class="btn ghost sm" href="' + esc(dealsLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('tag') + 'All deals</a>' : '') + '</div>';
+    if (k && hasKroger() && s.loc) {
+      const w = DEALS.week[s.id]; const loading = DEALS.loading['w' + s.id]; const err = DEALS.error['w' + s.id];
+      if (loading && !(w && w.items)) h += '<p class="readst"><span class="spin sm"></span>Getting this week\'s sale prices…</p>';
+      if (err) h += '<p class="readst bad">' + esc(err) + ' <button class="linkbtn sm" data-act="dweekretry" data-id="' + esc(s.id) + '">Try again</button></p>';
+      if (w && w.items) {
+        const n = st ? (rt.wshown || 24) : 8;
+        h += '<p class="hint">' + plural(w.items.length, 'item') + ' on sale, biggest savings first. From Kroger, ' + new Date(w.t).toLocaleString(undefined, {weekday:'short', hour:'numeric', minute:'2-digit'}) + '.</p>'
+          + '<div class="dgrid">' + w.items.slice(0, n).map(saleCardHTML).join('') + '</div>'
+          + (w.items.length > n ? '<div class="morebar"><button class="btn ghost" ' + (st ? 'data-act="dweekmore"' : 'data-dst="' + esc(s.id) + '"') + '>' + (st ? 'Show more' : 'See all ' + w.items.length) + '</button></div>' : '');
+      }
+    }
+    const saved = myDeals().filter(d => d.store === s.id);
+    if (saved.length) h += '<div class="dsaved">' + saved.map(d => '<div class="drow">' + icon('tag') + '<div><b>' + esc(d.text) + ': ' + esc(d.price) + (d.reg ? ' <s>' + esc(d.reg) + '</s>' : '') + '</b><small>You saved this' + (d.ends ? ' · ' + esc(endsText(d.ends)) : '') + '</small></div><button class="gx" data-dealrm="' + esc(d.id) + '" aria-label="Remove this deal">' + icon('x') + '</button></div>').join('') + '</div>';
+    if (!k) h += '<button class="addrow" data-act="dealnew" data-id="' + esc(s.id) + '">' + icon('plus') + 'Save a deal from this ad</button>';
+    h += '</section>';
+  });
+  return h;
+}
+function saleCardHTML(x){
+  const off = Math.round((x.regular - x.promo) / x.regular * 100);
+  return '<div class="scard">' + (x.image ? '<img src="' + esc(x.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="simg"></span>')
+    + '<div class="sbody"><b class="sprice">' + money(x.promo) + ' <s>' + money(x.regular) + '</s></b><span class="soff">' + off + '% off</span><p>' + esc(x.name) + (x.size ? ' · ' + esc(x.size) : '') + '</p>'
+    + '<button class="linkbtn sm" data-dadd="' + esc(x.name.slice(0, 60)) + '">' + icon('plus') + 'Add to list</button></div></div>';
+}
+function storesHTML(){
+  const stores = myStores();
+  return '<p class="dhint">Your stores, in the order they show up. Food 4 Less sale prices come from Kroger. The others link to their own weekly ads.</p>'
+    + stores.map(s => {
+      const c = CHAINS[s.chain] || {};
+      return '<div class="panel stcard"><div class="sthead"><div><h2>' + esc(s.name) + '</h2><p>' + esc([s.where, s.address].filter(Boolean).join(' · ')) + '</p></div><button class="iconbtn" data-stmenu="' + esc(s.id) + '" aria-label="Options for ' + esc(storeLabel(s)) + '">' + icon('more') + '</button></div>'
+        + '<div class="dbtns">' + (adLink(s) ? '<a class="btn ghost sm" href="' + esc(adLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('ext') + 'Weekly ad</a>' : '')
+        + (dealsLink(s) ? '<a class="btn ghost sm" href="' + esc(dealsLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('tag') + 'All deals</a>' : '')
+        + (s.address ? '<a class="btn ghost sm" href="' + esc(mapLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('pin') + 'Map</a>' : '')
+        + (s.phone ? '<a class="btn ghost sm" href="tel:' + esc(s.phone.replace(/[^\d+]/g, '')) + '">' + icon('phone') + 'Call</a>' : '') + '</div>'
+        + (c.kroger ? '<p class="hint">' + (!hasKroger() ? 'Sale prices: not set up yet. <button class="linkbtn sm" data-act="kconnect">Set up</button>' : s.loc ? 'Sale prices on (store ' + esc(s.loc) + '). <button class="linkbtn sm" data-act="kfind" data-id="' + esc(s.id) + '">Change</button>' : 'Sale prices: pick your store. <button class="linkbtn sm" data-act="kfind" data-id="' + esc(s.id) + '">Find it</button>') + '</p>' : '')
+        + '</div>';
+    }).join('')
+    + '<div class="morebar"><button class="btn ghost" data-act="storenew">' + icon('plus') + 'Add a store</button></div>'
+    + (hasKroger() ? '<p class="hint" style="text-align:center">Kroger keys saved. <button class="linkbtn sm" data-act="kconnect">Change</button></p>' : '');
+}
+function mountDeals(r){
+  if (!hasKroger()) return;
+  const t = r.dtab || 'list';
+  if (t === 'week') (r.dstore ? myStores().filter(s => s.id === r.dstore) : krogerStores()).filter(s => (CHAINS[s.chain] || {}).kroger && s.loc).forEach(s => loadWeek(s));
+  if (t === 'list') loadListDeals();
+}
+
+// store options, adding a store, saving a deal, and Kroger setup
+function storeMenu(id){
+  const s = storeBy(id); if (!s) return;
+  const list = myStores(); const i = list.indexOf(s);
+  menuSheet([i > 0 ? mi('stup', 'back', 'Move up', id, 'rot90') : '', mi('stedit', 'edit', 'Edit store', id), mi('strm', 'trash', 'Remove store', id, 'danger')].filter(Boolean), storeLabel(s));
+}
+function moveStore(id){ const list = myStores().slice(); const i = list.findIndex(s => s.id === id); if (i > 0) { const x = list.splice(i, 1)[0]; list.splice(i - 1, 0, x); putStores(list); } closeSheet(); }
+async function removeStore(id){
+  closeSheet(); const s = storeBy(id); if (!s) return;
+  const ok = await confirmBox({title:'Remove ' + storeLabel(s) + '?', msg:'Takes it off your stores. Deals you saved for it go too.', ok:'Remove'});
+  if (!ok) return;
+  putSettings({mydeals:(Store.settings.mydeals || []).filter(d => d.store !== id)});
+  putStores(myStores().filter(x => x.id !== id));
+}
+let SF = null;
+function openStoreForm(id){
+  const s = id ? storeBy(id) : null;
+  SF = {id:id || '', chain:s ? s.chain : 'safeway'};
+  const chainBtns = () => Object.keys(CHAINS).map(k => '<button type="button" class="chip' + (SF.chain === k ? ' on' : '') + '" data-sfchain="' + k + '">' + esc(CHAINS[k].name) + '</button>').join('');
+  openSheet(sheetHead(s ? 'Edit store' : 'Add a store') + '<div class="sh-body">'
+    + '<div class="field"><span class="lbl">Store</span><div class="wrapchips" id="sfchains">' + chainBtns() + '</div></div>'
+    + '<div class="field"><label class="lbl" for="sf-name">Name</label><input class="inp" id="sf-name" maxlength="40" value="' + esc(s ? s.name : 'Safeway') + '"></div>'
+    + '<div class="field"><label class="lbl" for="sf-where">Which one <span class="opt">like the street it\'s on</span></label><input class="inp" id="sf-where" maxlength="40" value="' + esc(s ? s.where || '' : '') + '"></div>'
+    + '<div class="field"><label class="lbl" for="sf-addr">Address <span class="opt">optional</span></label><input class="inp" id="sf-addr" maxlength="120" value="' + esc(s ? s.address || '' : '') + '"></div>'
+    + '<div class="field"><label class="lbl" for="sf-phone">Phone <span class="opt">optional</span></label><input class="inp" id="sf-phone" maxlength="20" inputmode="tel" value="' + esc(s ? s.phone || '' : '') + '"></div>'
+    + '<div class="field" id="sf-adbox"' + (SF.chain === 'other' ? '' : ' hidden') + '><label class="lbl" for="sf-ad">Weekly ad link <span class="opt">optional</span></label><input class="inp" id="sf-ad" maxlength="300" inputmode="url" placeholder="https://" value="' + esc(s ? s.ad || '' : '') + '"></div>'
+    + '</div><div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="stsave">Save</button></div>', {label:'Store'});
+  SF.redrawChains = () => { const b = $('#sfchains'); if (b) b.innerHTML = chainBtns(); const ad = $('#sf-adbox'); if (ad) ad.hidden = SF.chain !== 'other'; };
+}
+function saveStoreForm(){
+  if (!SF) return;
+  const name = $('#sf-name').value.trim() || (CHAINS[SF.chain] || {}).name || 'Store';
+  let ad = ($('#sf-ad') || {}).value || '';
+  ad = ad.trim(); if (ad && !/^https?:\/\//i.test(ad)) ad = 'https://' + ad;
+  const s = {id:SF.id || 's-' + uid(), chain:SF.chain, name:name.slice(0, 40), where:$('#sf-where').value.trim().slice(0, 40), address:$('#sf-addr').value.trim().slice(0, 120), phone:$('#sf-phone').value.trim().slice(0, 20)};
+  if (SF.chain === 'other' && ad) s.ad = ad;
+  const old = storeBy(s.id); if (old && old.loc && old.chain === s.chain) s.loc = old.loc;
+  const list = myStores().slice(); const i = list.findIndex(x => x.id === s.id);
+  if (i >= 0) list[i] = s; else list.push(s);
+  putStores(list); closeSheet(); SF = null;
+  toast(i >= 0 ? 'Store saved' : 'Added ' + storeLabel(s));
+}
+function openDealForm(storeId){
+  const stores = myStores().filter(s => !(CHAINS[s.chain] || {}).kroger).concat(myStores().filter(s => (CHAINS[s.chain] || {}).kroger));
+  const pick = storeId || (stores[0] && stores[0].id) || '';
+  openSheet(sheetHead('Save a deal') + '<div class="sh-body"><p class="dhint">Spotted something in a weekly ad? Save it here and it shows next to that item on your grocery list until the sale ends.</p>'
+    + '<div class="field"><label class="lbl" for="df-what">What\'s on sale</label><input class="inp" id="df-what" maxlength="60" placeholder="Chicken thighs"></div>'
+    + '<div class="field"><label class="lbl" for="df-price">Sale price</label><input class="inp" id="df-price" maxlength="30" placeholder="$1.49/lb or 2 for $5"></div>'
+    + '<div class="field"><label class="lbl" for="df-reg">Regular price <span class="opt">optional</span></label><input class="inp" id="df-reg" maxlength="30" placeholder="$2.99/lb"></div>'
+    + '<div class="field"><label class="lbl" for="df-store">Store</label><select class="inp" id="df-store">' + stores.map(s => '<option value="' + esc(s.id) + '"' + (s.id === pick ? ' selected' : '') + '>' + esc(storeLabel(s)) + '</option>').join('') + '</select></div>'
+    + '<div class="field"><label class="lbl" for="df-ends">Good through</label><input class="inp" id="df-ends" type="date" value="' + nextTuesday() + '"></div>'
+    + '</div><div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="dealsave">Save deal</button></div>', {label:'Save a deal'});
+  setTimeout(() => { const i = $('#df-what'); if (i) i.focus(); }, 60);
+}
+function saveDealForm(){
+  const what = $('#df-what').value.trim(), price = $('#df-price').value.trim();
+  if (!what) { $('#df-what').classList.add('err'); $('#df-what').focus(); return; }
+  if (!price) { $('#df-price').classList.add('err'); $('#df-price').focus(); return; }
+  const f = lookupFood(what) || {id:''};
+  const d = {id:'d-' + uid(), text:capWord(what), food:f.id, price:price.slice(0, 30), reg:$('#df-reg').value.trim().slice(0, 30), store:$('#df-store').value, ends:$('#df-ends').value || '', t:now()};
+  putSettings({mydeals:(Store.settings.mydeals || []).filter(x => !x.ends || x.ends >= today()).concat([d])});
+  closeSheet(); redrawDeals(); redrawList();
+  toast('Deal saved');
+}
+function removeDeal(id){ const before = Store.settings.mydeals || []; putSettings({mydeals:before.filter(d => d.id !== id)}); redrawDeals(); redrawList(); toast('Deal removed', {label:'Undo', fn:() => { putSettings({mydeals:before}); redrawDeals(); }}); }
+function openKroger(){
+  const k = krogerKeys();
+  openSheet(sheetHead('Food 4 Less sale prices') + '<div class="sh-body">'
+    + '<p class="dhint">Food 4 Less is owned by Kroger, and Kroger gives out its prices for free to apps like this one. You just need your own free key. One time, about 10 minutes.</p>'
+    + '<ol class="ksteps"><li>Go to <a href="https://developer.kroger.com/" target="_blank" rel="noopener noreferrer">developer.kroger.com</a> and create a free account (or sign in).</li>'
+    + '<li>Create an app. Call it <b>yumyumtumtum</b>. If it asks for a redirect link, use <b>https://djvas1975.github.io/yumyumtumtum/</b>. If it asks which APIs, pick <b>Products</b> and <b>Locations</b>. If it asks Production or Certification, pick <b>Production</b>.</li>'
+    + '<li>Copy the app\'s <b>Client ID</b> and <b>Client Secret</b> into the boxes below.</li></ol>'
+    + '<p class="hint">The buttons on Kroger\'s site may be named a little differently. If you get stuck, send Claude a screenshot.</p>'
+    + '<div class="field"><label class="lbl" for="kc-id">Client ID</label><input class="inp" id="kc-id" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(k.id || '') + '"></div>'
+    + '<div class="field"><label class="lbl" for="kc-secret">Client Secret</label><input class="inp" id="kc-secret" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(k.secret || '') + '"></div>'
+    + '<p class="hint">Saved on this phone and in your backups. It only lets the app read Kroger\'s prices, nothing about you.</p>'
+    + '</div><div class="sh-foot">' + (k.id ? '<button class="btn ghost" data-act="kforget">Remove keys</button>' : '<button class="btn ghost" data-act="closesheet">Cancel</button>') + '<button class="btn primary" data-act="ksave">Save</button></div>', {full:true, label:'Food 4 Less sale prices'});
+}
+async function saveKroger(){
+  const id = $('#kc-id').value.trim(), secret = $('#kc-secret').value.trim();
+  if (!id || !secret) { toast('Paste both the Client ID and the Client Secret.'); return; }
+  putSettings({kroger:{id:id, secret:secret}});
+  DEALS.week = {}; DEALS.list = {}; DEALS.test = false; saveDealsLS();
+  closeSheet();
+  const s = krogerStores()[0];
+  if (s) findKrogerStore(s.id); else toast('Keys saved');
+}
+async function findKrogerStore(id){
+  const s = storeBy(id); if (!s) return;
+  const zip = ((s.address || '').match(/\b\d{5}\b/) || [])[0] || '95336';
+  openSheet(sheetHead('Find your ' + s.name) + '<div class="sh-body" id="kfbody"><p class="readst"><span class="spin sm"></span>Asking Kroger for stores near ' + esc(zip) + '…</p></div>', {label:'Find store'});
+  let j;
+  try { j = await krogerCall('find=' + zip); }
+  catch (e) { const b = $('#kfbody'); if (b) b.innerHTML = '<p class="readst bad">' + esc(e.message) + '</p><div class="morebar"><button class="btn ghost" data-act="kconnect">Check the keys</button></div>'; return; }
+  const f4l = j.stores.filter(x => /food ?4 ?less|foods ?co/i.test(x.name + ' ' + x.chain));
+  const want = s.chain === 'food4less' && f4l.length ? f4l : j.stores;
+  const street = (s.address || '').split(',')[0].toLowerCase().replace(/\s+/g, ' ');
+  const match = want.find(x => street && x.address.toLowerCase().indexOf(street) === 0);
+  if (match) { setKrogerLoc(s.id, match.locationId); closeSheet(); toast('Found it: ' + match.address.split(',')[0]); return; }
+  const b = $('#kfbody'); if (!b) return;
+  b.innerHTML = want.length ? '<p class="dhint">Which one is yours?</p>' + want.map(x => '<button class="mi" data-kloc="' + esc(x.locationId) + '" data-id="' + esc(s.id) + '">' + icon('pin') + '<span>' + esc(x.name) + '<br><small>' + esc(x.address) + '</small></span></button>').join('')
+    : '<p class="dhint">Kroger didn\'t list a ' + esc(s.name) + ' near ' + esc(zip) + '. Check the store\'s address on the My stores tab.</p>';
+}
+function setKrogerLoc(id, loc){ putStores(myStores().map(s => s.id === id ? Object.assign({}, s, {loc:loc}) : s)); const s = storeBy(id); if (s) { loadWeek(s, true); loadListDeals(true); } }
 
 /* the same text reader the recipe reader uses, for pasted recipe text */
 /* ---- captions (TikTok / Instagram / YouTube descriptions) ---- */
@@ -2770,6 +3307,19 @@ function foodsIn(text) {
   }
   return out.sort((x, y) => x.a - y.a).map(h => h.id).filter((id, i, a) => a.indexOf(id) === i);
 }
+// the words a line uses for a food, for a grocery list: "1/2 cup potato starch" -> "Potato starch" (not "Cornstarch")
+function foodName(line, id) {
+  const label = LABEL[id] || '';
+  const lw = singularWords(line);
+  if (label && singularWords(label).every(w => lw.indexOf(w) >= 0)) return label;
+  const f = FOOD_RE.find(x => x[0] === id);
+  if (!f) return label;
+  f[1].lastIndex = 0;
+  const m = f[1].exec(' ' + normFood(line) + ' ');
+  f[1].lastIndex = 0;
+  const w = m ? m[0].trim() : '';
+  return w && w.length <= 30 ? w.charAt(0).toUpperCase() + w.slice(1) : label;
+}
 // "chicken rice beans spam" -> chicken, rice, beans, spam (typed without commas)
 const FILLER = /^(and|or|with|some|the|plus|also|got|have|i|we|my|of|a|an|fresh|frozen|leftover|cooked|raw|bag|bags|can|cans|jar|box|pack|lb|lbs|pound|pounds|cups?|few|little|lots|lot|bunch|half|whole|small|large|big|any)$/;
 function splitFoods(text) {
@@ -2930,6 +3480,32 @@ function recipeCats(r) {
   else if ((meat || CAT_RE.main.test(title)) && !['soups', 'salads', 'desserts', 'drinks', 'apps', 'breakfast', 'bread', 'sides'].some(k => out.has(k))) out.add('main');
   if (out.has('bread') && !out.has('desserts')) out.add('baking');
   return CATS.map(c => c[0]).filter(k => out.has(k));
+}
+// grocery list sections, in the order you walk a typical store
+const AISLES = ['Produce', 'Meat & seafood', 'Dairy & eggs', 'Bread & tortillas', 'Rice, pasta & beans', 'Canned & jarred', 'Sauces & condiments', 'Spices & baking', 'Frozen', 'Snacks & drinks', 'Other'];
+const AISLE_OF = {
+  'Bread & tortillas': ['tortillas', 'bread', 'biscuits', 'pizza dough', 'pie crust', 'wrappers', 'rice paper'],
+  'Rice, pasta & beans': ['rice', 'pasta', 'noodles', 'egg noodles', 'rice noodles', 'quinoa', 'couscous', 'oats', 'cornmeal', 'black beans', 'pinto beans', 'refried beans', 'kidney beans', 'white beans', 'beans', 'chickpeas', 'lentils', 'breadcrumbs'],
+  'Canned & jarred': ['chicken broth', 'beef broth', 'vegetable broth', 'broth', 'cream of chicken', 'cream of mushroom', 'canned tomatoes', 'tomato sauce', 'tomato paste', 'pasta sauce', 'enchilada sauce', 'salsa', 'coconut milk', 'canned milk', 'chipotle in adobo', 'olives', 'pickles', 'capers', 'water chestnuts', 'sun dried tomatoes', 'peanut butter', 'tuna', 'kimchi'],
+  'Sauces & condiments': ['soy sauce', 'fish sauce', 'oyster sauce', 'hoisin', 'teriyaki', 'worcestershire', 'gochujang', 'sriracha', 'hot sauce', 'bbq sauce', 'curry paste', 'pesto', 'ketchup', 'mustard', 'mayo', 'ranch', 'italian dressing', 'honey', 'maple syrup', 'corn syrup', 'rice vinegar', 'balsamic', 'vinegar', 'rice wine', 'sesame oil', 'chili oil', 'oil', 'tahini', 'hummus', 'miso'],
+  'Spices & baking': ['flour', 'sugar', 'brown sugar', 'powdered sugar', 'cornstarch', 'baking powder', 'baking soda', 'yeast', 'vanilla', 'chocolate', 'cocoa', 'salt', 'pepper', 'coconut', 'nuts', 'sesame seeds'],
+  'Frozen': ['ice cream', 'whipped cream'],
+  'Snacks & drinks': ['tortilla chips', 'crackers', 'peanuts', 'wine', 'beer', 'water']
+};
+const AISLE_BY = {}; Object.keys(AISLE_OF).forEach(a => AISLE_OF[a].forEach(id => { AISLE_BY[id] = a; }));
+// which section a grocery item goes in
+function aisleOf(food, name) {
+  if (/\bfrozen\b/i.test(name || '')) return 'Frozen';
+  if (!food || food.indexOf('x:') === 0) return 'Other';
+  if (AISLE_BY[food]) return AISLE_BY[food];
+  const k = KIND[food];
+  if (k === 'v' || FRESH_HERBS.has(food)) return 'Produce';
+  if (k === 'p') return food === 'tofu' ? 'Produce' : 'Meat & seafood';
+  if (k === 'd' || food === 'butter') return 'Dairy & eggs';
+  if (k === 'h') return 'Spices & baking';
+  if (k === 'c') return 'Rice, pasta & beans';
+  if (k === 's') return 'Canned & jarred';
+  return 'Other';
 }
 // things to tap-add, grouped
 const QUICK_FOODS = [
@@ -3245,6 +3821,10 @@ async function restoreBackup(file){
   }
   if (o.settings && typeof o.settings.name === 'string') putSettings({name:o.settings.name.slice(0, 40)});
   if (o.settings && o.settings.pantry && Array.isArray(o.settings.pantry.items) && !hasKitchen()) putSettings({pantry:o.settings.pantry});
+  if (o.settings && Array.isArray(o.settings.grocery) && !groceryList().length) putSettings({grocery:o.settings.grocery});
+  if (o.settings && Array.isArray(o.settings.stores) && !Array.isArray(Store.settings.stores)) putSettings({stores:o.settings.stores});
+  if (o.settings && Array.isArray(o.settings.mydeals)) putSettings({mydeals:(Store.settings.mydeals || []).concat(o.settings.mydeals.filter(d => d && d.id && !(Store.settings.mydeals || []).some(x => x.id === d.id)))});
+  if (o.settings && o.settings.kroger && o.settings.kroger.id && !hasKroger()) putSettings({kroger:o.settings.kroger});
   if (o.settings && o.settings.taste && Array.isArray(o.settings.taste.never)) { const T = tasteStore(); putSettings({taste:Object.assign({}, T, {never:neverList().concat(o.settings.taste.never.filter(x => typeof x === 'string' && !neverList().some(y => y.toLowerCase() === x.toLowerCase())))})}); }
   toast('Backup restored');
 }
@@ -3310,6 +3890,28 @@ const A = {
   cookwmore: () => { const r = cur(); r.wshown = (r.wshown || 12) + 12; redrawCook(); },
   cookretry: () => loadCook(true),
   catretry: () => loadFeed('k:' + cur().key, true),
+  tolist: t => { const r = Store.recipes.get(t.dataset.id || cur().id); if (r) openToList({id:r.id, title:r.title, ingredients:r.ingredients}); },
+  tolistp: t => { const it = DISC.byId.get(t.dataset.id); const st = it && DISC.read.get(normUrl(it.url)); if (st && st.j) openToList({title:(st.j.title || it.title), ingredients:st.j.ingredients}); },
+  tladd: () => tlAdd(),
+  listmenu: () => listMenu(),
+  glistshare: () => shareList(),
+  glistclearc: () => clearList(true),
+  glistclear: () => clearList(false),
+  gdone: () => doneShopping(),
+  kconnect: () => openKroger(),
+  ksave: () => saveKroger(),
+  kforget: () => { putSettings({kroger:{}}); DEALS.week = {}; DEALS.list = {}; DEALS.test = false; saveDealsLS(); closeSheet(); redrawDeals(); toast('Kroger keys removed'); },
+  kfind: t => findKrogerStore(t.dataset.id),
+  dealnew: t => openDealForm(t.dataset.id),
+  dealsave: () => saveDealForm(),
+  storenew: () => openStoreForm(),
+  stsave: () => saveStoreForm(),
+  stup: t => moveStore(t.dataset.id),
+  stedit: t => { closeSheet(); setTimeout(() => openStoreForm(t.dataset.id), 300); },
+  strm: t => removeStore(t.dataset.id),
+  dlistretry: () => { krogerStores().forEach(s => { DEALS.error['l' + s.id] = ''; }); loadListDeals(true); },
+  dweekretry: t => { const s = storeBy(t.dataset.id); if (s) loadWeek(s, true); },
+  dweekmore: () => { const r = cur(); r.wshown = (r.wshown || 24) + 24; redrawDeals(); },
   catmore: () => { const r = cur(); r.mshown = (r.mshown || 12) + 12; refresh(); },
   nvadd: () => { const i = $('#neverin'); if (!i) return; const v = i.value.trim(); if (!v) { i.focus(); return; } i.value = ''; i.blur(); addNever(v); }
 };
@@ -3372,8 +3974,9 @@ async function installApp(){
 function readShare(){
   if (window.top !== window) return null;
   let p; try { p = new URLSearchParams(location.search); } catch (e) { return null; }
-  const out = {add:p.has('add'), cook:p.has('cook'), title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
-  if (!out.add && !out.cook && !out.title && !out.text && !out.url) return null;
+  const go0 = p.get('go');
+  const out = {add:p.has('add'), cook:p.has('cook') || go0 === 'cook', go:['list', 'deals'].indexOf(go0) >= 0 ? go0 : '', title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
+  if (!out.add && !out.cook && !out.go && !out.title && !out.text && !out.url) return null;
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   return out;
 }
@@ -3428,7 +4031,8 @@ async function boot(){
   }
   await startLocal();
   show(true);
-  if (share && share.cook && !share.add) go({name:'cook'});
+  if (share && share.go && !share.add) go({name:share.go});
+  else if (share && share.cook && !share.add) go({name:'cook'});
   else if (share) openEditor(null, (share.title || share.text || share.url) ? share : null);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 }

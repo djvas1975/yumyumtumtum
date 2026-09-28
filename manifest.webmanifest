@@ -63,6 +63,18 @@
           "type": "image/png"
         }
       ]
+    },
+    {
+      "name": "Grocery list",
+      "short_name": "Grocery list",
+      "url": "https://djvas1975.github.io/yumyumtumtum/?go=list",
+      "icons": [
+        {
+          "src": "icons/shortcut-list.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
     }
   ],
   "share_target": {
