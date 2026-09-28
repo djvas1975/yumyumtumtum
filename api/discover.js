@@ -116,7 +116,7 @@ module.exports = async (req, res) => {
   const debug = !!qp.debug;
   const limit = debug && qp.wait ? Math.min(25000, parseInt(qp.wait, 10) || SITE_TIMEOUT) : SITE_TIMEOUT;
   let sources;
-  if (want.length) sources = SOURCES.filter(s => want.includes(s.id));
+  if (want.length) sources = SOURCES.filter(s => want.includes(s.id) || (s.trial && want.includes('trial')));
   else if (qp.all) sources = SOURCES.filter(s => !s.trial);
   else sources = SOURCES.filter(s => s.core || (q && s.topics && s.topics.test(q.toLowerCase())));
 
