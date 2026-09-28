@@ -6,6 +6,7 @@
 //   q     up to 8 searches, split on |
 //   have  what's in the kitchen (food ids or plain words, comma separated): used to pick which
 //         recipes to read first and to sort the answer. The phone checks them again itself.
+//   b     the basics always on hand (default salt, pepper, oil, water, butter, sugar, flour)
 //   x     extra sites to ask (ids from api/discover.js), for cuisines Dave likes
 //   n     how many recipes to read (12 to 48, default 40)
 //   debug=1  how each site and page answered, and how each recipe matched
@@ -33,7 +34,8 @@ module.exports = async (req, res) => {
   const debug = !!qp.debug;
   const t0 = Date.now();
   const report = debug ? { searches: [], pages: [] } : null;
-  const kitchen = K.makePantry(have.map(h => K.LABEL[h] ? { id: h } : K.lookupFood(h)), []);
+  const basics = qp.b != null ? list(qp.b, 40) : K.DEFAULT_BASICS;
+  const kitchen = K.makePantry(have.map(h => K.LABEL[h] ? { id: h } : K.lookupFood(h)), basics);
 
   // 1. search the sites: the main ones, the extra general ones, the cuisine sites that fit, and any asked for
   const siteFor = q => SOURCES.filter(s => !s.trial && (s.core || s.wide || extra.indexOf(s.id) >= 0 || (s.topics && s.topics.test(q))));
