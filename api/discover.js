@@ -43,7 +43,7 @@ const SOURCES = [
   { id: 'jocooks', name: 'Jo Cooks', kind: 'wp', core: true, home: 'https://www.jocooks.com' },
   // cuisine specialists, asked when the search mentions their kind of food
   { id: 'mexicanplease', name: 'Mexican Please', kind: 'wp', home: 'https://www.mexicanplease.com', topics: MEX },
-  { id: 'mexicoinmykitchen', name: 'Mexico in My Kitchen', kind: 'wp', home: 'https://www.mexicoinmykitchen.com', topics: MEX },
+  { id: 'mexicoinmykitchen', name: 'Mexico in My Kitchen', kind: 'wp', home: 'https://www.mexicoinmykitchen.com', topics: MEX, blockPages: true }, // its recipe pages turn servers away
   { id: 'maricruzavalos', name: 'Maricruz Avalos', kind: 'wp', home: 'https://www.maricruzavalos.com', topics: MEX },
   { id: 'thewoksoflife', name: 'The Woks of Life', kind: 'wp', home: 'https://thewoksoflife.com', topics: CHI },
   { id: 'omnivorescookbook', name: 'Omnivore’s Cookbook', kind: 'wp', home: 'https://omnivorescookbook.com', topics: CHI },

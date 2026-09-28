@@ -70,8 +70,10 @@ module.exports = async (req, res) => {
     return { x, s: x.qs.length * 2 + inName + mine * 2.5 - x.best * 0.3 };
   }).sort((a, b) => b.s - a.s);
   const perSite = {}, cap = Math.max(3, Math.ceil(n / 8)), picked = [];
+  const noPages = new Set(SOURCES.filter(s => s.blockPages).map(s => s.id));
   for (const { x } of scored) {
     if (picked.length >= n) break;
+    if (noPages.has(x.source)) continue;
     if ((perSite[x.source] || 0) >= cap) continue;
     perSite[x.source] = (perSite[x.source] || 0) + 1;
     picked.push(x);

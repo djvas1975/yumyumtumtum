@@ -39,6 +39,7 @@ const J = x => JSON.stringify(x);
     ['1 cup spam, cubed', 'core:spam']
   ];
   cases.forEach(([l, want]) => ok(read(l) === want, 'reads "' + l + '" -> ' + read(l)));
+  ok(X.matchRecipe(['1 lb 85/15 beef'], X.makePantry([X.lookupFood('ground beef')], [])).ready && !X.matchRecipe(['1 lb flank steak'], X.makePantry([X.lookupFood('ground beef')], [])).ready, 'plain "beef" takes ground beef, a steak doesn\'t');
   ok(X.readIngredient('1/4 cup cilantro, for garnish').optional && X.readIngredient('hot sauce (optional)').optional, 'garnish and optional lines are optional');
 
   // ---------- typed kitchen items ----------
