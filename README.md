@@ -19,16 +19,11 @@ saved recipes and new ones from the recipe sites that you can make, with what's 
 for each. Suggestions lean toward what you save, cook, rate, and skip, and anything on
 your **Foods you don't eat** list (Me tab) never gets suggested.
 
-## Grocery list and deals
+## Grocery list
 On any recipe, tap **Add to grocery list**. What's already in your kitchen gets checked
-off, so only what you need goes on the list. The **List** tab keeps it by store section,
-and you can add anything else too. Tap **Done shopping** to move what's in the cart into
-your kitchen.
-
-The **Deals** tab has weekly ads for your stores (Food 4 Less, Safeway, Raley's, and both
-Save Marts to start, and you can add more). None of these stores share their deals with
-apps, so tap a weekly ad and save any deal you spot. It shows up next to that item on your
-list until the sale ends.
+off, so only what you need goes on the list. The **List** tab keeps it by store section
+or by recipe, and you can add anything else too. Tap **Done shopping** to move what's in
+the cart into your kitchen.
 
 ## Where recipes are stored
 On the phone itself (works offline). Nothing is uploaded anywhere. Use

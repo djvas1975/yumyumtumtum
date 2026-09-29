@@ -8,9 +8,6 @@
     },
     "api/cook.js": {
       "maxDuration": 45
-    },
-    "api/deals.js": {
-      "maxDuration": 30
     }
   }
 }

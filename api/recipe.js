@@ -24,6 +24,7 @@ module.exports = async (req, res) => {
   const bad = badUrl(url);
   if (bad) { res.status(400).json({ ok: false, error: bad }); return; }
   const trace = req.query && req.query.debug ? [] : null;
+  if (trace && req.query.subs) trace.subs = true; // debug only: check for the video's own captions (spoken words)
   try {
     const out = await readRecipe(url, trace);
     if (trace) out.trace = trace;
@@ -37,7 +38,7 @@ module.exports = async (req, res) => {
 async function readRecipe(url, trace) {
   const host = new URL(url).hostname.replace(/^(www|m|mobile)\./, '');
   if (/(^|\.)tiktok\.com$/.test(host)) return withLinkedRecipe(await readTikTok(url, trace), trace);
-  if (host === 'youtu.be' || /(^|\.)youtube\.com$/.test(host)) return withLinkedRecipe(await readYouTube(url), trace);
+  if (host === 'youtu.be' || /(^|\.)youtube\.com$/.test(host)) return withLinkedRecipe(await readYouTube(url, trace), trace);
   if (/(^|\.)instagram\.com$/.test(host)) return withLinkedRecipe(await readInstagram(url, trace), trace);
   if (/(^|\.)facebook\.com$/.test(host) || host === 'fb.watch') return withLinkedRecipe(await readFacebook(url, trace), trace);
   if (host === 'pin.it' || /(^|\.)pinterest\.[a-z.]+$/.test(host)) return readPinterest(url, trace);
@@ -216,6 +217,7 @@ async function tikTokPage(url, trace) {
     const v = item.video || {};
     image = (slide && ((slide.imageURL && (slide.imageURL.urlList || [])[0]) || (slide.displayImage && (slide.displayImage.urlList || [])[0]))) || v.cover || v.originCover || v.dynamicCover || '';
     if (trace) trace.push('page data found: ' + (ip.images ? ip.images.length + ' slides' : 'video') + ', caption ' + caption.length + ' chars');
+    if (trace && trace.subs) await probeTikTokSubs(v, trace);
   }
   if (!caption) {
     caption = decode(meta(html, 'og:description') || meta(html, 'description'));
@@ -255,7 +257,17 @@ async function resolveTikTok(url, trace) {
 }
 
 /* ---------------- YouTube ---------------- */
-async function readYouTube(url) {
+// Debug probe (debug=1&subs=1): does TikTok list its own captions of what's said in the video?
+async function probeTikTokSubs(v, trace) {
+  const subs = (v.subtitleInfos || []).map(x => ({ lang: x.LanguageCodeName || x.LanguageID || '', format: x.Format || '', source: x.Source || '', url: x.Url || '' }));
+  const cla = ((v.claInfo || {}).captionInfos || []).map(x => ({ lang: x.language || x.languageCode || '', url: x.url || (x.urlList || [])[0] || '' }));
+  trace.push('captions listed: subtitleInfos ' + subs.length + ' [' + subs.map(x => x.lang + '/' + x.format + '/' + x.source).join(', ') + '], claInfo ' + cla.length + ' [' + cla.map(x => x.lang).join(', ') + ']' + (v.claInfo ? ', autoCaption ' + v.claInfo.enableAutoCaption : ''));
+  const pick = subs.find(x => /^en/i.test(x.lang) && x.url) || cla.find(x => /^en/i.test(x.lang) && x.url) || subs.find(x => x.url) || cla.find(x => x.url);
+  if (!pick) return;
+  try { const { text } = await fetchText(pick.url, { trace }); trace.push('caption file (' + text.length + ' chars): ' + text.replace(/\s+/g, ' ').slice(0, 600)); }
+  catch (e) { trace.push('caption file failed: ' + e.message); }
+}
+async function readYouTube(url, trace) {
   const o = await fetchJson('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(url)).catch(() => ({}));
   const out = blank(url);
   out.kind = 'video';
@@ -269,6 +281,7 @@ async function readYouTube(url) {
     const { text: html } = await fetchText(id ? 'https://www.youtube.com/watch?v=' + id : url);
     const m = html.match(/"shortDescription":"((?:[^"\\]|\\.)*)"/);
     if (m) desc = JSON.parse('"' + m[1] + '"');
+    if (trace && trace.subs) { const ct = html.match(/"captionTracks":(\[.*?\])/); trace.push('youtube captionTracks: ' + (ct ? ct[1].slice(0, 400) : 'none')); }
     if (!out.title) out.title = decode(meta(html, 'og:title'));
     const max = id && html.includes('maxresdefault') ? 'https://i.ytimg.com/vi/' + id + '/maxresdefault.jpg' : '';
     if (max) out.image = max;

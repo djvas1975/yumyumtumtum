@@ -3,7 +3,7 @@
 Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.1.1**.
+Current version: **1.2**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -31,8 +31,9 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 
 ---
 
-## What the app does (v1.1)
-- **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Deals, Me.
+## What the app does (v1.2)
+- **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
+  Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
   Recently saved, **Browse by cuisine** (scrollable tiles: Mexican, Asian, Italian, Chinese,
   Japanese, Thai, Korean, Vietnamese, Indian, Greek, Mediterranean, Middle Eastern, American,
@@ -49,6 +50,12 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
   collections, jump chips, checkable ingredients and steps, notes, cookware, nutrition, full
   caption (for videos), "Full recipe on [site]" link, and a button that jumps to the recipe
   card on the original site. The More (⋯) menu has **Fill in missing details from the link**.
+  v1.2 adds: a **Swap** button on ingredients that have a known substitute (green when you're
+  missing it and have what the swap uses), a green "Swaps you can make with what you have" box
+  under the kitchen check, a swap sheet with amounts and **Add to notes**, "N things for this
+  recipe are on your list · See them", and **Cookware & tips** (the recipe's own cookware, tips for
+  the pans and appliances the directions use, what to use if you don't have one, and USDA safe
+  temperatures for the meat in it).
 - **Yums:** smart collections (All Yums, Favorites, Want to try, Made it) and custom collections.
 - **Search:** Dave's own recipes with filters (type, time, status, cuisine, meal, source) and
   sorting, plus a **Find new recipes on Delish, Tasty, and more** button.
@@ -63,26 +70,17 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
   Recipe pages and Discover previews say "You have 7 of 9. Need … Spices: …".
 - **List** (grocery list, v1.1): a recipe page's **Add to grocery list** (and the Discover
   preview's) opens a sheet where foods already in the kitchen are checked off ("Have it") and not
-  added, optional and spice lines are marked, and needed ones are picked. The list is also
-  stand-alone: type anything ("milk, paper towels"). Items are grouped by store section, merge
-  when two recipes need the same food, show which recipe they're for, and show a green deal tag
-  when a deal matches. Check items into "In the cart"; **Done shopping** moves them into the
-  kitchen list. ⋯ menu: share the list as text, clear checked, clear all.
-- **Deals** (separate tab, v1.1): For my list, This week, My stores. Stores to start: Food 4 Less
-  (131 Spreckels Ave, at Yosemite), Safeway (1187 S Main St), Raley's (1280 Lathrop Rd), Save Mart
-  (1172 N Main St), Save Mart (1431 W Yosemite Ave), all Manteca. Addresses and phones checked
-  Sept 28, 2026 on each chain's own store page or listings. Dave can add, edit, reorder, or remove
-  stores. Each has Weekly ad and All deals buttons (the chain's official pages; Food 4 Less has only
-  its weekly ad at myfood4less.com), Map, and Call. None of these chains share deals data, so Dave
-  saves deals he spots ("Save a deal"), and they show on his list until the end date.
-  **The Manteca Food 4 Less is not Kroger's.** It's run by PAQ, Inc. of Lodi, an employee-owned
-  franchisee (Manteca Chamber listing; Progressive Grocer: Kroger "doesn't have any administrative
-  control over PAQ's Food 4 Less stores"). v1.1 wrongly assumed Kroger and had Dave make Kroger keys;
-  with his real keys Kroger's store finder answered but listed no stores within 15 miles of 95336.
-  v1.1.1 points Food 4 Less at PAQ's weekly ad and hides the Kroger parts.
+  added, optional and spice lines are marked, needed ones are picked, and "Or swap: … (you have
+  it)" shows when a swap is on hand. The list is also stand-alone: type anything ("milk, paper
+  towels"). **By aisle** (store sections) or **By recipe** (each recipe's items together, with
+  Open recipe; items for two recipes show under both). Items merge when two recipes need the
+  same food. Check items into "In the cart"; **Done shopping** moves them into the kitchen list.
+  ⋯ menu: share the list as text, clear checked, clear all.
+- **Deals were removed in v1.2** (Dave's call, Sept 28, 2026). He may build store deals as a
+  separate app that ties into this one later. What was learned is under "Deals (removed)" below.
 - **Me:** name, stats, **What it's learned you like** (taste chips, **Foods you don't eat**
   list, Start over), backup and restore, remove examples, storage info.
-- Works offline once installed (service worker). Long-press the icon for Save and What can I cook shortcuts.
+- Works offline once installed (service worker). Long-press the icon for Save, What can I cook, and Grocery list shortcuts.
 
 ## How it's built
 | File | Purpose |
@@ -93,13 +91,13 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 | `api/recipe.js` | Recipe reader: `GET /api/recipe?url=...` (add `&debug=1` for a trace). |
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
-| `api/deals.js` | Kroger-family prices: `GET /api/deals?find=95336` (stores near a ZIP) and `?loc=<locationId>&q=milk|eggs` (up to 30 terms, sale items by % off; `&all=1` adds the regular price when nothing's on sale). Keys come in headers `x-kroger-id` / `x-kroger-secret` from the app, or Vercel env `KROGER_CLIENT_ID` / `KROGER_CLIENT_SECRET`. Tries api.kroger.com, then api-ce.kroger.com (Kroger's test area) and says `test:true` if only that works. No keys: `{ok:false, needKeys:true}`. |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
+| `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`) and cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`). Sources are listed at the top of the file. |
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, archive fallback. |
-| `tools/sync_caption.py` | Copies the caption parser (lib/parse.js) and the kitchen matcher (lib/pantry.js) into app.html. |
-| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/deals.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections, and a fake Kroger. |
-| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, deals 30 s). |
+| `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
+| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, and swaps and cookware tips. |
+| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s). |
 | `icons/` | App icons. `tools/make_photo_icons.py` makes the current ones from `tools/icon-art.jpg`. |
 
 Browsers can only call the reader from the app's own site (CORS allows https://djvas1975.github.io),
@@ -108,10 +106,10 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 
 ## Making a change (the routine)
 1. Edit `tools/app.html` for the app, or `api/` and `lib/` for the reader or Discover.
-2. If the caption section of `lib/parse.js` or anything in `lib/pantry.js` changed, run `python3 tools/sync_caption.py`.
+2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
-4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/deals.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.1.1`).
+4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js`
+5. App changes: bump the version text in `V.me` (`version 1.2`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -235,32 +233,47 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - Live check Sept 27, 2026 (v0.9 endpoint): 5 searches, 880 candidates, 40 recipes read, no
   errors, 8.6 seconds.
 
-## Grocery list and deals: how it works (built Sept 28, 2026)
-- List: `Store.settings.grocery = [{id, name, food, detail, recipes:[{id,title}], done, doneAt, t}]`.
-  Sections come from `aisleOf(food, name)`. Deals on an item: saved deals whose food or words match,
-  plus the top Kroger sale for that item at each Food 4 Less with a store picked.
-- Stores: `Store.settings.stores` (falls back to `DEFAULT_STORES` in app.html). Chains and their
-  official ad links are in `CHAINS` (Food 4 Less, Safeway, Raley's, Save Mart, Other with its own link).
-  A Kroger-family store keeps its Kroger `loc` (locationId). Saved deals: `Store.settings.mydeals`
-  `{id, text, food, price, reg, store, ends}` (end date defaults to next Tuesday).
-- Kroger prices (dormant since v1.1.1): only for a store whose chain has `kroger:true`. The only such
-  chain is the hidden `kroger` one ("Ralphs or Kroger"), not offered in Add a store. Keys:
-  `Store.settings.kroger = {id, secret}`, kept in backups. Dave made a Production app
-  (`djvas1975recipes`) on Sept 28, 2026 and saved its keys on his phone; the name "yumyumtumtum" was
-  already taken on Kroger's side. After saving, the app looks up stores near the store's ZIP and
-  matches the street, or shows a list.
-  This week's sales = 28 everyday searches (`WEEK_TERMS`), cached 12 hours; list prices cached 12 hours
-  per item (`yyt-deals-v1` in localStorage).
-- Kroger's API gives the regular and promo price per store (`items[0].price.regular/promo`, promo 0 =
-  no sale, and a `locationId` is required to get any price). Scope `product.compact`, client
-  credentials. Dave's real keys were accepted on Sept 28, 2026 (the store finder answered with no
-  error), but no price lookup has run live, since there's no Kroger store near him.
-- Flipp was considered for Safeway/Raley's/Save Mart ads and ruled out: its terms forbid scraping.
-- Kroger setup steps (Deals > Set up, only shown with a Kroger store): developer.kroger.com, create an
-  app with a unique name, Production, APIs Products (Public) and Locations (Public), leave the consent
-  section blank, Register, then paste the client_id and client_secret.
-- Ideas for real Safeway/Raley's/Save Mart/Food 4 Less prices: none found from official sources. Their
-  sites block automated reading, and Flipp's terms forbid scraping.
+## Grocery list: how it works (built Sept 28, 2026)
+- `Store.settings.grocery = [{id, name, food, detail, recipes:[{id,title}], done, doneAt, t}]`.
+  Sections come from `aisleOf(food, name)`. Names use the recipe's words (`foodName`).
+  `Store.settings.listView` remembers By aisle or By recipe; the recipe page's "See them" opens
+  By recipe scrolled to that recipe (`{name:'list', lview:'recipe', focus:id}`).
+
+## Swaps and cookware tips: how they work (built Sept 28, 2026)
+- `swapFor(line)` picks the longest matching swap for an ingredient line (so "buttermilk" beats
+  "milk", "coconut milk" and "peanut butter" get none). Each swap has options `{t, d, n, src}`:
+  `n` = the foods it uses (pantry ids, inner list = any one of them); `swapHave` says "You have
+  this" only when every part is in the kitchen, never for options that use nothing checkable.
+- Amounts marked `src:'ext'` come from university extension charts (NDSU FN198 / Purdue
+  HHS-784-W, Missouri MP564, Utah State, Arkansas HE-198). `src:'kitchen'` ones are everyday
+  like-for-like swaps without invented precision. Half-and-half uses 7/8 cup milk + 1/2 tbsp
+  butter (NDSU and Missouri agree; Utah State says 3 tbsp).
+- `toolsFor(recipe)` reads the title, directions, and the recipe's cookware list (ingredients only
+  for "oil for frying"). It skips false alarms that were tested: "grilled cheese" isn't a grill,
+  "mix until blended" isn't a blender, an air fryer isn't deep frying, "brown the beef" in a Dutch
+  oven or slow cooker recipe doesn't add a skillet tip, and a stir fry gets the wok tip only.
+- Safety facts: FoodSafety.gov temps (poultry 165, ground meat 160, steaks/chops/roasts 145 + 3 min
+  rest, fish 145, casseroles 165), USDA deep frying (2 inches of room, thermometer, no water on
+  grease fires), Clemson HGIC / USDA slow cookers (thaw first, 1/2 to 2/3 full, vegetables on the
+  bottom, lid on), Instant Pot manual (2/3 max, 1/2 for foods that expand, minimum liquid), Pyrex
+  (preheat first, no sudden temperature changes, no stovetop or broiler), Waring blender manual (hot
+  liquids: small amount, vent the lid, start low).
+- Added to the kitchen matcher for this: `cream of tartar` and `molasses` (typing "cream of tartar"
+  used to count as heavy cream).
+
+## Deals (removed in v1.2): what was learned
+- The Manteca Food 4 Less (131 Spreckels Ave) is run by PAQ, Inc. of Lodi, an employee-owned
+  franchisee, not Kroger (Manteca Chamber listing; Progressive Grocer: Kroger "doesn't have any
+  administrative control over PAQ's Food 4 Less stores"). Its weekly ad is
+  https://myfood4less.com/store/food4less/flyers/weekly. Kroger's API has no stores within 15 miles
+  of 95336 (checked with Dave's real keys; his Kroger developer app is `djvas1975recipes`).
+- Safeway, Raley's, and Save Mart have no public deals data. Flipp's terms forbid scraping.
+- Stores checked Sept 28, 2026: Food 4 Less 131 Spreckels Ave (209) 823-0806; Safeway 1187 S Main St
+  (209) 824-1144; Raley's 1280 Lathrop Rd (209) 825-0242; Save Mart 1172 N Main St (209) 239-2267;
+  Save Mart 1431 W Yosemite Ave (209) 823-1768.
+- The removed code is in git history (commit 3be8028, v1.1.1): `api/deals.js` (Kroger client with
+  token cache and test-area fallback) and the Deals tab in `tools/app.html`. Old settings
+  (`stores`, `mydeals`, `kroger`) stay on the phone unused.
 
 ## App icon status
 - **In use (v0.7, Sept 26, 2026):** Dave's own pick, a 3D-cartoon "pigging out" picture of him
@@ -286,6 +299,8 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - For looks, show a picture and let him choose. He'll say plainly when something misses.
 
 ## Ideas not built yet
+- Store deals as a separate app that ties into the grocery list (see "Deals (removed)").
+- Fill in a video's recipe from what's said in it (see "Video recipes from what's said" once checked).
 - Meal planner (Yummly had one). The grocery list is ready for it.
 - An "Add what I need" button on What can I cook results.
 - "More like this" row on a recipe page.

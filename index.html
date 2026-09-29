@@ -98,7 +98,6 @@ body[data-route="recipe"] #view{padding-bottom:calc(112px + env(safe-area-inset-
 .scroll-x::after{content:"";flex:0 0 1px}
 .chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-weight:700;font-size:14px;color:var(--ink-2);white-space:nowrap}
 .chip .ic{width:16px;height:16px}
-a.chip{text-decoration:none}
 .chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .chip.dashed{border-style:dashed;background:transparent}
 .wrapchips{display:flex;flex-wrap:wrap;gap:8px}
@@ -271,6 +270,40 @@ body[data-route="recipe"] .tabbar{display:none}
 .tips{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
 .tips li{padding:12px 14px;border-radius:14px;background:var(--saffron-soft);line-height:1.5;overflow-wrap:anywhere}
 .tool{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:999px;background:var(--sunk);font-weight:700;font-size:14px}
+.ing li:not(.ihead){display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)}
+.ing li:not(.ihead) label{flex:1;min-width:0;border-bottom:0}
+.swapbtn{flex:none;display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 10px;border-radius:999px;background:var(--sunk);color:var(--ink-2);font-size:12.5px;font-weight:800}
+.swapbtn .ic{width:14px;height:14px;stroke-width:2.6}
+.swapbtn.now{background:var(--basil-soft);color:var(--basil)}
+.swapnow{margin:-4px 0 12px;padding:12px;border-radius:14px;background:var(--basil-soft)}
+.swapnow > span{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:800;color:var(--basil);margin-bottom:8px}
+.swapnow > span .ic{width:16px;height:16px;flex:none}
+.swapnow .chip{background:var(--surface);height:auto;min-height:34px;max-width:100%;padding:6px 12px;white-space:normal;text-align:left;font-size:13.5px}
+.swopt{padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--surface);margin-bottom:10px}
+.swopt.have{border-color:var(--basil);background:var(--basil-soft)}
+.swt{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+.swt b{font-size:16px}
+.swhave{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:800;color:var(--basil)}
+.swhave .ic{width:14px;height:14px;stroke-width:3}
+.swopt p{line-height:1.5;color:var(--ink-2)}
+.swnote{margin-top:4px}
+.onlist{display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-size:14px;font-weight:700;color:var(--ink-2)}
+.onlist .ic{width:17px;height:17px;flex:none;color:var(--chili);margin-top:1px}
+.eqx{margin-bottom:12px}
+.tcard{padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);margin-bottom:10px}
+.tc-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.tc-h .ic{width:18px;height:18px;color:var(--chili);flex:none}
+.tc-h b{font-size:16px}
+.tcard p{line-height:1.5;color:var(--ink-2)}
+.tcard .tc-alt{margin-top:6px;font-size:14px;color:var(--ink-3);font-weight:600}
+.tcard.temp{background:var(--saffron-soft);border-color:transparent}
+.tcard.temp ul{margin:0;padding-left:20px;line-height:1.6;font-weight:700}
+.tlswap{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:12.5px;font-weight:800;color:var(--basil)}
+.tlswap .ic{width:13px;height:13px;flex:none}
+.lview{margin:10px 0 2px}
+.grhead{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.gsec.grp h2{text-transform:none;letter-spacing:0;font:800 16px/1.3 var(--body);color:var(--ink)}
+.gsec.grp.focus h2{color:var(--chili)}
 .nut{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
 .nut div{padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);min-width:0}
 .nut b{display:block;font:800 16px/1.2 var(--display);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
@@ -454,8 +487,6 @@ textarea.inp{height:auto;min-height:92px;padding:12px 14px;line-height:1.45;resi
 .gtext b{font-weight:700;font-size:16px}
 .gtext small{color:var(--ink-3);font-size:13px;font-weight:600;overflow-wrap:anywhere}
 .gitem.done .gtext b{text-decoration:line-through;color:var(--ink-3)}
-.gdeal{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;margin-top:3px;padding:3px 9px;border-radius:999px;background:var(--basil-soft);color:var(--basil);font-size:12.5px;font-weight:800}
-.gdeal .ic{width:13px;height:13px;flex:none}
 .gx{flex:none;width:32px;height:32px;display:grid;place-items:center;color:var(--ink-3);border-radius:50%}
 .gx .ic{width:17px;height:17px}
 .tl{display:flex;flex-direction:column}
@@ -468,35 +499,6 @@ textarea.inp{height:auto;min-height:92px;padding:12px 14px;line-height:1.45;resi
 .tlrow.have:not(.on) .tltext{text-decoration:line-through;color:var(--ink-3)}
 .tltag{flex:none;font-size:12px;font-weight:800;color:var(--ink-3);padding-top:3px}
 .tltag.ok{color:var(--basil)}
-.tlrow .gdeal{margin-left:36px}
-.dsub{margin-top:2px}
-.dconnect{margin-top:16px}
-.drow{display:flex;align-items:flex-start;gap:10px;padding:8px 0}
-.drow > .ic{width:17px;height:17px;color:var(--basil);flex:none;margin-top:2px}
-.drow > div{flex:1;min-width:0;display:flex;flex-direction:column}
-.drow b{font-weight:800}
-.drow s{color:var(--ink-3);font-weight:600}
-.drow small{color:var(--ink-3);font-size:13px;font-weight:600}
-.dcardl{padding:12px 14px;margin-bottom:10px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
-.dcardl > b{font-size:16px}
-.dbtns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:10px}
-.scard{border-radius:14px;background:var(--surface);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column}
-.scard img,.scard .simg{width:100%;aspect-ratio:1;object-fit:contain;background:#fff}
-.sbody{padding:10px;display:flex;flex-direction:column;gap:3px}
-.sprice{font-size:17px;color:var(--basil)}
-.sprice s{color:var(--ink-3);font-size:13px;font-weight:600}
-.soff{font-size:12px;font-weight:800;color:var(--chili)}
-.sbody p{font-size:13.5px;line-height:1.35;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.sbody .linkbtn .ic{width:14px;height:14px;vertical-align:-2px}
-.dsaved{margin-top:6px}
-.stcard .sthead{display:flex;align-items:flex-start;gap:10px}
-.stcard .sthead > div{flex:1;min-width:0}
-.stcard .sthead p{margin-bottom:12px;font-size:14px}
-.ksteps{margin:0 0 14px;padding-left:20px;line-height:1.5;overflow-wrap:anywhere}
-.ksteps li{margin-bottom:8px}
-.ksteps a{color:var(--chili);font-weight:800}
-.mi.rot90 .ic{transform:rotate(90deg)}
 .mi small{color:var(--ink-3);font-weight:600}
 .kmeta{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .khave span{min-width:0}
@@ -580,9 +582,9 @@ const I = {
   download:'<path d="M12 4v11M7 10.5l5 4.5 5-4.5M5 20h14"/>',
   upload:'<path d="M12 20V9M7 13.5 12 9l5 4.5M5 4h14"/>',
   sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  swap:'<path d="M4 8h13l-3.5-3.5"/><path d="M20 16H7l3.5 3.5"/>',
+  therm:'<path d="M14 14.6V5a2 2 0 0 0-4 0v9.6a4 4 0 1 0 4 0z"/><path d="M12 10v7"/>',
   cart:'<path d="M3 4h2.2l2.3 11h10.2l2.1-8H6.4"/><circle cx="9.5" cy="19.5" r="1.4"/><circle cx="16.5" cy="19.5" r="1.4"/>',
-  tag:'<path d="M3.5 12.3V4.5a1 1 0 0 1 1-1h7.8l8.2 8.2a1.4 1.4 0 0 1 0 2l-6.8 6.8a1.4 1.4 0 0 1-2 0z"/><circle cx="8.2" cy="8.2" r="1.5"/>',
-  phone:'<path d="M5.5 3.5h3l1.5 4-2 1.3a11 11 0 0 0 7.2 7.2l1.3-2 4 1.5v3a1.5 1.5 0 0 1-1.6 1.5A16.5 16.5 0 0 1 4 5.1a1.5 1.5 0 0 1 1.5-1.6z"/>',
   pot:'<path d="M4 10h16v6.5A3.5 3.5 0 0 1 16.5 20h-9A3.5 3.5 0 0 1 4 16.5z"/><path d="M2 10h20M9 6.5c0-1 1-1.2 1-2.5M14 6.5c0-1 1-1.2 1-2.5"/>',
   image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>',
   link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
@@ -1057,7 +1059,7 @@ V.recipe = (rt) => {
   const r = Store.recipes.get(rt.id);
   if (!r) return missingHTML("This recipe isn't here anymore.");
   const p = plat(r); const src = srcLabel(r);
-  const ing = r.ingredients || [], steps = r.steps || [], tips = r.srcNotes || [], eq = r.equipment || [], nut = r.nutrition || [], tags = r.tags || [];
+  const ing = r.ingredients || [], steps = r.steps || [], tips = r.srcNotes || [], nut = r.nutrition || [], tags = r.tags || [];
   const nIng = countItems(ing), nSteps = countItems(steps);
   const cols = (r.collections || []).map(id => Store.cols.get(id)).filter(Boolean);
   const checked = CHECKS[r.id] || {};
@@ -1087,12 +1089,16 @@ V.recipe = (rt) => {
   }
   h += '<div class="rate"><span class="lbl2">Your rating</span><div class="stars">' + stars + '</div></div>'
     + '<div class="duo"><button class="btn made" data-act="made">' + icon('pot') + (r.madeCount ? 'Made it again' : 'I made this') + '</button><button class="btn ghost" data-act="addto" data-id="' + esc(r.id) + '">' + icon('folder') + 'Collections</button></div>';
-  const jumps = [['sec-ing', 'Ingredients', nIng], ['sec-steps', 'Directions', nSteps], ['sec-tips', 'Notes & tips', tips.length], ['sec-equip', 'Cookware', eq.length], ['sec-nut', 'Nutrition', nut.length]].filter(x => x[2]);
+  const KH = toolsFor(r);
+  const jumps = [['sec-ing', 'Ingredients', nIng], ['sec-steps', 'Directions', nSteps], ['sec-tips', 'Notes & tips', tips.length], ['sec-equip', 'Cookware', KH.tools.length + KH.extra.length + KH.temps.length], ['sec-nut', 'Nutrition', nut.length]].filter(x => x[2]);
   if (jumps.length > 1) h += '<div class="jumps scroll-x">' + jumps.map(x => '<button class="chip" data-jump="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
   // ingredients
-  if (nIng) h += '<div class="block" id="sec-ing"><h2>Ingredients <span class="muted">' + nIng + '</span></h2>' + (hasKitchen() ? khaveHTML(kitchenMatch(r)) : '') + '<ul class="ing">'
-    + ing.map((x, i) => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li><label><input type="checkbox" data-chk="' + i + '"' + (checked[i] ? ' checked' : '') + '><span>' + esc(x) + '</span></label></li>').join('') + '</ul>'
+  const SW = nIng ? ingSwaps(ing) : [];
+  if (nIng) h += '<div class="block" id="sec-ing"><h2>Ingredients <span class="muted">' + nIng + '</span></h2>' + (hasKitchen() ? khaveHTML(kitchenMatch(r)) + swapNowHTML(SW) : '') + '<ul class="ing">'
+    + ing.map((x, i) => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li><label><input type="checkbox" data-chk="' + i + '"' + (checked[i] ? ' checked' : '') + '><span>' + esc(x) + '</span></label>'
+      + (SW[i] ? '<button class="swapbtn' + (SW[i].now ? ' now' : '') + '" data-swap="' + i + '" aria-label="Swaps for ' + esc(SW[i].sw.name) + '">' + icon('swap') + 'Swap</button>' : '') + '</li>').join('') + '</ul>'
     + '<button class="btn ghost wide tolist" data-act="tolist" data-id="' + esc(r.id) + '">' + icon('cart') + 'Add to grocery list</button>'
+    + onListHTML(r)
     + (r.captionCut ? cutNote(r) : '') + '</div>';
   else if (!wantsMore) h += '<div class="block" id="sec-ing"><h2>Ingredients</h2><button class="addrow" data-act="edit" data-id="' + esc(r.id) + '">' + icon('plus') + 'Add the ingredients, or paste the recipe text</button></div>';
   // directions
@@ -1109,7 +1115,7 @@ V.recipe = (rt) => {
   if (r.caption && (nIng || nSteps)) h += '<details class="block capbox"><summary>Full caption<span class="more">Show</span><span class="less">Hide</span></summary><p class="caption">' + esc(r.caption) + '</p></details>';
   if (r.recipeUrl && r.platform !== 'web') h += '<div class="block"><a class="addrow" href="' + esc(r.recipeUrl.replace(/#.*$/, '') + (r.anchor ? '#' + encodeURIComponent(r.anchor) : '')) + '" target="_blank" rel="noopener noreferrer">' + icon('ext') + 'Full recipe on ' + esc(hostOf(r.recipeUrl)) + '</a></div>';
   if (tips.length) h += '<div class="block" id="sec-tips"><h2>Notes, tips &amp; substitutions</h2><ul class="tips">' + tips.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
-  if (eq.length) h += '<div class="block" id="sec-equip"><h2>Cookware</h2><div class="wrapchips">' + eq.map(x => '<span class="tool">' + esc(x) + '</span>').join('') + '</div></div>';
+  h += cookwareHTML(KH);
   if (nut.length) h += '<div class="block" id="sec-nut"><h2>Nutrition</h2><div class="nut">' + nut.map(x => '<div><b>' + esc(x.value) + '</b><span>' + esc(x.label) + '</span></div>').join('') + '</div><p class="hint nutnote">Per serving, as listed by the recipe.</p></div>';
   h += r.notes
     ? '<div class="block"><h2>My notes</h2><p class="notes">' + esc(r.notes) + '</p></div>'
@@ -1144,19 +1150,19 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 1.1.1</p></div>';
+    + '<p class="ver">yumyumtumtum · version 1.2</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
 /* ---------- navigation ---------- */
-const TABS = ['home', 'search', 'yums', 'list', 'deals', 'me'];
+const TABS = ['home', 'search', 'yums', 'list', 'me'];
 let stack = [{name:'home'}];
 let pushed = 0;
 const cur = () => stack[stack.length - 1];
 function go(route){
   const c = cur(); c.scroll = window.scrollY;
   if (!$('#sheet').hidden) closeSheet();
-  if (TABS.indexOf(route.name) >= 0) stack = [route];
+  if (TABS.indexOf(route.name) >= 0 || route.tab) stack = [route];
   else {
     if (c.name === route.name && c.id === route.id) return;
     stack.push(route);
@@ -1186,7 +1192,6 @@ function mountView(r){
   if (r.name === 'discover') { mountDiscover(r); return; }
   if (r.name === 'cook') { mountCook(r); return; }
   if (r.name === 'list') { mountList(r); return; }
-  if (r.name === 'deals') { mountDeals(r); return; }
   if (r.name === 'cat') { loadFeed('k:' + r.key); return; }
   if (r.name !== 'search') return;
   const q = $('#q');
@@ -1221,7 +1226,7 @@ function navHTML(){
     + '<button class="tab" data-tab="yums">' + icon('yums') + '<span>Yums</span></button>'
     + '<button class="addbtn" data-act="add" aria-label="Save a recipe">' + icon('plus') + '</button>'
     + '<button class="tab" data-tab="list">' + icon('cart') + '<span>List</span><b class="tbadge" id="lbadge" hidden></b></button>'
-    + '<button class="tab" data-tab="deals">' + icon('tag') + '<span>Deals</span></button>'
+    + '<button class="tab" data-tab="cook">' + icon('pot') + '<span>Cook</span></button>'
     + '<button class="tab" data-tab="me">' + icon('user') + '<span>Me</span></button>';
 }
 function updateNav(){
@@ -2221,7 +2226,8 @@ function kcardWeb(x){
     + '<div class="card-body"><h3>' + esc(it.title) + '</h3>' + kstatHTML(m) + kmetaHTML(m, it.totalTime) + '</div></article>';
 }
 V.cook = (rt) => {
-  const head = backBar('<div class="ph-t"><h1 class="title sm">What can I cook?</h1><p class="ph-sub">With what\'s in your kitchen</p></div>');
+  const t = '<div class="ph-t"><h1 class="title sm">What can I cook?</h1><p class="ph-sub">With what\'s in your kitchen</p></div>';
+  const head = stack.length > 1 ? backBar(t) : '<header class="topbar"><div class="wrap pagehead">' + t + '</div></header>';
   return head + '<div class="wrap">'
     + '<form class="searchbox addbox" id="pqform" autocomplete="off">' + icon('plus') + '<input id="pq" type="text" enterkeyhint="done" autocomplete="off" autocapitalize="none" maxlength="200" placeholder="Add food, like chicken, rice, cheese" aria-label="Add food you have"><button type="submit" class="btn sm primary">Add</button></form>'
     + '<div id="psug" class="wrapchips psug"></div>'
@@ -2321,6 +2327,64 @@ function khaveHTML(m){
 }
 restoreCook();
 
+/* ---------- swaps and cookware tips on the recipe page (data and rules in lib/kitchen.js) ---------- */
+// for each ingredient line: {sw, now} where now = you're missing it and have what a swap uses
+function ingSwaps(ing){
+  const P = hasKitchen() ? myPantry() : null; let extra = false;
+  return (ing || []).map(l => {
+    if (isHead(l)) { extra = EXTRA_HEAD.test(l); return null; }
+    const sw = swapFor(l); if (!sw) return null;
+    let now = false;
+    if (P) {
+      const r = readIngredient(l, extra);
+      const missing = !r.optional && r.ids.length && !(r.alt ? r.ids.some(id => pantryHas(P, id)) : r.ids.every(id => pantryHas(P, id)));
+      now = !!(missing && sw.o.some(o => swapHave(o, P)));
+    }
+    return {sw:sw, now:now};
+  });
+}
+function swapNowHTML(SW){
+  const now = SW.map((x, i) => x && x.now ? i : -1).filter(i => i >= 0).slice(0, 4);
+  if (!now.length) return '';
+  const P = myPantry();
+  return '<div class="swapnow"><span>' + icon('swap') + 'Swaps you can make with what you have:</span><div class="wrapchips">'
+    + now.map(i => { const o = SW[i].sw.o.find(x => swapHave(x, P)); return '<button class="chip sm" data-swap="' + i + '">No ' + esc(lc(SW[i].sw.name)) + '? ' + esc(o.t) + '</button>'; }).join('') + '</div></div>';
+}
+function openSwap(i){
+  const r = Store.recipes.get(cur().id); if (!r) return;
+  const line = (r.ingredients || [])[i]; const sw = line && swapFor(line); if (!sw) return;
+  const P = hasKitchen() ? myPantry() : null;
+  const opts = sw.o.map(o => { const have = swapHave(o, P); return '<div class="swopt' + (have ? ' have' : '') + '"><div class="swt"><b>' + esc(o.t) + '</b>' + (have ? '<span class="swhave">' + icon('check') + 'You have this</span>' : '') + '</div><p>' + esc(o.d) + '</p></div>'; }).join('');
+  const ext = sw.o.some(o => o.src === 'ext');
+  openSheet(sheetHead('Swap for ' + lc(sw.name)) + '<div class="sh-body"><p class="dhint">The recipe calls for <b>' + esc(line) + '</b></p>' + opts
+    + '<p class="hint swnote">' + (ext ? 'Amounts come from university extension swap charts. ' : '') + 'A swap can change the taste or texture a little.</p></div>'
+    + '<div class="sh-foot"><button class="btn ghost" data-act="closesheet">Close</button><button class="btn primary" data-act="swapnote" data-id="' + esc(r.id) + '" data-i="' + i + '">' + icon('edit') + 'Add to notes</button></div>', {label:'Swap for ' + lc(sw.name)});
+}
+function saveSwapNote(id, i){
+  const r = Store.recipes.get(id); if (!r) return;
+  const line = (r.ingredients || [])[i]; const sw = line && swapFor(line); if (!sw) return;
+  const P = hasKitchen() ? myPantry() : null;
+  const o = sw.o.find(x => swapHave(x, P)) || sw.o[0];
+  const note = 'Swap for ' + lc(sw.name) + ': ' + o.t + '. ' + o.d;
+  if ((r.notes || '').indexOf(note) >= 0) { closeSheet(); toast('Already in your notes'); return; }
+  putRecipe(Object.assign({}, r, {notes:((r.notes || '').trim() ? r.notes.trim() + '\n' : '') + note, updatedAt:now()}));
+  closeSheet(); toast('Saved to My notes');
+}
+// "3 things for this recipe are on your list"
+function onListHTML(r){
+  const n = groceryList().filter(x => !x.done && (x.recipes || []).some(q => q.id === r.id || (q.title && q.title === r.title))).length;
+  if (!n) return '';
+  return '<p class="onlist">' + icon('cart') + '<span>' + plural(n, 'thing') + ' for this recipe ' + (n === 1 ? 'is' : 'are') + ' on your list. <button class="linkbtn sm" data-act="seelist" data-id="' + esc(r.id) + '">See ' + (n === 1 ? 'it' : 'them') + '</button></span></p>';
+}
+function cookwareHTML(K){
+  if (!K.tools.length && !K.extra.length && !K.temps.length) return '';
+  return '<div class="block" id="sec-equip"><h2>Cookware &amp; tips</h2>'
+    + (K.extra.length ? '<div class="wrapchips eqx">' + K.extra.map(x => '<span class="tool">' + esc(x) + '</span>').join('') + '</div>' : '')
+    + K.tools.map(t => '<div class="tcard"><div class="tc-h">' + icon('pot') + '<b>' + esc(t.name) + '</b></div><p>' + esc(t.tip) + '</p>' + (t.alt ? '<p class="tc-alt">' + esc(t.alt) + '</p>' : '') + '</div>').join('')
+    + (K.temps.length ? '<div class="tcard temp"><div class="tc-h">' + icon('therm') + '<b>Is it done? Check with a meat thermometer</b></div><ul>' + K.temps.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><p class="tc-alt">Safe temperatures from the USDA. Check the thickest part.</p></div>' : '')
+    + '</div>';
+}
+
 /* ---------- recipe categories: Main dishes, Sides, Soups, Desserts, and so on ---------- */
 const CAT_Q = {main:['easy dinner', 'dinner'], sides:['side dish', 'easy side dish'], apps:['appetizer', 'dip'], soups:['soup', 'stew'], salads:['salad'],
   breakfast:['breakfast', 'brunch'], desserts:['dessert', 'cookies'], baking:['cookies', 'muffins', 'cake'], bread:['bread', 'rolls', 'biscuits'], drinks:['drinks', 'smoothie', 'agua fresca']};
@@ -2366,18 +2430,11 @@ function catFeedHTML(rt){
     + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '');
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-pq],[data-prm],[data-pb],[data-psug],[data-nv],[data-nrm],[data-cc],[data-catgo],[data-cookcat],[data-gtoggle],[data-grm],[data-tlrow],[data-dtab],[data-dst],[data-dadd],[data-dealrm],[data-stmenu],[data-sfchain],[data-kloc]'); if (!t) return;
+  const t = e.target.closest('[data-pq],[data-prm],[data-pb],[data-psug],[data-nv],[data-nrm],[data-cc],[data-catgo],[data-cookcat],[data-gtoggle],[data-grm],[data-tlrow]'); if (!t) return;
   const d = t.dataset;
   if (d.gtoggle) { toggleGrocery(d.gtoggle); return; }
   if (d.grm) { removeGrocery(d.grm); return; }
   if (d.tlrow != null) { tlToggle(+d.tlrow); return; }
-  if (d.dtab) { const r = cur(); r.dtab = d.dtab; r.wshown = 24; show(false); return; }
-  if (d.dst != null) { const r = cur(); r.dstore = d.dst; r.wshown = 24; redrawDeals(); mountDeals(r); window.scrollTo(0, 0); return; }
-  if (d.dadd) { const n = addGroceryText(d.dadd.replace(/,/g, ' ')); toast(n.length ? 'Added to your list' : 'Already on your list', {label:'Open list', fn:() => go({name:'list'})}); return; }
-  if (d.dealrm) { removeDeal(d.dealrm); return; }
-  if (d.stmenu) { storeMenu(d.stmenu); return; }
-  if (d.sfchain) { if (!SF) return; SF.chain = d.sfchain; const nm = $('#sf-name'); if (nm && (!nm.value.trim() || Object.keys(CHAINS).some(k => CHAINS[k].name === nm.value.trim()))) nm.value = d.sfchain === 'other' ? '' : CHAINS[d.sfchain].name; SF.redrawChains(); return; }
-  if (d.kloc) { setKrogerLoc(d.id, d.kloc); closeSheet(); toast('Store picked'); return; }
   if (d.cc != null) { const r = cur(); if ((r.cat || '') === d.cc) return; r.cat = d.cc; r.shown = 12; r.wshown = 12; redrawCook(); clearTimeout(cookTimer); loadCook(false); return; }
   if (d.catgo) { go({name:'cat', key:d.catgo}); return; }
   if (d.cookcat != null) { go({name:'cook', cat:d.cookcat}); return; }
@@ -2454,15 +2511,11 @@ async function shareList(){
   copyText(text);
 }
 function redrawList(){ const r = cur(); if (r.name === 'list') { const b = $('#glist'); if (b) b.innerHTML = listBodyHTML(r); } updateNav(); }
-function dealBadgeHTML(x){
-  const d = dealsFor(x)[0]; if (!d) return '';
-  return '<span class="gdeal">' + icon('tag') + esc(d.price + ' at ' + d.store + (d.reg ? ' (reg ' + d.reg + ')' : '')) + '</span>';
-}
 function gitemHTML(x){
   const recipes = (x.recipes || []).map(r => r.title).filter(Boolean);
   const sub = [x.detail && x.detail.toLowerCase() !== x.name.toLowerCase() ? x.detail : '', recipes.length ? 'for ' + joinList(recipes.map(t => shortT(t))) : ''].filter(Boolean).join(' · ');
   return '<div class="gitem' + (x.done ? ' done' : '') + '"><button class="gcheck" data-gtoggle="' + esc(x.id) + '" aria-pressed="' + !!x.done + '" aria-label="' + (x.done ? 'Uncheck ' : 'Check off ') + esc(x.name) + '">' + icon('check') + '</button>'
-    + '<div class="gtext" data-gtoggle="' + esc(x.id) + '"><b>' + esc(x.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + (x.done ? '' : dealBadgeHTML(x)) + '</div>'
+    + '<div class="gtext" data-gtoggle="' + esc(x.id) + '"><b>' + esc(x.name) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>'
     + '<button class="gx" data-grm="' + esc(x.id) + '" aria-label="Remove ' + esc(x.name) + '">' + icon('x') + '</button></div>';
 }
 V.list = (rt) => {
@@ -2470,13 +2523,28 @@ V.list = (rt) => {
     + '<div class="wrap"><form class="searchbox addbox" id="gform" autocomplete="off">' + icon('plus') + '<input id="gq" type="text" enterkeyhint="done" autocomplete="off" maxlength="200" placeholder="Add milk, paper towels…" aria-label="Add an item"><button type="submit" class="btn sm primary">Add</button></form>'
     + '<div id="glist">' + listBodyHTML(rt) + '</div></div>';
 };
+const listView = rt => rt.lview || Store.settings.listView || 'aisle';
+function gitemsHTML(items){ return items.map(gitemHTML).join(''); }
 function listBodyHTML(rt){
   const all = groceryList(); const todo = all.filter(x => !x.done), done = all.filter(x => x.done);
   if (!all.length) return '<div class="empty small"><h3>Your list is empty</h3><p>Add things here, or tap <b>Add to grocery list</b> on any recipe. What you already have gets checked off for you.</p></div>';
-  const by = {}; todo.forEach(x => { const a = aisleOf(x.food, x.name); (by[a] = by[a] || []).push(x); });
-  const nDeals = todo.filter(x => dealsFor(x).length).length;
-  let h = '<p class="gsum">' + plural(todo.length, 'thing') + ' to get' + (done.length ? ' · ' + done.length + ' in the cart' : '') + (nDeals ? ' · <button class="linkbtn sm" data-tab="deals">' + plural(nDeals, 'deal') + '</button>' : '') + '</p>';
-  AISLES.filter(a => by[a]).forEach(a => { h += '<section class="gsec"><h2>' + esc(a) + '</h2>' + by[a].map(gitemHTML).join('') + '</section>'; });
+  const withRecipes = all.some(x => (x.recipes || []).length);
+  const v = withRecipes ? listView(rt) : 'aisle';
+  let h = '<p class="gsum">' + plural(todo.length, 'thing') + ' to get' + (done.length ? ' · ' + done.length + ' in the cart' : '') + '</p>';
+  if (withRecipes) h += '<div class="chips lview">' + [['aisle', 'By aisle'], ['recipe', 'By recipe']].map(x => '<button class="chip' + (v === x[0] ? ' on' : '') + '" data-lview="' + x[0] + '" aria-pressed="' + (v === x[0]) + '">' + x[1] + '</button>').join('') + '</div>';
+  if (v === 'recipe') {
+    const groups = []; const other = [];
+    todo.forEach(x => {
+      const rs = (x.recipes || []).filter(q => q && q.title);
+      if (!rs.length) { other.push(x); return; }
+      rs.forEach(q => { const key = q.id || q.title; let g = groups.find(y => y.key === key); if (!g) { g = {key:key, id:q.id && Store.recipes.has(q.id) ? q.id : '', title:q.title, items:[]}; groups.push(g); } g.items.push(x); });
+    });
+    groups.forEach(g => { h += '<section class="gsec grp' + (rt.focus && rt.focus === g.id ? ' focus' : '') + '" data-grp="' + esc(g.key) + '"><div class="grhead"><h2>' + esc(g.title) + '</h2>' + (g.id ? '<button class="linkbtn sm" data-open="' + esc(g.id) + '">Open recipe</button>' : '') + '</div>' + gitemsHTML(g.items) + '</section>'; });
+    if (other.length) h += '<section class="gsec"><h2>Other things</h2>' + gitemsHTML(other) + '</section>';
+  } else {
+    const by = {}; todo.forEach(x => { const a = aisleOf(x.food, x.name); (by[a] = by[a] || []).push(x); });
+    AISLES.filter(a => by[a]).forEach(a => { h += '<section class="gsec"><h2>' + esc(a) + '</h2>' + gitemsHTML(by[a]) + '</section>'; });
+  }
   if (done.length) h += '<section class="gsec gdone"><h2>In the cart</h2>' + done.map(gitemHTML).join('') + '</section>'
     + '<div class="morebar"><button class="btn primary" data-act="gdone">' + icon('check') + 'Done shopping</button></div>';
   return h;
@@ -2484,7 +2552,8 @@ function listBodyHTML(rt){
 function mountList(){
   const f = $('#gform'); if (!f) return;
   f.addEventListener('submit', e => { e.preventDefault(); const i = $('#gq'); const v = i.value; if (!v.trim()) { i.focus(); return; } const added = addGroceryText(v); i.value = ''; if (!added.length) toast('That\'s already on your list'); });
-  loadListDeals();
+  const r = cur();
+  if (r.focus) { const g = document.querySelector('[data-grp="' + CSS.escape(r.focus) + '"]'); if (g) setTimeout(() => g.scrollIntoView({block:'start'}), 30); }
 }
 function listMenu(){
   const all = groceryList();
@@ -2513,7 +2582,8 @@ function openToList(o){
     const have = r.ids.length ? (r.alt ? r.ids.some(id => pantryHas(P, id)) : r.ids.every(id => pantryHas(P, id))) : customHas(P, l);
     const name = r.ids.length ? r.ids.map(id => foodName(l, id)).join(r.alt ? ' or ' : ' and ') : capWord(r.core || l);
     const listed = onList.some(x => (food && x.food === food && food.indexOf('x:') !== 0) || x.name.toLowerCase() === name.toLowerCase());
-    rows.push({line:l, food:food, name:name, have:have, listed:listed, optional:r.optional, spice:r.ids.length && r.ids.every(id => SPICE.has(id)), add:!have && !listed && !r.optional});
+    const sw = !have && swapFor(l); const so = sw && sw.o.find(o => swapHave(o, P));
+    rows.push({line:l, food:food, name:name, have:have, listed:listed, optional:r.optional, spice:r.ids.length && r.ids.every(id => SPICE.has(id)), add:!have && !listed && !r.optional, swap:so ? so.t : ''});
   });
   TL = {rows:rows, recipe:{id:o.id || '', title:o.title || ''}};
   openSheet(toListHTML(), {full:true, label:'Add to grocery list'});
@@ -2521,9 +2591,9 @@ function openToList(o){
 function toListHTML(){
   const rows = TL.rows; const n = rows.filter(r => r.add).length; const nHave = rows.filter(r => r.have).length;
   const body = '<p class="dhint">' + (TL.recipe.title ? esc(TL.recipe.title) + '. ' : '') + (nHave ? 'What you already have is checked off. ' : '') + 'Tap to change what goes on the list.</p><div class="tl">'
-    + rows.map((r, i) => r.head ? '<p class="kgrp">' + esc(r.head) + '</p>' : '<button class="tlrow' + (r.add ? ' on' : '') + (r.have ? ' have' : '') + '" data-tlrow="' + i + '" aria-pressed="' + r.add + '"><span class="tlbox">' + (r.add ? icon('plus') : r.have ? icon('check') : '') + '</span><span class="tltext">' + esc(r.line) + '</span>'
+    + rows.map((r, i) => r.head ? '<p class="kgrp">' + esc(r.head) + '</p>' : '<button class="tlrow' + (r.add ? ' on' : '') + (r.have ? ' have' : '') + '" data-tlrow="' + i + '" aria-pressed="' + r.add + '"><span class="tlbox">' + (r.add ? icon('plus') : r.have ? icon('check') : '') + '</span><span class="tltext">' + esc(r.line) + (r.swap && r.add ? '<small class="tlswap">' + icon('swap') + 'Or swap: ' + esc(r.swap) + ' (you have it)</small>' : '') + '</span>'
       + (r.have ? '<span class="tltag ok">Have it</span>' : r.listed ? '<span class="tltag">On your list</span>' : r.optional ? '<span class="tltag">Optional</span>' : r.spice ? '<span class="tltag">Spice</span>' : '')
-      + (r.add ? dealBadgeHTML({name:r.name, food:r.food}) : '') + '</button>').join('') + '</div>';
+      + '</button>').join('') + '</div>';
   return sheetHead('Add to grocery list') + '<div class="sh-body">' + body + '</div><div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="tladd"' + (n ? '' : ' disabled') + '>' + icon('cart') + (n ? 'Add ' + plural(n, 'item') : 'Nothing picked') + '</button></div>';
 }
 function tlToggle(i){ const r = TL && TL.rows[i]; if (!r || r.head) return; r.add = !r.add; const b = $('#sheet .sheet'); if (b) { const y = ($('.sh-body', b) || {}).scrollTop || 0; b.innerHTML = toListHTML(); const sb = $('.sh-body', b); if (sb) sb.scrollTop = y; } }
@@ -2535,326 +2605,6 @@ function tlAdd(){
   toast(n ? 'Added ' + plural(n, 'item') + ' to your list' : 'Already on your list', {label:'Open list', fn:() => go({name:'list'})});
   TL = null;
 }
-
-/* ---------- deals: your stores' weekly ads and deals you save ----------
-   Kroger-family sale prices (api/deals.js) only work for a store whose chain has kroger:true. The Manteca
-   Food 4 Less is run by PAQ, Inc. (an employee-owned franchisee), not Kroger, so Kroger has no prices for it
-   (checked Sept 28, 2026: Kroger's store finder listed nothing within 15 miles of 95336). The Kroger chain
-   stays hidden in case Dave ever adds a Ralphs or Kroger store. */
-// weekly ad and deals pages for the chains we know
-const CHAINS = {
-  food4less:{name:'Food 4 Less', ad:'https://myfood4less.com/store/food4less/flyers/weekly'},
-  safeway:{name:'Safeway', ad:'https://www.safeway.com/weeklyad/', deals:'https://www.safeway.com/shop/deals/sale-prices.html'},
-  raleys:{name:'Raley’s', ad:'https://www.raleys.com/weekly-ad', deals:'https://www.raleys.com/something-extra/offers-and-savings'},
-  savemart:{name:'Save Mart', ad:'https://savemart.com/flyers', deals:'https://shop.savemart.com/store/savemart/collections/rc-weekly-ad'},
-  other:{name:'Other store'},
-  kroger:{name:'Ralphs or Kroger', kroger:true, hidden:true, ad:'https://www.kroger.com/weeklyad', deals:'https://www.kroger.com/pr/weekly-digital-deals'}
-};
-const DEFAULT_STORES = [
-  {id:'s-f4l', chain:'food4less', name:'Food 4 Less', where:'Yosemite & Spreckels', address:'131 Spreckels Ave, Manteca, CA 95336', phone:'(209) 823-0806'},
-  {id:'s-safeway', chain:'safeway', name:'Safeway', where:'S Main St', address:'1187 S Main St, Manteca, CA 95337', phone:'(209) 824-1144'},
-  {id:'s-raleys', chain:'raleys', name:'Raley’s', where:'Lathrop Rd', address:'1280 Lathrop Rd, Manteca, CA 95336', phone:'(209) 825-0242'},
-  {id:'s-savemart-main', chain:'savemart', name:'Save Mart', where:'N Main St', address:'1172 N Main St, Manteca, CA 95336', phone:'(209) 239-2267'},
-  {id:'s-savemart-yosemite', chain:'savemart', name:'Save Mart', where:'W Yosemite Ave', address:'1431 W Yosemite Ave, Manteca, CA 95337', phone:'(209) 823-1768'}
-];
-const myStores = () => Array.isArray(Store.settings.stores) ? Store.settings.stores : DEFAULT_STORES;
-const storeBy = id => myStores().find(s => s.id === id);
-const storeLabel = s => s ? s.name + (s.where ? ' (' + s.where + ')' : '') : 'a store';
-const storeShort = s => s ? s.name : '';
-const adLink = s => s.ad || (CHAINS[s.chain] || {}).ad || '';
-const dealsLink = s => s.deals || (CHAINS[s.chain] || {}).deals || '';
-const mapLink = s => 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(s.name + ' ' + (s.address || ''));
-function putStores(list){ putSettings({stores:list}); redrawDeals(); }
-const krogerKeys = () => Store.settings.kroger || {};
-const hasKroger = () => !!(krogerKeys().id && krogerKeys().secret);
-const krogerStores = () => myStores().filter(s => (CHAINS[s.chain] || {}).kroger);
-
-// deals you saved from a weekly ad: {id, text, food, price, reg, store, ends}
-const today = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-const myDeals = () => (Array.isArray(Store.settings.mydeals) ? Store.settings.mydeals : []).filter(d => d && d.id && (!d.ends || d.ends >= today()));
-function nextTuesday(){ const d = new Date(); const add = (2 - d.getDay() + 7) % 7 || 7; d.setDate(d.getDate() + add); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-const money = n => '$' + (+n).toFixed(2);
-const endsText = d => { if (!d) return ''; const x = new Date(d + 'T12:00:00'); return 'through ' + x.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'}); };
-
-// sale prices from Kroger, cached on the phone
-const DEALS = {week:{}, list:{}, loading:{}, error:{}};
-const DEALS_LS = 'yyt-deals-v1';
-(function(){ const s = readLS(DEALS_LS); if (s) { DEALS.week = s.week || {}; DEALS.list = s.list || {}; DEALS.test = !!s.test; } })();
-const saveDealsLS = () => writeLS(DEALS_LS, {week:DEALS.week, list:DEALS.list, test:!!DEALS.test});
-async function krogerCall(params){
-  const k = krogerKeys();
-  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 40000);
-  try {
-    const res = await fetch(READER + '/api/deals?' + params + '&v=' + READER_V, {signal:ctrl.signal, headers:{'x-kroger-id':k.id || '', 'x-kroger-secret':k.secret || ''}});
-    const j = await res.json();
-    if (!j.ok) throw new Error(j.error || "Couldn't get Kroger prices.");
-    if (!!j.test !== !!DEALS.test) { DEALS.test = !!j.test; saveDealsLS(); }
-    return j;
-  } catch (e) {
-    if (e && e.name === 'AbortError') throw new Error('Kroger took too long to answer.');
-    if (e instanceof TypeError) throw new Error("Couldn't reach the deals finder. Check your connection.");
-    throw e;
-  } finally { clearTimeout(tm); }
-}
-// this week's sales at a Kroger-family store: the everyday things people buy
-const WEEK_TERMS = ['chicken', 'ground beef', 'steak', 'pork', 'bacon', 'sausage', 'eggs', 'milk', 'cheese', 'butter', 'yogurt', 'bread', 'tortillas', 'rice', 'pasta', 'beans', 'cereal', 'coffee', 'fruit', 'vegetables', 'potatoes', 'avocados', 'chips', 'soda', 'ice cream', 'frozen pizza', 'paper towels', 'laundry detergent'];
-async function loadWeek(s, force){
-  if (!s.loc || !hasKroger() || DEALS.loading['w' + s.id]) return;
-  const w = DEALS.week[s.id];
-  if (!force && w && w.loc === s.loc && Date.now() - w.t < 12 * 3600e3) return;
-  DEALS.loading['w' + s.id] = true; DEALS.error['w' + s.id] = ''; redrawDeals();
-  try {
-    const j = await krogerCall('loc=' + encodeURIComponent(s.loc) + '&q=' + encodeURIComponent(WEEK_TERMS.join('|')));
-    const seen = new Set(), items = [];
-    WEEK_TERMS.forEach(t => ((j.results[t] || {}).sale || []).forEach(x => { if (!seen.has(x.id)) { seen.add(x.id); items.push(Object.assign({}, x, {term:t})); } }));
-    items.sort((a, b) => (b.regular - b.promo) / b.regular - (a.regular - a.promo) / a.regular);
-    DEALS.week[s.id] = {t:Date.now(), loc:s.loc, items:items};
-    saveDealsLS();
-  } catch (e) { DEALS.error['w' + s.id] = e.message; }
-  DEALS.loading['w' + s.id] = false; redrawDeals();
-}
-// sales for what's on your grocery list
-async function loadListDeals(force){
-  if (!hasKroger()) return;
-  const terms = groceryList().filter(x => !x.done).map(groceryTerm).filter(Boolean);
-  for (const s of krogerStores().filter(x => x.loc)) {
-    if (DEALS.loading['l' + s.id]) continue;
-    const have = DEALS.list[s.id] && DEALS.list[s.id].loc === s.loc ? DEALS.list[s.id] : {loc:s.loc, results:{}};
-    const stale = terms.filter(t => force || !have.results[t] || Date.now() - have.results[t].t > 12 * 3600e3).slice(0, 30);
-    if (!stale.length) continue;
-    DEALS.loading['l' + s.id] = true; redrawDeals();
-    try {
-      const j = await krogerCall('loc=' + encodeURIComponent(s.loc) + '&all=1&q=' + encodeURIComponent(stale.join('|')));
-      stale.forEach(t => { const r = j.results[t] || {sale:[]}; have.results[t] = {t:Date.now(), sale:r.sale || [], best:r.best || null}; });
-      DEALS.list[s.id] = have; saveDealsLS();
-    } catch (e) { DEALS.error['l' + s.id] = e.message; }
-    DEALS.loading['l' + s.id] = false; redrawDeals(); redrawList();
-  }
-}
-// deals for one grocery item, best first: {price, reg, store, name, saved}
-function dealsFor(x){
-  const out = [];
-  const words = singularWords(x.name).filter(w => w.length > 2);
-  myDeals().forEach(d => {
-    const dw = singularWords(d.text);
-    if ((x.food && d.food && x.food === d.food && x.food.indexOf('x:') !== 0) || (words.length && words.every(w => dw.indexOf(w) >= 0))) out.push({price:d.price, reg:d.reg || '', store:storeShort(storeBy(d.store)), name:d.text, saved:true});
-  });
-  krogerStores().forEach(s => {
-    const r = DEALS.list[s.id] && DEALS.list[s.id].loc === s.loc && DEALS.list[s.id].results[groceryTerm(x)];
-    const d = r && r.sale && r.sale[0];
-    if (d) out.push({price:money(d.promo), reg:money(d.regular), store:storeShort(s), name:d.name + (d.size ? ', ' + d.size : ''), kroger:true});
-  });
-  return out;
-}
-function redrawDeals(){ const r = cur(); if (r.name === 'deals') { const b = $('#dbody'); if (b) b.innerHTML = dealsBodyHTML(r); } }
-
-const DTABS = [['list', 'For my list'], ['week', 'This week'], ['stores', 'My stores']];
-V.deals = (rt) => {
-  const t = rt.dtab || 'list';
-  return '<header class="topbar"><div class="wrap"><h1 class="title">Deals</h1><p class="ph-sub dsub">Weekly ads and sales at your stores</p>'
-    + '<div class="chips">' + DTABS.map(x => '<button class="chip' + (t === x[0] ? ' on' : '') + '" data-dtab="' + x[0] + '" aria-pressed="' + (t === x[0]) + '">' + x[1] + '</button>').join('') + '</div></div></header>'
-    + '<div class="wrap" id="dbody">' + dealsBodyHTML(rt) + '</div>';
-};
-function dealsBodyHTML(rt){
-  const t = rt.dtab || 'list';
-  return t === 'week' ? weekHTML(rt) : t === 'stores' ? storesHTML() : forListHTML();
-}
-function krogerNote(){
-  if (!krogerStores().length) return '';
-  if (!hasKroger()) return '<div class="getcard dconnect"><div><b>Turn on Kroger sale prices</b><span>Free from Kroger. Takes about 10 minutes, one time.</span></div><button class="btn primary sm" data-act="kconnect">Set up</button></div>';
-  if (DEALS.test) return '<div class="getcard dconnect"><div><b>These Kroger keys are for testing</b><span>They came from Kroger\'s test area, so prices may not be real. Make the app again under Production and paste the new keys.</span></div><button class="btn primary sm" data-act="kconnect">Fix</button></div>';
-  const need = krogerStores().filter(s => !s.loc);
-  if (need.length) return '<div class="getcard dconnect"><div><b>Pick your ' + esc(need[0].name) + '</b><span>So prices match your store.</span></div><button class="btn primary sm" data-act="kfind" data-id="' + esc(need[0].id) + '">Find it</button></div>';
-  return '';
-}
-function dealRowHTML(d){ return '<div class="drow">' + icon('tag') + '<div><b>' + esc(d.price) + (d.reg ? ' <s>' + esc(d.reg) + '</s>' : '') + ' at ' + esc(d.store) + '</b><small>' + esc(d.name) + (d.saved ? ' · you saved this' : '') + '</small></div></div>'; }
-function forListHTML(){
-  const items = groceryList().filter(x => !x.done);
-  const loading = krogerStores().some(s => DEALS.loading['l' + s.id]);
-  const err = krogerStores().map(s => DEALS.error['l' + s.id]).filter(Boolean)[0];
-  let h = krogerNote();
-  if (!items.length) return h + '<div class="empty small"><h3>Nothing on your list yet</h3><p>Add things to your grocery list and any deals on them show up here.</p><button class="btn ghost" data-tab="list">' + icon('cart') + 'Open grocery list</button></div>' + otherStoresNote();
-  if (loading) h += '<p class="readst"><span class="spin sm"></span>Checking Kroger prices…</p>';
-  if (err && !loading) h += '<p class="readst bad">' + esc(err) + ' <button class="linkbtn sm" data-act="dlistretry">Try again</button></p>';
-  const withDeals = items.map(x => ({x:x, d:dealsFor(x)}));
-  const found = withDeals.filter(y => y.d.length), none = withDeals.filter(y => !y.d.length);
-  const live = hasKroger() && krogerStores().some(s => s.loc);
-  if (!live && !found.length) return h + '<p class="dhint">' + (myDeals().length ? 'None of the deals you saved match your list right now.' : 'When you save a deal you spot in a weekly ad, it shows up here if it matches something on your list.') + '</p>' + otherStoresNote();
-  h += '<section class="sec"><div class="sec-h"><h2>On sale</h2>' + (found.length ? '<span class="muted">' + found.length + '</span>' : '') + '</div>'
-    + (found.length ? found.map(y => '<div class="dcardl"><b>' + esc(y.x.name) + '</b>' + y.d.slice(0, 3).map(dealRowHTML).join('') + '</div>').join('') : '<p class="dhint">' + (loading ? 'Looking…' : 'No deals found yet for what\'s on your list.') + '</p>')
-    + '</section>';
-  if (none.length && live) h += '<section class="sec"><div class="sec-h"><h2>No sale right now</h2><span class="muted">' + none.length + '</span></div><p class="dhint">' + esc(joinList(none.map(y => y.x.name))) + '</p></section>';
-  return h + otherStoresNote();
-}
-function otherStoresNote(){
-  const others = myStores().filter(s => !(CHAINS[s.chain] || {}).kroger);
-  if (!others.length) return '';
-  return '<section class="sec"><div class="sec-h"><h2>Check these weekly ads</h2></div><p class="dhint">' + esc(joinList(Array.from(new Set(others.map(s => s.name))))) + ' don\'t share their deals with apps. Tap a weekly ad, and save any deal you spot so it shows on your list.</p>'
-    + '<div class="wrapchips">' + others.map(s => adLink(s) ? '<a class="chip" href="' + esc(adLink(s)) + '" target="_blank" rel="noopener noreferrer">' + esc(storeLabel(s)) + icon('ext') + '</a>' : '').join('') + '</div>'
-    + '<div class="morebar"><button class="btn ghost" data-act="dealnew">' + icon('plus') + 'Save a deal I spotted</button></div></section>';
-}
-function weekHTML(rt){
-  const st = rt.dstore || '';
-  const stores = myStores();
-  let h = '<div class="chips scroll-x" data-sx="dst"><button class="chip' + (!st ? ' on' : '') + '" data-dst="">All stores</button>' + stores.map(s => '<button class="chip' + (st === s.id ? ' on' : '') + '" data-dst="' + esc(s.id) + '">' + esc(storeLabel(s)) + '</button>').join('') + '</div>';
-  const show = st ? stores.filter(s => s.id === st) : stores;
-  h += krogerNote();
-  show.forEach(s => {
-    const k = (CHAINS[s.chain] || {}).kroger;
-    h += '<section class="sec"><div class="sec-h"><h2>' + esc(storeLabel(s)) + '</h2></div><div class="dbtns">'
-      + (adLink(s) ? '<a class="btn ghost sm" href="' + esc(adLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('ext') + 'Weekly ad</a>' : '')
-      + (dealsLink(s) ? '<a class="btn ghost sm" href="' + esc(dealsLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('tag') + 'All deals</a>' : '') + '</div>';
-    if (k && hasKroger() && s.loc) {
-      const w = DEALS.week[s.id]; const loading = DEALS.loading['w' + s.id]; const err = DEALS.error['w' + s.id];
-      if (loading && !(w && w.items)) h += '<p class="readst"><span class="spin sm"></span>Getting this week\'s sale prices…</p>';
-      if (err) h += '<p class="readst bad">' + esc(err) + ' <button class="linkbtn sm" data-act="dweekretry" data-id="' + esc(s.id) + '">Try again</button></p>';
-      if (w && w.items) {
-        const n = st ? (rt.wshown || 24) : 8;
-        h += '<p class="hint">' + plural(w.items.length, 'item') + ' on sale, biggest savings first. From Kroger, ' + new Date(w.t).toLocaleString(undefined, {weekday:'short', hour:'numeric', minute:'2-digit'}) + '.</p>'
-          + '<div class="dgrid">' + w.items.slice(0, n).map(saleCardHTML).join('') + '</div>'
-          + (w.items.length > n ? '<div class="morebar"><button class="btn ghost" ' + (st ? 'data-act="dweekmore"' : 'data-dst="' + esc(s.id) + '"') + '>' + (st ? 'Show more' : 'See all ' + w.items.length) + '</button></div>' : '');
-      }
-    }
-    const saved = myDeals().filter(d => d.store === s.id);
-    if (saved.length) h += '<div class="dsaved">' + saved.map(d => '<div class="drow">' + icon('tag') + '<div><b>' + esc(d.text) + ': ' + esc(d.price) + (d.reg ? ' <s>' + esc(d.reg) + '</s>' : '') + '</b><small>You saved this' + (d.ends ? ' · ' + esc(endsText(d.ends)) : '') + '</small></div><button class="gx" data-dealrm="' + esc(d.id) + '" aria-label="Remove this deal">' + icon('x') + '</button></div>').join('') + '</div>';
-    if (!k) h += '<button class="addrow" data-act="dealnew" data-id="' + esc(s.id) + '">' + icon('plus') + 'Save a deal from this ad</button>';
-    h += '</section>';
-  });
-  return h;
-}
-function saleCardHTML(x){
-  const off = Math.round((x.regular - x.promo) / x.regular * 100);
-  return '<div class="scard">' + (x.image ? '<img src="' + esc(x.image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '<span class="simg"></span>')
-    + '<div class="sbody"><b class="sprice">' + money(x.promo) + ' <s>' + money(x.regular) + '</s></b><span class="soff">' + off + '% off</span><p>' + esc(x.name) + (x.size ? ' · ' + esc(x.size) : '') + '</p>'
-    + '<button class="linkbtn sm" data-dadd="' + esc(x.name.slice(0, 60)) + '">' + icon('plus') + 'Add to list</button></div></div>';
-}
-function storesHTML(){
-  const stores = myStores();
-  return '<p class="dhint">Your stores, in the order they show up. The buttons open each store\'s own weekly ad.</p>'
-    + stores.map(s => {
-      const c = CHAINS[s.chain] || {};
-      return '<div class="panel stcard"><div class="sthead"><div><h2>' + esc(s.name) + '</h2><p>' + esc([s.where, s.address].filter(Boolean).join(' · ')) + '</p></div><button class="iconbtn" data-stmenu="' + esc(s.id) + '" aria-label="Options for ' + esc(storeLabel(s)) + '">' + icon('more') + '</button></div>'
-        + '<div class="dbtns">' + (adLink(s) ? '<a class="btn ghost sm" href="' + esc(adLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('ext') + 'Weekly ad</a>' : '')
-        + (dealsLink(s) ? '<a class="btn ghost sm" href="' + esc(dealsLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('tag') + 'All deals</a>' : '')
-        + (s.address ? '<a class="btn ghost sm" href="' + esc(mapLink(s)) + '" target="_blank" rel="noopener noreferrer">' + icon('pin') + 'Map</a>' : '')
-        + (s.phone ? '<a class="btn ghost sm" href="tel:' + esc(s.phone.replace(/[^\d+]/g, '')) + '">' + icon('phone') + 'Call</a>' : '') + '</div>'
-        + (c.kroger ? '<p class="hint">' + (!hasKroger() ? 'Sale prices: not set up yet. <button class="linkbtn sm" data-act="kconnect">Set up</button>' : s.loc ? 'Sale prices on (store ' + esc(s.loc) + '). <button class="linkbtn sm" data-act="kfind" data-id="' + esc(s.id) + '">Change</button>' : 'Sale prices: pick your store. <button class="linkbtn sm" data-act="kfind" data-id="' + esc(s.id) + '">Find it</button>') + '</p>' : '')
-        + '</div>';
-    }).join('')
-    + '<div class="morebar"><button class="btn ghost" data-act="storenew">' + icon('plus') + 'Add a store</button></div>'
-    + (hasKroger() && krogerStores().length ? '<p class="hint" style="text-align:center">Kroger keys saved. <button class="linkbtn sm" data-act="kconnect">Change</button></p>' : '');
-}
-function mountDeals(r){
-  if (!hasKroger()) return;
-  const t = r.dtab || 'list';
-  if (t === 'week') (r.dstore ? myStores().filter(s => s.id === r.dstore) : krogerStores()).filter(s => (CHAINS[s.chain] || {}).kroger && s.loc).forEach(s => loadWeek(s));
-  if (t === 'list') loadListDeals();
-}
-
-// store options, adding a store, saving a deal, and Kroger setup
-function storeMenu(id){
-  const s = storeBy(id); if (!s) return;
-  const list = myStores(); const i = list.indexOf(s);
-  menuSheet([i > 0 ? mi('stup', 'back', 'Move up', id, 'rot90') : '', mi('stedit', 'edit', 'Edit store', id), mi('strm', 'trash', 'Remove store', id, 'danger')].filter(Boolean), storeLabel(s));
-}
-function moveStore(id){ const list = myStores().slice(); const i = list.findIndex(s => s.id === id); if (i > 0) { const x = list.splice(i, 1)[0]; list.splice(i - 1, 0, x); putStores(list); } closeSheet(); }
-async function removeStore(id){
-  closeSheet(); const s = storeBy(id); if (!s) return;
-  const ok = await confirmBox({title:'Remove ' + storeLabel(s) + '?', msg:'Takes it off your stores. Deals you saved for it go too.', ok:'Remove'});
-  if (!ok) return;
-  putSettings({mydeals:(Store.settings.mydeals || []).filter(d => d.store !== id)});
-  putStores(myStores().filter(x => x.id !== id));
-}
-let SF = null;
-function openStoreForm(id){
-  const s = id ? storeBy(id) : null;
-  SF = {id:id || '', chain:s ? s.chain : 'safeway'};
-  const chainBtns = () => Object.keys(CHAINS).filter(k => !CHAINS[k].hidden || SF.chain === k).map(k => '<button type="button" class="chip' + (SF.chain === k ? ' on' : '') + '" data-sfchain="' + k + '">' + esc(CHAINS[k].name) + '</button>').join('');
-  openSheet(sheetHead(s ? 'Edit store' : 'Add a store') + '<div class="sh-body">'
-    + '<div class="field"><span class="lbl">Store</span><div class="wrapchips" id="sfchains">' + chainBtns() + '</div></div>'
-    + '<div class="field"><label class="lbl" for="sf-name">Name</label><input class="inp" id="sf-name" maxlength="40" value="' + esc(s ? s.name : 'Safeway') + '"></div>'
-    + '<div class="field"><label class="lbl" for="sf-where">Which one <span class="opt">like the street it\'s on</span></label><input class="inp" id="sf-where" maxlength="40" value="' + esc(s ? s.where || '' : '') + '"></div>'
-    + '<div class="field"><label class="lbl" for="sf-addr">Address <span class="opt">optional</span></label><input class="inp" id="sf-addr" maxlength="120" value="' + esc(s ? s.address || '' : '') + '"></div>'
-    + '<div class="field"><label class="lbl" for="sf-phone">Phone <span class="opt">optional</span></label><input class="inp" id="sf-phone" maxlength="20" inputmode="tel" value="' + esc(s ? s.phone || '' : '') + '"></div>'
-    + '<div class="field" id="sf-adbox"' + (SF.chain === 'other' ? '' : ' hidden') + '><label class="lbl" for="sf-ad">Weekly ad link <span class="opt">optional</span></label><input class="inp" id="sf-ad" maxlength="300" inputmode="url" placeholder="https://" value="' + esc(s ? s.ad || '' : '') + '"></div>'
-    + '</div><div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="stsave">Save</button></div>', {label:'Store'});
-  SF.redrawChains = () => { const b = $('#sfchains'); if (b) b.innerHTML = chainBtns(); const ad = $('#sf-adbox'); if (ad) ad.hidden = SF.chain !== 'other'; };
-}
-function saveStoreForm(){
-  if (!SF) return;
-  const name = $('#sf-name').value.trim() || (CHAINS[SF.chain] || {}).name || 'Store';
-  let ad = ($('#sf-ad') || {}).value || '';
-  ad = ad.trim(); if (ad && !/^https?:\/\//i.test(ad)) ad = 'https://' + ad;
-  const s = {id:SF.id || 's-' + uid(), chain:SF.chain, name:name.slice(0, 40), where:$('#sf-where').value.trim().slice(0, 40), address:$('#sf-addr').value.trim().slice(0, 120), phone:$('#sf-phone').value.trim().slice(0, 20)};
-  if (SF.chain === 'other' && ad) s.ad = ad;
-  const old = storeBy(s.id); if (old && old.loc && old.chain === s.chain) s.loc = old.loc;
-  const list = myStores().slice(); const i = list.findIndex(x => x.id === s.id);
-  if (i >= 0) list[i] = s; else list.push(s);
-  putStores(list); closeSheet(); SF = null;
-  toast(i >= 0 ? 'Store saved' : 'Added ' + storeLabel(s));
-}
-function openDealForm(storeId){
-  const stores = myStores().filter(s => !(CHAINS[s.chain] || {}).kroger).concat(myStores().filter(s => (CHAINS[s.chain] || {}).kroger));
-  const pick = storeId || (stores[0] && stores[0].id) || '';
-  openSheet(sheetHead('Save a deal') + '<div class="sh-body"><p class="dhint">Spotted something in a weekly ad? Save it here and it shows next to that item on your grocery list until the sale ends.</p>'
-    + '<div class="field"><label class="lbl" for="df-what">What\'s on sale</label><input class="inp" id="df-what" maxlength="60" placeholder="Chicken thighs"></div>'
-    + '<div class="field"><label class="lbl" for="df-price">Sale price</label><input class="inp" id="df-price" maxlength="30" placeholder="$1.49/lb or 2 for $5"></div>'
-    + '<div class="field"><label class="lbl" for="df-reg">Regular price <span class="opt">optional</span></label><input class="inp" id="df-reg" maxlength="30" placeholder="$2.99/lb"></div>'
-    + '<div class="field"><label class="lbl" for="df-store">Store</label><select class="inp" id="df-store">' + stores.map(s => '<option value="' + esc(s.id) + '"' + (s.id === pick ? ' selected' : '') + '>' + esc(storeLabel(s)) + '</option>').join('') + '</select></div>'
-    + '<div class="field"><label class="lbl" for="df-ends">Good through</label><input class="inp" id="df-ends" type="date" value="' + nextTuesday() + '"></div>'
-    + '</div><div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="dealsave">Save deal</button></div>', {label:'Save a deal'});
-  setTimeout(() => { const i = $('#df-what'); if (i) i.focus(); }, 60);
-}
-function saveDealForm(){
-  const what = $('#df-what').value.trim(), price = $('#df-price').value.trim();
-  if (!what) { $('#df-what').classList.add('err'); $('#df-what').focus(); return; }
-  if (!price) { $('#df-price').classList.add('err'); $('#df-price').focus(); return; }
-  const f = lookupFood(what) || {id:''};
-  const d = {id:'d-' + uid(), text:capWord(what), food:f.id, price:price.slice(0, 30), reg:$('#df-reg').value.trim().slice(0, 30), store:$('#df-store').value, ends:$('#df-ends').value || '', t:now()};
-  putSettings({mydeals:(Store.settings.mydeals || []).filter(x => !x.ends || x.ends >= today()).concat([d])});
-  closeSheet(); redrawDeals(); redrawList();
-  toast('Deal saved');
-}
-function removeDeal(id){ const before = Store.settings.mydeals || []; putSettings({mydeals:before.filter(d => d.id !== id)}); redrawDeals(); redrawList(); toast('Deal removed', {label:'Undo', fn:() => { putSettings({mydeals:before}); redrawDeals(); }}); }
-function openKroger(){
-  const k = krogerKeys();
-  openSheet(sheetHead('Kroger sale prices') + '<div class="sh-body">'
-    + '<p class="dhint">Kroger gives out prices for its own stores (Ralphs, Kroger, and others) for free to apps like this one. You just need your own free key. One time, about 10 minutes.</p>'
-    + '<ol class="ksteps"><li>Go to <a href="https://developer.kroger.com/" target="_blank" rel="noopener noreferrer">developer.kroger.com</a> and create a free account (or sign in).</li>'
-    + '<li>Create an app with a name nobody else would use (names must be unique). Pick <b>Production</b>, then the <b>Products</b> and <b>Locations</b> APIs. Leave the sign-in (consent) section blank, and tap <b>Register</b>.</li>'
-    + '<li>Copy the app\'s <b>Client ID</b> and <b>Client Secret</b> into the boxes below.</li></ol>'
-    + '<p class="hint">The buttons on Kroger\'s site may be named a little differently. If you get stuck, send Claude a screenshot.</p>'
-    + '<div class="field"><label class="lbl" for="kc-id">Client ID</label><input class="inp" id="kc-id" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(k.id || '') + '"></div>'
-    + '<div class="field"><label class="lbl" for="kc-secret">Client Secret</label><input class="inp" id="kc-secret" autocomplete="off" autocapitalize="none" spellcheck="false" value="' + esc(k.secret || '') + '"></div>'
-    + '<p class="hint">Saved on this phone and in your backups. It only lets the app read Kroger\'s prices, nothing about you.</p>'
-    + '</div><div class="sh-foot">' + (k.id ? '<button class="btn ghost" data-act="kforget">Remove keys</button>' : '<button class="btn ghost" data-act="closesheet">Cancel</button>') + '<button class="btn primary" data-act="ksave">Save</button></div>', {full:true, label:'Kroger sale prices'});
-}
-async function saveKroger(){
-  const id = $('#kc-id').value.trim(), secret = $('#kc-secret').value.trim();
-  if (!id || !secret) { toast('Paste both the Client ID and the Client Secret.'); return; }
-  putSettings({kroger:{id:id, secret:secret}});
-  DEALS.week = {}; DEALS.list = {}; DEALS.test = false; saveDealsLS();
-  closeSheet();
-  const s = krogerStores()[0];
-  if (s) findKrogerStore(s.id); else toast('Keys saved');
-}
-async function findKrogerStore(id){
-  const s = storeBy(id); if (!s) return;
-  const zip = ((s.address || '').match(/\b\d{5}\b/) || [])[0] || '95336';
-  openSheet(sheetHead('Find your ' + s.name) + '<div class="sh-body" id="kfbody"><p class="readst"><span class="spin sm"></span>Asking Kroger for stores near ' + esc(zip) + '…</p></div>', {label:'Find store'});
-  let j;
-  try { j = await krogerCall('find=' + zip); }
-  catch (e) { const b = $('#kfbody'); if (b) b.innerHTML = '<p class="readst bad">' + esc(e.message) + '</p><div class="morebar"><button class="btn ghost" data-act="kconnect">Check the keys</button></div>'; return; }
-  const f4l = j.stores.filter(x => /food ?4 ?less|foods ?co/i.test(x.name + ' ' + x.chain));
-  const want = s.chain === 'food4less' && f4l.length ? f4l : j.stores;
-  const street = (s.address || '').split(',')[0].toLowerCase().replace(/\s+/g, ' ');
-  const match = want.find(x => street && x.address.toLowerCase().indexOf(street) === 0);
-  if (match) { setKrogerLoc(s.id, match.locationId); closeSheet(); toast('Found it: ' + match.address.split(',')[0]); return; }
-  const b = $('#kfbody'); if (!b) return;
-  b.innerHTML = want.length ? '<p class="dhint">Which one is yours?</p>' + want.map(x => '<button class="mi" data-kloc="' + esc(x.locationId) + '" data-id="' + esc(s.id) + '">' + icon('pin') + '<span>' + esc(x.name) + '<br><small>' + esc(x.address) + '</small></span></button>').join('')
-    : '<p class="dhint">Kroger didn\'t list a ' + esc(s.name) + ' near ' + esc(zip) + '. Check the store\'s address on the My stores tab.</p>';
-}
-function setKrogerLoc(id, loc){ putStores(myStores().map(s => s.id === id ? Object.assign({}, s, {loc:loc}) : s)); const s = storeBy(id); if (s) { loadWeek(s, true); loadListDeals(true); } }
 
 /* the same text reader the recipe reader uses, for pasted recipe text */
 /* ---- captions (TikTok / Instagram / YouTube descriptions) ---- */
@@ -3132,6 +2882,8 @@ const FOODS = [
   ['water chestnuts', 'Water chestnuts', 's', 'water chestnuts'],
   ['cornstarch', 'Cornstarch', 's', 'corn ?starch|potato starch|arrowroot( powder)?|tapioca (starch|flour)'],
   ['baking powder', 'Baking powder', 's', 'baking powder'],
+  ['cream of tartar', 'Cream of tartar', 's', 'cream of tartar'],
+  ['molasses', 'Molasses', 's', '(dark |light |blackstrap |unsulphured )?molasses'],
   ['baking soda', 'Baking soda', 's', 'baking soda|bicarbonate of soda'],
   ['yeast', 'Yeast', 's', '(active dry |instant |rapid rise )?yeast'],
   ['vanilla', 'Vanilla', 's', '(pure )?vanilla( extract| bean| paste)?'],
@@ -3505,7 +3257,7 @@ const AISLE_OF = {
   'Rice, pasta & beans': ['rice', 'pasta', 'noodles', 'egg noodles', 'rice noodles', 'quinoa', 'couscous', 'oats', 'cornmeal', 'black beans', 'pinto beans', 'refried beans', 'kidney beans', 'white beans', 'beans', 'chickpeas', 'lentils', 'breadcrumbs'],
   'Canned & jarred': ['chicken broth', 'beef broth', 'vegetable broth', 'broth', 'cream of chicken', 'cream of mushroom', 'canned tomatoes', 'tomato sauce', 'tomato paste', 'pasta sauce', 'enchilada sauce', 'salsa', 'coconut milk', 'canned milk', 'chipotle in adobo', 'olives', 'pickles', 'capers', 'water chestnuts', 'sun dried tomatoes', 'peanut butter', 'tuna', 'kimchi'],
   'Sauces & condiments': ['soy sauce', 'fish sauce', 'oyster sauce', 'hoisin', 'teriyaki', 'worcestershire', 'gochujang', 'sriracha', 'hot sauce', 'bbq sauce', 'curry paste', 'pesto', 'ketchup', 'mustard', 'mayo', 'ranch', 'italian dressing', 'honey', 'maple syrup', 'corn syrup', 'rice vinegar', 'balsamic', 'vinegar', 'rice wine', 'sesame oil', 'chili oil', 'oil', 'tahini', 'hummus', 'miso'],
-  'Spices & baking': ['flour', 'sugar', 'brown sugar', 'powdered sugar', 'cornstarch', 'baking powder', 'baking soda', 'yeast', 'vanilla', 'chocolate', 'cocoa', 'salt', 'pepper', 'coconut', 'nuts', 'sesame seeds'],
+  'Spices & baking': ['flour', 'sugar', 'brown sugar', 'powdered sugar', 'cornstarch', 'baking powder', 'cream of tartar', 'molasses', 'baking soda', 'yeast', 'vanilla', 'chocolate', 'cocoa', 'salt', 'pepper', 'coconut', 'nuts', 'sesame seeds'],
   'Frozen': ['ice cream', 'whipped cream'],
   'Snacks & drinks': ['tortilla chips', 'crackers', 'peanuts', 'wine', 'beer', 'water']
 };
@@ -3535,6 +3287,288 @@ const QUICK_FOODS = [
 const BASIC_CHOICES = ['salt', 'pepper', 'oil', 'water', 'butter', 'sugar', 'flour', 'spices', 'garlic powder', 'onion powder', 'brown sugar', 'baking powder', 'baking soda', 'vanilla', 'cumin', 'chili powder', 'paprika', 'oregano', 'italian seasoning', 'cinnamon', 'red pepper flakes', 'soy sauce', 'ketchup', 'mustard', 'mayo', 'vinegar'];
 const DEFAULT_BASICS = ['salt', 'pepper', 'oil', 'water', 'butter', 'sugar', 'flour'];
 /* ---- end pantry ---- */
+
+/* ---- kitchen help: swaps and cookware tips ---- */
+// n = what the swap uses, as food ids from lib/pantry.js; an inner list means any one of them. 'x:molasses' is
+// something the kitchen list only knows if you typed it in yourself.
+// The app says "You have it" when every part is in your kitchen.
+const SWAPS = [
+  // dairy
+  {id:'buttermilk', name:'Buttermilk', m:'buttermilk', o:[
+    {t:'Milk + lemon juice or vinegar', d:'For 1 cup: put 1 tbsp lemon juice or white vinegar in a measuring cup, add milk up to 1 cup, and let it sit 5 minutes.', n:['milk', ['lemon', 'vinegar']], src:'ext'},
+    {t:'Plain yogurt', d:'Same amount. Thin it with a splash of milk if it\'s thick.', n:['yogurt'], src:'ext'}]},
+  {id:'sour cream', name:'Sour cream', m:'sour cream', o:[
+    {t:'Plain yogurt', d:'Same amount. Greek yogurt is closest in thickness.', n:['yogurt'], src:'ext'}]},
+  {id:'heavy cream', name:'Heavy cream', m:'heavy (whipping )?cream|whipping cream|double cream', o:[
+    {t:'Milk + butter', d:'For 1 cup: 3/4 cup milk plus 1/3 cup melted butter. Fine for cooking and baking, but it won\'t whip.', n:['milk', 'butter'], src:'ext'},
+    {t:'Half-and-half', d:'Same amount in soups and sauces. It\'s thinner and can curdle if it boils hard, so keep it at a simmer.', n:[], src:'kitchen'}]},
+  {id:'half and half', name:'Half-and-half', m:'half and half', o:[
+    {t:'Milk + butter', d:'For 1 cup: 7/8 cup milk (1 cup minus 2 tbsp) plus 1/2 tbsp melted butter.', n:['milk', 'butter'], src:'ext'},
+    {t:'Evaporated milk', d:'Same amount, straight from the can.', n:['canned milk'], src:'ext'}]},
+  {id:'milk', name:'Milk', m:'(?<!coconut |condensed |evaporated |almond |oat |soy |rice )(whole |2% |skim |low fat |nonfat )?milk', o:[
+    {t:'Evaporated milk + water', d:'For 1 cup: 1/2 cup evaporated milk plus 1/2 cup water.', n:['canned milk'], src:'ext'},
+    {t:'Unsweetened oat, almond, or soy milk', d:'Same amount. The flavor changes a little.', n:[], src:'kitchen'}]},
+  {id:'yogurt', name:'Yogurt', m:'(plain |greek |whole milk )*yogh?urt', o:[
+    {t:'Sour cream or buttermilk', d:'Same amount.', n:[['sour cream', 'buttermilk']], src:'ext'}]},
+  {id:'mayo', name:'Mayo', m:'mayo(nnaise)?', o:[
+    {t:'Plain yogurt or sour cream', d:'Same amount. Tangier and lighter.', n:[['yogurt', 'sour cream']], src:'ext'}]},
+  {id:'cream cheese', name:'Cream cheese', m:'cream cheese', o:[
+    {t:'Neufchatel', d:'Same amount. It\'s a little softer and lighter.', n:[], src:'kitchen'}]},
+  {id:'ricotta', name:'Ricotta', m:'ricotta', o:[
+    {t:'Cottage cheese', d:'Same amount. Blend it smooth first if the texture matters.', n:[], src:'kitchen'}]},
+  {id:'parmesan', name:'Parmesan', m:'parmesan|parmigiano( reggiano)?', o:[
+    {t:'Pecorino Romano', d:'Same amount. It\'s saltier, so go easy on added salt.', n:[], src:'kitchen'}]},
+  {id:'cheddar', name:'Cheddar', m:'(sharp |mild |medium |white )?cheddar', o:[
+    {t:'Colby Jack or Monterey Jack', d:'Same amount. Milder, and melts well.', n:[], src:'kitchen'}]},
+  {id:'jack', name:'Monterey Jack', m:'(monterey |pepper )jack', o:[
+    {t:'Mozzarella or mild cheddar', d:'Same amount.', n:[['mozzarella', 'cheese']], src:'kitchen'}]},
+  {id:'mozzarella', name:'Mozzarella', m:'mozzarella', o:[
+    {t:'Provolone or Monterey Jack', d:'Same amount. Both melt well.', n:[], src:'kitchen'}]},
+  {id:'eggs', name:'Egg', m:'eggs?(?! (yolks?|whites?|wash|noodles))', o:[
+    {t:'Ground flaxseed + water (baking only)', d:'For 1 egg: 1 tbsp ground flaxseed stirred into 3 tbsp water. Let it sit 5 minutes until thick. Works for holding muffins, cookies, and quick breads together, not where eggs are the main thing.', n:[], src:'kitchen'}]},
+  {id:'butter', name:'Butter', m:'(?<!peanut |almond |apple |cashew |nut |cookie )(unsalted |salted |melted |softened |cold )?butter(?! beans| lettuce)', o:[
+    {t:'Stick margarine', d:'Same amount.', n:[], src:'ext'},
+    {t:'Cooking oil (for the stove)', d:'For sauteing or greasing a pan, use oil instead. Not a good swap in cookies or pie crust.', n:['oil'], src:'kitchen'}]},
+  {id:'shortening', name:'Shortening', m:'shortening|crisco', o:[
+    {t:'Butter', d:'For 1 cup: 1 1/8 cups butter (1 cup plus 2 tbsp). Baked goods may spread a little more.', n:['butter'], src:'ext'}]},
+  // baking
+  {id:'baking powder', name:'Baking powder', m:'baking powder', o:[
+    {t:'Baking soda + cream of tartar', d:'For 1 tsp: 1/4 tsp baking soda plus 5/8 tsp cream of tartar (a heaping 1/2 tsp).', n:['baking soda', 'cream of tartar'], src:'ext'}]},
+  {id:'self rising flour', name:'Self-rising flour', m:'self rising flour', o:[
+    {t:'Flour + baking powder + salt', d:'For 1 cup: 1 cup all-purpose flour minus 2 tsp, plus 1 1/2 tsp baking powder and 1/2 tsp salt.', n:['flour', 'baking powder'], src:'ext'}]},
+  {id:'cake flour', name:'Cake flour', m:'cake flour', o:[
+    {t:'All-purpose flour', d:'For 1 cup: 1 cup minus 2 tbsp all-purpose flour, sifted.', n:['flour'], src:'ext'}]},
+  {id:'cornstarch', name:'Cornstarch', m:'corn ?starch', o:[
+    {t:'Flour (for thickening)', d:'For 1 tbsp cornstarch: 2 tbsp all-purpose flour. Let it simmer a couple minutes so it doesn\'t taste floury.', n:['flour'], src:'ext'},
+    {t:'Potato starch or arrowroot', d:'Same amount, for thickening or coating.', n:[], src:'kitchen'}]},
+  {id:'potato starch', name:'Potato starch', m:'potato starch', o:[
+    {t:'Cornstarch', d:'Same amount. Works for coating and thickening.', n:['cornstarch'], src:'kitchen'}]},
+  {id:'brown sugar', name:'Brown sugar', m:'(light |dark |packed )*brown sugar', o:[
+    {t:'White sugar + molasses', d:'For 1 cup: 1 cup white sugar plus 1/4 cup molasses.', n:['sugar', 'molasses'], src:'ext'},
+    {t:'Just white sugar', d:'Same amount. A little less rich and chewy.', n:['sugar'], src:'ext'}]},
+  {id:'powdered sugar', name:'Powdered sugar', m:'powdered sugar|confectioners\'? sugar|icing sugar', o:[
+    {t:'White sugar (in batters only)', d:'For 1 cup: 3/4 cup white sugar. Not for frosting or dusting, since it won\'t be smooth.', n:['sugar'], src:'ext'}]},
+  {id:'honey', name:'Honey', m:'honey(?! mustard| ham| roasted)', o:[
+    {t:'Sugar + water', d:'For 1 cup: 1 1/4 cups sugar plus 1/4 cup water.', n:['sugar'], src:'ext'},
+    {t:'Maple syrup', d:'Same amount. The flavor changes a little.', n:['maple syrup'], src:'kitchen'}]},
+  {id:'maple syrup', name:'Maple syrup', m:'(pure )?maple syrup', o:[
+    {t:'Honey', d:'Same amount. The flavor changes a little.', n:['honey'], src:'kitchen'}]},
+  {id:'corn syrup', name:'Corn syrup', m:'(light |dark )?corn syrup', o:[
+    {t:'Sugar + water', d:'For 1 cup: 1 cup sugar plus 1/4 cup water.', n:['sugar'], src:'ext'},
+    {t:'Honey', d:'Same amount.', n:['honey'], src:'ext'}]},
+  {id:'unsweetened chocolate', name:'Unsweetened chocolate', m:'unsweetened (baking )?chocolate|baking chocolate', o:[
+    {t:'Cocoa powder + butter or oil', d:'For 1 oz: 3 tbsp cocoa powder plus 1 tbsp butter or oil.', n:['cocoa'], src:'ext'}]},
+  {id:'semisweet chocolate', name:'Semisweet chocolate', m:'semi ?sweet (baking )?chocolate(?! chips| chunks)', o:[
+    {t:'Unsweetened chocolate + sugar', d:'For 1 oz: 1/2 oz unsweetened chocolate plus 1 tbsp sugar.', n:['chocolate', 'sugar'], src:'ext'}]},
+  {id:'yeast', name:'Yeast', m:'(active dry |instant |rapid rise )?yeast', o:[
+    {t:'The other kind of dry yeast', d:'Active dry and instant (rapid rise) yeast swap 1 for 1. One packet is 2 1/4 tsp. If you use active dry, dissolve it in the recipe\'s warm liquid first.', n:[], src:'kitchen'}]},
+  // spices and herbs
+  {id:'allspice', name:'Allspice', m:'(ground )?allspice', o:[
+    {t:'Cinnamon + cloves', d:'For 1 tsp: 1/2 tsp cinnamon and 1/2 tsp ground cloves.', n:['cinnamon', 'cloves'], src:'ext'}]},
+  {id:'pumpkin pie spice', name:'Pumpkin pie spice', m:'pumpkin (pie )?spice', o:[
+    {t:'Your own mix', d:'For 1 tsp: 1/2 tsp cinnamon, 1/4 tsp ground ginger, 1/8 tsp allspice, and 1/8 tsp nutmeg.', n:['cinnamon', 'ground ginger', 'allspice', 'nutmeg'], src:'ext'}]},
+  {id:'chili powder', name:'Chili powder', m:'chil(i|e) powder', o:[
+    {t:'Paprika + cumin', d:'Mix paprika and cumin with a pinch of cayenne and oregano. Taste as you go.', n:['paprika', 'cumin'], src:'kitchen'}]},
+  {id:'italian seasoning', name:'Italian seasoning', m:'italian seasoning', o:[
+    {t:'Dried basil, oregano, and thyme', d:'Equal parts of whatever you have. Add a little rosemary if you like.', n:[['oregano', 'basil', 'thyme']], src:'kitchen'}]},
+  {id:'cayenne', name:'Cayenne', m:'cayenne( pepper)?', o:[
+    {t:'Red pepper flakes or hot sauce', d:'Start with a pinch or a few dashes and taste.', n:[['red pepper flakes', 'hot sauce']], src:'kitchen'}]},
+  {id:'red pepper flakes', name:'Red pepper flakes', m:'(crushed )?red pepper flakes|chil(i|e) flakes', o:[
+    {t:'Cayenne or hot sauce', d:'Cayenne is hotter, so use about half as much.', n:[['cayenne', 'hot sauce']], src:'kitchen'}]},
+  {id:'dry mustard', name:'Dry mustard', m:'dry mustard|mustard powder|ground mustard', o:[
+    {t:'Prepared mustard', d:'For 1 tsp dry mustard: 1 tbsp regular mustard.', n:['mustard'], src:'ext'}]},
+  {id:'fresh herbs', name:'Fresh herbs', m:'fresh (basil|oregano|thyme|rosemary|dill|parsley|mint|sage|tarragon)', o:[
+    {t:'Dried herbs', d:'For 1 tbsp fresh: 1 tsp dried.', n:[], src:'ext'}]},
+  {id:'dried herbs', name:'Dried herbs', m:'dried (basil|oregano|thyme|rosemary|dill|parsley|mint|sage|tarragon)', o:[
+    {t:'Fresh herbs', d:'For 1 tsp dried: 1 tbsp fresh, chopped.', n:[], src:'ext'}]},
+  {id:'cilantro', name:'Cilantro', m:'cilantro', o:[
+    {t:'Parsley + a squeeze of lime', d:'Same amount of parsley. It won\'t taste like cilantro, but it adds the fresh green.', n:['parsley'], src:'kitchen'}]},
+  {id:'green onions', name:'Green onions', m:'(green|spring) onions?|scallions?', o:[
+    {t:'Chives or a little onion', d:'Same amount of chives, or a smaller amount of finely chopped onion.', n:[], src:'kitchen'}]},
+  {id:'chives', name:'Chives', m:'chives', o:[
+    {t:'Green onion tops', d:'Finely chopped, about the same amount.', n:['green onions'], src:'ext'}]},
+  // produce
+  {id:'garlic', name:'Garlic', m:'(fresh |minced |chopped )?garlic( cloves?)?(?! powder| salt)|cloves? (of )?garlic', o:[
+    {t:'Garlic powder', d:'For 1 clove: 1/8 tsp garlic powder.', n:['garlic powder'], src:'ext'}]},
+  {id:'garlic powder', name:'Garlic powder', m:'garlic powder', o:[
+    {t:'Fresh garlic', d:'For 1/8 tsp garlic powder: 1 clove, minced.', n:['garlic'], src:'ext'}]},
+  {id:'onion', name:'Onion', m:'(?<!green |spring )(yellow |white |sweet |red )?onions?(?! powder)', o:[
+    {t:'Dried minced onion', d:'For 1 small onion: 1 tbsp dried minced onion, soaked in a little water first.', n:[], src:'ext'},
+    {t:'Onion powder', d:'Add a little at a time and taste.', n:['onion powder'], src:'kitchen'}]},
+  {id:'shallots', name:'Shallots', m:'shallots?', o:[
+    {t:'Onion', d:'About the same amount of chopped yellow or white onion. Add a little garlic if you like.', n:['onion'], src:'kitchen'}]},
+  {id:'ginger', name:'Fresh ginger', m:'(fresh |minced |grated )ginger|ginger root|ginger paste', o:[
+    {t:'Ground ginger', d:'For 1 tbsp grated fresh ginger: about 1/4 tsp ground ginger.', n:['ground ginger'], src:'kitchen'}]},
+  {id:'jalapeno', name:'Jalapeno', m:'jalapenos?( peppers?)?', o:[
+    {t:'Serrano or red pepper flakes', d:'Serranos are hotter, so use less. A pinch of red pepper flakes adds the heat without the pepper.', n:[['chiles', 'red pepper flakes']], src:'kitchen'}]},
+  {id:'lemon', name:'Lemon', m:'lemons?( juice| zest)?|juice of (\\w+ )?lemons?', o:[
+    {t:'Lime', d:'Same amount of juice or zest.', n:['lime'], src:'kitchen'},
+    {t:'Vinegar (juice only)', d:'For 1 tsp lemon juice: 1/2 tsp vinegar. Best in marinades and dressings, not where you taste the lemon.', n:['vinegar'], src:'ext'}]},
+  {id:'lime', name:'Lime', m:'limes?( juice| zest)?|juice of (\\w+ )?limes?', o:[
+    {t:'Lemon', d:'Same amount of juice or zest.', n:['lemon'], src:'kitchen'}]},
+  // cans, sauces, and pantry
+  {id:'tomato sauce', name:'Tomato sauce', m:'tomato sauce', o:[
+    {t:'Tomato paste + water', d:'For a 15 oz can: one 6 oz can tomato paste plus 1 cup water.', n:['tomato paste'], src:'ext'}]},
+  {id:'tomato paste', name:'Tomato paste', m:'tomato paste', o:[
+    {t:'Tomato sauce, cooked down', d:'For 1 tbsp paste: about 2 to 3 tbsp tomato sauce, simmered until thick.', n:['tomato sauce'], src:'ext'}]},
+  {id:'tomato juice', name:'Tomato juice', m:'tomato juice', o:[
+    {t:'Tomato sauce + water', d:'For 1 cup: 1/2 cup tomato sauce plus 1/2 cup water.', n:['tomato sauce'], src:'ext'}]},
+  {id:'ketchup', name:'Ketchup', m:'ketchup|catsup', o:[
+    {t:'Tomato sauce + sugar + vinegar', d:'For 1 cup: 1 cup tomato sauce, 1/2 cup sugar, and 2 tbsp vinegar.', n:['tomato sauce', 'sugar', 'vinegar'], src:'ext'}]},
+  {id:'broth', name:'Broth', m:'(chicken |beef |vegetable |veggie )?(broth|stock)', o:[
+    {t:'Bouillon + water', d:'For 1 cup: 1 bouillon cube or 1 tsp bouillon granules dissolved in 1 cup boiling water.', n:[], src:'ext'},
+    {t:'A different broth', d:'Chicken, beef, and vegetable broth can stand in for each other.', n:[['chicken broth', 'beef broth', 'vegetable broth', 'broth']], src:'kitchen'}]},
+  {id:'wine', name:'Wine', m:'(dry )?(white|red) wine(?! vinegar)|(?<!rice |shaoxing |plum )wine(?! vinegar)', o:[
+    {t:'Broth + a splash of vinegar', d:'Same amount of broth (chicken for white wine, beef for red) plus a splash of vinegar or lemon juice for tang.', n:[['chicken broth', 'beef broth', 'vegetable broth', 'broth']], src:'kitchen'}]},
+  {id:'mirin', name:'Mirin', m:'mirin', o:[
+    {t:'Dry sherry or white wine + sugar', d:'Same amount, plus about 1/2 tsp sugar for each tbsp.', n:['wine'], src:'kitchen'}]},
+  {id:'rice vinegar', name:'Rice vinegar', m:'(seasoned )?rice (wine )?vinegar', o:[
+    {t:'Apple cider or white wine vinegar', d:'Same amount. Add a pinch of sugar if the recipe uses seasoned rice vinegar.', n:['vinegar'], src:'kitchen'}]},
+  {id:'soy sauce', name:'Soy sauce', m:'(low sodium |reduced sodium |light |dark )?soy sauce', o:[
+    {t:'Tamari or coconut aminos', d:'Same amount. Tamari is usually gluten-free. Coconut aminos is sweeter and less salty.', n:[], src:'kitchen'}]},
+  {id:'fish sauce', name:'Fish sauce', m:'fish sauce', o:[
+    {t:'Soy sauce', d:'Same amount. You lose some of the funk, but it\'s still salty and savory.', n:['soy sauce'], src:'kitchen'}]},
+  {id:'oyster sauce', name:'Oyster sauce', m:'oyster sauce', o:[
+    {t:'Hoisin, or soy sauce + a pinch of sugar', d:'Same amount. Hoisin is sweeter.', n:[['hoisin', 'soy sauce']], src:'kitchen'}]},
+  {id:'worcestershire', name:'Worcestershire', m:'worcestershire( sauce)?', o:[
+    {t:'Steak sauce', d:'Same amount.', n:[], src:'ext'}]},
+  {id:'gochujang', name:'Gochujang', m:'gochujang( paste)?', o:[
+    {t:'Sriracha + soy sauce + a pinch of sugar', d:'Start with half the amount. It\'s hotter and thinner, and won\'t taste quite the same.', n:['sriracha', 'soy sauce'], src:'kitchen'}]},
+  {id:'sriracha', name:'Sriracha', m:'sriracha', o:[
+    {t:'Chili garlic sauce or hot sauce', d:'To taste. Start with a little less.', n:['hot sauce'], src:'kitchen'}]},
+  {id:'sesame oil', name:'Sesame oil', m:'(toasted )?sesame oil', o:[
+    {t:'Neutral oil + sesame seeds', d:'There\'s no real swap for the toasted flavor. Use regular oil and sprinkle toasted sesame seeds on top, or leave it out.', n:['oil'], src:'kitchen'}]},
+  {id:'chipotle', name:'Chipotles in adobo', m:'chipotles?( peppers?)? in adobo', o:[
+    {t:'Smoked paprika + cayenne', d:'For smoky heat: a little smoked paprika plus a pinch of cayenne. Taste as you go.', n:['paprika'], src:'kitchen'}]},
+  {id:'cream soup', name:'Cream of chicken or mushroom soup', m:'(condensed )?cream of (chicken|mushroom|celery)( soup)?', o:[
+    {t:'Quick white sauce', d:'For one 10.5 oz can: melt 3 tbsp butter, stir in 3 tbsp flour, then whisk in 1 1/4 cups milk or broth and simmer until thick. Season with salt and pepper.', n:['butter', 'flour', ['milk', 'broth', 'chicken broth']], src:'kitchen'}]},
+  {id:'breadcrumbs', name:'Breadcrumbs', m:'(panko |italian |seasoned |plain |dry )?bread ?crumbs|panko', o:[
+    {t:'Crushed crackers', d:'Same amount. Crushed cornflakes or potato chips also work for a crunchy coating.', n:['crackers'], src:'ext'}]},
+  // meat
+  {id:'ground beef', name:'Ground beef', m:'(lean |extra lean )?ground (beef|chuck)|hamburger( meat)?', o:[
+    {t:'Ground turkey', d:'Same amount. It\'s leaner, so add a little oil. Cook it to 165°F.', n:['ground turkey'], src:'kitchen'}]},
+  {id:'ground turkey', name:'Ground turkey', m:'ground turkey', o:[
+    {t:'Ground beef or ground chicken', d:'Same amount. Cook ground beef to 160°F and ground chicken to 165°F.', n:[['ground beef', 'chicken']], src:'kitchen'}]},
+  {id:'chicken breast', name:'Chicken breast', m:'chicken breasts?', o:[
+    {t:'Boneless chicken thighs', d:'Same weight. Juicier and harder to overcook. Cook to 165°F.', n:['chicken'], src:'kitchen'}]},
+  {id:'chicken thighs', name:'Chicken thighs', m:'chicken thighs?', o:[
+    {t:'Chicken breasts', d:'Same weight. They cook faster and dry out easier, so check them sooner. Cook to 165°F.', n:['chicken'], src:'kitchen'}]}
+];
+const SWAP_RE = SWAPS.map(s => [s, new RegExp('(?<![a-z])(?:' + s.m + ')(?![a-z])', 'g')]);
+
+// the swap for one ingredient line (the longest match wins, so "buttermilk" beats "milk"), or null
+function swapFor(line) {
+  const s = ' ' + normFood(String(line || '').replace(/\([^)]*\)/g, ' ')) + ' ';
+  let best = null;
+  for (const [sw, re] of SWAP_RE) {
+    re.lastIndex = 0;
+    const m = re.exec(s);
+    if (m && m[0].trim() && (!best || m[0].length > best.len)) best = { sw, len: m[0].length };
+  }
+  return best ? best.sw : null;
+}
+// does the kitchen have what a swap option uses? false when it uses nothing we can check
+function swapHave(opt, pantry) {
+  if (!pantry || !opt.n || !opt.n.length) return false;
+  const has = id => id.indexOf('x:') === 0 ? customHas(pantry, id.slice(2)) : pantryHas(pantry, id);
+  return opt.n.every(x => Array.isArray(x) ? x.some(has) : has(x));
+}
+
+// Cookware and equipment: what the recipe calls for, a tip, and what to use if you don't have it.
+// m is checked against the title, directions, and the recipe's own cookware list; mi also checks the ingredients.
+const TOOLS = [
+  {id:'dutch', name:'Dutch oven or heavy pot', m:'dutch oven|braise|braising|braised',
+    tip:'A heavy pot with a tight lid holds steady heat for braises, stews, and chili.',
+    alt:'No Dutch oven? Any heavy pot with a lid. If it goes in the oven, make sure the handles and lid are oven-safe.'},
+  {id:'fry', name:'Deep pot and a thermometer for frying', m:'deep fr(y|ied|ying)|deep fat|fry (them |it |in batches )?until (golden|crisp)|heat (the )?oil to|oil (reaches|registers)|(?<!air )fryer', mi:'for (deep )?frying|frying oil',
+    tip:'Use a fryer or a deep, heavy pot, and leave at least 2 inches of room at the top so the oil can bubble up. A deep-fry or candy thermometer keeps the oil at the right heat. Pat food dry first so it doesn\'t spatter.',
+    alt:'Never use water on a grease fire. Cover the pot with a metal lid or use a kitchen fire extinguisher.', src:'USDA'},
+  {id:'air', name:'Air fryer', m:'air fr(y|ied|yer|ying)',
+    tip:'Don\'t crowd the basket, and shake or flip halfway so everything crisps evenly.',
+    alt:'No air fryer? Bake on a sheet pan in a hot oven (a wire rack on the pan helps it crisp). Expect it to take longer.'},
+  {id:'slow', name:'Slow cooker', m:'slow cook(er|ed|ing)?|crock ?pot',
+    tip:'Thaw meat first, fill it between half and two-thirds full, put vegetables on the bottom with the meat on top, and keep the lid on.',
+    alt:'No slow cooker? Use a covered heavy pot on a low simmer on the stove, stirring now and then. It\'ll be done much sooner, so start checking early.', src:'USDA'},
+  {id:'pressure', name:'Pressure cooker or Instant Pot', m:'instant ?pot|pressure cook(er|ed|ing)?|natural(ly)? release|quick release|high pressure',
+    tip:'Don\'t fill it past the 2/3 line, or 1/2 for rice, beans, and grains, which foam and expand. Use at least the minimum liquid your manual calls for.',
+    alt:'No pressure cooker? Simmer it covered on the stove. It\'ll take a lot longer.', src:'manual'},
+  {id:'wok', name:'Wok or large skillet', m:'(?<!non )wok|stir ?fr(y|ied|ying)',
+    tip:'Get the pan very hot and cook in small batches so things sear instead of steam. Have everything cut before you start.',
+    alt:'No wok? Your biggest skillet works.'},
+  {id:'skillet', name:'Skillet', m:'skillet|frying pan|saute(ed|ing)?|sear(ed|ing)?|pan fr(y|ied)|brown (the |it |them )?(meat|beef|chicken|pork|sausage|on (all|both) sides)',
+    tip:'For a good sear, use cast iron or stainless steel, let it get hot before the food goes in, and don\'t crowd the pan. Cook in batches if you need to.',
+    alt:'A nonstick pan works too, but it won\'t brown as well.'},
+  {id:'nonstick', name:'Nonstick pan', m:'nonstick|omelet(te)?|scrambled|crepes?|pancakes?|fried eggs?',
+    tip:'Nonstick is easiest for eggs and pancakes. Use medium heat and skip metal utensils.',
+    alt:'No nonstick? A well-seasoned cast iron pan with a little butter or oil.'},
+  {id:'sheet', name:'Sheet pan', m:'sheet pan|baking sheet|cookie sheet|roasting pan|roast(ed)? (the |in the )?(vegetables|veggies|potatoes|broccoli|chicken)',
+    tip:'Use a rimmed pan and spread things out in one layer with some space so they roast instead of steam. Parchment or foil makes cleanup easy.',
+    alt:'No sheet pan? A large baking dish works, but things won\'t get as crispy.'},
+  {id:'dish', name:'Baking dish', m:'baking dish|casserole dish|\\d+ ?x ?\\d+ (inch )?(baking |glass )?(dish|pan)|pyrex|glass dish',
+    tip:'If it\'s glass, put it in the oven after the oven is preheated, and don\'t set it hot on a wet or cold counter or add cold liquid to it hot. Sudden temperature changes can crack it. Never use glass on the stove or under the broiler.',
+    alt:'No 9x13? Two 8x8 pans hold about the same. Check for doneness a little early.', src:'Pyrex'},
+  {id:'broil', name:'Broiler', m:'broil(er|ed|ing)?',
+    tip:'Keep the rack a few inches from the heat and stay close. It goes from browned to burned fast. Use a metal pan, not glass.',
+    alt:'No broiler? Finish it in the hottest oven you can, on the top rack.', src:'Pyrex'},
+  {id:'grill', name:'Grill', m:'grill(ed|ing)?(?! pan| cheese)|bbq grill|barbecue grill',
+    tip:'Oil the grates and let the grill heat up before the food goes on.',
+    alt:'No grill? A grill pan or cast iron skillet over medium-high heat, or the broiler.'},
+  {id:'blender', name:'Blender', m:'blender|puree(d)?|blend(ed)? until (completely |very )?smooth',
+    tip:'Blending something hot? Blend a small amount at a time, take out the center of the lid so steam can escape, hold a folded towel over the opening, and start on low.',
+    alt:'For soups, an immersion (stick) blender right in the pot is easier.', src:'manual'},
+  {id:'processor', name:'Food processor', m:'food processor|pulse (until|a few)',
+    tip:'Pulse in short bursts so it chops instead of turning to paste.',
+    alt:'No food processor? A blender in short pulses, or chop by hand.'},
+  {id:'mixer', name:'Mixer', m:'stand mixer|hand mixer|electric mixer|beat (on|at) (medium|high)|light and fluffy|stiff peaks|soft peaks|cream (the )?butter',
+    tip:'A hand mixer handles most batters and whipped cream.',
+    alt:'No mixer? A whisk and some arm work for small batches. Creaming butter and sugar by hand works if the butter is soft.'},
+  {id:'muffin', name:'Muffin tin', m:'muffin (tin|pan|cups)|cupcake (tin|pan|liners)',
+    tip:'Use liners or grease it well, and fill each cup about two-thirds full.',
+    alt:'No muffin tin? Oven-safe ramekins on a sheet pan.'},
+  {id:'loaf', name:'Loaf pan', m:'loaf pan|bread pan',
+    tip:'Most recipes mean a 9x5 inch pan. A smaller 8.5x4.5 pan bakes taller and takes a little longer.',
+    alt:'No loaf pan? Muffin tins work for many quick breads. Bake for less time.'},
+  {id:'rice', name:'Rice cooker', m:'rice cooker',
+    tip:'Rinse the rice and use the water lines on the cooker\'s bowl.',
+    alt:'No rice cooker? A pot with a tight lid on low heat, and don\'t lift the lid while it steams.'},
+  {id:'pasta', name:'Large pot for pasta', m:'(boil|cook) (the )?(pasta|noodles|spaghetti)|large pot of (salted )?water|pot of boiling (salted )?water',
+    tip:'Use plenty of water so the pasta doesn\'t stick, and salt it well. Save a cup of pasta water before draining; it helps sauces cling.',
+    alt:''}
+];
+const TOOL_RE = TOOLS.map(t => [t, new RegExp('(?<![a-z])(?:' + t.m + ')(?![a-z])'), t.mi ? new RegExp('(?<![a-z])(?:' + t.mi + ')(?![a-z])') : null]);
+
+// safe temperatures for the meat in a recipe (FoodSafety.gov / USDA chart)
+const TEMPS = [
+  {ids:['chicken', 'turkey', 'ground turkey'], t:'Chicken and turkey: 165°F'},
+  {ids:['ground beef', 'ground pork', 'sausage'], t:'Ground beef, pork, and raw sausage: 160°F'},
+  {ids:['beef', 'beefy', 'pork', 'lamb'], t:'Steaks, chops, and roasts: 145°F, then rest 3 minutes'},
+  {ids:['salmon', 'tuna', 'fish'], t:'Fish: 145°F, or until it flakes and isn\'t see-through'}
+];
+
+// what a recipe needs: [{id, name, tip, alt, src, fromRecipe}] plus safe temps for the meat in it
+function toolsFor(r) {
+  r = r || {};
+  const steps = (r.steps || []).filter(x => !/^##\s/.test(x));
+  const eq = (r.equipment || []).map(String);
+  const text = ' ' + normFood([r.title || ''].concat(steps, eq).join(' . ')) + ' ';
+  const ingText = ' ' + normFood((r.ingredients || []).join(' . ')) + ' ';
+  const out = [];
+  TOOL_RE.forEach(([t, re, rei]) => {
+    if (re.test(text) || (rei && rei.test(ingText))) out.push({ id: t.id, name: t.name, tip: t.tip, alt: t.alt, src: t.src || '' });
+  });
+  // "brown the beef" in a Dutch oven or slow cooker recipe doesn't mean a skillet, and a stir fry has its own tip
+  const si = out.findIndex(x => x.id === 'skillet');
+  if (si >= 0 && (out.some(x => x.id === 'wok') || (out.some(x => ['dutch', 'slow', 'pressure'].indexOf(x.id) >= 0) && !/(?<![a-z])(skillet|frying pan)(?![a-z])/.test(text)))) out.splice(si, 1);
+  // the recipe's own cookware that none of the tips cover
+  const extra = eq.filter(e => !TOOL_RE.some(([t, re]) => re.test(' ' + normFood(e) + ' ') && out.some(x => x.id === t.id)));
+  // meat in the ingredients -> safe temperatures
+  const ids = new Set();
+  (r.ingredients || []).forEach(l => { if (!/^##\s/.test(l)) foodsIn(l).forEach(id => ids.add(id)); });
+  const temps = TEMPS.filter(x => x.ids.some(id => ids.has(id))).map(x => x.t);
+  if (/\b(casserole|bake)\b/i.test(r.title || '') && temps.length) temps.push('Casseroles and leftovers: 165°F');
+  return { tools: out, extra, temps };
+}
+/* ---- end kitchen help ---- */
 
 /* ---------- add / edit ---------- */
 let F = null;
@@ -3839,9 +3873,6 @@ async function restoreBackup(file){
   if (o.settings && typeof o.settings.name === 'string') putSettings({name:o.settings.name.slice(0, 40)});
   if (o.settings && o.settings.pantry && Array.isArray(o.settings.pantry.items) && !hasKitchen()) putSettings({pantry:o.settings.pantry});
   if (o.settings && Array.isArray(o.settings.grocery) && !groceryList().length) putSettings({grocery:o.settings.grocery});
-  if (o.settings && Array.isArray(o.settings.stores) && !Array.isArray(Store.settings.stores)) putSettings({stores:o.settings.stores});
-  if (o.settings && Array.isArray(o.settings.mydeals)) putSettings({mydeals:(Store.settings.mydeals || []).concat(o.settings.mydeals.filter(d => d && d.id && !(Store.settings.mydeals || []).some(x => x.id === d.id)))});
-  if (o.settings && o.settings.kroger && o.settings.kroger.id && !hasKroger()) putSettings({kroger:o.settings.kroger});
   if (o.settings && o.settings.taste && Array.isArray(o.settings.taste.never)) { const T = tasteStore(); putSettings({taste:Object.assign({}, T, {never:neverList().concat(o.settings.taste.never.filter(x => typeof x === 'string' && !neverList().some(y => y.toLowerCase() === x.toLowerCase())))})}); }
   toast('Backup restored');
 }
@@ -3907,6 +3938,8 @@ const A = {
   cookwmore: () => { const r = cur(); r.wshown = (r.wshown || 12) + 12; redrawCook(); },
   cookretry: () => loadCook(true),
   catretry: () => loadFeed('k:' + cur().key, true),
+  swapnote: t => saveSwapNote(t.dataset.id, +t.dataset.i),
+  seelist: t => go({name:'list', lview:'recipe', focus:t.dataset.id}),
   tolist: t => { const r = Store.recipes.get(t.dataset.id || cur().id); if (r) openToList({id:r.id, title:r.title, ingredients:r.ingredients}); },
   tolistp: t => { const it = DISC.byId.get(t.dataset.id); const st = it && DISC.read.get(normUrl(it.url)); if (st && st.j) openToList({title:(st.j.title || it.title), ingredients:st.j.ingredients}); },
   tladd: () => tlAdd(),
@@ -3915,28 +3948,16 @@ const A = {
   glistclearc: () => clearList(true),
   glistclear: () => clearList(false),
   gdone: () => doneShopping(),
-  kconnect: () => openKroger(),
-  ksave: () => saveKroger(),
-  kforget: () => { putSettings({kroger:{}}); DEALS.week = {}; DEALS.list = {}; DEALS.test = false; saveDealsLS(); closeSheet(); redrawDeals(); toast('Kroger keys removed'); },
-  kfind: t => findKrogerStore(t.dataset.id),
-  dealnew: t => openDealForm(t.dataset.id),
-  dealsave: () => saveDealForm(),
-  storenew: () => openStoreForm(),
-  stsave: () => saveStoreForm(),
-  stup: t => moveStore(t.dataset.id),
-  stedit: t => { closeSheet(); setTimeout(() => openStoreForm(t.dataset.id), 300); },
-  strm: t => removeStore(t.dataset.id),
-  dlistretry: () => { krogerStores().forEach(s => { DEALS.error['l' + s.id] = ''; }); loadListDeals(true); },
-  dweekretry: t => { const s = storeBy(t.dataset.id); if (s) loadWeek(s, true); },
-  dweekmore: () => { const r = cur(); r.wshown = (r.wshown || 24) + 24; redrawDeals(); },
   catmore: () => { const r = cur(); r.mshown = (r.mshown || 12) + 12; refresh(); },
   nvadd: () => { const i = $('#neverin'); if (!i) return; const v = i.value.trim(); if (!v) { i.focus(); return; } i.value = ''; i.blur(); addNever(v); }
 };
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.id === 'neverin') { e.preventDefault(); A.nvadd(); } });
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump]');
+  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump],[data-swap],[data-lview]');
   if (!t) return;
   const d = t.dataset;
+  if (d.swap != null) { openSwap(+d.swap); return; }
+  if (d.lview) { putSettings({listView:d.lview}); const r = cur(); r.lview = d.lview; r.focus = ''; redrawList(); return; }
   if (d.dsave) { e.preventDefault(); saveDiscovered(d.dsave); return; }
   if (d.dnope) { e.preventDefault(); hideDiscovered(d.dnope); return; }
   if (d.dopen) { openDiscover(d.dopen); return; }
@@ -3944,7 +3965,7 @@ document.addEventListener('click', e => {
   if (d.dfind) { go({name:'discover', key:'q:' + d.dfind}); return; }
   if (d.fav) { e.preventDefault(); toggleFav(d.fav); return; }
   if (d.open) { go({name:'recipe', id:d.open}); return; }
-  if (d.tab) { if (cur().name === d.tab && stack.length === 1) { window.scrollTo({top:0, behavior:'smooth'}); return; } go({name:d.tab}); return; }
+  if (d.tab) { if (cur().name === d.tab && stack.length === 1) { window.scrollTo({top:0, behavior:'smooth'}); return; } go({name:d.tab, tab:d.tab === 'cook'}); return; }
   if (d.go) { go({name:d.go, focus:d.focus === '1'}); return; }
   if (d.col) { go({name:'col', id:d.col}); return; }
   if (d.hf) { S = SEARCH_DEFAULT(); const p = d.hf.split(':'); toggleF(p[0], p[1]); go({name:'search'}); return; }
@@ -3992,7 +4013,7 @@ function readShare(){
   if (window.top !== window) return null;
   let p; try { p = new URLSearchParams(location.search); } catch (e) { return null; }
   const go0 = p.get('go');
-  const out = {add:p.has('add'), cook:p.has('cook') || go0 === 'cook', go:['list', 'deals'].indexOf(go0) >= 0 ? go0 : '', title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
+  const out = {add:p.has('add'), cook:p.has('cook') || go0 === 'cook', go:go0 === 'list' ? go0 : '', title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
   if (!out.add && !out.cook && !out.go && !out.title && !out.text && !out.url) return null;
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   return out;
