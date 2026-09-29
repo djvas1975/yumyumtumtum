@@ -3,7 +3,7 @@
 Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.2**.
+Current version: **1.3**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -31,7 +31,7 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 
 ---
 
-## What the app does (v1.2)
+## What the app does (v1.3)
 - **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
   Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
@@ -56,7 +56,17 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
   recipe are on your list · See them", and **Cookware & tips** (the recipe's own cookware, tips for
   the pans and appliances the directions use, what to use if you don't have one, and USDA safe
   temperatures for the meat in it).
-- **Yums:** smart collections (All Yums, Favorites, Want to try, Made it) and custom collections.
+- **Yums** (rebuilt in v1.3 to be Dave's recipe box): count of recipes and how many made, a search
+  pill, six smart collections (All Yums, Favorites, Want to try, Made it, Top rated = 4+ stars,
+  30 min or less), **Categories** (the same 10 as Home, as photo tiles with counts; tap for his
+  saved recipes in that category), a "N recipes not sorted yet" row when some fit no category,
+  **Cuisines** (chips with counts, only ones he has), and **My collections**.
+  Every collection page (smart, category, cuisine, or his own) has sort chips (Newest, A to Z, Top
+  rated, Most made, Quickest). Category pages add "Find new …", which opens the Home category page
+  (What can I make + new ideas).
+- **Category on each recipe (v1.3):** the recipe page shows "Category: Main dishes · Change". The
+  sheet lets Dave pick one or more; that choice (`r.cats`) wins over the automatic one, and "Let
+  the app pick again" clears it.
 - **Search:** Dave's own recipes with filters (type, time, status, cuisine, meal, source) and
   sorting, plus a **Find new recipes on Delish, Tasty, and more** button.
 - **Discover** (Home > Just for you > See all): free recipes from 33 sites, search, Newest, and
@@ -109,7 +119,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.2`).
+5. App changes: bump the version text in `V.me` (`version 1.3`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -232,6 +242,12 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   for 6 hours, and on Vercel for 6 hours.
 - Live check Sept 27, 2026 (v0.9 endpoint): 5 searches, 880 candidates, 40 recipes read, no
   errors, 8.6 seconds.
+
+## Yums and categories: how it works (built Sept 29, 2026)
+- Collection ids: `_all`, `_fav`, `_try`, `_made`, `_top`, `_quick` (in `SMART`), `cat:<key>` and
+  `cat:_none` (your categories via `catsOf`), `cui:<name>` (via `inCuisine`), or a custom collection id.
+  `colItems(id)` lists them and `colInfo(id)` names them; `V.col` shows any of them with `rt.sort`.
+- `catsOf(r)` returns `r.cats` when Dave picked categories, else the automatic `recipeCats` result.
 
 ## Grocery list: how it works (built Sept 28, 2026)
 - `Store.settings.grocery = [{id, name, food, detail, recipes:[{id,title}], done, doneAt, t}]`.

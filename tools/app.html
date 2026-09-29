@@ -142,15 +142,31 @@ body[data-route="recipe"] #view{padding-bottom:calc(112px + env(safe-area-inset-
 .ct-n{color:var(--ink-3);font-size:13px;font-weight:600;margin-top:-4px}
 .colgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px 14px}
 .smartgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
-.smart{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.smart{display:flex;align-items:center;gap:10px;padding:12px 10px;border-radius:16px;background:var(--surface);border:1px solid var(--line);min-width:0}
 .dot{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none}
 .dot .ic{width:21px;height:21px}
 .t-chili{background:var(--chili-soft);color:var(--chili)}
 .t-berry{background:var(--berry-soft);color:var(--berry)}
 .t-saffron{background:var(--saffron-soft);color:var(--saffron)}
 .t-basil{background:var(--basil-soft);color:var(--basil)}
+.t-plum{background:color-mix(in srgb,#8B5CC7 16%,var(--surface));color:#8B5CC7}
+.t-sky{background:color-mix(in srgb,#2F80C9 16%,var(--surface));color:#2F80C9}
+.catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.catgrid .cuis{height:118px}
+.catgrid .cuis .art svg{width:40%;right:4%;top:8%}
+.yhead h1{white-space:nowrap}
+.sortrow{margin-top:12px;border-style:solid;background:var(--surface);text-align:left}
+.sortrow span{display:flex;flex-direction:column;gap:2px;min-width:0}
+.sortrow small{font-size:13px;font-weight:600;color:var(--ink-3)}
+.chip .cn{font-weight:800;color:var(--ink-3);margin-left:2px}
+.chip.on .cn{color:inherit;opacity:.75}
+.catline{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px}
+.catline .lbl2{margin-right:2px}
+.catline .chip{height:32px;padding:0 12px;font-size:13.5px}
+.cl-none{font-weight:700;color:var(--ink-3);font-size:14px}
+.catauto{display:block;margin-top:14px}
 .sm-t{min-width:0;display:flex;flex-direction:column}
-.sm-t b{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sm-t b{font-weight:800;line-height:1.2}
 .sm-t span{color:var(--ink-3);font-size:13px;font-weight:600}
 
 /* tab bar */
@@ -555,6 +571,7 @@ const I = {
   heartf:'<path fill="currentColor" d="M12 20s-7.2-4.5-9.1-8.9C1.6 8 3.4 4.8 6.7 4.8c2 0 3.4 1 5.3 3 1.9-2 3.3-3 5.3-3 3.3 0 5.1 3.2 3.8 6.3C19.2 15.5 12 20 12 20z"/>',
   more:'<circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
   ext:'<path d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  bolt:'<path d="M13 2.5 4.5 13.5H12l-1 8 8.5-11H12z"/>',
   clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   star:'<path fill="currentColor" stroke="none" d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/>',
@@ -932,15 +949,31 @@ const SMART = {
   _all:{name:'All Yums', ic:'yums', tone:'chili'},
   _fav:{name:'Favorites', ic:'heartf', tone:'berry'},
   _try:{name:'Want to try', ic:'clock', tone:'saffron'},
-  _made:{name:'Made it', ic:'pot', tone:'basil'}
+  _made:{name:'Made it', ic:'pot', tone:'basil'},
+  _top:{name:'Top rated', ic:'star', tone:'plum'},
+  _quick:{name:'30 min or less', ic:'bolt', tone:'sky'}
 };
+// ids: smart ones (_fav), your categories (cat:main, cat:_none), cuisines (cui:Mexican), or your own collections
 function colItems(id){
   const all = list();
   if (id === '_all') return all;
   if (id === '_fav') return all.filter(r => r.fav);
   if (id === '_try') return all.filter(r => !r.madeCount);
   if (id === '_made') return all.filter(r => r.madeCount > 0);
+  if (id === '_top') return all.filter(r => (r.rating || 0) >= 4);
+  if (id === '_quick') return all.filter(r => r.time && r.time <= 30);
+  if (id === 'cat:_none') return all.filter(r => !catsOf(r).length);
+  if (id.indexOf('cat:') === 0) return all.filter(r => catsOf(r).indexOf(id.slice(4)) >= 0);
+  if (id.indexOf('cui:') === 0) return all.filter(r => inCuisine(r, id.slice(4)));
   return all.filter(r => (r.collections || []).indexOf(id) >= 0);
+}
+// what to call a collection, and whether it fills itself
+function colInfo(id){
+  if (SMART[id]) return {name:SMART[id].name, auto:true};
+  if (id === 'cat:_none') return {name:'Not sorted yet', auto:true, kind:'cat'};
+  if (id.indexOf('cat:') === 0) return catBy(id.slice(4)) ? {name:catLabel(id.slice(4)), auto:true, kind:'cat', key:id.slice(4)} : null;
+  if (id.indexOf('cui:') === 0) return {name:id.slice(4), auto:true, kind:'cui'};
+  const c = Store.cols.get(id); return c ? {name:c.name, auto:false} : null;
 }
 
 /* ---------- building blocks ---------- */
@@ -1026,20 +1059,52 @@ V.search = () => '<header class="topbar"><div class="wrap"><h1 class="title">Sea
   + '<div class="chips scroll-x" id="schips"></div></div></header>'
   + '<div class="wrap"><div class="resbar"><span id="rescount"></span><button class="sortbtn" data-act="sort">' + icon('sort') + '<span id="sortlbl"></span></button></div><div class="grid" id="results"></div></div>';
 V.yums = () => {
+  const all = list();
   const smart = Object.keys(SMART).map(id => { const s = SMART[id]; return '<button class="smart" data-col="' + id + '"><span class="dot t-' + s.tone + '">' + icon(s.ic) + '</span><span class="sm-t"><b>' + s.name + '</b><span>' + plural(colItems(id).length, 'recipe') + '</span></span></button>'; }).join('');
   const cols = customCols();
-  return '<header class="topbar"><div class="wrap headrow"><h1 class="title">Your Yums</h1><button class="btn ghost sm" data-act="newcol">' + icon('plus') + 'New collection</button></div></header>'
-    + '<div class="wrap"><div class="smartgrid">' + smart + '</div>'
-    + '<section class="sec"><div class="sec-h"><h2>Collections</h2><span class="muted">' + cols.length + '</span></div><div class="colgrid">' + cols.map(colTile).join('') + newColTile() + '</div></section></div>';
+  const made = all.filter(r => r.madeCount > 0).length;
+  return '<header class="topbar"><div class="wrap headrow yhead"><div><h1 class="title">Your Yums</h1><p class="ph-sub">' + plural(all.length, 'recipe') + (made ? ' · ' + made + ' made' : '') + '</p></div><button class="btn ghost sm" data-act="newcol">' + icon('plus') + 'New</button></div></header>'
+    + '<div class="wrap">'
+    + (all.length ? '<button class="searchpill" data-go="search" data-focus="1">' + icon('search') + '<span>Search your ' + plural(all.length, 'recipe') + '</span></button>' : '')
+    + '<div class="smartgrid">' + smart + '</div>'
+    + '<section class="sec"><div class="sec-h"><h2>Categories</h2></div>' + yumsCatsHTML(all) + '</section>'
+    + yumsCuisinesHTML(all)
+    + '<section class="sec"><div class="sec-h"><h2>My collections</h2><span class="muted">' + cols.length + '</span></div><div class="colgrid">' + cols.map(colTile).join('') + newColTile() + '</div></section></div>';
 };
+// your saved recipes by kind of dish; the ones with recipes first
+function yumsCatsHTML(all){
+  const tiles = CATS.map(c => ({c:c, items:all.filter(r => catsOf(r).indexOf(c[0]) >= 0)}));
+  const none = all.filter(r => !catsOf(r).length);
+  const tile = x => { const pic = sorted(x.items, 'new').find(r => photoSrc(r));
+    return '<button class="cuis' + (x.items.length ? '' : ' none') + '" data-col="cat:' + x.c[0] + '" aria-label="' + esc(x.c[1]) + ', ' + plural(x.items.length, 'recipe') + '">'
+      + artHTML({a:x.c[3], b:x.c[4], g:x.c[2]}) + (pic ? imgHTML(pic) : '')
+      + '<span class="cuis-shade"></span><span class="cuis-t"><b>' + esc(x.c[1]) + '</b><small>' + (x.items.length ? plural(x.items.length, 'recipe') : 'Nothing yet') + '</small></span></button>'; };
+  return '<div class="catgrid">' + tiles.filter(x => x.items.length).concat(tiles.filter(x => !x.items.length)).map(tile).join('') + '</div>'
+    + (none.length ? '<button class="addrow sortrow" data-col="cat:_none">' + icon('sliders') + '<span><b>' + plural(none.length, 'recipe') + ' not sorted yet</b><small>Pick a category for them so they show up above</small></span></button>' : '');
+}
+// cuisines you have recipes for
+function yumsCuisinesHTML(all){
+  const names = CUISINE_TILES.map(t => t[0]);
+  all.forEach(r => { const c = (r.cuisine || '').trim(); if (c && !names.some(n => inCuisine(r, n)) && names.indexOf(c) < 0) names.push(c); });
+  const got = names.map(n => ({n:n, k:all.filter(r => inCuisine(r, n)).length})).filter(x => x.k).sort((a, b) => b.k - a.k);
+  if (!got.length) return '';
+  return '<section class="sec"><div class="sec-h"><h2>Cuisines</h2></div><div class="wrapchips">'
+    + got.map(x => '<button class="chip" data-col="cui:' + esc(x.n) + '">' + esc(x.n) + ' <span class="cn">' + x.k + '</span></button>').join('') + '</div></section>';
+}
+const COL_SORTS = [['new', 'Newest'], ['az', 'A to Z'], ['rating', 'Top rated'], ['made', 'Most made'], ['quick', 'Quickest']];
 V.col = (rt) => {
-  const smart = SMART[rt.id]; const c = smart || Store.cols.get(rt.id);
-  if (!c) return missingHTML('That collection was deleted.');
-  const items = sorted(colItems(rt.id), 'new');
-  const inner = '<div class="ph-t"><h1 class="title sm">' + esc(c.name) + '</h1><p class="ph-sub">' + plural(items.length, 'recipe') + '</p></div>'
-    + (smart ? '' : '<button class="iconbtn" data-act="colmore" data-id="' + esc(rt.id) + '" aria-label="Collection options">' + icon('more') + '</button>');
-  const empty = '<div class="empty small"><h3>Nothing here yet</h3><p>' + (smart ? 'Recipes will show up here as you save and cook them.' : 'Open any recipe and tap Collections to add it here.') + '</p></div>';
-  return backBar(inner) + '<div class="wrap">' + (items.length ? '<div class="grid" style="padding-top:8px">' + items.map(r => card(r)).join('') + '</div>' : empty) + '</div>';
+  const info = colInfo(rt.id);
+  if (!info) return missingHTML('That collection was deleted.');
+  const all = colItems(rt.id); const sort = rt.sort || 'new';
+  const items = sorted(all, sort);
+  const inner = '<div class="ph-t"><h1 class="title sm">' + esc(info.name) + '</h1><p class="ph-sub">' + plural(items.length, 'recipe') + '</p></div>'
+    + (info.auto ? '' : '<button class="iconbtn" data-act="colmore" data-id="' + esc(rt.id) + '" aria-label="Collection options">' + icon('more') + '</button>');
+  let top = '';
+  if (items.length > 1) top += '<div class="chips scroll-x" data-sx="csort">' + COL_SORTS.map(x => '<button class="chip' + (sort === x[0] ? ' on' : '') + '" data-csort="' + x[0] + '" aria-pressed="' + (sort === x[0]) + '">' + x[1] + '</button>').join('') + '</div>';
+  if (rt.id === 'cat:_none') top += '<p class="dhint">These didn\'t fit a category on their own. Open one and tap <b>Category</b> to pick where it goes.</p>';
+  if (info.key) top += '<button class="kitcard" data-catgo="' + info.key + '"><span class="kc-ic">' + icon('globe') + '</span><span class="kc-t"><b>Find new ' + esc(info.name.toLowerCase()) + '</b><small>Ideas from the recipe sites, and what you can make with your kitchen</small></span>' + icon('back', 'flip') + '</button>';
+  const empty = '<div class="empty small"><h3>Nothing here yet</h3><p>' + (info.kind === 'cat' ? 'Save a recipe like this and it shows up here on its own. You can also pick the category on any recipe.' : info.auto ? 'Recipes will show up here as you save and cook them.' : 'Open any recipe and tap Collections to add it here.') + '</p></div>';
+  return backBar(inner) + '<div class="wrap">' + top + (items.length ? '<div class="grid" style="padding-top:12px">' + items.map(r => card(r)).join('') + '</div>' : empty) + '</div>';
 };
 const CHECKS = {};
 function stat(v, l){ return '<div class="stat"><b>' + esc(v) + '</b><span>' + l + '</span></div>'; }
@@ -1076,7 +1141,7 @@ V.recipe = (rt) => {
       + '</span></div><button class="btn primary sm" data-act="getdetails" data-id="' + esc(r.id) + '"' + (reading ? ' disabled' : '') + '>' + (reading ? '<span class="spin sm"></span>Reading' : 'Get it') + '</button></div>';
   }
   h += '<div class="rate"><span class="lbl2">Your rating</span><div class="stars">' + stars + '</div></div>'
-    + '<div class="duo"><button class="btn made" data-act="made">' + icon('pot') + (r.madeCount ? 'Made it again' : 'I made this') + '</button><button class="btn ghost" data-act="addto" data-id="' + esc(r.id) + '">' + icon('folder') + 'Collections</button></div>';
+    + catLineHTML(r) + '<div class="duo"><button class="btn made" data-act="made">' + icon('pot') + (r.madeCount ? 'Made it again' : 'I made this') + '</button><button class="btn ghost" data-act="addto" data-id="' + esc(r.id) + '">' + icon('folder') + 'Collections</button></div>';
   const KH = toolsFor(r);
   const jumps = [['sec-ing', 'Ingredients', nIng], ['sec-steps', 'Directions', nSteps], ['sec-tips', 'Notes & tips', tips.length], ['sec-equip', 'Cookware', KH.tools.length + KH.extra.length + KH.temps.length], ['sec-nut', 'Nutrition', nut.length]].filter(x => x[2]);
   if (jumps.length > 1) h += '<div class="jumps scroll-x">' + jumps.map(x => '<button class="chip" data-jump="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
@@ -1138,7 +1203,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 1.2</p></div>';
+    + '<p class="ver">yumyumtumtum · version 1.3</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -2044,7 +2109,35 @@ const FRUIT = new Set(['banana', 'apple', 'berries', 'peaches', 'pineapple', 'ma
 const catBy = k => CATS.find(c => c[0] === k);
 const catLabel = k => (catBy(k) || [k, k])[1];
 const CAT_MEMO = new Map();
+// "Category: Main dishes · Change" on a recipe
+function catLineHTML(r){
+  const c = catsOf(r);
+  return '<div class="catline"><span class="lbl2">Category</span>' + (c.length ? c.map(k => '<button class="chip" data-col="cat:' + k + '">' + esc(catLabel(k)) + '</button>').join('') : '<span class="cl-none">Not sorted</span>')
+    + '<button class="linkbtn sm" data-act="setcat" data-id="' + esc(r.id) + '">' + (c.length ? 'Change' : 'Pick one') + '</button></div>';
+}
+let CS = null;
+function openCatSheet(id){
+  const r = Store.recipes.get(id); if (!r) return;
+  CS = {id:id, sel:new Set(catsOf(r)), mine:Array.isArray(r.cats) && r.cats.length > 0};
+  openSheet(catSheetHTML(), {label:'Category'});
+}
+function catSheetHTML(){
+  const r = Store.recipes.get(CS.id) || {};
+  return sheetHead('Category') + '<div class="sh-body"><p class="dhint">Where does <b>' + esc(r.title || 'this recipe') + '</b> go? Pick one or more.</p><div class="wrapchips">'
+    + CATS.map(c => '<button class="chip' + (CS.sel.has(c[0]) ? ' on' : '') + '" data-rcat="' + c[0] + '" aria-pressed="' + CS.sel.has(c[0]) + '">' + esc(c[1]) + '</button>').join('') + '</div>'
+    + (CS.mine ? '<button class="linkbtn sm catauto" data-act="catauto">Let the app pick again</button>' : '<p class="hint catauto">Right now the app picks from the recipe\'s name and details.</p>')
+    + '</div><div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="catsave">Save</button></div>';
+}
+function catToggle(k){ if (!CS) return; if (CS.sel.has(k)) CS.sel.delete(k); else CS.sel.add(k); const b = $('#sheet .sheet'); if (b) b.innerHTML = catSheetHTML(); }
+function catSave(auto){
+  if (!CS) return; const r = Store.recipes.get(CS.id); if (!r) return;
+  const cats = auto ? [] : CATS.map(c => c[0]).filter(k => CS.sel.has(k));
+  putRecipe(Object.assign({}, r, {cats:cats}));
+  closeSheet(); CS = null;
+  toast(auto || !cats.length ? 'The app will pick the category' : 'Category saved');
+}
 function catsOf(r){
+  if (Array.isArray(r.cats) && r.cats.length) return r.cats.filter(x => catBy(x));
   const k = (r.title || '') + '|' + (r.category || '') + '|' + (r.tags || []).join(',') + '|' + (r.meal || []).join(',');
   let c = CAT_MEMO.get(k);
   if (!c) { if (CAT_MEMO.size > 3000) CAT_MEMO.clear(); c = recipeCats(r); CAT_MEMO.set(k, c); }
@@ -3926,6 +4019,9 @@ const A = {
   cookwmore: () => { const r = cur(); r.wshown = (r.wshown || 12) + 12; redrawCook(); },
   cookretry: () => loadCook(true),
   catretry: () => loadFeed('k:' + cur().key, true),
+  setcat: t => openCatSheet(t.dataset.id || cur().id),
+  catsave: () => catSave(false),
+  catauto: () => catSave(true),
   swapnote: t => saveSwapNote(t.dataset.id, +t.dataset.i),
   seelist: t => go({name:'list', lview:'recipe', focus:t.dataset.id}),
   tolist: t => { const r = Store.recipes.get(t.dataset.id || cur().id); if (r) openToList({id:r.id, title:r.title, ingredients:r.ingredients}); },
@@ -3941,9 +4037,11 @@ const A = {
 };
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.id === 'neverin') { e.preventDefault(); A.nvadd(); } });
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump],[data-swap],[data-lview]');
+  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump],[data-swap],[data-lview],[data-csort],[data-rcat]');
   if (!t) return;
   const d = t.dataset;
+  if (d.csort) { const r = cur(); r.sort = d.csort; refresh(); return; }
+  if (d.rcat) { catToggle(d.rcat); return; }
   if (d.swap != null) { openSwap(+d.swap); return; }
   if (d.lview) { putSettings({listView:d.lview}); const r = cur(); r.lview = d.lview; r.focus = ''; redrawList(); return; }
   if (d.dsave) { e.preventDefault(); saveDiscovered(d.dsave); return; }
