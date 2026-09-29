@@ -175,6 +175,20 @@ body[data-route="recipe"] #view{padding-bottom:calc(112px + env(safe-area-inset-
 .catline .chip{height:32px;padding:0 12px;font-size:13.5px}
 .cl-none{font-weight:700;color:var(--ink-3);font-size:14px}
 .catauto{display:block;margin-top:14px}
+.cstat{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink-2)}
+.cstat.ok{color:var(--basil)}
+.cstat.bad{color:var(--danger)}
+.cstat.warn{color:var(--chili)}
+.cstat .ic{width:17px;height:17px;flex:none}
+#cloudp .hint{margin-top:4px}
+.codebox{margin:4px 0 14px;padding:16px 10px;border-radius:14px;background:var(--sunk);font:800 18px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em;text-align:center;user-select:all;overflow-wrap:anywhere}
+.crlist{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.crrow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface);text-align:left}
+.crrow span:last-child{display:flex;flex-direction:column}
+.crrow small{color:var(--ink-3);font-weight:600;font-size:13px}
+.crdot{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--line)}
+.crrow.on{border-color:var(--chili)}
+.crrow.on .crdot{border:6px solid var(--chili)}
 .sm-t{min-width:0;display:flex;flex-direction:column}
 .sm-t b{font-weight:800;line-height:1.2}
 .sm-t span{color:var(--ink-3);font-size:13px;font-weight:600}
@@ -798,6 +812,7 @@ const queue = new Map();
 function persist(coll, id, body){
   if (Store.mode === 'starting') { bootP.then(() => persist(coll, id, body)); return; }
   if (Store.mode === 'local') {
+    try { cloudChanged(); } catch (e) {}
     if (Store.local !== 'idb') { saveSoon(LOCAL_KEY); return; }
     const p = body ? (coll === 'meta' ? IDB.put('meta', clone(body), id) : IDB.put(coll, clone(body))) : IDB.del(coll, id);
     p.catch(() => toast("Couldn't save that change on this phone. Try again."));
@@ -1201,7 +1216,7 @@ V.me = () => {
   const mode = Store.mode === 'cloud'
     ? ['Synced to your recipe box', 'Your recipes and photos are stored with this app in your claude.ai account, so they show up on your phone and your computer.']
     : Store.mode === 'local'
-      ? (onPhone() ? ['Saved on this phone', 'Your recipes and photos are stored right on this phone and work without internet. Download a backup now and then so nothing gets lost if the phone does.'] : ['Saved on this device only', 'Recipes live in this browser. Download a backup now and then so nothing gets lost.'])
+      ? (onPhone() ? ['Saved on this phone', 'Your recipes and photos are stored right on this phone and work without internet. ' + (CLOUD.on ? 'Cloud backup keeps a copy in your private storage too.' : 'Turn on Cloud backup (or download a backup now and then) so nothing gets lost if the phone does.')] : ['Saved on this device only', 'Recipes live in this browser. Download a backup now and then so nothing gets lost.'])
       : ['Connecting', 'Loading your recipe box.'];
   const mini = (n, l) => '<div><b>' + n + '</b><span>' + l + '</span></div>';
   return '<header class="topbar"><div class="wrap headrow"><h1 class="title">Me</h1></div></header><div class="wrap">'
@@ -1209,13 +1224,14 @@ V.me = () => {
     + '<div class="statrow">' + mini(all.length, 'Recipes') + mini(Store.cols.size, 'Collections') + mini(vids, 'Videos') + mini(cooked, 'Times cooked') + '</div>'
     + (installEvt ? '<section class="panel"><h2>Put it on your home screen</h2><p>Installs yumyumtumtum as an app with its own icon. It also shows up when you tap Share in TikTok, Instagram, YouTube, or Chrome.</p><div class="acts"><button class="btn primary" data-act="install">' + icon('download') + 'Install app</button></div></section>' : '')
     + tastePanel()
-    + '<section class="panel"><h2>Backup</h2><p>One file with every recipe, collection, and photo. Keep a copy somewhere safe, like Google Drive or iCloud.</p><div class="acts">'
+    + cloudPanel()
+    + '<section class="panel"><h2>Backup file</h2><p>One file with every recipe, collection, and photo. Keep a copy somewhere safe, like Google Drive or iCloud.</p><div class="acts">'
     + (canBackup ? '<button class="btn primary" data-act="export">' + icon('download') + 'Download backup</button>' : '')
     + '<label class="btn ghost" for="restore">' + icon('upload') + 'Restore a backup</label><input type="file" id="restore" class="vh" accept=".json,application/json"></div>'
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 1.3</p></div>';
+    + '<p class="ver">yumyumtumtum · version 1.4</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -3951,10 +3967,24 @@ async function restoreBackup(file){
   const ok = await confirmBox({title:'Restore this backup?', msg:'Adds ' + plural(o.recipes.length, 'recipe') + ' and ' + plural(cols.length, 'collection') + '. Anything with the same ID gets replaced by the backup copy.', ok:'Restore', danger:false});
   if (!ok) return;
   toast('Restoring…');
+  await restoreData(o);
+  toast('Backup restored');
+}
+// puts a backup's recipes, collections, and settings on this phone. getPhoto(ref) brings back photos kept in the cloud.
+async function restoreData(o, getPhoto){
+  const cols = Array.isArray(o.collections) ? o.collections : [];
+  const refs = o.recipes.filter(r => r && r.photoRef).length; let got = 0;
   cols.forEach(c => { if (c && c.id && c.name) putCol({id:String(c.id), name:String(c.name).slice(0, 60), createdAt:c.createdAt || now(), sample:!!c.sample}); });
   for (const r0 of o.recipes) {
     if (!r0 || !r0.id || !r0.title) continue;
     const r = Object.assign({}, r0); delete r.photoKey;
+    if (r.photoRef) {
+      const ref = String(r.photoRef).replace(/[^\w-]/g, ''); delete r.photoRef;
+      if (getPhoto && onPhone()) {
+        try { const b = await getPhoto(ref); if (b && b.size) { await IDB.put('photos', b, ref); r.photoKey = ref; delete r.photoData; delete r.photoId; CLOUD_SENT_ADD(ref); } } catch (e) {}
+        got++; if (got % 5 === 0 || got === refs) toast('Getting photos: ' + got + ' of ' + refs + '…');
+      }
+    }
     if (r.photoData) {
       const b = dataURLToBlob(r.photoData);
       if (b && Store.mode === 'cloud' && Store.assets) { try { const up = await Store.assets.upload(b, {type:/^image\/(png|jpeg|gif|webp)$/.test(b.type) ? b.type : 'image/jpeg'}); r.photoId = up.id; delete r.photoData; } catch (e) {} }
@@ -3967,8 +3997,181 @@ async function restoreBackup(file){
   if (o.settings && o.settings.pantry && Array.isArray(o.settings.pantry.items) && !hasKitchen()) putSettings({pantry:o.settings.pantry});
   if (o.settings && Array.isArray(o.settings.grocery) && !groceryList().length) putSettings({grocery:o.settings.grocery});
   if (o.settings && o.settings.taste && Array.isArray(o.settings.taste.never)) { const T = tasteStore(); putSettings({taste:Object.assign({}, T, {never:neverList().concat(o.settings.taste.never.filter(x => typeof x === 'string' && !neverList().some(y => y.toLowerCase() === x.toLowerCase())))})}); }
-  toast('Backup restored');
+  if (o.settings && o.settings.taste && o.settings.taste.w && !Object.keys(tasteStore().w || {}).length) putSettings({taste:Object.assign({}, o.settings.taste, {never:neverList()})});
+  if (o.settings && o.settings.listView && !Store.settings.listView) putSettings({listView:o.settings.listView});
 }
+/* ---------- cloud backup: automatic, to Dave's own private Vercel Blob store (api/backup.js) ----------
+   The recovery code stays on this phone (localStorage), never in the backup itself. Each saved change
+   bumps a counter; 90 seconds after the last change (at most every 5 minutes) the phone sends the
+   backup. Photos go up once each. The first backup each day also keeps a daily copy (30 days). */
+const CLOUD_LS = 'yyt-cloud-v1', REV_LS = 'yyt-rev';
+const CLOUD = Object.assign({on:false, key:'', last:'', lastDay:'', lastRev:-1, lastCount:0, err:'', sent:{}}, readLS(CLOUD_LS) || {});
+let CLOUD_BUSY = false, cloudTimer = 0, CLOUD_PENDING = '';
+const saveCloud = () => writeLS(CLOUD_LS, CLOUD);
+const CLOUD_SENT_ADD = ref => { CLOUD.sent[ref] = 1; };
+const localRev = () => +(readLS(REV_LS) || 0);
+function cloudChanged(){
+  writeLS(REV_LS, localRev() + 1);
+  if (!CLOUD.on) return;
+  clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudBackup(false), 90e3);
+}
+function newRecoveryCode(){
+  const A = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; let s = '';
+  crypto.getRandomValues(new Uint8Array(16)).forEach(x => { s += A[x % A.length]; });
+  return 'YUM-' + s.match(/.{4}/g).join('-');
+}
+const normCode = c => String(c || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^YUM/, '');
+const fmtCode = c => { const n = normCode(c); return n.length === 16 ? 'YUM-' + n.match(/.{4}/g).join('-') : String(c || '').trim().toUpperCase(); };
+const localDay = () => new Date().toLocaleDateString('en-CA');
+async function cloudFetch(query, init, key){
+  const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 45000);
+  try {
+    return await fetch(READER + '/api/backup?' + query, Object.assign({}, init || {}, {signal:ctrl.signal, cache:'no-store', headers:Object.assign({'x-backup-key':key || CLOUD.key}, (init || {}).headers || {})}));
+  } catch (e) {
+    if (e && e.name === 'AbortError') throw new Error('The backup took too long. It\'ll try again later.');
+    throw new Error('Couldn\'t reach the backup. Check your connection.');
+  } finally { clearTimeout(tm); }
+}
+async function cloudJSON(query, init, key){
+  const res = await cloudFetch(query, init, key);
+  let j = null; try { j = await res.json(); } catch (e) {}
+  if (!j) throw new Error('The backup service didn\'t answer right. It\'ll try again later.');
+  if (!j.ok && j.app !== 'yumyumtumtum') throw Object.assign(new Error(j.error || 'The backup didn\'t go through.'), {needsSetup:!!j.needsSetup, wrongKey:!!j.wrongKey, empty:!!j.empty});
+  return j;
+}
+async function cloudBackup(manual){
+  if (!CLOUD.on || !CLOUD.key || CLOUD_BUSY || !canRead() || !onPhone()) return false;
+  const rev = localRev();
+  if (!manual) {
+    if (rev === CLOUD.lastRev) return false;
+    const since = CLOUD.last ? Date.now() - Date.parse(CLOUD.last) : 1e12;
+    if (since < 5 * 60e3) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudBackup(false), 5 * 60e3 - since + 1000); return false; }
+    if (navigator.onLine === false) return false;
+  }
+  CLOUD_BUSY = true; redrawCloud();
+  try {
+    const recs = [], send = [];
+    for (const r of list()) {
+      const o = Object.assign({}, r); delete o.photoKey; delete o.photoId;
+      if (r.photoKey) { o.photoRef = r.photoKey; delete o.photoData; if (!CLOUD.sent[r.photoKey]) send.push(r.photoKey); }
+      recs.push(o);
+    }
+    // don't let a phone that lost its recipes write over a good backup on its own
+    if (!manual && CLOUD.lastCount >= 5 && recs.length < CLOUD.lastCount / 2) throw new Error('This phone has a lot fewer recipes than your last backup (' + recs.length + ' vs ' + CLOUD.lastCount + '), so the automatic backup stopped to keep the old one safe. Tap Back up now if that\'s right, or Restore to get them back.');
+    for (const k of send) {
+      let b = null; try { b = await IDB.get('photos', k); } catch (e) {}
+      if (!b || !b.size) continue;
+      await cloudJSON('op=photo&id=' + encodeURIComponent(k), {method:'POST', body:b, headers:{'content-type':'application/octet-stream', 'x-photo-type':b.type || 'image/jpeg'}});
+      CLOUD.sent[k] = 1; saveCloud();
+    }
+    const settings = Object.assign({}, Store.settings); ['kroger', 'stores', 'mydeals'].forEach(k => { delete settings[k]; });
+    const data = JSON.stringify({app:'yumyumtumtum', version:1, exportedAt:now(), settings:settings, collections:Array.from(Store.cols.values()), recipes:recs});
+    if (data.length > 3900000) throw new Error('Your backup got too big to send in one piece. Tell Claude so it can be split up.');
+    const day = localDay();
+    await cloudJSON('op=save&day=' + day + (CLOUD.lastDay !== day ? '&daily=1' : ''), {method:'POST', body:data, headers:{'content-type':'application/json'}});
+    Object.assign(CLOUD, {last:now(), lastDay:day, lastRev:rev, lastCount:recs.length, err:''}); saveCloud();
+    return true;
+  } catch (e) {
+    CLOUD.err = e.needsSetup ? 'setup' : e.wrongKey ? 'Your cloud backup was made with a different recovery code. Use Restore from cloud with that code.' : (e.message || 'The backup didn\'t go through.');
+    saveCloud();
+    return false;
+  } finally { CLOUD_BUSY = false; redrawCloud(); }
+}
+function whenText(iso){
+  const d = new Date(iso); if (isNaN(d)) return '';
+  const t = d.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+  const day = d.toLocaleDateString('en-CA'); const y = new Date(Date.now() - 864e5).toLocaleDateString('en-CA');
+  return day === localDay() ? 'today at ' + t : day === y ? 'yesterday at ' + t : fmtDate(iso) + ' at ' + t;
+}
+function cloudPanel(){
+  if (!onPhone()) return '';
+  let st;
+  if (!CLOUD.on) st = '<p>Backs up your recipes, photos, collections, kitchen, and grocery list to your own private storage, all by itself. Get everything back on any phone with your recovery code.</p>';
+  else if (CLOUD_BUSY) st = '<p class="cstat"><span class="spin sm"></span>Backing up…</p>';
+  else if (CLOUD.err === 'setup') st = '<p class="cstat warn">Waiting on the storage to be set up in Vercel. Backups start as soon as it is.</p>';
+  else if (CLOUD.err) st = '<p class="cstat bad">' + esc(CLOUD.err) + '</p>';
+  else if (CLOUD.last) st = '<p class="cstat ok">' + icon('check') + '<span>Backed up ' + esc(whenText(CLOUD.last)) + ' · ' + plural(CLOUD.lastCount, 'recipe') + '</span></p><p class="hint">It backs up by itself a minute or two after you change something.</p>';
+  else st = '<p class="cstat">On. The first backup is coming up.</p>';
+  return '<section class="panel" id="cloudp"><h2>Cloud backup</h2>' + st + '<div class="acts">'
+    + (CLOUD.on ? '<button class="btn primary" data-act="cloudnow"' + (CLOUD_BUSY ? ' disabled' : '') + '>' + icon('upload') + 'Back up now</button><button class="btn ghost" data-act="cloudmenu">' + icon('more') + 'More</button>'
+      : '<button class="btn primary" data-act="cloudon">Turn on</button><button class="btn ghost" data-act="cloudrestore">' + icon('download') + 'Restore from cloud</button>')
+    + '</div></section>';
+}
+function redrawCloud(){ const p = $('#cloudp'); if (p) p.outerHTML = cloudPanel(); }
+function codeSheet(title, intro, code, foot){
+  openSheet(sheetHead(title) + '<div class="sh-body"><p class="dhint">' + intro + '</p><div class="codebox" aria-label="Recovery code">' + esc(code) + '</div>'
+    + '<div class="acts"><button class="btn ghost" data-act="cloudcopy" data-code="' + esc(code) + '">' + icon('copy') + 'Copy</button>' + (navigator.share ? '<button class="btn ghost" data-act="cloudshare" data-code="' + esc(code) + '">' + icon('ext') + 'Share</button>' : '') + '</div>'
+    + '<p class="hint">Keep it private. Anyone with this code could see your backup.</p></div>' + foot, {label:title});
+}
+function openCloudOn(){
+  CLOUD_PENDING = CLOUD.key || newRecoveryCode();
+  codeSheet('Turn on cloud backup', 'This is your <b>recovery code</b>. You\'ll need it to get your recipes back on a new phone, so save it somewhere safe, like a note or an email to yourself.', CLOUD_PENDING,
+    '<div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="cloudstart">I saved it. Turn on</button></div>');
+}
+async function cloudStart(){
+  Object.assign(CLOUD, {on:true, key:CLOUD_PENDING, err:'', lastRev:-1}); saveCloud();
+  closeSheet(); redrawCloud();
+  const ok = await cloudBackup(true);
+  toast(ok ? 'Cloud backup is on. Backed up ' + plural(CLOUD.lastCount, 'recipe') + '.' : 'Cloud backup is on');
+}
+function cloudMenu(){
+  menuSheet([mi('cloudcode', 'edit', 'See my recovery code'), mi('cloudrestore', 'download', 'Restore from cloud'), mi('cloudoff', 'x', 'Turn off cloud backup', '', 'danger')], 'Cloud backup');
+}
+async function cloudOff(){
+  closeSheet();
+  const ok = await confirmBox({title:'Turn off cloud backup?', msg:'Your backups stay in the cloud. This phone just stops sending new ones. You can turn it back on with the same code.', ok:'Turn off'});
+  if (!ok) return;
+  CLOUD.on = false; saveCloud(); redrawCloud(); toast('Cloud backup is off');
+}
+// restore on a new phone: code -> pick a backup -> bring it all back
+let CR = null;
+function openCloudRestore(){ closeSheet(); setTimeout(() => { CR = {step:'code', code:CLOUD.key ? fmtCode(CLOUD.key) : '', err:'', busy:false}; openSheet(crHTML(), {label:'Restore from cloud'}); }, 60); }
+function crHTML(){
+  const head = sheetHead('Restore from cloud');
+  const status = (CR.err ? '<p class="readst bad">' + esc(CR.err) + '</p>' : '') + (CR.busy ? '<p class="readst"><span class="spin sm"></span>' + esc(CR.busy) + '</p>' : '');
+  if (CR.step === 'code') return head + '<div class="sh-body"><p class="dhint">Type your recovery code. It starts with YUM.</p><div class="field"><label class="lbl" for="cr-code">Recovery code</label><input class="inp" id="cr-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="YUM-XXXX-XXXX-XXXX-XXXX" value="' + esc(CR.code) + '"></div>' + status + '</div>'
+    + '<div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="crfind"' + (CR.busy ? ' disabled' : '') + '>Find my backup</button></div>';
+  const rows = [];
+  if (CR.info.latest) rows.push(['latest', 'Latest backup', whenText(CR.info.latest.at)]);
+  CR.info.days.forEach(d => rows.push([d.day, new Date(d.day + 'T12:00:00').toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'}), 'Copy from that day']));
+  return head + '<div class="sh-body"><p class="dhint">Pick a backup. Recipes already on this phone stay. If the same recipe is in the backup, the backup\'s copy wins.</p><div class="crlist">'
+    + rows.map(x => '<button class="crrow' + (CR.pick === x[0] ? ' on' : '') + '" data-crpick="' + x[0] + '" aria-pressed="' + (CR.pick === x[0]) + '"><span class="crdot"></span><span><b>' + esc(x[1]) + '</b><small>' + esc(x[2]) + '</small></span></button>').join('') + '</div>' + status + '</div>'
+    + '<div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="crgo"' + (CR.busy ? ' disabled' : '') + '>Restore</button></div>';
+}
+function crRedraw(){ const b = $('#sheet .sheet'); if (b && CR) b.innerHTML = crHTML(); }
+async function crFind(){
+  const i = $('#cr-code'); CR.code = i ? i.value : CR.code;
+  if (normCode(CR.code).length < 12) { CR.err = 'That code looks too short. It\'s YUM plus 16 letters and numbers.'; crRedraw(); return; }
+  CR.err = ''; CR.busy = 'Looking for your backup…'; crRedraw();
+  try {
+    const j = await cloudJSON('op=info', {}, fmtCode(CR.code));
+    if (!j.latest && !j.days.length) throw Object.assign(new Error(''), {empty:true});
+    CR.info = j; CR.step = 'pick'; CR.pick = j.latest ? 'latest' : j.days[0].day; CR.busy = '';
+  } catch (e) {
+    CR.busy = ''; CR.err = e.wrongKey ? 'That code doesn\'t match your backup. Check it and try again.' : e.empty ? 'There\'s no backup in the cloud yet.' : e.needsSetup ? 'Cloud backup isn\'t set up in Vercel yet.' : e.message;
+  }
+  crRedraw();
+}
+async function crGo(){
+  if (!CR || !CR.pick) return;
+  const key = fmtCode(CR.code);
+  CR.err = ''; CR.busy = 'Getting your backup…'; crRedraw();
+  try {
+    const o = await cloudJSON('op=get&day=' + encodeURIComponent(CR.pick), {}, key);
+    if (!o || o.app !== 'yumyumtumtum' || !Array.isArray(o.recipes)) throw new Error('That backup couldn\'t be read.');
+    CR.busy = 'Putting ' + plural(o.recipes.length, 'recipe') + ' back…'; crRedraw();
+    await restoreData(o, async ref => { const r = await cloudFetch('op=photo&id=' + encodeURIComponent(ref), {}, key); return r.ok ? await r.blob() : null; });
+    Object.assign(CLOUD, {on:true, key:key, err:'', last:now(), lastDay:localDay(), lastRev:localRev(), lastCount:Math.max(o.recipes.length, list().length)}); saveCloud();
+    closeSheet(); CR = null; redrawCloud();
+    toast('Restored ' + plural(o.recipes.length, 'recipe') + '. Cloud backup is on.');
+  } catch (e) { CR.busy = ''; CR.err = e.wrongKey ? 'That code doesn\'t match your backup.' : e.message; crRedraw(); }
+}
+bootP.then(() => {
+  if (CLOUD.on) setTimeout(() => cloudBackup(false), 20000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && CLOUD.on && localRev() !== CLOUD.lastRev) cloudBackup(false); });
+  window.addEventListener('online', () => { if (CLOUD.on) setTimeout(() => cloudBackup(false), 5000); });
+});
+
 async function removeExamples(){
   const ex = list().filter(r => r.sample);
   const ok = await confirmBox({title:'Remove the examples?', msg:'Deletes ' + plural(ex.length, 'example recipe') + ' and any example collections you haven\'t used. Your own recipes stay.', ok:'Remove'});
@@ -4031,6 +4234,17 @@ const A = {
   cookwmore: () => { const r = cur(); r.wshown = (r.wshown || 12) + 12; redrawCook(); },
   cookretry: () => loadCook(true),
   catretry: () => loadFeed('k:' + cur().key, true),
+  cloudon: () => openCloudOn(),
+  cloudstart: () => cloudStart(),
+  cloudnow: async () => { const ok = await cloudBackup(true); toast(ok ? 'Backed up ' + plural(CLOUD.lastCount, 'recipe') : CLOUD.err === 'setup' ? 'Waiting on the storage in Vercel' : 'The backup didn\'t go through'); },
+  cloudmenu: () => cloudMenu(),
+  cloudcode: () => { closeSheet(); setTimeout(() => codeSheet('Your recovery code', 'Use this code to get your recipes back on a new phone (Me > Cloud backup > Restore from cloud).', fmtCode(CLOUD.key), '<div class="sh-foot"><button class="btn primary big" data-act="closesheet">Done</button></div>'), 60); },
+  cloudcopy: t => copyText(t.dataset.code),
+  cloudshare: t => { try { navigator.share({title:'yumyumtumtum recovery code', text:'My yumyumtumtum recovery code: ' + t.dataset.code}).catch(() => {}); } catch (e) {} },
+  cloudrestore: () => openCloudRestore(),
+  cloudoff: () => cloudOff(),
+  crfind: () => crFind(),
+  crgo: () => crGo(),
   setcat: t => openCatSheet(t.dataset.id || cur().id),
   catsave: () => catSave(false),
   catauto: () => catSave(true),
@@ -4049,9 +4263,10 @@ const A = {
 };
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.id === 'neverin') { e.preventDefault(); A.nvadd(); } });
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump],[data-swap],[data-lview],[data-csort],[data-rcat]');
+  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump],[data-swap],[data-lview],[data-csort],[data-rcat],[data-crpick]');
   if (!t) return;
   const d = t.dataset;
+  if (d.crpick) { if (CR) { CR.pick = d.crpick; crRedraw(); } return; }
   if (d.csort) { const r = cur(); r.sort = d.csort; refresh(); return; }
   if (d.rcat) { catToggle(d.rcat); return; }
   if (d.swap != null) { openSwap(+d.swap); return; }

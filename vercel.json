@@ -8,6 +8,9 @@
     },
     "api/cook.js": {
       "maxDuration": 45
+    },
+    "api/backup.js": {
+      "maxDuration": 30
     }
   }
 }

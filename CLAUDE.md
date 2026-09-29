@@ -3,7 +3,7 @@
 Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.3**.
+Current version: **1.4**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -26,12 +26,13 @@ it automatically. In any other chat, attach this file and say what you want chan
 | Recipe reader + Discover service (Vercel, free Hobby plan, auto-deploys from GitHub) | https://yumyumtumtum.vercel.app |
 | claude.ai copy of the app (private, reader and Discover don't work there) | https://claude.ai/artifact/Jm3hSva7uWbKcXmYypsxje |
 
-Dave's recipes live **on his phone** (the browser's IndexedDB), not on any server. A new chat
-can't see them. Before big changes, Dave should use **Me > Download backup**.
+Dave's recipes live **on his phone** (the browser's IndexedDB). Since v1.4, **Cloud backup** (Me tab)
+copies them automatically to a private Vercel Blob store in his own Vercel account (see "Cloud
+backup" below). A new chat still can't see them. Before big changes, Dave can tap **Back up now**.
 
 ---
 
-## What the app does (v1.3)
+## What the app does (v1.4)
 - **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
   Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
@@ -88,6 +89,11 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
   ⋯ menu: share the list as text, clear checked, clear all.
 - **Deals were removed in v1.2** (Dave's call, Sept 28, 2026). He may build store deals as a
   separate app that ties into this one later. What was learned is under "Deals (removed)" below.
+- **Cloud backup (v1.4, Me tab):** Turn on shows a recovery code (YUM-XXXX-XXXX-XXXX-XXXX) to save,
+  then it backs up by itself; Back up now; More (see my code, restore, turn off); Restore from cloud
+  on a new phone (type the code, pick Latest or a day's copy). Dave chose Vercel only (no OneDrive:
+  Microsoft makes web apps sign in again every 24 hours, and personal accounts report being blocked
+  from registering apps in Azure).
 - **Me:** name, stats, **What it's learned you like** (taste chips, **Foods you don't eat**
   list, Start over), backup and restore, remove examples, storage info.
 - Works offline once installed (service worker). Long-press the icon for Save, What can I cook, and Grocery list shortcuts.
@@ -101,13 +107,15 @@ can't see them. Before big changes, Dave should use **Me > Download backup**.
 | `api/recipe.js` | Recipe reader: `GET /api/recipe?url=...` (add `&debug=1` for a trace). |
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
+| `api/backup.js` | Cloud backup to the private Vercel Blob store: `POST ?op=save&day=&daily=1`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code; the first code that sends something claims the store (a hash in `backup/_owner.json`). No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
 | `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`) and cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`). Sources are listed at the top of the file. |
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, archive fallback. |
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
-| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, and swaps and cookware tips. |
-| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s). |
+| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps and cookware tips, and cloud backup with a fake Blob store. |
+| `package.json` | Only for Vercel: the `@vercel/blob` SDK used by api/backup.js. (npm's registry refused `@vercel/blob` inside Claude sessions on Sept 29, 2026, so tests fake it; Vercel installs it on deploy.) |
+| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s). |
 | `icons/` | App icons. `tools/make_photo_icons.py` makes the current ones from `tools/icon-art.jpg`. |
 
 Browsers can only call the reader from the app's own site (CORS allows https://djvas1975.github.io),
@@ -118,8 +126,8 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 1. Edit `tools/app.html` for the app, or `api/` and `lib/` for the reader or Discover.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
-4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.3`).
+4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js`
+5. App changes: bump the version text in `V.me` (`version 1.4`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -242,6 +250,25 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   for 6 hours, and on Vercel for 6 hours.
 - Live check Sept 27, 2026 (v0.9 endpoint): 5 searches, 880 candidates, 40 recipes read, no
   errors, 8.6 seconds.
+
+## Cloud backup: how it works (built Sept 29, 2026)
+- Storage: a **private** Vercel Blob store connected to the yumyumtumtum Vercel project (Storage tab >
+  Create > Blob > Private). Vercel adds `BLOB_STORE_ID` (OIDC) or `BLOB_READ_WRITE_TOKEN`; a redeploy
+  picks them up. Hobby plan (checked Sept 29, 2026): 1 GB storage, 2,000 advanced operations (put,
+  list) and 10,000 simple operations a month, free; past the limit Blob stops for 30 days, no charge.
+- Files: `backup/latest.json` (recipes, collections, settings; photos replaced by `photoRef`),
+  `backup/days/<YYYY-MM-DD>.json` (the first backup of each day, newest 30 kept),
+  `backup/photos/<photoKey>` (each photo once), `backup/_owner.json` (sha256 of "yyt:" + code).
+- Phone (`tools/app.html`, "cloud backup" block): state in localStorage `yyt-cloud-v1`
+  `{on, key, last, lastDay, lastRev, lastCount, err, sent}`; `yyt-rev` counts saved changes
+  (bumped in `persist`). Backs up 90 s after the last change, at most every 5 minutes, 20 s after
+  opening if something changed, and when the app goes to the background. Settings `kroger`, `stores`,
+  `mydeals` are left out. Safety: an automatic backup is skipped if the phone has less than half the
+  recipes of the last backup (Back up now still works). Restore uses `restoreData(o, getPhoto)`,
+  shared with the file restore.
+- Tested offline end to end (Playwright + the real api/backup.js with a fake store): turn on, photo
+  sent once, second backup, wrong code refused, restore on a fresh phone with the photo, and the
+  "waiting on Vercel" state. **Not yet tested against the real Vercel store** until Dave creates it.
 
 ## Yums and categories: how it works (built Sept 29, 2026)
 - Collection ids: `_all`, `_fav`, `_try`, `_made`, `_top`, `_quick` (in `SMART`), `cat:<key>` and

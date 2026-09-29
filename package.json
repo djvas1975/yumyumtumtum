@@ -1,0 +1,9 @@
+{
+  "name": "yumyumtumtum",
+  "private": true,
+  "description": "Dave's recipe app. The app itself is tools/app.html (built to index.html); api/ holds the Vercel functions.",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@vercel/blob": "^2.8.0"
+  }
+}
