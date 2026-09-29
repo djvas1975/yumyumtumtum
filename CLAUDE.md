@@ -275,6 +275,21 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   token cache and test-area fallback) and the Deals tab in `tools/app.html`. Old settings
   (`stores`, `mydeals`, `kroger`) stay on the phone unused.
 
+## Video recipes from what's said (checked Sept 28, 2026, not built)
+- Probe: `/api/recipe?url=<video>&debug=1&subs=1` lists the video's own captions and shows the start
+  of the caption file. Debug only; normal reads don't change.
+- **TikTok: works, free.** TikTok's page data lists its own speech-to-text captions
+  (`video.subtitleInfos`, WebVTT, Source `ASR`), and the reader downloaded them from Vercel for both
+  videos tried: @jancharles0 7625252149349453070 (435 chars, a one-line caption with no recipe) and
+  @mamawgailcooks 7404617088431557931 (5,409 chars).
+- **YouTube: not from the server.** Two Shorts (LrCEvNIyX-I, TM7bFFMmK9E) had no `captionTracks` in
+  the page Vercel gets.
+- **Instagram and Facebook:** they don't share captions of what's said; it would mean downloading
+  the video, which their terms don't allow and which they usually block. Not planned.
+- Turning a spoken transcript into ingredients and steps well needs an AI model. Estimate with Claude
+  Haiku 4.5 ($1 in / $5 out per million tokens): under a penny per video. Needs Dave's own API key
+  with billing. Without AI: show "What they said" on the recipe page and pick out the foods mentioned.
+
 ## App icon status
 - **In use (v0.7, Sept 26, 2026):** Dave's own pick, a 3D-cartoon "pigging out" picture of him
   (glasses, gray goatee, napkin bib, giant burrito, ramen with chopsticks, orange background).
@@ -300,7 +315,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 ## Ideas not built yet
 - Store deals as a separate app that ties into the grocery list (see "Deals (removed)").
-- Fill in a video's recipe from what's said in it (see "Video recipes from what's said" once checked).
+- Fill in a video's recipe from what's said in it (see "Video recipes from what's said").
 - Meal planner (Yummly had one). The grocery list is ready for it.
 - An "Add what I need" button on What can I cook results.
 - "More like this" row on a recipe page.
