@@ -12,6 +12,10 @@ const { cors, fetchText, decode, clean } = require('../lib/parse');
 const enc = encodeURIComponent;
 const SITE_TIMEOUT = 8000;
 
+// Checked from Vercel Sept 30, 2026. Turned servers away (403) or had no WordPress search: A Beautiful Mess,
+// Angela Anderson Art, Artists Network, Art Projects for Kids, Crafting in the Rain, Emily Seilhamer Art,
+// Happiness is Homemade, Hey Let's Make Stuff, I Heart Crafty Things, Jewelry Making Journal, One Little Project,
+// Resin Obsession, The Art Sherpa, The Blue Bottle Tree, The Kitchen Table Classroom, The Postman's Knock, Tracie Kiernan.
 // kind: which board a site mostly feeds. topics: only asked when the search mentions these.
 const ROCK = /rock|stone|pebble|mandala|dot/;
 const POUR = /pour|fluid|resin|cells|swipe|dutch/;
@@ -23,57 +27,57 @@ const WOOD = /wood|pallet|sign|shelf|furniture|dresser|table|crate|porch/;
 
 const SOURCES = [
   // painting
-  { id: 'traciekiernan', name: 'Tracie Kiernan', home: 'https://traciekiernan.com', kind: 'painting', trial: true },
-  { id: 'theartsherpa', name: 'The Art Sherpa', home: 'https://theartsherpa.com', kind: 'painting', trial: true },
-  { id: 'angelaandersonart', name: 'Angela Anderson Art', home: 'https://angelaandersonart.com', kind: 'painting', trial: true },
-  { id: 'emilyseilhamerart', name: 'Emily Seilhamer Art', home: 'https://emilyseilhamerart.com', kind: 'painting', trial: true },
-  { id: 'artsyprettyplants', name: 'Artsy Pretty Plants', home: 'https://artsyprettyplants.com', kind: 'painting', trial: true },
-  { id: 'artprojectsforkids', name: 'Art Projects for Kids', home: 'https://artprojectsforkids.org', kind: 'painting', trial: true },
-  { id: 'deepspacesparkle', name: 'Deep Space Sparkle', home: 'https://www.deepspacesparkle.com', kind: 'painting', topics: KIDS, trial: true },
-  { id: 'artistsnetwork', name: 'Artists Network', home: 'https://www.artistsnetwork.com', kind: 'painting', trial: true },
-  { id: 'thepostmansknock', name: 'The Postman’s Knock', home: 'https://www.thepostmansknock.com', kind: 'painting', trial: true },
-  { id: 'rockpainting101', name: 'Rock Painting 101', home: 'https://rockpainting101.com', kind: 'painting', topics: ROCK, trial: true },
-  { id: 'acrylicpouring', name: 'Acrylic Pouring', home: 'https://www.acrylicpouring.com', kind: 'painting', topics: POUR, trial: true },
-  { id: 'salvagesisterandmister', name: 'Salvage Sister and Mister', home: 'https://salvagesisterandmister.com', kind: 'painting', topics: WOOD, trial: true },
-  { id: 'artbarblog', name: 'Art Bar', home: 'https://artbarblog.com', kind: 'painting', trial: true },
-  { id: 'thekitchentableclassroom', name: 'The Kitchen Table Classroom', home: 'https://www.thekitchentableclassroom.com', kind: 'painting', topics: KIDS, trial: true },
+  { id: 'artsyprettyplants', name: 'Artsy Pretty Plants', home: 'https://artsyprettyplants.com', kind: 'painting' },
+  { id: 'deepspacesparkle', name: 'Deep Space Sparkle', home: 'https://www.deepspacesparkle.com', kind: 'painting', topics: KIDS },
+  { id: 'rockpainting101', name: 'Rock Painting 101', home: 'https://rockpainting101.com', kind: 'painting', topics: ROCK },
+  { id: 'acrylicpouring', name: 'Acrylic Pouring', home: 'https://www.acrylicpouring.com', kind: 'painting', topics: POUR },
+  { id: 'salvagesisterandmister', name: 'Salvage Sister and Mister', home: 'https://salvagesisterandmister.com', kind: 'painting', topics: WOOD },
+  { id: 'artbarblog', name: 'Art Bar', home: 'https://artbarblog.com', kind: 'painting' },
+  // second round of painting blogs to try
+  { id: 'artisfun', name: 'Art is Fun', home: 'https://www.art-is-fun.com', kind: 'painting', trial: true },
+  { id: 'willkempartschool', name: 'Will Kemp Art School', home: 'https://willkempartschool.com', kind: 'painting', trial: true },
+  { id: 'emptyeasel', name: 'Empty Easel', home: 'https://emptyeasel.com', kind: 'painting', trial: true },
+  { id: 'drawpaintacademy', name: 'Draw Paint Academy', home: 'https://drawpaintacademy.com', kind: 'painting', trial: true },
+  { id: 'watercoloraffair', name: 'Watercolor Affair', home: 'https://www.watercoloraffair.com', kind: 'painting', trial: true },
+  { id: 'makoccino', name: 'Makoccino', home: 'https://www.makoccino.com', kind: 'painting', trial: true },
+  { id: 'doodlewash', name: 'Doodlewash', home: 'https://doodlewash.com', kind: 'painting', trial: true },
+  { id: 'petticoatjunktion', name: 'Petticoat Junktion', home: 'https://www.petticoatjunktion.com', kind: 'painting', trial: true },
+  { id: 'girlinthegarage', name: 'Girl in the Garage', home: 'https://girlinthegarage.net', kind: 'painting', trial: true },
+  { id: 'designsbystudioc', name: 'Designs by Studio C', home: 'https://www.designsbystudioc.com', kind: 'painting', trial: true },
+  { id: 'messylittlemonster', name: 'Messy Little Monster', home: 'https://www.messylittlemonster.com', kind: 'both', trial: true },
+  { id: 'artfulparent', name: 'The Artful Parent', home: 'https://artfulparent.com', kind: 'both', trial: true },
+  { id: 'thefrugalcrafter', name: 'The Frugal Crafter', home: 'https://thefrugalcrafter.com', kind: 'both', trial: true },
+  { id: 'paintingwithjane', name: 'Painting with Jane', home: 'https://paintingwithjane.com', kind: 'painting', trial: true },
+  { id: 'acrylicpaintingschool', name: 'Acrylic Painting School', home: 'https://acrylicpaintingschool.com', kind: 'painting', trial: true },
+  { id: 'paintingtutorials', name: 'Beginner Painting Tutorials', home: 'https://www.paintingtutorials.com', kind: 'painting', trial: true },
   // crafts
-  { id: 'craftsbyamanda', name: 'Crafts by Amanda', home: 'https://craftsbyamanda.com', kind: 'both', trial: true },
-  { id: 'modpodgerocks', name: 'Mod Podge Rocks', home: 'https://modpodgerocksblog.com', kind: 'craft', trial: true },
-  { id: 'diycandy', name: 'DIY Candy', home: 'https://diycandy.com', kind: 'craft', trial: true },
-  { id: 'onelittleproject', name: 'One Little Project', home: 'https://onelittleproject.com', kind: 'craft', trial: true },
-  { id: 'heyletsmakestuff', name: 'Hey, Let’s Make Stuff', home: 'https://heyletsmakestuff.com', kind: 'craft', trial: true },
-  { id: 'cutesycrafts', name: 'Cutesy Crafts', home: 'https://cutesycrafts.com', kind: 'craft', trial: true },
-  { id: 'craftsonsea', name: 'Crafts on Sea', home: 'https://craftsonsea.co.uk', kind: 'craft', topics: KIDS, trial: true },
-  { id: 'happinessishomemade', name: 'Happiness is Homemade', home: 'https://www.happinessishomemade.net', kind: 'craft', trial: true },
-  { id: 'sustainmycrafthabit', name: 'Sustain My Craft Habit', home: 'https://sustainmycrafthabit.com', kind: 'craft', trial: true },
-  { id: 'apieceofrainbow', name: 'A Piece of Rainbow', home: 'https://www.apieceofrainbow.com', kind: 'craft', trial: true },
-  { id: 'housefulofhandmade', name: 'Houseful of Handmade', home: 'https://housefulofhandmade.com', kind: 'craft', trial: true },
-  { id: 'craftingintherain', name: 'Crafting in the Rain', home: 'https://craftingintherain.com', kind: 'craft', trial: true },
-  { id: 'welcometonanas', name: 'Welcome To Nana’s', home: 'https://welcometonanas.com', kind: 'craft', trial: true },
-  { id: 'jennifermaker', name: 'Jennifer Maker', home: 'https://jennifermaker.com', kind: 'craft', topics: CRICUT, trial: true },
-  { id: 'resinobsession', name: 'Resin Obsession', home: 'https://resinobsession.com', kind: 'craft', topics: POUR, trial: true },
-  { id: 'thecraftyblogstalker', name: 'The Crafty Blog Stalker', home: 'https://thecraftyblogstalker.com', kind: 'craft', trial: true },
-  { id: 'makeandtakes', name: 'Make and Takes', home: 'https://www.makeandtakes.com', kind: 'craft', trial: true },
-  { id: 'thebestideasforkids', name: 'The Best Ideas for Kids', home: 'https://www.thebestideasforkids.com', kind: 'craft', topics: KIDS, trial: true },
-  { id: 'iheartcraftythings', name: 'I Heart Crafty Things', home: 'https://iheartcraftythings.com', kind: 'craft', trial: true },
-  { id: 'abeautifulmess', name: 'A Beautiful Mess', home: 'https://abeautifulmess.com', kind: 'craft', trial: true },
-  { id: 'thecountrychiccottage', name: 'The Country Chic Cottage', home: 'https://www.thecountrychiccottage.net', kind: 'craft', trial: true },
-  { id: 'sewcanshe', name: 'Sew Can She', home: 'https://www.sewcanshe.com', kind: 'craft', topics: SEW, trial: true },
-  { id: 'repeatcrafterme', name: 'Repeat Crafter Me', home: 'https://www.repeatcrafterme.com', kind: 'craft', topics: YARN, trial: true },
-  { id: 'mooglyblog', name: 'Moogly', home: 'https://www.mooglyblog.com', kind: 'craft', topics: YARN, trial: true },
-  { id: 'thehandymansdaughter', name: 'The Handyman’s Daughter', home: 'https://www.thehandymansdaughter.com', kind: 'craft', topics: WOOD, trial: true },
-  { id: 'anikasdiylife', name: 'Anika’s DIY Life', home: 'https://www.anikasdiylife.com', kind: 'craft', topics: WOOD, trial: true },
-  { id: 'shanty2chic', name: 'Shanty 2 Chic', home: 'https://www.shanty-2-chic.com', kind: 'craft', topics: WOOD, trial: true },
-  { id: 'thecraftingchicks', name: 'The Crafting Chicks', home: 'https://thecraftingchicks.com', kind: 'craft', trial: true },
-  { id: 'thebluebottletree', name: 'The Blue Bottle Tree', home: 'https://www.thebluebottletree.com', kind: 'craft', trial: true },
-  { id: 'jewelrymakingjournal', name: 'Jewelry Making Journal', home: 'https://jewelrymakingjournal.com', kind: 'craft', trial: true },
-  { id: 'confessionsofaserialdiyer', name: 'Confessions of a Serial DIYer', home: 'https://www.confessionsofaserialdiyer.com', kind: 'craft', trial: true },
-  { id: 'thecraftpatchblog', name: 'The Craft Patch', home: 'https://thecraftpatchblog.com', kind: 'craft', trial: true },
-  { id: 'hellowonderful', name: 'Hello Wonderful', home: 'https://www.hellowonderful.co', kind: 'craft', topics: KIDS, trial: true },
-  { id: 'easypeasyandfun', name: 'Easy Peasy and Fun', home: 'https://www.easypeasyandfun.com', kind: 'both', topics: KIDS, trial: true },
-  { id: '100directions', name: '100 Directions', home: 'https://www.100directions.com', kind: 'craft', topics: CRICUT, trial: true },
-  { id: 'craftingcheerfully', name: 'Crafting Cheerfully', home: 'https://craftingcheerfully.com', kind: 'craft', trial: true }
+  { id: 'craftsbyamanda', name: 'Crafts by Amanda', home: 'https://craftsbyamanda.com', kind: 'both' },
+  { id: 'modpodgerocks', name: 'Mod Podge Rocks', home: 'https://modpodgerocksblog.com', kind: 'craft' },
+  { id: 'diycandy', name: 'DIY Candy', home: 'https://diycandy.com', kind: 'craft' },
+  { id: 'cutesycrafts', name: 'Cutesy Crafts', home: 'https://cutesycrafts.com', kind: 'craft' },
+  { id: 'craftsonsea', name: 'Crafts on Sea', home: 'https://craftsonsea.co.uk', kind: 'craft', topics: KIDS },
+  { id: 'sustainmycrafthabit', name: 'Sustain My Craft Habit', home: 'https://sustainmycrafthabit.com', kind: 'craft' },
+  { id: 'apieceofrainbow', name: 'A Piece of Rainbow', home: 'https://www.apieceofrainbow.com', kind: 'craft' },
+  { id: 'housefulofhandmade', name: 'Houseful of Handmade', home: 'https://housefulofhandmade.com', kind: 'craft' },
+  { id: 'welcometonanas', name: 'Welcome To Nana’s', home: 'https://welcometonanas.com', kind: 'craft' },
+  { id: 'jennifermaker', name: 'Jennifer Maker', home: 'https://jennifermaker.com', kind: 'craft', topics: CRICUT },
+  { id: 'thecraftyblogstalker', name: 'The Crafty Blog Stalker', home: 'https://thecraftyblogstalker.com', kind: 'craft' },
+  { id: 'makeandtakes', name: 'Make and Takes', home: 'https://www.makeandtakes.com', kind: 'craft' },
+  { id: 'thebestideasforkids', name: 'The Best Ideas for Kids', home: 'https://www.thebestideasforkids.com', kind: 'craft', topics: KIDS },
+  { id: 'thecountrychiccottage', name: 'The Country Chic Cottage', home: 'https://www.thecountrychiccottage.net', kind: 'craft' },
+  { id: 'sewcanshe', name: 'Sew Can She', home: 'https://www.sewcanshe.com', kind: 'craft', topics: SEW },
+  { id: 'repeatcrafterme', name: 'Repeat Crafter Me', home: 'https://www.repeatcrafterme.com', kind: 'craft', topics: YARN },
+  { id: 'mooglyblog', name: 'Moogly', home: 'https://www.mooglyblog.com', kind: 'craft', topics: YARN },
+  { id: 'thehandymansdaughter', name: 'The Handyman’s Daughter', home: 'https://www.thehandymansdaughter.com', kind: 'craft', topics: WOOD },
+  { id: 'anikasdiylife', name: 'Anika’s DIY Life', home: 'https://www.anikasdiylife.com', kind: 'craft', topics: WOOD },
+  { id: 'shanty2chic', name: 'Shanty 2 Chic', home: 'https://www.shanty-2-chic.com', kind: 'craft', topics: WOOD },
+  { id: 'thecraftingchicks', name: 'The Crafting Chicks', home: 'https://thecraftingchicks.com', kind: 'craft' },
+  { id: 'confessionsofaserialdiyer', name: 'Confessions of a Serial DIYer', home: 'https://www.confessionsofaserialdiyer.com', kind: 'craft' },
+  { id: 'thecraftpatchblog', name: 'The Craft Patch', home: 'https://thecraftpatchblog.com', kind: 'craft' },
+  { id: 'hellowonderful', name: 'Hello Wonderful', home: 'https://www.hellowonderful.co', kind: 'craft', topics: KIDS },
+  { id: 'easypeasyandfun', name: 'Easy Peasy and Fun', home: 'https://www.easypeasyandfun.com', kind: 'both', topics: KIDS },
+  { id: '100directions', name: '100 Directions', home: 'https://www.100directions.com', kind: 'craft', topics: CRICUT },
+  { id: 'craftingcheerfully', name: 'Crafting Cheerfully', home: 'https://craftingcheerfully.com', kind: 'craft' }
 ];
 
 module.exports = async (req, res) => {
@@ -141,10 +145,13 @@ async function fromWordPress(s, q, n, trace) {
       url: p.link, image, width: w, height: h,
       source: s.id, sourceName: s.name, kind: s.kind
     };
-  }).filter(x => x.title && x.url && x.image && !SKIP.test(x.title)).slice(0, n);
+  }).filter(x => x.title && x.url && x.image && !SKIP.test(x.title) && !(FOOD.test(x.title) && !NOT_FOOD.test(x.title))).slice(0, n);
 }
 // gift guides, giveaways, shop news: not a project
-const SKIP = /\b(gift guide|giveaway|sale|deals?|shop update|coupon|affiliate|podcast|episode|newsletter|announcement|link party|features?)\b|\?$/i;
+const SKIP = /\b(gift guide|giveaway|sale|deals?|shop update|coupon|affiliate|podcast|episode|newsletter|announcement|link party|features?|worksheets?|coloring pages?|life cycle)\b|\?$/i;
+// recipes and food posts that some craft blogs also run
+const FOOD = /\b(recipes?|cake|cakes|cheesecakes?|cookies?|cupcakes?|muffins?|brownies?|bars|dip|soup|chili|casserole|smoothie|cocktail|mocktail|latte|punch|salad|bread|pie|fudge|edible|snack|treats? recipe|dinner|breakfast|appetizer)\b/i;
+const NOT_FOOD = /\b(craft|diy|paint|painted|painting|crochet|knit|sew|svg|cricut|wood|clay|felt|paper|printable|ornament|decor|wreath|box|boxes|toppers?|holders?|coasters?)\b/i;
 
 function withTimeout(p, ms) {
   let t;
