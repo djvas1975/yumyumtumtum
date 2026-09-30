@@ -1,7 +1,7 @@
 // Brush & Glue idea finder: painting and craft projects from free how-to blogs.
 // GET /api/crafts?q=rock+painting&type=painting   ->  matching projects
 // GET /api/crafts?type=craft                        ->  the newest projects
-// Options: type=painting|craft|both (which blogs to ask), sites=a,b (only these), n=6 (per site),
+// Options: type=painting|craft|both (which blogs to ask), sites=a,b (only these), n=6 (per site), page=2 (the next ones),
 //          debug=1 (how each site answered), sites=trial (try the sites marked trial).
 //
 // Each item: { title, url, image, width, height, source, sourceName, kind }
@@ -87,19 +87,21 @@ module.exports = async (req, res) => {
   const q = clean(String(qp.q || '')).slice(0, 80);
   const type = ['painting', 'craft'].includes(qp.type) ? qp.type : 'both';
   const n = Math.max(1, Math.min(12, parseInt(qp.n, 10) || 6));
+  const page = Math.max(1, Math.min(5, parseInt(qp.page, 10) || 1));
   const want = String(qp.sites || '').split(',').map(s => s.trim()).filter(Boolean);
   const debug = !!qp.debug;
   const lq = q.toLowerCase();
   let sources;
   if (want.length) sources = SOURCES.filter(s => want.includes(s.id) || (s.trial && want.includes('trial')));
-  else sources = SOURCES.filter(s => !s.trial && (type === 'both' || s.kind === type || s.kind === 'both') && (!s.topics || (lq && s.topics.test(lq))));
+  // painting blogs are few, so painting searches also ask the craft blogs (many post painted projects); craft searches skip painting-only blogs
+  else sources = SOURCES.filter(s => !s.trial && !(type === 'craft' && s.kind === 'painting') && (!s.topics || (lq && s.topics.test(lq))));
 
   const report = [];
   const lists = await Promise.all(sources.map(async s => {
     const t0 = Date.now();
     const trace = debug ? [] : null;
     try {
-      const items = await withTimeout(fromWordPress(s, q, n, trace), SITE_TIMEOUT);
+      const items = await withTimeout(fromWordPress(s, q, n, trace, page), SITE_TIMEOUT);
       if (debug) report.push({ id: s.id, ms: Date.now() - t0, count: items.length, sample: items.slice(0, 2).map(x => x.title + ' | ' + (x.image ? 'photo ' + x.width + 'x' + x.height : 'no photo')), trace });
       return items;
     } catch (e) {
@@ -116,13 +118,13 @@ module.exports = async (req, res) => {
     items.push(it);
   }
   res.setHeader('Cache-Control', debug ? 'no-store' : 's-maxage=21600, stale-while-revalidate=86400');
-  const out = { ok: true, q, type, items };
+  const out = { ok: true, q, type, page, items };
   if (debug) out.report = report.sort((a, b) => b.count - a.count || a.id.localeCompare(b.id));
   res.status(200).json(out);
 };
 
-async function fromWordPress(s, q, n, trace) {
-  const url = s.home + '/wp-json/wp/v2/posts?per_page=' + Math.min(20, n + 6)
+async function fromWordPress(s, q, n, trace, page) {
+  const url = s.home + '/wp-json/wp/v2/posts?per_page=' + Math.min(20, n + 6) + (page > 1 ? '&page=' + page : '')
     + (q ? '&search=' + enc(q) + '&orderby=relevance' : '')
     + '&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_media_url,yoast_head_json.og_image,_links,_embedded';
   const { text } = await fetchText(url, { trace, headers: { Accept: 'application/json' } });
