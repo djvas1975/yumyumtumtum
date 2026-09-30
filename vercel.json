@@ -18,5 +18,15 @@
     "api/crafts.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/crafts/:tag",
+      "destination": "/api/crafts"
+    },
+    {
+      "source": "/api/idea/:tag",
+      "destination": "/api/idea"
+    }
+  ]
 }
