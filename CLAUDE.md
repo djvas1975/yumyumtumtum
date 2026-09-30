@@ -1,9 +1,12 @@
-# yumyumtumtum: project summary and handoff
+# YumYum (formerly yumyumtumtum): project summary and handoff
 
-Dave's personal Yummly-style recipe app. It saves recipes and cooking videos from TikTok,
+Dave's personal Yummly-style recipe app, shown as **YumYum** since v1.5 (Sept 30, 2026). Only the name
+people see changed: the web addresses, the GitHub repo, the Vercel project, the phone's storage
+(IndexedDB `yumyumtumtum`, `yyt-` keys), and the backup format (`app:'yumyumtumtum'`) keep the old
+name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.4**.
+Current version: **1.5**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -16,7 +19,7 @@ it automatically. In any other chat, attach this file and say what you want chan
    already installed on Dave's GitHub account with access to all repos.
 2. Tell Claude what to change. Claude edits, tests, and pushes to `main`. The app and the
    recipe reader update on their own within about a minute.
-3. On the phone, fully close yumyumtumtum and reopen it to get the update.
+3. On the phone, fully close YumYum and reopen it to get the update.
 
 ## Where everything lives
 | What | Where |
@@ -32,7 +35,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 
 ---
 
-## What the app does (v1.4)
+## What the app does (v1.5)
 - **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
   Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
@@ -127,7 +130,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.4`).
+5. App changes: bump the version text in `V.me` (`version 1.5`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -345,6 +348,8 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - Older icons, kept only for history: the drawn chef mascot (`tools/make_mascot.py`) and the
   rejected hand-drawn Dave (`tools/make_dave_icons.py`). Claude-drawn portraits of Dave were
   rejected twice. For likeness art, use a picture Dave makes or picks himself.
+- The home-screen name follows the manifest `name`/`short_name` the same way (web.dev "How Chrome
+  handles updates to the web app manifest": name and short_name are updatable on Android).
 - Installed phone icon: Chrome on Android checks the manifest when the app is opened (at most
   once every 24 hours), then swaps the icon after the app is closed and the phone is plugged in
   on Wi-Fi (web.dev "How Chrome handles updates to the web app manifest"). To force it sooner,

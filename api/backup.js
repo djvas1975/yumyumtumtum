@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
       if (!text) { res.status(400).json({ ok: false, error: 'The backup was empty.' }); return; }
       if (text.length > MAX_BACKUP) { res.status(413).json({ ok: false, error: 'The backup is too big to send in one piece.' }); return; }
       let o; try { o = JSON.parse(text); } catch (e) { o = null; }
-      if (!o || o.app !== 'yumyumtumtum' || !Array.isArray(o.recipes)) { res.status(400).json({ ok: false, error: 'That isn’t a yumyumtumtum backup.' }); return; }
+      if (!o || o.app !== 'yumyumtumtum' || !Array.isArray(o.recipes)) { res.status(400).json({ ok: false, error: 'That isn’t a YumYum backup.' }); return; }
       await blob().put(ROOT + 'latest.json', text, put(opts, 'application/json'));
       // the phone asks for a daily copy with its first backup of the day (keeps Vercel's free operations low)
       const day = /^\d{4}-\d{2}-\d{2}$/.test(String(qp.day || '')) ? String(qp.day) : new Date().toISOString().slice(0, 10);

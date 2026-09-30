@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
-<title>yumyumtumtum</title>
+<title>YumYum</title>
 <meta name="theme-color" content="#E0431F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1056,7 +1056,7 @@ const backBar = (inner) => '<header class="topbar"><div class="wrap pagehead"><b
 const V = {};
 V.home = () => {
   const all = sorted(list(), 'new');
-  const head = '<header class="topbar"><div class="wrap brandbar">' + LOGO + '<span class="wordmark"><span class="y">yumyum</span>tumtum</span></div></header>';
+  const head = '<header class="topbar"><div class="wrap brandbar">' + LOGO + '<span class="wordmark"><span class="y">Yum</span>Yum</span></div></header>';
   const greet = '<h1 class="greet">' + esc(greeting()) + '</h1><p class="greet-sub">What are we cooking?</p>';
   if (!all.length) return head + '<div class="wrap">' + greet + kitchenCardHTML() + '<div class="empty">' + LOGO + '<h3>Your recipe box is empty</h3><p>Tap the + button to save a recipe from TikTok, Instagram, YouTube, Pinterest, or any website.</p><button class="btn primary" data-act="add">' + icon('plus') + 'Save your first recipe</button>' + (canRead() ? '<button class="btn ghost" data-go="discover">' + icon('globe') + 'Find new recipes</button>' : '') + '</div></div>';
   const vids = all.filter(isVideo).slice(0, 10);
@@ -1222,7 +1222,7 @@ V.me = () => {
   return '<header class="topbar"><div class="wrap headrow"><h1 class="title">Me</h1></div></header><div class="wrap">'
     + '<div class="profile"><div class="avatar" aria-hidden="true">' + esc((nm.trim().charAt(0) || 'Y').toUpperCase()) + '</div><div class="field"><label class="lbl" for="myname">Your name</label><input class="inp" id="myname" maxlength="40" value="' + esc(nm) + '" autocomplete="given-name"></div></div>'
     + '<div class="statrow">' + mini(all.length, 'Recipes') + mini(Store.cols.size, 'Collections') + mini(vids, 'Videos') + mini(cooked, 'Times cooked') + '</div>'
-    + (installEvt ? '<section class="panel"><h2>Put it on your home screen</h2><p>Installs yumyumtumtum as an app with its own icon. It also shows up when you tap Share in TikTok, Instagram, YouTube, or Chrome.</p><div class="acts"><button class="btn primary" data-act="install">' + icon('download') + 'Install app</button></div></section>' : '')
+    + (installEvt ? '<section class="panel"><h2>Put it on your home screen</h2><p>Installs YumYum as an app with its own icon. It also shows up when you tap Share in TikTok, Instagram, YouTube, or Chrome.</p><div class="acts"><button class="btn primary" data-act="install">' + icon('download') + 'Install app</button></div></section>' : '')
     + tastePanel()
     + cloudPanel()
     + '<section class="panel"><h2>Backup file</h2><p>One file with every recipe, collection, and photo. Keep a copy somewhere safe, like Google Drive or iCloud.</p><div class="acts">'
@@ -1231,7 +1231,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">yumyumtumtum · version 1.4</p></div>';
+    + '<p class="ver">YumYum · version 1.5</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1612,7 +1612,7 @@ const READING = new Set();
 async function getDetails(id){
   const r = Store.recipes.get(id);
   if (!r || !r.url || READING.has(id)) return;
-  if (!canRead()) { toast('Open yumyumtumtum from your home screen to pull in recipe details.'); return; }
+  if (!canRead()) { toast('Open YumYum from your home screen to pull in recipe details.'); return; }
   READING.add(id); refresh();
   try {
     const j = await readLink(r.url);
@@ -1878,7 +1878,7 @@ V.discover = (rt) => {
   const key = rt.key || 'foryou';
   const q = key.indexOf('q:') === 0 ? key.slice(2) : '';
   const head = backBar('<div class="ph-t"><h1 class="title sm">Discover</h1><p class="ph-sub">Free recipes, picked for you</p></div>');
-  if (!canRead()) return head + '<div class="wrap"><div class="empty"><h3>Open the app on your phone</h3><p>Discover finds new recipes from Delish, Tasty, and popular recipe blogs. It works in the yumyumtumtum app on your home screen.</p></div></div>';
+  if (!canRead()) return head + '<div class="wrap"><div class="empty"><h3>Open the app on your phone</h3><p>Discover finds new recipes from Delish, Tasty, and popular recipe blogs. It works in the YumYum app on your home screen.</p></div></div>';
   return head + '<div class="wrap">'
     + '<div class="searchbox">' + icon('search') + '<input id="dq" type="search" enterkeyhint="search" placeholder="Search Delish, Tasty, and 30 more" autocomplete="off" aria-label="Search recipe sites" value="' + esc(q) + '"></div>'
     + '<div class="chips scroll-x" data-sx="dtabs">' + (q ? '<button class="chip on" data-dk="foryou" aria-label="Clear search">' + esc(q) + icon('x') + '</button>' : '')
@@ -1901,7 +1901,7 @@ function discFeedHTML(rt){
       + '<div class="grid">' + items.slice(0, shown).map(it => dcard(it)).join('') + '</div>'
       + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '');
   }
-  h += '<div class="dnote"><b>Also try</b><span>These sites don\'t let outside apps search them, but you can search there and tap Share, then yumyumtumtum, to save a recipe.</span><div class="morelinks">'
+  h += '<div class="dnote"><b>Also try</b><span>These sites don\'t let outside apps search them, but you can search there and tap Share, then YumYum, to save a recipe.</span><div class="morelinks">'
     + MORE_SITES.map(s => '<a class="chip" href="' + esc(q ? s[1](q) : s[2]) + '" target="_blank" rel="noopener noreferrer">' + esc(s[0]) + icon('ext') + '</a>').join('') + '</div></div>';
   return h;
 }
@@ -2385,7 +2385,7 @@ function cookResultsHTML(rt){
   h += '</section>';
   // new recipes from the sites
   h += '<section class="sec"><div class="sec-h"><h2>New ' + esc(what) + ' to try</h2>' + (W1.length ? '<span class="muted">' + W1.length + '</span>' : '') + '</div>';
-  if (!canRead()) h += '<p class="dhint">Open yumyumtumtum from your home screen to search the recipe sites too.</p>';
+  if (!canRead()) h += '<p class="dhint">Open YumYum from your home screen to search the recipe sites too.</p>';
   else {
     if (COOK.loading) h += '<p class="readst"><span class="spin sm"></span>' + (W1.length ? 'Looking for more…' : 'Checking 40+ recipe sites. This takes about 10 seconds…') + '</p>';
     if (COOK.error && !COOK.loading) h += '<div class="empty small"><h3>Couldn\'t search the sites</h3><p>' + esc(COOK.error) + '</p><button class="btn ghost" data-act="cookretry">Try again</button></div>';
@@ -3946,7 +3946,7 @@ async function exportBackup(){
     recs.push(o);
   }
   const data = JSON.stringify({app:'yumyumtumtum', version:1, exportedAt:now(), settings:Store.settings, collections:Array.from(Store.cols.values()), recipes:recs});
-  const name = 'yumyumtumtum-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  const name = 'yumyum-backup-' + new Date().toISOString().slice(0, 10) + '.json';
   if (Store.downloads) {
     try { await Store.downloads.save({filename:name, data:data}); toast('Backup saved'); }
     catch (e) { if (!(e && e.code === 'declined')) toast("Couldn't save the backup. Try again in a moment."); else hideToast(); }
@@ -3962,7 +3962,7 @@ async function exportBackup(){
 async function restoreBackup(file){
   let o = null;
   try { o = JSON.parse(await file.text()); } catch (e) {}
-  if (!o || o.app !== 'yumyumtumtum' || !Array.isArray(o.recipes)) { toast("That file isn't a yumyumtumtum backup."); return; }
+  if (!o || o.app !== 'yumyumtumtum' || !Array.isArray(o.recipes)) { toast("That file isn't a YumYum backup."); return; }
   const cols = Array.isArray(o.collections) ? o.collections : [];
   const ok = await confirmBox({title:'Restore this backup?', msg:'Adds ' + plural(o.recipes.length, 'recipe') + ' and ' + plural(cols.length, 'collection') + '. Anything with the same ID gets replaced by the backup copy.', ok:'Restore', danger:false});
   if (!ok) return;
@@ -4240,7 +4240,7 @@ const A = {
   cloudmenu: () => cloudMenu(),
   cloudcode: () => { closeSheet(); setTimeout(() => codeSheet('Your recovery code', 'Use this code to get your recipes back on a new phone (Me > Cloud backup > Restore from cloud).', fmtCode(CLOUD.key), '<div class="sh-foot"><button class="btn primary big" data-act="closesheet">Done</button></div>'), 60); },
   cloudcopy: t => copyText(t.dataset.code),
-  cloudshare: t => { try { navigator.share({title:'yumyumtumtum recovery code', text:'My yumyumtumtum recovery code: ' + t.dataset.code}).catch(() => {}); } catch (e) {} },
+  cloudshare: t => { try { navigator.share({title:'YumYum recovery code', text:'My YumYum recovery code: ' + t.dataset.code}).catch(() => {}); } catch (e) {} },
   cloudrestore: () => openCloudRestore(),
   cloudoff: () => cloudOff(),
   crfind: () => crFind(),
@@ -4315,7 +4315,7 @@ document.addEventListener('error', e => {
 /* ---------- install + sharing (installed phone app only) ---------- */
 let installEvt = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; refresh(); });
-window.addEventListener('appinstalled', () => { installEvt = null; refresh(); toast('Installed. Look for yumyumtumtum on your home screen.'); });
+window.addEventListener('appinstalled', () => { installEvt = null; refresh(); toast('Installed. Look for YumYum on your home screen.'); });
 async function installApp(){
   if (!installEvt) { toast('Use Chrome\'s menu and tap Install app.'); return; }
   const e = installEvt; installEvt = null;

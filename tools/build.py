@@ -37,8 +37,8 @@ def build_index():
 def build_manifest():
     return {
         "id": BASE or "./",
-        "name": "yumyumtumtum",
-        "short_name": "yumyumtumtum",
+        "name": "YumYum",
+        "short_name": "YumYum",
         "description": "Save recipes and cooking videos from TikTok, Instagram, YouTube, and any website.",
         "start_url": BASE or "./",
         "scope": BASE or "./",
@@ -106,7 +106,7 @@ self.addEventListener('fetch', e => {
 });
 """
 
-README = """# yumyumtumtum
+README = """# YumYum (yumyumtumtum)
 
 Dave's personal recipe box. Save recipes and cooking videos from TikTok, Instagram,
 YouTube, Facebook, Pinterest, or any website, organize them into collections, and
@@ -115,10 +115,10 @@ tap through to the original when it's time to cook.
 ## Put it on an Android phone
 1. Open the site address in **Chrome**.
 2. Tap **Install** on the Home tab (or Chrome's menu, then **Install app**).
-3. The yumyumtumtum icon shows up on the home screen and in the app drawer.
+3. The YumYum icon shows up on the home screen and in the app drawer.
 
 After it's installed, tap **Share** in TikTok, Instagram, YouTube, or Chrome and pick
-**yumyumtumtum** to save that link. Long-press the icon for quick **Save**,
+**YumYum** to save that link. Long-press the icon for quick **Save**,
 **What can I cook?**, and **Grocery list** shortcuts.
 
 ## What can I cook?
