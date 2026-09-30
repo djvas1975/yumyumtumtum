@@ -11,6 +11,12 @@
     },
     "api/backup.js": {
       "maxDuration": 30
+    },
+    "api/idea.js": {
+      "maxDuration": 45
+    },
+    "api/crafts.js": {
+      "maxDuration": 30
     }
   }
 }
