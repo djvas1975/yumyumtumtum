@@ -28,5 +28,12 @@
       "source": "/api/idea/:tag",
       "destination": "/api/idea"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/crafts",
+      "destination": "/crafts/",
+      "permanent": false
+    }
   ]
 }
