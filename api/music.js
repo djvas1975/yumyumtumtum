@@ -20,6 +20,9 @@ const CHANNELS = [
   // filled in from op=resolve; see below
 ];
 
+// handles checked with op=resolve when picking the channels above
+const CANDIDATES = ['JustinGuitar', 'MartyMusic', 'AndyGuitar', 'GuitarZero2Hero', 'LaurenBatemanGuitar', 'PaulDavids', 'Pianote', 'billhiltonpiano', 'PianoVideoLessons', 'LisaWitt', 'SheetMusicBoss', 'drumeo', 'StephenTaylorDrumLessons', '180drums', 'BernadetteTeachesMusic', 'TheUkuleleTeacher', 'cynthialinmusic', 'UkuleleUnderground', 'BanjoBenClark', 'FreeBanjoLessons', 'TrumpetHeroes', 'TrumpetHeadquarters', 'TRUMPETSIZZLE', 'TheTrumpetProf', 'LouisDowdeswell', 'ChristopherBill'];
+
 module.exports = async (req, res) => {
   if (!cors(req, res)) return;
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
@@ -28,7 +31,7 @@ module.exports = async (req, res) => {
   const op = String(qp.op || 'feeds');
   try {
     if (op === 'resolve') {
-      const handles = String(qp.h || '').split(',').map(s => s.trim().replace(/^@/, '')).filter(Boolean).slice(0, 40);
+      const handles = (qp.h ? String(qp.h).split(',') : CANDIDATES).map(s => s.trim().replace(/^@/, '')).filter(Boolean).slice(0, 40);
       const out = await Promise.all(handles.map(resolveHandle));
       res.setHeader('Cache-Control', 'no-store');
       res.status(200).json({ ok: true, channels: out });
