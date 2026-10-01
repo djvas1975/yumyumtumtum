@@ -1,4 +1,4 @@
-// Offline tests for Brush & Glue's Learn music tab: what a lesson is about (crafts/music.js),
+// Offline tests for Artistry's Learn music tab: what a lesson is about (crafts/music.js),
 // the song links, and the lesson finder (api/music.js) with and without a YouTube key, with a fake internet.
 const path = require('path');
 const R = path.join(__dirname, '..');

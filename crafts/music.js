@@ -1,4 +1,4 @@
-/* Brush & Glue "Learn music": instruments, genres, artists, a starter list of songs to learn, and the word
+/* Artistry "Learn music": instruments, genres, artists, a starter list of songs to learn, and the word
    reader that tells which instrument, genre and artist a lesson is about. Used by the app (crafts/index.html)
    and by the tests (node tests/music.test.js). Free and on the phone: no AI service. */
 (function (root) {

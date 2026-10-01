@@ -1,4 +1,4 @@
-/* Brush & Glue sorter: decides Painting or Crafts, the category, and tags from a post's words.
+/* Artistry sorter: decides Painting or Crafts, the category, and tags from a post's words.
    Used by the app (crafts/index.html loads this file) and by the tests (node tests/crafts.test.js).
    Free and on the phone: no AI service. */
 (function (root) {

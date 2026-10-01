@@ -1,4 +1,4 @@
-// Offline tests for Brush & Glue (the crafts app in crafts/): the sorter, the post reader (api/idea.js),
+// Offline tests for Artistry, formerly Brush & Glue (the crafts app in crafts/): the sorter, the post reader (api/idea.js),
 // and the blog finder (api/crafts.js), with a fake internet.
 const path = require('path');
 const R = path.join(__dirname, '..');

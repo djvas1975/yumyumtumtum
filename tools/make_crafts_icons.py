@@ -1,7 +1,10 @@
-"""Draws the Brush & Glue app icons (crafts/icons/). Run: python3 tools/make_crafts_icons.py [preview.png]
+"""Draws Artistry's long-press shortcut icons (crafts/icons/shortcut-*.png): white symbols on a teal circle.
+Run: python3 tools/make_crafts_icons.py            (shortcuts only)
+     python3 tools/make_crafts_icons.py --old preview.png   (also the retired Brush & Glue palette icon, for history)
 
-A white artist's palette with four paint dabs and a paintbrush on a red tile.
-Drawn at 1024px and scaled down so the edges come out smooth.
+The app icon itself comes from Dave's picture: tools/make_artistry_icons.py (since Oct 1, 2026).
+The old icon was a white artist's palette with four paint dabs and a paintbrush on a red tile,
+drawn at 1024px and scaled down so the edges come out smooth.
 """
 import math
 import os
@@ -12,6 +15,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "crafts", "icons")
 N = 1024
 RED_TOP, RED_BOT = (242, 36, 64), (196, 0, 32)
+TEAL = (10, 122, 118, 255)  # from the Artistry icon's background
 
 
 def gradient(size):
@@ -93,7 +97,7 @@ def shortcut(kind, size=96):
     s = size * 4
     im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
-    d.ellipse([0, 0, s - 1, s - 1], fill=(230, 0, 35, 255))
+    d.ellipse([0, 0, s - 1, s - 1], fill=TEAL)
     w = int(s * 0.09)
     if kind == "add":
         d.rounded_rectangle([s * 0.5 - w / 2, s * 0.26, s * 0.5 + w / 2, s * 0.74], radius=w // 2, fill="white")
@@ -119,15 +123,19 @@ def shortcut(kind, size=96):
 
 def main():
     os.makedirs(OUT, exist_ok=True)
-    for sz in (512, 192):
-        tile(sz, True, 0.86).save(os.path.join(OUT, "icon-%d.png" % sz), optimize=True)
-        tile(sz, False, 0.7).save(os.path.join(OUT, "icon-maskable-%d.png" % sz), optimize=True)
-    tile(128, True, 0.86).save(os.path.join(OUT, "logo-128.png"), optimize=True)
-    tile(180, False, 0.8).convert("RGB").save(os.path.join(OUT, "apple-touch-icon.png"), optimize=True)
     shortcut("add").save(os.path.join(OUT, "shortcut-add.png"))
     shortcut("ideas").save(os.path.join(OUT, "shortcut-ideas.png"))
     shortcut("music").save(os.path.join(OUT, "shortcut-music.png"))
-    if len(sys.argv) > 1:
+    if "--old" not in sys.argv:
+        return
+    # the retired Brush & Glue palette icon, written beside this script (not into the app)
+    old = os.path.join(os.path.dirname(os.path.abspath(__file__)), "old-crafts-icons")
+    os.makedirs(old, exist_ok=True)
+    for sz in (512, 192):
+        tile(sz, True, 0.86).save(os.path.join(old, "icon-%d.png" % sz), optimize=True)
+        tile(sz, False, 0.7).save(os.path.join(old, "icon-maskable-%d.png" % sz), optimize=True)
+    args = [x for x in sys.argv[1:] if x != "--old"]
+    if args:
         sheet = Image.new("RGBA", (1100, 560), (255, 255, 255, 255))
         sheet.alpha_composite(tile(512, True, 0.86), (20, 24))
         m = tile(512, False, 0.7)
@@ -135,7 +143,7 @@ def main():
         ImageDraw.Draw(circ).ellipse([0, 0, 511, 511], fill=255)
         m.putalpha(circ)
         sheet.alpha_composite(m, (560, 24))
-        sheet.convert("RGB").save(sys.argv[1])
+        sheet.convert("RGB").save(args[0])
 
 
 if __name__ == "__main__":

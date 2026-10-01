@@ -28,7 +28,7 @@ it automatically. In any other chat, attach this file and say what you want chan
 | Code (public repo, branch `main`) | https://github.com/djvas1975/yumyumtumtum |
 | Recipe reader + Discover service (Vercel, free Hobby plan, auto-deploys from GitHub) | https://yumyumtumtum.vercel.app |
 | claude.ai copy of the app (private, reader and Discover don't work there) | https://claude.ai/artifact/Jm3hSva7uWbKcXmYypsxje |
-| **Brush & Glue**, Dave's painting and crafts app (separate app, same repo and Vercel project; see the end of this file) | https://yumyumtumtum.vercel.app/crafts/ |
+| **Artistry** (was Brush & Glue), the painting, crafts and music-lessons app for Steph (separate app, same repo and Vercel project; see the end of this file) | https://yumyumtumtum.vercel.app/crafts/ |
 
 Dave's recipes live **on his phone** (the browser's IndexedDB). Since v1.4, **Cloud backup** (Me tab)
 copies them automatically to a private Vercel Blob store in his own Vercel account (see "Cloud
@@ -383,7 +383,12 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 ---
 
-# Brush & Glue (the painting and crafts app), built Sept 30, 2026
+# Artistry (formerly Brush & Glue): the painting, crafts and music app, built Sept 30, 2026
+
+**Renamed Artistry on Oct 1, 2026 (v1.2), with a new icon from Dave's picture.** Only the name people see changed: the
+web address (`/crafts/`), the phone's storage (IndexedDB `brushglue`, cache names `bng-`), and the backup format
+(`app:'brushglue'`) keep the old name on purpose, so nothing saved is lost and old backups still restore. The app is
+for Steph (Dave's son's mom); see the Learn music section below.
 
 Dave asked for "an app that stores and categorizes arts and crafts ideas", painting ideas and craft ideas kept
 apart, that learns what he likes, then: "look similar to Pinterest", "sharing like YumYum", "share an Instagram
@@ -394,13 +399,13 @@ had to be set up on GitHub or Vercel.
 |---|---|
 | The app (install from Chrome on Android) | https://yumyumtumtum.vercel.app/crafts/ (served by Vercel, NOT GitHub Pages, so its scope doesn't sit inside YumYum's) |
 | App files | `crafts/index.html` (the whole app), `crafts/cats.js` (the sorter, shared with tests), `crafts/music.js` (Learn music data and lesson reader, shared with api/music.js and tests), `crafts/manifest.webmanifest` (name, icons, Share menu), `crafts/sw.js` (offline; bump `VERSION` when crafts/ changes), `crafts/icons/` |
-| Icons | `tools/make_crafts_icons.py` draws them (white palette with four paint dabs and a brush on a red tile) |
+| Icons | App icon from Dave's picture `tools/artistry-icon-art.jpg` (ukulele, paint palette, leaves, music notes on a teal tile): `python3 tools/make_artistry_icons.py [picture] [preview.png]` finds the tile, fills its corners, and writes icon-512/192, icon-maskable-512/192 (86% on a blurred copy of itself so round and rounded-square launchers keep the ukulele and palette), logo-128, apple-touch-icon. `tools/make_crafts_icons.py` draws the teal long-press shortcut icons (add, ideas, music); `--old` redraws the retired red palette icon into tools/old-crafts-icons/. To change the icon again, attach the new picture and run make_artistry_icons.py with it. |
 | Post reader | `api/idea.js`: `GET /api/idea?url=` -> `{platform, kind, title, caption, image, width, height, author, siteName, link, supplies}`. Instagram/TikTok/YouTube/Facebook use the readers exported from api/recipe.js (`module.exports.readers`); Pinterest uses the pin-info widget JSON; websites use og tags plus a schema.org HowTo supply list. |
 | Blog finder | `api/crafts.js`: `GET /api/crafts?q=&type=painting|craft|both&n=&page=` -> items `{title,url,image,width,height,sourceName,kind}` from 42 WordPress craft/painting blogs (their `/wp-json/wp/v2/posts?search=`). `debug=1` reports each site; `sites=trial` tries sites marked `trial: true`. Titles must mention the search (unless that leaves fewer than 6). Food posts, giveaways, reviews are skipped. |
 | Tests | `node tests/crafts.test.js` (sorter cases, reader with fake Instagram/Pinterest/blog pages, finder), `node tests/music.test.js` (lesson reader, song list, api/music.js with a fake YouTube, with and without a key) |
 | Live-check aliases | `/api/idea/<anything>?url=`, `/api/crafts/<anything>?q=`, `/api/music/<anything>?inst=` (vercel.json rewrites). WebFetch in Claude sessions cached `/api/crafts?...` by path and ignored new query strings, so use a fresh alias path per check. New paths ask Dave to approve the fetch. |
 
-What it does (v1.0):
+What it does (v1.0; v1.1 added Music, v1.2 the Artistry name and icon):
 - Pinterest look: white (or dark) background, 2-5 column masonry of rounded photo pins, text tabs All / Painting / Crafts
   with category chips, red Save buttons, bottom icons Home, Search, Add, Music, Ideas, Boards.
 - Share > Brush & Glue (manifest `share_target`, GET with title/text/url) opens the Save sheet, reads the post, and

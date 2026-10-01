@@ -1,4 +1,4 @@
-// Brush & Glue post reader (the painting and crafts app in crafts/).
+// Artistry (formerly Brush & Glue) post reader (the painting and crafts app in crafts/).
 // GET /api/idea?url=<link>  ->  { ok, platform, finalUrl, title, caption, image, width, height, author, siteName, link, kind, supplies }
 // Add &debug=1 for a trace of what each site answered.
 //

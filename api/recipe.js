@@ -650,5 +650,5 @@ function findObj(node, test, depth) {
 }
 
 module.exports.readRecipe = readRecipe;
-// Brush & Glue (the crafts app, api/idea.js) reuses the social readers.
+// Artistry (the crafts app in crafts/, api/idea.js) reuses the social readers.
 module.exports.readers = { readTikTok, readYouTube, readInstagram, readFacebook };

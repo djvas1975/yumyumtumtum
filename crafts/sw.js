@@ -1,5 +1,5 @@
-// Brush & Glue offline support. Bump VERSION whenever crafts/ files change so phones pick up the update.
-const VERSION = 'bng-20260930-2';
+// Artistry (formerly Brush & Glue) offline support. Bump VERSION whenever crafts/ files change so phones pick up the update.
+const VERSION = 'bng-20261001-1';
 const SHELL = ['./', './index.html', './cats.js', './music.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/logo-128.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

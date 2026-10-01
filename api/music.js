@@ -1,4 +1,4 @@
-// Brush & Glue "Learn music": free lesson videos for piano, guitar, drums, ukulele, banjo, trumpet and more.
+// Artistry "Learn music": free lesson videos for piano, guitar, drums, ukulele, banjo, trumpet and more.
 //
 // GET /api/music?inst=guitar,ukulele        ->  the newest lessons from free teacher channels on YouTube for those instruments
 //                                               (needs YOUTUBE_API_KEY; YouTube's public RSS feeds return 404 for everyone

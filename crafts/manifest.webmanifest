@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Brush & Glue",
-  "short_name": "Brush & Glue",
-  "description": "Save painting and craft ideas from Instagram, TikTok, YouTube, Pinterest and any website.",
+  "name": "Artistry",
+  "short_name": "Artistry",
+  "description": "Save painting and craft ideas and music lessons from Instagram, TikTok, YouTube, Pinterest and any website.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

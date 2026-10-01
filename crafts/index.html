@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Brush &amp; Glue</title>
+<title>Artistry</title>
 <meta name="description" content="Save painting and craft ideas from Instagram, TikTok, YouTube, Pinterest and any website.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)">
@@ -305,7 +305,7 @@ h2.sect{font-size:20px;font-weight:800;margin:26px 4px 8px;letter-spacing:-.01em
 <script>
 (() => {
 'use strict';
-const VERSION = '1.1';
+const VERSION = '1.2';
 const READER_V = 1;
 const Cats = window.Cats;
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
@@ -387,6 +387,7 @@ const DB = {
   open() {
     return new Promise(res => {
       let r;
+      // the storage keeps the old name (the app was Brush & Glue until Oct 1, 2026) so nothing saved is lost
       try { r = indexedDB.open('brushglue', 1); } catch (e) { res(false); return; }
       r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('pins', { keyPath: 'id' }); d.createObjectStore('photos'); d.createObjectStore('kv'); };
       r.onsuccess = () => { this.db = r.result; res(true); };
@@ -744,7 +745,7 @@ function vHome() {
   if (!art.length) {
     h += welcome();
   } else if (!mine.length) {
-    h += `<div class="note">No ${tab === 'craft' ? 'craft' : 'painting'} ideas yet. Share a post to Brush &amp; Glue and it lands here.</div>`;
+    h += `<div class="note">No ${tab === 'craft' ? 'craft' : 'painting'} ideas yet. Share a post to Artistry and it lands here.</div>`;
   } else {
     h += masonry(list, pinCard);
   }
@@ -755,12 +756,12 @@ function vHome() {
   return h;
 }
 function welcome() {
-  const inst = standalone() ? '' : `<div class="note" style="margin:0 0 14px;background:var(--bg)"><b>Install it first</b> so Brush &amp; Glue shows up in the Share menu.<div class="row" style="margin-top:10px">${S.installEvt ? `<button class="btn red sm" data-act="install">Install app</button>` : ''}<span>${S.installEvt ? 'Or in' : 'In'} Chrome, tap the ⋮ menu, then <b>Add to Home screen</b> or <b>Install app</b>.</span></div></div>`;
+  const inst = standalone() ? '' : `<div class="note" style="margin:0 0 14px;background:var(--bg)"><b>Install it first</b> so Artistry shows up in the Share menu.<div class="row" style="margin-top:10px">${S.installEvt ? `<button class="btn red sm" data-act="install">Install app</button>` : ''}<span>${S.installEvt ? 'Or in' : 'In'} Chrome, tap the ⋮ menu, then <b>Add to Home screen</b> or <b>Install app</b>.</span></div></div>`;
   return `<div class="welcome"><h1>Save your first idea</h1>
     ${inst}
     <ol class="steps">
       <li><span>Open a video or post in Instagram, TikTok, YouTube, Facebook or Pinterest.</span></li>
-      <li><span>Tap <b>Share</b>, then pick <b>Brush &amp; Glue</b>. In Instagram, tap <b>Share</b> and then <b>Share to…</b> if you don’t see it.</span></li>
+      <li><span>Tap <b>Share</b>, then pick <b>Artistry</b>. In Instagram, tap <b>Share</b> and then <b>Share to…</b> if you don’t see it.</span></li>
       <li><span>It reads the post and files it under <b>Painting</b> or <b>Crafts</b> for you.</span></li>
     </ol>
     <button class="btn red" data-act="add">${I(IC.plus)}Paste a link instead</button></div>`;
@@ -902,7 +903,7 @@ function vSaved() {
   if (avoid.length) h += `<div class="panel"><h3>Not for me</h3><p class="muted" style="margin:0 0 6px;font-size:14px">Ideas like these show up less. Tap one to take it off.</p><div class="taglist">${avoid.map(a => `<button data-act="unavoid" data-k="${a.k}" data-v="${esc(a.v)}">${esc(a.l)} ✕</button>`).join('')}</div></div>`;
   h += `<h2 class="sect">Backup</h2><div class="panel"><p class="muted" style="margin:0 0 10px;font-size:14px">Your ideas and photos are saved on this phone. Download a backup now and then, or to move to a new phone.</p>
     <div class="row"><button class="btn ink sm" data-act="backup">${I(IC.download)}Download backup</button><button class="btn gray sm" data-act="restore">${I(IC.upload)}Restore a backup</button></div></div>
-    <p class="muted center" style="font-size:12.5px;margin:22px 0">Brush &amp; Glue ${VERSION}</p>`;
+    <p class="muted center" style="font-size:12.5px;margin:22px 0">Artistry ${VERSION}</p>`;
   return h;
 }
 function vBoard(key) {
@@ -1671,7 +1672,7 @@ function resourcesBlock() {
   return `<h2 class="sect">Free places to learn</h2><div class="res">${list.map(r => `<a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name)}</b><small>${esc(r.d)}</small></a>`).join('')}</div>`;
 }
 function keyNote() {
-  return `<div class="note"><b>Want lesson videos right on this page?</b> It takes a free YouTube key, set up once on the app’s server. Until then, tap a song for lessons on YouTube, or share a lesson from the YouTube app to Brush &amp; Glue and it lands here.</div>`;
+  return `<div class="note"><b>Want lesson videos right on this page?</b> It takes a free YouTube key, set up once on the app’s server. Until then, tap a song for lessons on YouTube, or share a lesson from the YouTube app to Artistry and it lands here.</div>`;
 }
 
 // the Music tab
@@ -1997,7 +1998,7 @@ async function backup() {
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'brush-and-glue-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.download = 'artistry-backup-' + new Date().toISOString().slice(0, 10) + '.json';
   document.body.appendChild(a); a.click(); a.remove();
   toast('Backup downloaded (' + plural(S.pins.length, 'idea') + ')');
 }
@@ -2006,8 +2007,8 @@ $('#restoreFile').addEventListener('change', async e => {
   e.target.value = '';
   if (!file) return;
   let d;
-  try { d = JSON.parse(await file.text()); } catch (err) { toast('That file isn’t a Brush & Glue backup.'); return; }
-  if (!d || d.app !== 'brushglue' || !Array.isArray(d.pins)) { toast('That file isn’t a Brush & Glue backup.'); return; }
+  try { d = JSON.parse(await file.text()); } catch (err) { toast('That file isn’t an Artistry backup.'); return; }
+  if (!d || d.app !== 'brushglue' || !Array.isArray(d.pins)) { toast('That file isn’t an Artistry backup.'); return; }
   let added = 0;
   for (const p of d.pins) {
     const cur = S.pins.find(x => x.id === p.id);
@@ -2027,7 +2028,7 @@ $('#restoreFile').addEventListener('change', async e => {
 
 /* ---------- start ---------- */
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); S.installEvt = e; if (['home', 'saved'].includes(S.route.v)) renderRoute(true); });
-window.addEventListener('appinstalled', () => { S.installEvt = null; toast('Installed. Look for Brush & Glue in the Share menu.'); renderRoute(true); });
+window.addEventListener('appinstalled', () => { S.installEvt = null; toast('Installed. Look for Artistry in the Share menu.'); renderRoute(true); });
 
 function loadMusicState(m, merge) {
   if (m.prefs) {

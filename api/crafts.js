@@ -1,4 +1,4 @@
-// Brush & Glue idea finder: painting and craft projects from free how-to blogs.
+// Artistry idea finder: painting and craft projects from free how-to blogs.
 // GET /api/crafts?q=rock+painting&type=painting   ->  matching projects
 // GET /api/crafts?type=craft                        ->  the newest projects
 // Options: type=painting|craft|both (which blogs to ask), sites=a,b (only these), n=6 (per site), page=2 (the next ones),
