@@ -257,10 +257,24 @@
   const has = (T, k) => T.includes(' ' + k + ' ') || T.includes(' ' + k + 's ');
   const LESSON = ['how to play', 'tutorial', 'lesson', 'lessons', 'chords', 'tabs', 'tab', 'strumming', 'learn', 'play along', 'playalong', 'beginner', 'beginners', 'sheet music', 'cover', 'riff', 'scales', 'easy song', 'easy songs', 'practice', 'exercise', 'technique', 'music theory', 'notes', 'melody'];
 
+  // Instruments named inside a channel name ("JustinGuitar", "Pianote", "Drumeo"); "uke" is left out (Luke).
+  const NAME_INST = [['piano', 'piano'], ['guitar', 'guitar'], ['drum', 'drums'], ['ukulele', 'ukulele'], ['banjo', 'banjo'], ['trumpet', 'trumpet'], ['violin', 'violin'], ['fiddle', 'violin'], ['mandolin', 'mandolin'], ['harmonica', 'harmonica']];
+  const squash = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  function fromAuthor(author) {
+    const a = squash(author);
+    if (!a) return { inst: [], teacher: null };
+    const teacher = TEACHERS.find(t => squash(t.name) === a || squash(t.name.replace(/\s*\(.*\)/, '')) === a) || null;
+    const inst = teacher ? teacher.inst.slice() : NAME_INST.filter(([w]) => a.includes(w)).map(([, id]) => id);
+    return { inst: Array.from(new Set(inst)), teacher };
+  }
+
   // What a lesson is about: instruments, genres, artist, level, and whether it looks like music at all.
-  function detect(text) {
+  // `author` (optional) is the channel or account that posted it: a known teacher, or an instrument in its name, counts.
+  function detect(text, author) {
     const T = prep(text);
     const inst = INSTRUMENTS.filter(i => i.kw.some(k => has(T, k))).map(i => i.id);
+    const by = fromAuthor(author);
+    for (const i of by.inst) if (!inst.includes(i) && (by.teacher || !inst.length)) inst.push(i);
     let artist = '';
     for (const n of ARTIST_NAMES) if (T.includes(' ' + n + ' ')) { artist = n; break; }
     const genres = [];
@@ -287,8 +301,8 @@
     if (song) for (const g of song.g) if (!genres.includes(g)) genres.push(g);
     const lessonHits = LESSON.filter(k => has(T, k)).length;
     const level = /\b(advanced|intermediate|hard|difficult|pro level)\b/.test(T) ? 'harder' : /\b(beginner|beginners|easy|simple|first|basic|basics|absolute)\b/.test(T) ? 'easy' : '';
-    const score = inst.length * 2 + lessonHits + (artist || song ? 1 : 0);
-    return { inst, genres, artist: artist ? TITLE_CASE(artist) : (song ? song.a : ''), song: song ? song.t : '', level, score, isMusic: inst.length > 0 && (lessonHits > 0 || !!artist || !!song) };
+    const score = Math.min(inst.length, 2) * 2 + lessonHits + (artist || song ? 1 : 0) + (by.teacher ? 2 : 0);
+    return { inst, genres, artist: artist ? TITLE_CASE(artist) : (song ? song.a : ''), song: song ? song.t : '', level, score, teacher: by.teacher ? by.teacher.name : '', isMusic: inst.length > 0 && (lessonHits > 0 || !!artist || !!song || !!by.teacher) };
   }
 
   // Free places to learn a song, by instrument

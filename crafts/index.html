@@ -1130,7 +1130,7 @@ function suggestFor() {
 }
 function musicGuess() {
   const text = [F.title, F.caption, F.shareText].join('\n');
-  const md = Music.detect(text);
+  const md = Music.detect(text, F.author);
   const art = Cats.classify(text);
   const artTop = Math.max(art.score.painting, art.score.craft);
   return { md, isMusic: md.isMusic && md.score >= 3 && md.score * 1.5 >= artTop };

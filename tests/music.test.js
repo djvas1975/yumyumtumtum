@@ -33,6 +33,13 @@ for (const text of ['Easy fall pumpkin acrylic painting', 'I made a guitar shape
   ok(!M.detect(text).isMusic, 'not a music lesson: "' + text + '"');
 }
 ok(M.detect('Taps on trumpet for beginners').inst[0] === 'trumpet', 'trumpet lesson found');
+// the channel counts: live YouTube check Oct 1, 2026 read "JustinGuitar Beginner Course Grade 1 Introduction" with no description
+const jg = M.detect('JustinGuitar Beginner Course Grade 1 Introduction', 'JustinGuitar');
+ok(jg.isMusic && jg.inst[0] === 'guitar' && jg.teacher === 'JustinGuitar', 'a lesson from a known teacher is music even when the title names no instrument -> ' + J([jg.inst, jg.teacher]));
+ok(M.detect('Beginner Course Grade 1 Introduction', 'Pianote').inst[0] === 'piano', 'a teacher channel gives its instrument');
+ok(M.detect('Easy lesson for beginners', 'GuitarLessonsWithBob').inst[0] === 'guitar', 'an instrument inside a channel name counts');
+ok(!M.detect('Easy song for beginners', 'Luke Combs Fan Page').inst.length, '"uke" inside a name (Luke) is not a ukulele');
+ok(!M.detect('Sunset painting on canvas', 'PaintWithJosh').isMusic, 'a painting channel is not music');
 ok(M.detect('What a Wonderful World ukulele tutorial').song === 'Somewhere Over the Rainbow / What a Wonderful World', 'a medley is found from either song');
 ok(M.detect('lesson', ).isMusic === false && M.detect('').isMusic === false, 'no instrument, not music');
 

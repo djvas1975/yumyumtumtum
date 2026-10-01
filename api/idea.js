@@ -199,7 +199,7 @@ async function selfTest(req, res) {
     try {
       const r = await Promise.race([readIdea(t.url), new Promise((_, rej) => setTimeout(() => rej(new Error('took over 35 s')), 35000))]);
       const s = Cats ? Cats.sortPost({ title: r.title, caption: r.caption, url: r.finalUrl }) : {};
-      const m = Music ? Music.detect(r.title + ' ' + r.caption.slice(0, 300)) : {};
+      const m = Music ? Music.detect(r.title + ' ' + r.caption.slice(0, 300), r.author) : {};
       return { app: t.app, ok: true, ms: Date.now() - t0, platform: r.platform, kind: r.kind, title: r.title.slice(0, 70), caption: r.caption.length, photo: r.image ? hostOf(r.image) : '', author: r.author, files: m.isMusic ? 'music:' + m.inst.join('/') : (s.type ? s.type + ':' + s.category + (s.sure ? '' : '?') : 'asks') };
     } catch (e) { return { app: t.app, ok: false, ms: Date.now() - t0, url: t.url, error: e.message }; }
   }));
