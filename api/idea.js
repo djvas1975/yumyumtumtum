@@ -49,10 +49,16 @@ async function readIdea(url, trace) {
   else if (platform === 'pinterest') return readPin(url, trace);
   else return readPage(url, trace);
   const caption = clean(r.caption) ? String(r.caption).trim() : '';
+  // the readers call every social post a video; photo posts get no play button in the app
+  const where = (r.finalUrl || '') + ' ' + url;
+  let kind = r.kind === 'video' ? 'video' : 'post';
+  if (platform === 'instagram' && !/instagram\.com\/(?:[\w.]+\/)?(reels?|tv)\//i.test(where)) kind = 'post';
+  if (platform === 'tiktok' && /\/photo\//.test(where)) kind = 'post';
+  if (platform === 'facebook' && !/\/(reel|videos?|watch)\b|fb\.watch|[?&]v=\d|\/share\/[rv]\//.test(where)) kind = 'post';
   return {
     platform,
     finalUrl: r.finalUrl || url,
-    kind: r.kind === 'video' ? 'video' : 'post',
+    kind,
     title: tidyTitle(platform === 'youtube' ? r.title : (r.title || firstLine(caption))),
     caption,
     image: r.image || '',

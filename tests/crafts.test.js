@@ -70,6 +70,9 @@ ok(Cats.catLabel('craft', 'yarn') === 'Yarn & crochet' && Cats.catLabel('paintin
 
   const ig = await readIdea('https://www.instagram.com/reel/DPour12345/?igsh=MWx0abc');
   ok(ig.platform === 'instagram' && ig.kind === 'video', 'instagram reel: platform and kind');
+  pages['https://www.instagram.com/p/DPhoto9876/embed/captioned/'] = igHtml;
+  const igPhoto = await readIdea('https://www.instagram.com/p/DPhoto9876/');
+  ok(igPhoto.kind === 'post', 'instagram photo post: no play button -> ' + igPhoto.kind);
   ok(ig.title === 'Galaxy paint pour on an old record', 'instagram reel: title without sparkles -> ' + ig.title);
   ok(ig.author === '@craftymaria' && ig.image === 'https://scontent.cdninstagram.com/v/t51/pour.jpg?stp=dst&x=1', 'instagram reel: creator and photo -> ' + J([ig.author, ig.image]));
   ok(/#paintpouring/.test(ig.caption) && !/comments/.test(ig.caption), 'instagram reel: whole caption, no comment count');
