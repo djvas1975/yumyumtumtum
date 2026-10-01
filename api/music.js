@@ -37,6 +37,24 @@ module.exports = async (req, res) => {
       res.status(200).json({ ok: true, channels: out });
       return;
     }
+    if (op === 'feedtest') {
+      // setup only: how YouTube's feeds answer this server
+      const id = String(qp.id || 'UCBNkm8o5LiEVLxO8w0p2sfQ');
+      const urls = ['https://www.youtube.com/feeds/videos.xml?channel_id=' + id, 'https://www.youtube.com/feeds/videos.xml?playlist_id=UU' + id.slice(2), 'http://www.youtube.com/feeds/videos.xml?channel_id=' + id];
+      const out = [];
+      for (const u of urls) {
+        for (const ua of ['Mozilla/5.0 (compatible; Feedfetcher-Google; +http://www.google.com/feedfetcher.html)', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36']) {
+          try {
+            const r = await fetch(u, { redirect: 'follow', headers: { 'User-Agent': ua, Accept: '*/*' } });
+            const body = await r.text();
+            out.push({ u, ua: ua.slice(0, 30), status: r.status, len: body.length, entries: (body.match(/<entry>/g) || []).length, start: body.slice(0, 120) });
+          } catch (e) { out.push({ u, error: e.message }); }
+        }
+      }
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json({ ok: true, out });
+      return;
+    }
     if (op === 'search') {
       const q = clean(String(qp.q || '')).slice(0, 100);
       if (!q) { res.status(400).json({ ok: false, error: 'Type a song or lesson to look for.' }); return; }
