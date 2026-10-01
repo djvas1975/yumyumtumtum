@@ -88,8 +88,8 @@
     S('foamsheets', 'Craft foam sheets', 'surfaces', ['foam sheet', 'foam sheets', 'craft foam', 'eva foam']),
     // glue, tape & sealers
     S('modpodge', 'Mod Podge', 'glue', ['mod podge', 'modge podge', 'decoupage glue', 'decoupage medium']),
-    S('hotglue', 'Hot glue gun & sticks', 'glue', ['hot glue', 'hot glue gun', 'glue gun', 'glue sticks for glue gun', 'hot glue sticks', 'low temp glue gun']),
-    S('craftglue', 'Craft glue', 'glue', ['craft glue', 'tacky glue', 'aleenes', 'aleene s', 'white glue', 'elmers glue', 'elmer s glue', 'school glue', 'glue', 'pva glue'], { fam: 'glue' }),
+    S('hotglue', 'Hot glue gun & sticks', 'glue', ['hot glue', 'hot glue gun', 'glue gun', 'hot glued', 'hot gluing', 'glue sticks for glue gun', 'hot glue sticks', 'low temp glue gun']),
+    S('craftglue', 'Craft glue', 'glue', ['craft glue', 'tacky glue', 'aleenes', 'aleene s', 'white glue', 'elmers glue', 'elmer s glue', 'school glue', 'glue', 'pva glue', 'glued', 'gluing'], { fam: 'glue' }),
     S('gluestick', 'Glue stick', 'glue', ['glue stick', 'glue sticks'], { basic: true }),
     S('e6000', 'E6000 or strong glue', 'glue', ['e6000', 'e 6000', 'super glue', 'gorilla glue', 'epoxy glue', 'strong glue', 'jewelry glue', 'gem glue']),
     S('woodglue', 'Wood glue', 'glue', ['wood glue', 'titebond']),
@@ -326,9 +326,11 @@
   }
   // Supplies said out loud in a video (TikTok's own speech-to-text). Clear names count anywhere; words that name a
   // supply only sometimes ("jar", "canvas", "rocks") count when they come right after "you'll need", "I'm using",
-  // "grab"… Talk is loose, so a few words never count on their own ("I saw", "oils", "iron").
+  // "grab"…, or when she hears them twice ("I glued… then I glued"). Talk is loose, so a few words never count on their
+  // own ("I saw", "oils", "iron").
   const CUE = / (?:you ll need|you will need|you re gonna need|you re going to need|you need|you re gonna want|i m using|i m gonna use|i m going to use|i used|i use|we re using|we used|grab|grabbed|go ahead and get|supplies|materials|i got) /g;
   const NOT_SAID = new Set(['saw', 'iron', 'oils', 'torch', 'printable', 'printables', 'printer', 'rag', 'rags', 'stones', 'oven']);
+  const times = (T, w) => [' ', 's ', 'es '].reduce((n, end) => n + T.split(' ' + w + end).length - 1, 0);
   function spoken(text, post) {
     post = post || {};
     const T = prep(text);
@@ -345,7 +347,7 @@
     const out = [];
     for (const f of findAll(T, true)) {
       if (NOT_SAID.has(f.w)) continue;
-      if (ONLY_FOR[f.id] ? ONLY_FOR[f.id] !== (post.type + ':' + post.category) : (!near.has(f.id) && isWeak(f, post))) continue;
+      if (ONLY_FOR[f.id] ? ONLY_FOR[f.id] !== (post.type + ':' + post.category) : (!near.has(f.id) && isWeak(f, post) && times(T, f.w) < 2)) continue;
       const s = byId(f.id);
       out.push({ id: f.id, name: s.name, line: s.name, g: s.g, from: 'said', basic: !!s.basic });
     }
