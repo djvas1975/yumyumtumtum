@@ -15,7 +15,8 @@ const SITE_TIMEOUT = 8000;
 // Checked from Vercel Sept 30, 2026. Turned servers away (403) or had no WordPress search: A Beautiful Mess,
 // Angela Anderson Art, Artists Network, Art Projects for Kids, Crafting in the Rain, Emily Seilhamer Art,
 // Happiness is Homemade, Hey Let's Make Stuff, I Heart Crafty Things, Jewelry Making Journal, One Little Project,
-// Resin Obsession, The Art Sherpa, The Blue Bottle Tree, The Kitchen Table Classroom, The Postman's Knock, Tracie Kiernan.
+// Resin Obsession, The Art Sherpa, The Blue Bottle Tree, The Kitchen Table Classroom, The Postman's Knock, Tracie Kiernan,
+// Art is Fun, Empty Easel, Messy Little Monster, Painting Tutorials, Painting with Jane, The Frugal Crafter, Will Kemp Art School.
 // kind: which board a site mostly feeds. topics: only asked when the search mentions these.
 const ROCK = /rock|stone|pebble|mandala|dot/;
 const POUR = /pour|fluid|resin|cells|swipe|dutch/;
@@ -33,23 +34,16 @@ const SOURCES = [
   { id: 'acrylicpouring', name: 'Acrylic Pouring', home: 'https://www.acrylicpouring.com', kind: 'painting', topics: POUR },
   { id: 'salvagesisterandmister', name: 'Salvage Sister and Mister', home: 'https://salvagesisterandmister.com', kind: 'painting', topics: WOOD },
   { id: 'artbarblog', name: 'Art Bar', home: 'https://artbarblog.com', kind: 'painting' },
-  // second round of painting blogs to try
-  { id: 'artisfun', name: 'Art is Fun', home: 'https://www.art-is-fun.com', kind: 'painting', trial: true },
-  { id: 'willkempartschool', name: 'Will Kemp Art School', home: 'https://willkempartschool.com', kind: 'painting', trial: true },
-  { id: 'emptyeasel', name: 'Empty Easel', home: 'https://emptyeasel.com', kind: 'painting', trial: true },
-  { id: 'drawpaintacademy', name: 'Draw Paint Academy', home: 'https://drawpaintacademy.com', kind: 'painting', trial: true },
-  { id: 'watercoloraffair', name: 'Watercolor Affair', home: 'https://www.watercoloraffair.com', kind: 'painting', trial: true },
-  { id: 'makoccino', name: 'Makoccino', home: 'https://www.makoccino.com', kind: 'painting', trial: true },
-  { id: 'doodlewash', name: 'Doodlewash', home: 'https://doodlewash.com', kind: 'painting', trial: true },
-  { id: 'petticoatjunktion', name: 'Petticoat Junktion', home: 'https://www.petticoatjunktion.com', kind: 'painting', trial: true },
-  { id: 'girlinthegarage', name: 'Girl in the Garage', home: 'https://girlinthegarage.net', kind: 'painting', trial: true },
-  { id: 'designsbystudioc', name: 'Designs by Studio C', home: 'https://www.designsbystudioc.com', kind: 'painting', trial: true },
-  { id: 'messylittlemonster', name: 'Messy Little Monster', home: 'https://www.messylittlemonster.com', kind: 'both', trial: true },
-  { id: 'artfulparent', name: 'The Artful Parent', home: 'https://artfulparent.com', kind: 'both', trial: true },
-  { id: 'thefrugalcrafter', name: 'The Frugal Crafter', home: 'https://thefrugalcrafter.com', kind: 'both', trial: true },
-  { id: 'paintingwithjane', name: 'Painting with Jane', home: 'https://paintingwithjane.com', kind: 'painting', trial: true },
-  { id: 'acrylicpaintingschool', name: 'Acrylic Painting School', home: 'https://acrylicpaintingschool.com', kind: 'painting', trial: true },
-  { id: 'paintingtutorials', name: 'Beginner Painting Tutorials', home: 'https://www.paintingtutorials.com', kind: 'painting', trial: true },
+  // painting blogs, second round (answered Sept 30, 2026)
+  { id: 'drawpaintacademy', name: 'Draw Paint Academy', home: 'https://drawpaintacademy.com', kind: 'painting' },
+  { id: 'watercoloraffair', name: 'Watercolor Affair', home: 'https://www.watercoloraffair.com', kind: 'painting' },
+  { id: 'makoccino', name: 'Makoccino', home: 'https://www.makoccino.com', kind: 'painting' },
+  { id: 'doodlewash', name: 'Doodlewash', home: 'https://doodlewash.com', kind: 'painting' },
+  { id: 'petticoatjunktion', name: 'Petticoat Junktion', home: 'https://www.petticoatjunktion.com', kind: 'painting' },
+  { id: 'girlinthegarage', name: 'Girl in the Garage', home: 'https://girlinthegarage.net', kind: 'painting' },
+  { id: 'designsbystudioc', name: 'Designs by Studio C', home: 'https://www.designsbystudioc.com', kind: 'both' },
+  { id: 'artfulparent', name: 'The Artful Parent', home: 'https://artfulparent.com', kind: 'both' },
+  { id: 'acrylicpaintingschool', name: 'Acrylic Painting School', home: 'https://acrylicpaintingschool.com', kind: 'painting' },
   // crafts
   { id: 'craftsbyamanda', name: 'Crafts by Amanda', home: 'https://craftsbyamanda.com', kind: 'both' },
   { id: 'modpodgerocks', name: 'Mod Podge Rocks', home: 'https://modpodgerocksblog.com', kind: 'craft' },
@@ -150,7 +144,7 @@ async function fromWordPress(s, q, n, trace, page) {
   }).filter(x => x.title && x.url && x.image && !SKIP.test(x.title) && !(FOOD.test(x.title) && !NOT_FOOD.test(x.title))).slice(0, n);
 }
 // gift guides, giveaways, shop news: not a project
-const SKIP = /\b(gift guide|giveaway|sale|deals?|shop update|coupon|affiliate|podcast|episode|newsletter|announcement|link party|features?|worksheets?|coloring pages?|life cycle)\b|\?$/i;
+const SKIP = /\b(gift guide|giveaway|sale|deals?|shop update|coupon|affiliate|podcast|episode|newsletter|announcement|link party|features?|worksheets?|coloring pages?|life cycle|review|guest artist|interview|top pours)\b|\?$/i;
 // recipes and food posts that some craft blogs also run
 const FOOD = /\b(recipes?|cake|cakes|cheesecakes?|cookies?|cupcakes?|muffins?|brownies?|bars|dip|soup|chili|casserole|smoothie|cocktail|mocktail|latte|punch|salad|bread|pie|fudge|edible|snack|treats? recipe|dinner|breakfast|appetizer)\b/i;
 const NOT_FOOD = /\b(craft|diy|paint|painted|painting|crochet|knit|sew|svg|cricut|wood|clay|felt|paper|printable|ornament|decor|wreath|box|boxes|toppers?|holders?|coasters?)\b/i;
