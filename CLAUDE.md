@@ -28,6 +28,7 @@ it automatically. In any other chat, attach this file and say what you want chan
 | Code (public repo, branch `main`) | https://github.com/djvas1975/yumyumtumtum |
 | Recipe reader + Discover service (Vercel, free Hobby plan, auto-deploys from GitHub) | https://yumyumtumtum.vercel.app |
 | claude.ai copy of the app (private, reader and Discover don't work there) | https://claude.ai/artifact/Jm3hSva7uWbKcXmYypsxje |
+| **Brush & Glue**, Dave's painting and crafts app (separate app, same repo and Vercel project; see the end of this file) | https://yumyumtumtum.vercel.app/crafts/ |
 
 Dave's recipes live **on his phone** (the browser's IndexedDB). Since v1.4, **Cloud backup** (Me tab)
 copies them automatically to a private Vercel Blob store in his own Vercel account (see "Cloud
@@ -369,3 +370,54 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - "More like this" row on a recipe page.
 - Scale servings and convert units.
 - YouTube cooking videos in Discover.
+
+---
+
+# Brush & Glue (the painting and crafts app), built Sept 30, 2026
+
+Dave asked for "an app that stores and categorizes arts and crafts ideas", painting ideas and craft ideas kept
+apart, that learns what he likes, then: "look similar to Pinterest", "sharing like YumYum", "share an Instagram
+video to the app and it categorizes it". It's a separate installable app that lives in this repo so nothing new
+had to be set up on GitHub or Vercel.
+
+| What | Where |
+|---|---|
+| The app (install from Chrome on Android) | https://yumyumtumtum.vercel.app/crafts/ (served by Vercel, NOT GitHub Pages, so its scope doesn't sit inside YumYum's) |
+| App files | `crafts/index.html` (the whole app), `crafts/cats.js` (the sorter, shared with tests), `crafts/manifest.webmanifest` (name, icons, Share menu), `crafts/sw.js` (offline; bump `VERSION` when crafts/ changes), `crafts/icons/` |
+| Icons | `tools/make_crafts_icons.py` draws them (white palette with four paint dabs and a brush on a red tile) |
+| Post reader | `api/idea.js`: `GET /api/idea?url=` -> `{platform, kind, title, caption, image, width, height, author, siteName, link, supplies}`. Instagram/TikTok/YouTube/Facebook use the readers exported from api/recipe.js (`module.exports.readers`); Pinterest uses the pin-info widget JSON; websites use og tags plus a schema.org HowTo supply list. |
+| Blog finder | `api/crafts.js`: `GET /api/crafts?q=&type=painting|craft|both&n=&page=` -> items `{title,url,image,width,height,sourceName,kind}` from 42 WordPress craft/painting blogs (their `/wp-json/wp/v2/posts?search=`). `debug=1` reports each site; `sites=trial` tries sites marked `trial: true`. Titles must mention the search (unless that leaves fewer than 6). Food posts, giveaways, reviews are skipped. |
+| Tests | `node tests/crafts.test.js` (sorter cases, reader with fake Instagram/Pinterest/blog pages, finder) |
+| Live-check aliases | `/api/idea/<anything>?url=` and `/api/crafts/<anything>?q=` (vercel.json rewrites). WebFetch in Claude sessions cached `/api/crafts?...` by path and ignored new query strings, so use a fresh alias path per check. New paths ask Dave to approve the fetch. |
+
+What it does (v1.0):
+- Pinterest look: white (or dark) background, 2-5 column masonry of rounded photo pins, text tabs All / Painting / Crafts
+  with category chips, red Save buttons, bottom icons Home, Search, Add, Ideas, Boards.
+- Share > Brush & Glue (manifest `share_target`, GET with title/text/url) opens the Save sheet, reads the post, and
+  files it: board (Painting or Crafts), category, tags. When the words don't clearly point one way (`sure` false) it
+  asks "Painting or crafts? Tap one." instead of guessing. Photos are downloaded through `/api/image`, shrunk to
+  736px JPEG and kept in IndexedDB (`brushglue`: stores `pins`, `photos`, `kv`) because Instagram photo links expire.
+- Pin page: big photo, Play here (embeds for YouTube, TikTok `embed/v2`, Instagram `/p/<code>/embed/`, Facebook
+  video plugin), Open in Instagram, favorite, share, Want to try / Made it, board pill, tags, supplies, notes,
+  "More like this" (his own similar pins, then blog projects).
+- Ideas for you: queries built from his top categories and tags plus the season (Oct = halloween/fall), ranked on the
+  phone by taste; topic chips; More ideas loads page 2; ⋯ > Not for me hides it and counts against its tags/category.
+- Learning (free, on the phone, no AI): save 1, favorite +3, made +2, opens +0.5 each (max 4), opening an idea +0.3 to
+  its category, Not for me -2. Shown on Boards > What it's learned, with a removable Not for me list.
+- Boards: All, Painting, Crafts, Favorites, Want to try, Made it, and one per category, with collage covers.
+- Backup: Boards > Download backup (JSON with photos) and Restore. No cloud backup yet.
+- Categories (crafts/cats.js): Painting: Acrylic, Watercolor, Paint pouring, Rock painting, Dot art & mandalas,
+  Painted pumpkins/glass & more, Oil, Gouache, Spray paint, Furniture & signs, Walls & murals, Drawing & sketching,
+  Kids painting. Crafts: Wood, Paper, Resin, Cricut & vinyl, Sewing & fabric, Yarn & crochet, Jewelry & beads, Clay,
+  Candles & soap, Wreaths & florals, Glass & mosaic, Holiday & seasonal, Home decor, Kids crafts, Upcycle & DIY,
+  Diamond art & kits.
+
+Checked live Sept 30, 2026: the reader read a real public Instagram post (caption, creator, cdninstagram photo) through
+the embed page; the finder returned 60+ real projects with photos and sizes for "painted rocks". Not checked live yet:
+sharing from Dave's own phone, a real Instagram reel of a craft, and the installed app's Share menu entry.
+
+Sites that answer (Sept 30, 2026) are listed in api/crafts.js; the ones that turned Vercel away are in its comment.
+An earlier claude.ai artifact version (https://claude.ai/artifact/2CjJ4k1XatYWvESKhAYXVm) is superseded by this app.
+
+Ideas not built yet: cloud backup (could share YumYum's Vercel Blob once it's set up), YouTube/TikTok search in
+Ideas (needs an official API key), reading what's said in TikTok videos for supply lists.
