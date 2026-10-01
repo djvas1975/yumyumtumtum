@@ -118,7 +118,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `api/recipe.js` | Recipe reader: `GET /api/recipe?url=...` (add `&debug=1` for a trace). |
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
-| `api/backup.js` | Cloud backup to the private Vercel Blob store: `POST ?op=save&day=&daily=1`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). |
+| `api/backup.js` | Cloud backup to the private Vercel Blob store: `POST ?op=save&day=&daily=1`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). Artistry uses the same endpoint with `&app=artistry` (see the Artistry cloud backup section). |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
 | `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`) and cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`). Sources are listed at the top of the file. |
@@ -392,6 +392,9 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 # Artistry (formerly Brush & Glue): the painting, crafts and music app, built Sept 30, 2026
 
+**Version 2.2 (Oct 1, 2026).** 2.0 was a full redesign; 2.1 added the practice tools (tuner, metronome, practice timer and
+streak); 2.2 added cloud backup. Supplies are also heard in TikTok videos (what's said, not just the caption).
+
 **Version 2.0 (Oct 1, 2026): a full redesign.** Dave asked for "a mix of Pinterest, Instagram, YouTube, Facebook… take
 the best of each app and make one really cool, useful, fun app for collecting art, crafts, painting, music tutorials and
 more", sharing from social media kept, sorting by kind and **holiday**, learning what "we" like, **supplies gathered for
@@ -406,11 +409,11 @@ son's mom); see the Learn music section below. It's a separate installable app i
 | What | Where |
 |---|---|
 | The app (install from Chrome on Android) | https://yumyumtumtum.vercel.app/crafts/ (served by Vercel, NOT GitHub Pages, so its scope doesn't sit inside YumYum's) |
-| App files | `crafts/index.html` (page shell and all CSS), `crafts/app.js` (all the app's code: views, storage, learning, save sheet, music, backup, updates), `crafts/cats.js` (Painting/Crafts sorter), `crafts/holidays.js` (holidays, dates, countdowns), `crafts/supplies.js` (supply finder and My supplies check; also used by api/idea.js tests), `crafts/music.js` (Learn music data), `crafts/fonts/` (Poppins Medium/Bold, Latin subset, OFL.txt), `crafts/manifest.webmanifest`, `crafts/sw.js` (offline and updates; `VERSION` is stamped by `node tools/stamp_crafts.js`), `crafts/icons/` |
+| App files | `crafts/index.html` (page shell and all CSS), `crafts/app.js` (all the app's code: views, storage, learning, save sheet, music, backup, updates), `crafts/cats.js` (Painting/Crafts sorter), `crafts/holidays.js` (holidays, dates, countdowns), `crafts/supplies.js` (supply finder and My supplies check; also used by api/idea.js tests), `crafts/music.js` (Learn music data), `crafts/practice.js` (tuner pitch finder, tunings, tap tempo, practice log math), `crafts/fonts/` (Poppins Medium/Bold, Latin subset, OFL.txt), `crafts/manifest.webmanifest`, `crafts/sw.js` (offline and updates; `VERSION` is stamped by `node tools/stamp_crafts.js`), `crafts/icons/` |
 | Icons | App icon from Dave's picture `tools/artistry-icon-art.jpg` (ukulele, paint palette, leaves, music notes on a teal tile): `python3 tools/make_artistry_icons.py [picture] [preview.png]` finds the tile, fills its corners, and writes icon-512/192, icon-maskable-512/192 (86% on a blurred copy of itself so round and rounded-square launchers keep the ukulele and palette), logo-128, apple-touch-icon. `tools/make_crafts_icons.py` draws the teal long-press shortcut icons (add, ideas, supplies, music); `--old` redraws the retired red palette icon into tools/old-crafts-icons/. To change the icon again, attach the new picture and run make_artistry_icons.py with it. |
-| Post reader | `api/idea.js`: `GET /api/idea?url=` -> `{platform, kind, title, caption, image, width, height, author, siteName, link, supplies}`. Instagram/TikTok/YouTube/Facebook use the readers exported from api/recipe.js (`module.exports.readers`); Pinterest uses the pin-info widget JSON and then reads the blog the pin links to for its supply list (9 s limit); websites use og tags plus the supply list from a schema.org HowTo card, a Create/WPRM/Tasty card, or the list under a "Supplies"/"Materials"/"What you'll need" heading (`listedSupplies`). |
+| Post reader | `api/idea.js`: `GET /api/idea?url=` -> `{platform, kind, title, caption, image, width, height, author, siteName, link, supplies, speech}`. `speech` = what's said in a TikTok video: TikTok's own speech-to-text captions (`video.subtitleInfos`, WebVTT, English first, the spoken language (ASR) before translations (MT), 6 s limit; `readTikTok(url, trace, {speech:true})` and `vttText` in api/recipe.js). Confirmed live Oct 1, 2026 on @timmsevitz 7224597108744146218 (1,186 chars; cardstock and glue found). Instagram/TikTok/YouTube/Facebook use the readers exported from api/recipe.js (`module.exports.readers`); Pinterest uses the pin-info widget JSON and then reads the blog the pin links to for its supply list (9 s limit); websites use og tags plus the supply list from a schema.org HowTo card, a Create/WPRM/Tasty card, or the list under a "Supplies"/"Materials"/"What you'll need" heading (`listedSupplies`). |
 | Blog finder | `api/crafts.js`: `GET /api/crafts?q=&type=painting|craft|both&n=&page=` -> items `{title,url,image,width,height,sourceName,kind}` from 42 WordPress craft/painting blogs (their `/wp-json/wp/v2/posts?search=`). `debug=1` reports each site; `sites=trial` tries sites marked `trial: true`. Titles must mention the search (unless that leaves fewer than 6). Food posts, giveaways, reviews are skipped. |
-| Tests | `node tests/crafts.test.js` (sorter, reader with fake pages, finder, sw.js stamp), `node tests/music.test.js`, `node tests/holidays.test.js` (dates, countdowns, detection), `node tests/supplies.test.js` (real-style captions, blog lists, check against My supplies) |
+| Tests | `node tests/crafts.test.js` (sorter, reader with fake pages, finder, sw.js stamp), `node tests/music.test.js`, `node tests/holidays.test.js` (dates, countdowns, detection), `node tests/supplies.test.js` (real-style captions, blog lists, spoken supplies, check against My supplies), `node tests/practice.test.js` (pitch finder on made-up and plucked string sounds, tunings, tap tempo, streaks) |
 | Share health check | `/api/idea/<anything>?selftest=1` reads one real public post from TikTok, Instagram, YouTube (youtu.be link), Facebook (a video and a post) and Pinterest on Vercel and reports title, caption length, photo host, supplies found on the page, and how it would be filed. `&only=facebook,pinterest` runs some; `&add=<url>|<url>` adds up to 4 more. |
 | Live-check aliases | `/api/idea/<anything>?url=`, `/api/crafts/<anything>?q=`, `/api/music/<anything>?inst=` (vercel.json rewrites). WebFetch in Claude sessions cached `/api/crafts?...` by path and ignored new query strings, so use a fresh alias path per check. New paths ask Dave to approve the fetch. |
 
@@ -441,8 +444,8 @@ son's mom); see the Learn music section below. It's a separate installable app i
   (topic chips incl. the next holiday) with More ideas.
 - **Project page:** full-bleed photo (double-tap = love), Play here, title, creator (tap for their page), Open in X,
   heart/share/edit, To make / Making / Made it (Made it = confetti + "Add a photo of yours"), **Supplies card** (have X
-  of Y meter, tap a row to mark it on hand, which updates My supplies; "Usually needs" rows when the post lists none;
-  Add N to my list; Edit), holiday pills with countdowns, kind pill, tags, How it's made (caption), notes, Yours (her
+  of Y meter, tap a row to mark it on hand, which updates My supplies; "Said in the video" rows from a TikTok's speech;
+  "Usually needs" rows when nothing lists any; Add N to my list; Edit), holiday pills with countdowns, kind pill, tags, How it's made (caption), notes, Yours (her
   photos), project page link, More like this (her saves, then blogs; holiday-aware).
 - **Holiday page** (`{v:'holiday', k}`): painted-ring header, countdown and date, Ready to make, Your ideas, Ideas for
   the holiday (blog finder, `HOL_Q`). "All" lists every holiday, celebration and season.
@@ -452,7 +455,9 @@ son's mom); see the Learn music section below. It's a separate installable app i
 - **Studio:** profile (name via Edit name), saved/made/songs learned, My supplies, Share Artistry (owner only), holiday
   highlight circles, tabs Boards (Everything, Painting, Crafts, Music, Favorites, Want to make, Making now, Made it,
   Ready to make, plus each kind) / Made (3-column grid of her photos) / Taste (lean, favorite kinds, holidays, creators,
-  tags, music lately, Not for me), install card, Backup/Restore, version line (5 taps = owner switch).
+  tags, music lately, Not for me), install card, Cloud backup card and Backup file card, version line (5 taps = owner switch).
+- **What they said** (TikToks): a section on the project page with the transcript; older TikToks get "Listen to the video for
+  supplies" in the ⋯ menu (`listenForSupplies`, sets `speechChecked`). Pins keep `speech`. Search looks in it too.
 - **Save sheet** (Share menu or +): reads the post, picks the board (Painting/Crafts/Music) and kind (8 shown, More…),
   **Holiday or season** chips (found ones on, next holidays offered), "Found 5 supplies · You have 2 of 5", tags, notes.
   Saving an Explore idea also reads its blog page in the background for the supply list.
@@ -478,7 +483,10 @@ son's mom); see the Learn music section below. It's a separate installable app i
 - Supplies (crafts/supplies.js): ~150 supplies in 12 store sections with keywords (longest match wins), `fam` for
   stand-ins (any canvas), `basic` for things most homes have, `LIKELY` usual supplies per kind, `listed()` reads lists
   under Supplies/Materials/You'll need headings (bullets, one-line lists, amounts, links and colors in parentheses
-  handled), `gather()` = list + things named in the post + usual ones when fewer than 2, `check()` against My supplies.
+  handled), `gather()` = list + things named in the post + said in the video (`spoken()`) + usual ones when fewer than 2,
+  `check()` against My supplies. `spoken()`: clear names anywhere; weak words ("jar", "canvas") only within ~110
+  characters after "you'll need", "I'm using", "grab"… or when said twice; never "saw", "iron", "oils", "torch".
+  "glued"/"gluing" count as glue, "hot glued" as a hot glue gun.
 
 Checked live Sept 30, 2026: the reader read a real public Instagram post through the embed page; the finder returned
 60+ real projects for "painted rocks". Oct 1, 2026: the share health check read a real TikTok, Instagram, YouTube,
@@ -487,18 +495,57 @@ Facebook (video and post) and Pinterest post, all with photos. Not checked yet: 
 Sites that answer (Sept 30, 2026) are listed in api/crafts.js; the ones that turned Vercel away are in its comment.
 An earlier claude.ai artifact version (https://claude.ai/artifact/2CjJ4k1XatYWvESKhAYXVm) is superseded by this app.
 
-Ideas not built yet: cloud backup (could share YumYum's Vercel Blob once it's set up), YouTube/TikTok search in
-Ideas (needs an official API key), reading what's said in TikTok videos for supply lists, store prices for the
-shopping list.
+Ideas not built yet: YouTube/TikTok search in Ideas (needs an official API key), store prices for the shopping list,
+a speed trainer on the metronome (speeds up every few bars).
+
+## Practice tools (v2.1, Oct 1, 2026)
+- Music tab top: practice card (goal ring that fills plum and closes as a painted ring at the goal, "🔥 N days in a row",
+  this week, 7 day bars) and Practice / Metronome / Tuner tiles. Home shows a Practice circle with the streak.
+- **Tuner** (`{v:'tuner'}`): YIN pitch finder in crafts/practice.js on a 4096-sample mic buffer (halved at 44.1/48 kHz),
+  ~14 readings a second, median of the last 5. Tunings: guitar, drop D, ukulele GCEA, low G uke, banjo open G (gDGBD),
+  bass, mandolin, violin, B♭ trumpet (shows written notes, = heard + 2 half steps), any note. Auto string or tap to lock
+  (plays the note for 2 s and ignores the mic meanwhile). "N cents high. Loosen a little", buzz when in tune. Listens
+  only while the page is open and visible; stops on leaving. Tested: test tones within 0.25 cents; Playwright fake mic
+  (111 Hz) read "A, 16 cents high".
+- **Metronome** (`{v:'metronome'}`): Web Audio clicks scheduled 0.12 s ahead (65 s ahead when the app is hidden, since
+  Chrome slows timers; rescheduled on return), 30-250 BPM, tap the beat, beats 2/3/4/6, clicks per beat 1-4, louder
+  first beat, beat lights. Keeps going on other pages with a floating bar (`#prpill`) that can stop it.
+- **Practice** (`{v:'practice'}`): timer with pause (kept in kv `practice.run`, so it survives closing the app), what
+  she's playing and working on, Done/Don't count, daily goal (5-60 min), history by day with delete + undo, Add time
+  by hand. Counted automatically: lesson time while a video plays (`flushLesson`, whole minutes, on stop or leaving the
+  app) and metronome time (1+ min) unless the timer is running. A day counts for the streak with 1+ minute.
+- kv `practice` = {sessions:[{id,t,mins,inst,what,src}], goal, run, met, tun, inst}; backups include sessions and goal.
+  Screen stays on (Wake Lock) while the tuner or metronome runs or the timer page is open. `?go=practice|metronome|tuner`.
+
+## Artistry cloud backup (v2.2, Oct 1, 2026)
+- Same private Vercel Blob store and endpoint as YumYum, with `&app=artistry`: folders `backup/a/<first 32 hex of
+  sha256("art:"+code)>/` (latest.json, days/, photos/), its own people list `backup/_artistry.json` (max 10), codes
+  `ART-XXXX-XXXX-XXXX-XXXX`, and it only accepts `app:'brushglue'` backups. YumYum's `u/` folders, `yyt:` hashes and
+  `_people.json` are unchanged.
+- Phone (crafts/app.js, "cloud backup" block): localStorage `art-cloud-v1` {on,key,last,lastDay,lastRev,lastCount,err,sent}
+  and `art-rev` (bumped by `savePin` and `kvSet`, except kv ideas/mfeed/mpicks/owner). Backs up 90 s after a change, at
+  most every 30 minutes (10 when she leaves the app), 20 s after opening if something changed. Photos (`<pinId>` and
+  Made-it `<pinId>:m<time>`, sent as ids with `:` -> `_`) go up once each; the backup lists them in `photoRefs`.
+  `speech` is dropped if a backup passes 3.8 MB. Automatic backups stop if the phone has under half the ideas of the
+  last one. Restore from cloud: code -> Latest or a day -> `restoreData` (shared with the file restore; adds, never
+  deletes) -> photos -> the phone keeps backing up to the same code.
+- **Needs Dave's one-time setup** (same as YumYum's): Vercel > yumyumtumtum project > Storage > Create > Blob > Private,
+  connected to the project, then redeploy. Until then the app says "Waiting on Dave to set up the cloud storage" and
+  starts by itself afterwards. Shares the Hobby limits with YumYum (1 GB, 2,000 advanced operations a month; each photo
+  is one).
+- Tested offline end to end (Playwright + the real api/backup.js on a pretend store, scratchpad cloud_ui.py): waiting
+  state, first backup with 3 photos + a Made-it photo, second backup sends no photos again, wrong code, restore on a
+  fresh phone with photos, practice log and supplies. **Not yet tested against the real Vercel store.**
 
 ## Changing Artistry (the routine) and how updates reach Steph's phone
 1. Edit files in `crafts/` (most changes are in `crafts/app.js` and the CSS in `crafts/index.html`; server parts in
    `api/idea.js`, `api/crafts.js`, `api/music.js`).
 2. Run `node tools/stamp_crafts.js` (sets `crafts/sw.js` VERSION from a hash of the app's files, and fingerprints the
    icon addresses in the manifest so a new icon reaches installed phones).
-3. Test: `node tests/crafts.test.js && node tests/music.test.js && node tests/holidays.test.js && node tests/supplies.test.js`
+3. Test: `node tests/crafts.test.js && node tests/music.test.js && node tests/holidays.test.js && node tests/supplies.test.js && node tests/practice.test.js`
    (crafts.test fails if step 2 was skipped), plus the YumYum tests if api/recipe.js or lib/ changed. Bump
-   `const VERSION = '2.x'` in crafts/app.js for visible changes. For a screen check, serve the repo folder, open
+   `const VERSION = '2.x'` in crafts/app.js for visible changes (2.2 now). If api/idea.js answers change, bump `READER_V`
+   in crafts/app.js (3 now): Vercel caches /api/idea answers for a day. For a screen check, serve the repo folder, open
    /crafts/ in Playwright at 390x844 and route `**/api/**` to fakes (the reader features need https, so the test copy
    replaces `location.protocol === 'https:'` in app.js with `true`).
 4. Commit as djvas1975 and push to `main`; Vercel deploys in about a minute.
@@ -506,7 +553,7 @@ How phones get it (tested Oct 1, 2026, Playwright with a real service worker, ag
 service worker loads the app's files from the internet first (saved copy only offline or after 4 s), so every open
 shows the newest version. If the app sits open in the background, coming back to it after 10+ minutes checks for a new
 sw.js; the new version takes over and the page reloads itself (`appUpdated`: right away if no sheet is open, no lesson
-playing and nothing typed; otherwise a toast "Artistry has an update · Reload", or the reload happens when she leaves
+playing, no metronome or tuner on, and nothing typed; otherwise a toast "Artistry has an update · Reload", or the reload happens when she leaves
 the app). Her saved ideas live in IndexedDB on her phone and are never touched by updates. The home-screen name and
 icon are Chrome's (manifest updates, up to about a day).
 
@@ -551,4 +598,4 @@ never in the repo. Free quota: 10,000 units a day; a search costs 100, a channel
 - Checked offline with Playwright (fake API, both modes, light and dark, 390 px). Not checked yet: the live API with
   a real key, and Steph's phone.
 
-Ideas not built yet for music: a practice log/streak, YouTube Shorts filter, a metronome.
+Ideas not built yet for music: YouTube Shorts filter, a metronome speed trainer, chord diagrams.
