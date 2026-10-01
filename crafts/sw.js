@@ -1,7 +1,7 @@
 // Artistry (formerly Brush & Glue) offline support.
 // VERSION is stamped by `node tools/stamp_crafts.js` from the app's files (tests fail if it's stale), so every change
 // gives phones a new service worker, and an open app reloads itself into the new version (see appUpdated in app.js).
-const VERSION = 'bng-9a8951fcd471';
+const VERSION = 'bng-5c82ba75770f';
 const SHELL = ['./', './index.html', './app.js', './cats.js', './music.js', './holidays.js', './supplies.js', './fonts/poppins-medium.woff', './fonts/poppins-bold.woff', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/logo-128.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
