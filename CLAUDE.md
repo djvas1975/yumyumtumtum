@@ -431,3 +431,24 @@ An earlier claude.ai artifact version (https://claude.ai/artifact/2CjJ4k1XatYWvE
 
 Ideas not built yet: cloud backup (could share YumYum's Vercel Blob once it's set up), YouTube/TikTok search in
 Ideas (needs an official API key), reading what's said in TikTok videos for supply lists.
+
+## Learn Music tab: IN PROGRESS (paused Sept 30, 2026, 6 pm)
+Asked for: a Music tab of its own for an amateur player of piano, guitar, drums, ukulele, banjo and trumpet who learns
+from YouTube tutorials. Favorite genres: alternative, rock, classical, pop, rap, classic rock, oldies, Motown,
+country, bluegrass. Recommend from her likes and learn what she's into lately.
+Done so far (not wired into the app yet):
+- `crafts/music.js`: instruments, genres, ~400 artist-to-genre names, 147 songs to learn (title, artist, genres,
+  level, best instruments), `detect(text)` (instrument, genres, artist, song, level, isMusic), `songLinks()` (YouTube
+  search, Ultimate Guitar, Songsterr, MuseScore, IMSLP).
+- `api/music.js`: newest lessons from free teacher channels via YouTube's public RSS feeds (no key); `op=search`
+  uses a YouTube Data API key if `YOUTUBE_API_KEY` is set in Vercel, else searches the feeds; `op=resolve` (setup
+  only) looks up channel ids from @handles. `CHANNELS` is still EMPTY: the last lookup (`/api/music/r3?op=resolve&debug=1`)
+  is waiting on a WebFetch approval. Handles that exist (r2 check): JustinGuitar, MartyMusic, AndyGuitar,
+  GuitarZero2Hero, PaulDavids, PianoVideoLessons, LisaWitt, SheetMusicBoss, 180drums, BernadetteTeachesMusic,
+  TheUkuleleTeacher, cynthialinmusic, UkuleleUnderground, FreeBanjoLessons, TrumpetHeroes, TrumpetHeadquarters,
+  TRUMPETSIZZLE, TheTrumpetProf, LouisDowdeswell. Not found: Pianote, billhiltonpiano, drumeo,
+  StephenTaylorDrumLessons, BanjoBenClark, ChristopherBill, LaurenBatemanGuitar (r3 tries other spellings).
+Next: fill CHANNELS with checked ids, add the Music tab to crafts/index.html (6th bottom icon; pins with type
+'music' kept out of the Painting/Crafts views; video page with the YouTube player, speed 0.5/0.75/1x and A-B loop;
+Songs to learn by genre; Picked for you ranked by a taste profile that weighs the last two weeks most; settings
+for instruments, genres, level), let the Save sheet file music links under Music, tests, publish, check live.
