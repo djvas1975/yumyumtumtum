@@ -3,6 +3,7 @@
 const path = require('path');
 const R = path.join(__dirname, '..');
 const Cats = require(path.join(R, 'crafts/cats.js'));
+const Sup = require(path.join(R, 'crafts/supplies.js'));
 
 let fails = 0;
 const ok = (cond, msg) => { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!cond) fails++; };
@@ -81,6 +82,22 @@ ok(Cats.catLabel('craft', 'yarn') === 'Yarn & crochet' && Cats.catLabel('paintin
   ok(/#paintpouring/.test(ig.caption) && !/comments/.test(ig.caption), 'instagram reel: whole caption, no comment count');
   const igSort = Cats.sortPost({ title: ig.title, caption: ig.caption, url: ig.finalUrl });
   ok(igSort.type === 'painting' && igSort.category === 'pour' && igSort.sure, 'instagram reel is filed under Painting > Paint pouring -> ' + J(igSort));
+
+  // TikTok: caption from the page data, and what's said from TikTok's own speech-to-text file
+  const ttData = { __DEFAULT_SCOPE__: { 'webapp.video-detail': { itemInfo: { itemStruct: { desc: 'Ghost jars for Halloween 👻 #halloweencrafts #dollartree', author: { uniqueId: 'craftymaria' },
+    video: { cover: 'https://p16-sign.tiktokcdn-us.com/cover.jpg', subtitleInfos: [
+      { LanguageCodeName: 'spa-ES', Format: 'webvtt', Source: 'MT', Url: 'https://v16.tiktokcdn-us.com/sub-es.vtt' },
+      { LanguageCodeName: 'eng-US', Format: 'webvtt', Source: 'ASR', Url: 'https://v16.tiktokcdn-us.com/sub-en.vtt' }] } } } } } };
+  pages['https://www.tiktok.com/@craftymaria/video/7400000000000000001'] = '<html><script id="__UNIVERSAL_DATA_FOR_REHYDRATION__" type="application/json">' + JSON.stringify(ttData) + '</script></html>';
+  pages['https://v16.tiktokcdn-us.com/sub-en.vtt'] = 'WEBVTT\n\n1\n00:00:00.000 --> 00:00:02.000\nSo you&#39;ll need a mason jar,\n\n2\n00:00:02.000 --> 00:00:04.500\n<c>some white acrylic paint</c>\n\n3\n00:00:04.500 --> 00:00:06.000\nsome white acrylic paint\n\n4\n00:00:06.000 --> 00:00:08.000\nand a black paint pen.\n';
+  const tt = await readIdea('https://www.tiktok.com/@craftymaria/video/7400000000000000001?_r=1');
+  ok(tt.platform === 'tiktok' && tt.kind === 'video' && tt.author === '@craftymaria' && /^Ghost jars/.test(tt.title), 'tiktok: title, creator and kind -> ' + J([tt.title, tt.author, tt.kind]));
+  ok(tt.speech === 'So you\'ll need a mason jar, some white acrylic paint and a black paint pen.', 'tiktok: what’s said, English over a translation, timings and repeats dropped -> ' + J(tt.speech));
+  const ttSup = Sup.gather({ title: tt.title, caption: tt.caption, speech: tt.speech, type: 'craft', category: 'upcycle' });
+  ok(['acrylic', 'paintpens'].every(id => ttSup.some(x => x.id === id && x.from === 'said')), 'tiktok: supplies heard in the video -> ' + J(ttSup.map(x => x.name + ':' + x.from)));
+  delete pages['https://v16.tiktokcdn-us.com/sub-en.vtt'];
+  const tt2 = await readIdea('https://www.tiktok.com/@craftymaria/video/7400000000000000001');
+  ok(tt2.speech === '' && /^Ghost jars/.test(tt2.title), 'tiktok: still saves when the speech file can’t be read');
 
   const pin = await readIdea('https://www.pinterest.com/pin/998877665544/');
   ok(pin.platform === 'pinterest' && pin.title === 'Mason Jar Halloween Lanterns' && pin.width === 736 && pin.height === 1104, 'pinterest: title and photo size -> ' + J([pin.title, pin.width, pin.height]));

@@ -1,5 +1,6 @@
 // Artistry (formerly Brush & Glue) post reader (the painting and crafts app in crafts/).
-// GET /api/idea?url=<link>  ->  { ok, platform, finalUrl, title, caption, image, width, height, author, siteName, link, kind, supplies }
+// GET /api/idea?url=<link>  ->  { ok, platform, finalUrl, title, caption, image, width, height, author, siteName, link, kind, supplies, speech }
+// speech = what's said in a TikTok video (TikTok's own speech-to-text), for the supply finder; '' for everything else.
 // Add &debug=1 for a trace of what each site answered.
 //
 // Instagram, TikTok, YouTube and Facebook use YumYum's readers (api/recipe.js), which get the
@@ -43,7 +44,7 @@ function platformOf(url) {
 async function readIdea(url, trace) {
   const platform = platformOf(url);
   let r;
-  if (platform === 'tiktok') r = await readers.readTikTok(url, trace);
+  if (platform === 'tiktok') r = await readers.readTikTok(url, trace, { speech: true });
   else if (platform === 'instagram') r = await readers.readInstagram(url, trace);
   else if (platform === 'youtube') r = await readers.readYouTube(url, trace);
   else if (platform === 'facebook') r = await readers.readFacebook(url, trace);
@@ -67,7 +68,8 @@ async function readIdea(url, trace) {
     author: r.author || '',
     siteName: r.siteName || '',
     link: '',
-    supplies: []
+    supplies: [],
+    speech: r.speech || ''
   };
 }
 
@@ -231,15 +233,15 @@ async function selfTest(req, res) {
   const only = String(req.query.only || '').split(',').filter(Boolean);
   const extra = String(req.query.add || '').split('|').map(s => s.trim()).filter(u => u && !badUrl(u)).slice(0, 4).map(url => ({ app: platformOf(url), url }));
   const list = SELFTEST.concat(extra).filter(t => !only.length || only.includes(t.app));
-  let Cats = null, Music = null;
-  try { Cats = require('../crafts/cats.js'); Music = require('../crafts/music.js'); } catch (e) {}
+  let Cats = null, Music = null, Sup = null;
+  try { Cats = require('../crafts/cats.js'); Music = require('../crafts/music.js'); Sup = require('../crafts/supplies.js'); } catch (e) {}
   const out = await Promise.all(list.map(async t => {
     const t0 = Date.now();
     try {
       const r = await Promise.race([readIdea(t.url), new Promise((_, rej) => setTimeout(() => rej(new Error('took over 35 s')), 35000))]);
       const s = Cats ? Cats.sortPost({ title: r.title, caption: r.caption, url: r.finalUrl }) : {};
       const m = Music ? Music.detect(r.title + ' ' + r.caption.slice(0, 300), r.author) : {};
-      return { app: t.app, ok: true, ms: Date.now() - t0, platform: r.platform, kind: r.kind, title: r.title.slice(0, 70), caption: r.caption.length, photo: r.image ? hostOf(r.image) : '', author: r.author, pageSupplies: (r.supplies || []).length, files: m.isMusic ? 'music:' + m.inst.join('/') : (s.type ? s.type + ':' + s.category + (s.sure ? '' : '?') : 'asks') };
+      return { app: t.app, ok: true, ms: Date.now() - t0, platform: r.platform, kind: r.kind, title: r.title.slice(0, 70), caption: r.caption.length, photo: r.image ? hostOf(r.image) : '', author: r.author, pageSupplies: (r.supplies || []).length, speech: (r.speech || '').length, heard: Sup && r.speech ? Sup.spoken(r.speech, { title: r.title, type: s.type, category: s.category }).map(x => x.name) : [], files: m.isMusic ? 'music:' + m.inst.join('/') : (s.type ? s.type + ':' + s.category + (s.sure ? '' : '?') : 'asks') };
     } catch (e) { return { app: t.app, ok: false, ms: Date.now() - t0, url: t.url, error: e.message }; }
   }));
   res.setHeader('Cache-Control', 'no-store');

@@ -53,6 +53,17 @@ ok(!ids(wreath).includes('pumpkin') && ids(S.gather({ title: 'Painted pumpkins',
 const noise = S.gather({ title: 'Wrought iron fence painting', type: 'painting', category: 'acrylic', caption: 'Painted this wrought iron gate scene on a canvas board with acrylics' });
 ok(!ids(noise).includes('heatpress'), '"iron" in a sentence is not a heat press -> ' + J(names(noise)));
 
+// said out loud in the video (TikTok's speech-to-text)
+const talk = 'hey guys so today we are making these cute little ghost jars for halloween so you will need a mason jar some white acrylic paint a foam brush and a black paint pen I saw this idea on pinterest and I just had to try it then I used a little bit of mod podge on the top and I grabbed some tea lights';
+const heard = S.spoken(talk, { title: 'Ghost luminaries', type: 'craft', category: 'upcycle' });
+ok(J(ids(heard)) === J(['jar', 'acrylic', 'foambrush', 'paintpens', 'modpodge', 'lights']) && heard.every(x => x.from === 'said'), 'supplies said in a video, in the order said, "I saw" is not a saw -> ' + J(names(heard)));
+ok(S.spoken('look at all these rocks and the canvas behind me, I love fall', { title: 'My craft room tour', type: 'craft', category: 'other' }).length === 0, 'weak words in chit-chat ("rocks", "canvas") don’t count');
+ok(J(ids(S.spoken('for this one you’re gonna need some smooth rocks and a canvas and an iron', { title: 'Kindness rocks', type: 'painting', category: 'rock' }))) === J(['rocks', 'canvas']), 'weak words right after "you’re gonna need" count, "iron" never does');
+const fromTalk = S.gather({ title: 'Ghost luminaries', caption: 'so cute 👻 #halloween #craft', speech: talk, type: 'craft', category: 'upcycle' });
+ok(fromTalk.some(x => x.from === 'said') && !fromTalk.some(x => x.from === 'likely'), 'a caption with no list plus talk in the video: supplies from the talk, no guesses -> ' + J(fromTalk.map(x => x.name + ':' + x.from)));
+const both = S.gather({ title: 'Sunset', type: 'painting', category: 'acrylic', caption: 'Supplies:\n- acrylic paint\n- 11x14 canvas', speech: 'I m using acrylic paint and a palette knife today' });
+ok(J(both.map(x => x.id + ':' + x.from)) === J(['acrylic:list', 'canvas:list', 'paletteknife:said']), 'the written list first, then what was said that it left out -> ' + J(both.map(x => x.id + ':' + x.from)));
+
 // usually needs, when a post says nothing
 const water = S.gather({ title: 'Watercolor sunflowers', caption: '', type: 'painting', category: 'watercolor' });
 ok(J(ids(water)) === J(['watercolor', 'wcpaper', 'brushes']) && water.every(x => x.from === 'likely'), 'usual supplies for watercolor -> ' + J(names(water)));

@@ -317,10 +317,39 @@
     }
     // named in the title or caption even without a list ("acrylics on a 5x7 canvas board")
     for (const m of findAll((post.title || '') + '\n' + (post.caption || ''), true)) if (!ids.has(m.id) && !isWeak(m, post)) add(m.id, byId(m.id).name, 'post');
+    // said out loud in the video (TikTok's speech-to-text)
+    for (const it of spoken(post.speech, post)) add(it.id, it.name, 'said');
     if (out.filter(x => !x.basic).length < 2) {
       for (const id of LIKELY[(post.type || '') + ':' + (post.category || '')] || []) add(id, byId(id).name, 'likely');
     }
     return out.slice(0, 30);
+  }
+  // Supplies said out loud in a video (TikTok's own speech-to-text). Clear names count anywhere; words that name a
+  // supply only sometimes ("jar", "canvas", "rocks") count when they come right after "you'll need", "I'm using",
+  // "grab"… Talk is loose, so a few words never count on their own ("I saw", "oils", "iron").
+  const CUE = / (?:you ll need|you will need|you re gonna need|you re going to need|you need|you re gonna want|i m using|i m gonna use|i m going to use|i used|i use|we re using|we used|grab|grabbed|go ahead and get|supplies|materials|i got) /g;
+  const NOT_SAID = new Set(['saw', 'iron', 'oils', 'torch', 'printable', 'printables', 'printer', 'rag', 'rags', 'stones', 'oven']);
+  function spoken(text, post) {
+    post = post || {};
+    const T = prep(text);
+    if (T.trim().length < 3) return [];
+    const near = new Set();
+    let m;
+    CUE.lastIndex = 0;
+    while ((m = CUE.exec(T))) {
+      let end = Math.min(T.length, m.index + m[0].length + 110);
+      while (end < T.length && T[end] !== ' ') end++;
+      for (const id of findAll(T.slice(m.index, end + 1))) near.add(id);
+      CUE.lastIndex = m.index + m[0].length - 1;
+    }
+    const out = [];
+    for (const f of findAll(T, true)) {
+      if (NOT_SAID.has(f.w)) continue;
+      if (ONLY_FOR[f.id] ? ONLY_FOR[f.id] !== (post.type + ':' + post.category) : (!near.has(f.id) && isWeak(f, post))) continue;
+      const s = byId(f.id);
+      out.push({ id: f.id, name: s.name, line: s.name, g: s.g, from: 'said', basic: !!s.basic });
+    }
+    return out.slice(0, 15);
   }
   // words that name a supply only sometimes: "iron" (heat press) in "wrought iron", "wax" in "wax paper"…
   const WEAK = new Set(['heatpress', 'oven', 'printer', 'pins', 'frame', 'tape', 'thread', 'floralwire', 'glass', 'jar', 'mug', 'pumpkin', 'blank', 'rocks', 'wood', 'wax', 'molds', 'hoop', 'drill', 'saw', 'elastic', 'twine', 'fragrance', 'buttons', 'lights', 'faux', 'beads', 'sponge', 'cups', 'canvas', 'fabric', 'stain', 'craftglue', 'palette']);
@@ -359,7 +388,7 @@
   // Common supplies to tap on the My supplies page, by store section
   const COMMON = ['acrylic', 'watercolor', 'paintpens', 'spraypaint', 'chalkpaint', 'markers', 'glitter', 'pourmedium', 'brushes', 'foambrush', 'sponge', 'dotting', 'stencils', 'paletteknife', 'easel', 'canvas', 'wcpaper', 'sketchbook', 'cardstock', 'rocks', 'woodslice', 'jar', 'pot', 'modpodge', 'hotglue', 'craftglue', 'e6000', 'paintertape', 'sealer', 'craftknife', 'cricut', 'vinyl', 'htv', 'transfertape', 'weeding', 'heatpress', 'yarn', 'crochethook', 'felt', 'fabric', 'floss', 'hoop', 'sewingmachine', 'wreathform', 'faux', 'ribbon', 'burlap', 'floralwire', 'twine', 'lights', 'wood', 'sandpaper', 'woodburner', 'drill', 'resin', 'molds', 'uvresin', 'beads', 'cord', 'findings', 'polymer', 'airdry', 'claytools', 'wax', 'wicks', 'fragrance', 'soapbase', 'pompoms', 'pipecleaners', 'googly', 'rhinestones'];
 
-  const API = { GROUPS, SUPPLIES, LIKELY, COMMON, byId, groupOf, groupInfo, lookup, findAll, listed, cleanLine, gather, check, prep };
+  const API = { GROUPS, SUPPLIES, LIKELY, COMMON, byId, groupOf, groupInfo, lookup, findAll, listed, cleanLine, gather, spoken, check, prep };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.Supplies = API;
 })(this);

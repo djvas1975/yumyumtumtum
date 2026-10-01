@@ -4,7 +4,7 @@
 (() => {
 'use strict';
 const VERSION = '2.0';
-const READER_V = 2;
+const READER_V = 3;
 const Cats = window.Cats, Hol = window.Holidays, Sup = window.Supplies;
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const API = (LOCAL || /(^|\.)vercel\.app$/.test(location.hostname)) ? '' : 'https://yumyumtumtum.vercel.app';
@@ -222,7 +222,7 @@ document.addEventListener('error', e => {
 const isArt = p => p && p.type !== 'music';
 function needsOf(p) {
   if (!isArt(p)) return [];
-  if (!Array.isArray(p.needs)) p.needs = Sup.gather({ title: p.title, caption: p.caption, supplies: p.supplies, type: p.type, category: p.category });
+  if (!Array.isArray(p.needs)) p.needs = Sup.gather({ title: p.title, caption: p.caption, supplies: p.supplies, speech: p.speech, type: p.type, category: p.category });
   return p.needs;
 }
 const stashSize = () => S.stash.have.length + S.stash.custom.length;
@@ -708,7 +708,7 @@ function exploreHome() {
 function searchResults() {
   const q = S.search.q.trim();
   const words = q.toLowerCase().replace(/^#/, '').split(/\s+/).filter(Boolean);
-  const hay = p => [p.title, p.caption, p.notes, (p.tags || []).join(' '), needsOf(p).map(x => x.name + ' ' + (x.line || '')).join(' '), isArt(p) ? Cats.catLabel(p.type, p.category) : 'music lesson song ' + (p.artist || '') + ' ' + (p.insts || []).join(' '), TYPE_LABEL[p.type], holsOf(p).map(Hol.label).join(' '), p.author, p.siteName].join(' ').toLowerCase();
+  const hay = p => [p.title, p.caption, p.speech, p.notes, (p.tags || []).join(' '), needsOf(p).map(x => x.name + ' ' + (x.line || '')).join(' '), isArt(p) ? Cats.catLabel(p.type, p.category) : 'music lesson song ' + (p.artist || '') + ' ' + (p.insts || []).join(' '), TYPE_LABEL[p.type], holsOf(p).map(Hol.label).join(' '), p.author, p.siteName].join(' ').toLowerCase();
   const mine = S.pins.filter(p => words.every(w => hay(p).includes(w))).sort((a, b) => b.createdAt - a.createdAt);
   let h = '';
   // a holiday or supply she typed
@@ -1056,6 +1056,7 @@ function vPin(p) {
         ${(p.tags || []).map(g => `<button class="pill" data-act="tag" data-t="${esc(g)}">#${esc(g)}</button>`).join('')}
       </div>
       ${p.caption && p.caption.trim() !== p.title ? `<div class="mini">How it’s made</div><p class="cap clip" id="cap">${esc(p.caption)}</p>${p.caption.length > 300 || (p.caption.match(/\n/g) || []).length > 5 ? `<button class="linkbtn" data-act="cap-more">More</button>` : ''}` : ''}
+      ${p.speech ? `<div class="mini">What they said</div><p class="cap clip" id="said">${esc(p.speech)}</p>${p.speech.length > 300 ? `<button class="linkbtn" data-act="said-more">More</button>` : ''}` : ''}
       ${p.notes ? `<div class="mini">Your notes</div><p class="cap">${esc(p.notes)}</p>` : ''}
       ${p.status === 'made' || shots.length ? `<div class="mini">Yours</div>${shots.length ? `<div class="grid3" style="margin:0">${shots.map(k => `<div><img data-photo="${esc(k)}" alt="Your ${esc(p.title)}"></div>`).join('')}</div>` : ''}<button class="btn gray sm" style="margin-top:10px" data-act="made-photo" data-id="${esc(p.id)}">${I(IC.camera)}Add a photo of yours</button>` : ''}
       ${p.link ? `<div class="mini">Project page</div><a href="${esc(p.link)}" target="_blank" rel="noopener" class="linkbtn" style="overflow-wrap:anywhere">${esc(hostOf(p.link))}</a>` : ''}
@@ -1073,7 +1074,7 @@ function suppliesCard(p) {
   const row = it => {
     const g = Sup.groupInfo(it.g);
     const on = haveSet.has(it);
-    const sub = it.line && it.line.toLowerCase() !== it.name.toLowerCase() ? it.line : it.basic ? 'Most homes have this' : '';
+    const sub = it.line && it.line.toLowerCase() !== it.name.toLowerCase() ? it.line : it.from === 'said' ? 'Said in the video' : it.basic ? 'Most homes have this' : '';
     return `<button class="srow${on ? ' have' : ''}" data-act="sup-tog" data-id="${esc(p.id)}" data-sid="${esc(it.id || '')}" data-name="${esc(it.line || it.name)}" aria-pressed="${on}"><span class="tick">${I(IC.check)}</span><span class="nm"><b>${esc(it.id ? it.name : it.line || it.name)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span><span class="gi">${E(g.emoji)}</span></button>`;
   };
   const listed = items.filter(x => x.from !== 'likely'), likely = items.filter(x => x.from === 'likely');
@@ -1249,7 +1250,7 @@ async function readLink() {
     f.title = f.title || j.title || '';
     f.caption = j.caption || '';
     f.author = j.author || ''; f.siteName = j.siteName || ''; f.platform = j.platform || f.platform;
-    f.kind = j.kind || 'post'; f.link = j.link || ''; f.supplies = j.supplies || [];
+    f.kind = j.kind || 'post'; f.link = j.link || ''; f.supplies = j.supplies || []; f.speech = j.speech || '';
     if (j.finalUrl && !/\/embed/.test(j.finalUrl)) f.finalUrl = j.finalUrl;
     f.imageUrl = j.image || '';
     if (j.width && j.height) f.img = { w: j.width, h: j.height };
@@ -1356,7 +1357,7 @@ async function saveForm() {
   }
   const p = {
     id: 'p' + rid(), url: f.finalUrl || f.url || '', shared: f.url || '', platform: f.platform, kind: f.kind, title, caption: f.caption, author: f.author,
-    siteName: f.siteName, link: f.link, supplies: f.supplies, type: f.type, category: f.category, tags: f.tags, notes: f.notes.trim(),
+    siteName: f.siteName, link: f.link, supplies: f.supplies, speech: f.speech || '', speechChecked: f.platform === 'tiktok' && !!f.read, type: f.type, category: f.category, tags: f.tags, notes: f.notes.trim(),
     status: 'want', liked: false, opens: 0, createdAt: now, updatedAt: now, imageUrl: f.imageUrl, img: f.img, photo: false, source: f.source || 'shared'
   };
   if (f.type !== 'music') { p.holidays = f.holidays.slice(); needsOf(p); }
@@ -1400,7 +1401,7 @@ function saveHolField(f) {
 }
 function saveSupBox(f) {
   if (f.reading || !(f.read || f.readErr)) return '';
-  const items = Sup.gather({ title: f.title, caption: f.caption + '\n' + f.shareText, supplies: f.supplies, type: f.type, category: f.category });
+  const items = Sup.gather({ title: f.title, caption: f.caption + '\n' + f.shareText, supplies: f.supplies, speech: f.speech, type: f.type, category: f.category });
   if (!items.length) return '';
   const r = Sup.check(items, S.stash);
   const listed = items.filter(x => x.from !== 'likely').length;
@@ -1433,6 +1434,23 @@ async function saveIdea(it) {
       if (S.route.v === 'pin' && S.route.id === p.id) renderRoute(true);
     }
   } catch (e) { /* keep what we have */ }
+}
+// TikToks saved before the reader listened to videos: get what's said now and add the supplies it names
+async function listenForSupplies(p) {
+  toast('Listening to the video…');
+  let j = null;
+  try { j = await getJSON(API + '/api/idea?url=' + enc(p.shared || p.url) + '&v=' + READER_V, 50000); } catch (e) {}
+  if (!j || !j.ok) { toast(navigator.onLine ? 'TikTok didn’t answer. Try again later.' : 'You’re offline.'); return; }
+  p.speechChecked = true;
+  p.speech = j.speech || '';
+  if (p.speech) {
+    if (p.needsEdited) { for (const it of Sup.spoken(p.speech, p)) if (!p.needs.some(x => x.id === it.id)) p.needs.push(it); }
+    else { p.needs = null; needsOf(p); }
+  }
+  await savePin(p);
+  const added = needsOf(p).filter(x => x.from === 'said').length;
+  if (S.route.v === 'pin' && S.route.id === p.id) renderRoute(true);
+  toast(!p.speech ? 'No talking in this one, or TikTok has no captions for it.' : added ? 'Heard ' + plural(added, 'supply', 'supplies') + ' in the video' : 'It doesn’t name any supplies out loud.');
 }
 function notForMe(it) {
   if (!it) return;
@@ -1494,6 +1512,7 @@ function pinMenu(p) {
     <div class="menu">
     <button data-act="like" data-id="${esc(p.id)}" data-close="1">${I(IC.heart)}${p.liked ? 'Remove from favorites' : 'Add to favorites'}</button>
     ${(supFor(p) || {}).missing && supFor(p).missing.length ? `<button data-act="shop-add" data-id="${esc(p.id)}" data-close="1">${I(IC.basket)}Add missing supplies to my list</button>` : ''}
+    ${p.platform === 'tiktok' && p.kind === 'video' && !p.speechChecked ? `<button data-act="heard" data-id="${esc(p.id)}">${I(IC.note)}Listen to the video for supplies</button>` : ''}
     <button data-act="edit" data-id="${esc(p.id)}">${I(IC.pencil)}Edit, change board or holiday</button>
     <button data-act="move" data-id="${esc(p.id)}" data-close="1">${I(IC.swap)}Move to ${p.type === 'craft' ? 'Painting' : 'Crafts'}</button>
     <button data-act="share" data-id="${esc(p.id)}" data-close="1">${I(IC.share)}Share</button>
@@ -1512,7 +1531,7 @@ function supEditSheet(p) {
   const items = needsOf(p);
   showSheet(`<div class="grip"></div><div class="shead"><h2>Supplies for this project</h2><button class="iconbtn" data-act="close-sheet" aria-label="Done">${I(IC.x)}</button></div>
     <p class="muted" style="font-size:14px;margin:0 2px 8px">Take off what it doesn’t need, or add what the post left out.</p>
-    <div class="srows">${items.map((it, i) => `<div class="srow" style="cursor:default"><span class="gi">${E(Sup.groupInfo(it.g).emoji)}</span><span class="nm"><b>${esc(it.id ? it.name : it.line || it.name)}</b>${it.from === 'likely' ? '<small>Usually needed</small>' : ''}</span><button class="iconbtn" data-act="need-del" data-id="${esc(p.id)}" data-i="${i}" aria-label="Take off ${esc(it.name)}">${I(IC.trash)}</button></div>`).join('')}</div>
+    <div class="srows">${items.map((it, i) => `<div class="srow" style="cursor:default"><span class="gi">${E(Sup.groupInfo(it.g).emoji)}</span><span class="nm"><b>${esc(it.id ? it.name : it.line || it.name)}</b>${it.from === 'likely' ? '<small>Usually needed</small>' : it.from === 'said' ? '<small>Said in the video</small>' : ''}</span><button class="iconbtn" data-act="need-del" data-id="${esc(p.id)}" data-i="${i}" aria-label="Take off ${esc(it.name)}">${I(IC.trash)}</button></div>`).join('')}</div>
     <div class="addsup" style="margin-top:12px"><input id="needIn" type="text" autocomplete="off" placeholder="Add a supply" aria-label="Add a supply"><button class="btn teal" data-act="need-add" data-id="${esc(p.id)}">Add</button></div>
     <div class="row" style="margin-top:10px"><button class="btn gray sm" data-act="need-reset" data-id="${esc(p.id)}">Go back to what the post says</button></div>
     <div class="sactions"><button class="btn ink" data-act="close-sheet">Done</button></div>`, 'Supplies');
@@ -1649,7 +1668,8 @@ document.addEventListener('click', async e => {
     case 'share': if (pin) thenClose(() => sharePin(pin.title, pin.url || pin.link)); break;
     case 'open': if (pin) { pin.opens = (pin.opens || 0) + 1; pin.lastOpened = Date.now(); savePin(pin); } break;
     case 'play': if (pin) { const em = embedOf(pin); const box = $('#cumedia'); if (em && box) { const w = box.clientWidth; box.innerHTML = `<div class="float"><button class="round" data-act="back" aria-label="Back">${I(IC.back)}</button></div><iframe src="${esc(em.src)}" style="height:${Math.round(Math.min(w * em.ar, window.innerHeight * 0.8))}px" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="${esc(pin.title)}"></iframe>`; box.removeAttribute('data-dbl'); pin.opens = (pin.opens || 0) + 1; pin.lastOpened = Date.now(); savePin(pin); } } break;
-    case 'cap-more': { const c = $('#cap'); if (c) { c.classList.toggle('clip'); el.textContent = c.classList.contains('clip') ? 'More' : 'Less'; } } break;
+    case 'cap-more': case 'said-more': { const c = $(a === 'said-more' ? '#said' : '#cap'); if (c) { c.classList.toggle('clip'); el.textContent = c.classList.contains('clip') ? 'More' : 'Less'; } } break;
+    case 'heard': if (pin) closeSheet(() => listenForSupplies(pin)); break;
     case 'tag': go({ v: 'explore', from: from() }); $('#q') && ($('#q').value = el.dataset.t); runSearch(el.dataset.t); break;
     case 'topic': S.ideas.topic = el.dataset.t; S.ideas.items = []; S.ideas.sig = ''; S.ideas.error = ''; S.ideas.page = 1; renderRoute(true); loadIdeas(true); break;
     case 'ideas-more': loadIdeas(false, true); break;

@@ -170,11 +170,12 @@ function wprmGroups(html) {
 }
 
 /* ---------------- TikTok ---------------- */
-async function readTikTok(url, trace) {
+// opts.speech: also get what's said in the video (TikTok's own speech-to-text captions), for Artistry's supply finder
+async function readTikTok(url, trace, opts) {
   const target = await resolveTikTok(url, trace);
   // the post's own page has the whole caption with its line breaks (TikTok's quick lookup squashes it onto one line)
   let page = null;
-  try { page = await tikTokPage(target, trace); }
+  try { page = await tikTokPage(target, trace, opts); }
   catch (e) { if (trace) trace.push('page failed: ' + e.message); }
   if (page && (page.full || /\/photo\//.test(target))) return page.out;
   if (/\/photo\//.test(target)) throw new Error('TikTok wouldn’t share this post’s details.');
@@ -189,10 +190,11 @@ async function readTikTok(url, trace) {
   out.image = o.thumbnail_url || (page && page.out.image) || '';
   const cap = decode(o.title || '');
   applyCaption(out, page && page.out.caption.length > cap.length ? page.out.caption : cap);
+  if (page && page.out.speech) out.speech = page.out.speech;
   return out;
 }
 // Caption, creator, and cover (or first slide) from the post's own page. full = the page's own data was there.
-async function tikTokPage(url, trace) {
+async function tikTokPage(url, trace, opts) {
   const { text: html } = await fetchText(url, { trace });
   let item = null;
   const m = html.match(/<script[^>]*id=["']__UNIVERSAL_DATA_FOR_REHYDRATION__["'][^>]*>([\s\S]*?)<\/script>/);
@@ -207,7 +209,7 @@ async function tikTokPage(url, trace) {
     const s2 = html.match(/<script[^>]*id=["']SIGI_STATE["'][^>]*>([\s\S]*?)<\/script>/);
     if (s2) { try { const im = JSON.parse(s2[1]).ItemModule || {}; item = im[Object.keys(im)[0]] || null; } catch (e) {} }
   }
-  let caption = '', image = '', author = '';
+  let caption = '', image = '', author = '', speech = '';
   if (item) {
     caption = item.desc || '';
     const ip = item.imagePost || {};
@@ -218,6 +220,7 @@ async function tikTokPage(url, trace) {
     image = (slide && ((slide.imageURL && (slide.imageURL.urlList || [])[0]) || (slide.displayImage && (slide.displayImage.urlList || [])[0]))) || v.cover || v.originCover || v.dynamicCover || '';
     if (trace) trace.push('page data found: ' + (ip.images ? ip.images.length + ' slides' : 'video') + ', caption ' + caption.length + ' chars');
     if (trace && trace.subs) await probeTikTokSubs(v, trace);
+    if (opts && opts.speech && !ip.images) speech = await tikTokSpeech(v, trace);
   }
   if (!caption) {
     caption = decode(meta(html, 'og:description') || meta(html, 'description'));
@@ -233,7 +236,41 @@ async function tikTokPage(url, trace) {
   out.author = author ? '@' + String(author).replace(/^@/, '') : '';
   out.image = image;
   applyCaption(out, caption);
+  if (speech) out.speech = speech;
   return { out, full: !!(item && item.desc) };
+}
+
+// What's said in a TikTok video, as plain text. TikTok lists its own speech-to-text captions in the page data
+// (video.subtitleInfos: WebVTT files, Source "ASR"; checked Sept 28, 2026). English first, the spoken language
+// (ASR) before machine translations (MT). Gives up after 6 seconds; a video with no talking has none.
+async function tikTokSpeech(v, trace) {
+  const subs = (v.subtitleInfos || []).map(x => ({ lang: String(x.LanguageCodeName || x.LanguageID || ''), src: String(x.Source || ''), url: x.Url || '' }))
+    .concat(((v.claInfo || {}).captionInfos || []).map(x => ({ lang: String(x.language || x.languageCode || ''), src: 'cla', url: x.url || (x.urlList || [])[0] || '' })))
+    .filter(x => x.url && !badUrl(x.url));
+  const rank = x => (/^en/i.test(x.lang) ? 0 : 2) + (/^MT$/i.test(x.src) ? 1 : 0);
+  const pick = subs.sort((a, b) => rank(a) - rank(b))[0];
+  if (!pick) { if (trace) trace.push('speech: none listed'); return ''; }
+  try {
+    const { text } = await Promise.race([fetchText(pick.url, { headers: { Accept: 'text/vtt,text/plain,*/*' } }), new Promise((_, rej) => setTimeout(() => rej(new Error('took over 6 s')), 6000))]);
+    const said = vttText(text);
+    if (trace) trace.push('speech: ' + pick.lang + '/' + pick.src + ', ' + said.length + ' chars');
+    return said;
+  } catch (e) { if (trace) trace.push('speech failed: ' + e.message); return ''; }
+}
+// WebVTT -> plain words: drop the header, cue numbers, timings and tags; skip a cue that repeats the one before it
+function vttText(vtt) {
+  const out = [];
+  let skip = false;
+  for (let line of String(vtt || '').replace(/\r/g, '').split('\n')) {
+    line = line.trim();
+    if (!line) { skip = false; continue; }
+    if (skip) continue;
+    if (/^(WEBVTT|NOTE\b|STYLE\b|REGION\b)/.test(line)) { skip = true; continue; }
+    if (/-->/.test(line) || /^\d+$/.test(line)) continue;
+    const t = decode(line.replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+    if (t && t !== out[out.length - 1]) out.push(t);
+  }
+  return out.join(' ').replace(/\s+/g, ' ').trim().slice(0, 8000);
 }
 
 // Share links (tiktok.com/t/…, vm.tiktok.com/…) point to the full video address; find it.
@@ -652,3 +689,4 @@ function findObj(node, test, depth) {
 module.exports.readRecipe = readRecipe;
 // Artistry (the crafts app in crafts/, api/idea.js) reuses the social readers.
 module.exports.readers = { readTikTok, readYouTube, readInstagram, readFacebook };
+module.exports.vttText = vttText;
