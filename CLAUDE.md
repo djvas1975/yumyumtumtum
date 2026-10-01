@@ -398,11 +398,12 @@ had to be set up on GitHub or Vercel.
 | What | Where |
 |---|---|
 | The app (install from Chrome on Android) | https://yumyumtumtum.vercel.app/crafts/ (served by Vercel, NOT GitHub Pages, so its scope doesn't sit inside YumYum's) |
-| App files | `crafts/index.html` (the whole app), `crafts/cats.js` (the sorter, shared with tests), `crafts/music.js` (Learn music data and lesson reader, shared with api/music.js and tests), `crafts/manifest.webmanifest` (name, icons, Share menu), `crafts/sw.js` (offline; bump `VERSION` when crafts/ changes), `crafts/icons/` |
+| App files | `crafts/index.html` (the whole app), `crafts/cats.js` (the sorter, shared with tests), `crafts/music.js` (Learn music data and lesson reader, shared with api/music.js and tests), `crafts/manifest.webmanifest` (name, icons, Share menu), `crafts/sw.js` (offline and updates; `VERSION` is stamped by `node tools/stamp_crafts.js`), `crafts/icons/` |
 | Icons | App icon from Dave's picture `tools/artistry-icon-art.jpg` (ukulele, paint palette, leaves, music notes on a teal tile): `python3 tools/make_artistry_icons.py [picture] [preview.png]` finds the tile, fills its corners, and writes icon-512/192, icon-maskable-512/192 (86% on a blurred copy of itself so round and rounded-square launchers keep the ukulele and palette), logo-128, apple-touch-icon. `tools/make_crafts_icons.py` draws the teal long-press shortcut icons (add, ideas, music); `--old` redraws the retired red palette icon into tools/old-crafts-icons/. To change the icon again, attach the new picture and run make_artistry_icons.py with it. |
 | Post reader | `api/idea.js`: `GET /api/idea?url=` -> `{platform, kind, title, caption, image, width, height, author, siteName, link, supplies}`. Instagram/TikTok/YouTube/Facebook use the readers exported from api/recipe.js (`module.exports.readers`); Pinterest uses the pin-info widget JSON; websites use og tags plus a schema.org HowTo supply list. |
 | Blog finder | `api/crafts.js`: `GET /api/crafts?q=&type=painting|craft|both&n=&page=` -> items `{title,url,image,width,height,sourceName,kind}` from 42 WordPress craft/painting blogs (their `/wp-json/wp/v2/posts?search=`). `debug=1` reports each site; `sites=trial` tries sites marked `trial: true`. Titles must mention the search (unless that leaves fewer than 6). Food posts, giveaways, reviews are skipped. |
 | Tests | `node tests/crafts.test.js` (sorter cases, reader with fake Instagram/Pinterest/blog pages, finder), `node tests/music.test.js` (lesson reader, song list, api/music.js with a fake YouTube, with and without a key) |
+| Share health check | `/api/idea/<anything>?selftest=1` reads one real public post from TikTok, Instagram, YouTube (youtu.be link), Facebook (a video and a post) and Pinterest on Vercel and reports title, caption length, photo host, and how it would be filed. `&only=facebook,pinterest` runs some; `&add=<url>|<url>` adds up to 4 more. |
 | Live-check aliases | `/api/idea/<anything>?url=`, `/api/crafts/<anything>?q=`, `/api/music/<anything>?inst=` (vercel.json rewrites). WebFetch in Claude sessions cached `/api/crafts?...` by path and ignored new query strings, so use a fresh alias path per check. New paths ask Dave to approve the fetch. |
 
 What it does (v1.0; v1.1 added Music, v1.2 the Artistry name and icon):
@@ -436,6 +437,25 @@ An earlier claude.ai artifact version (https://claude.ai/artifact/2CjJ4k1XatYWvE
 
 Ideas not built yet: cloud backup (could share YumYum's Vercel Blob once it's set up), YouTube/TikTok search in
 Ideas (needs an official API key), reading what's said in TikTok videos for supply lists.
+
+## Changing Artistry (the routine) and how updates reach Steph's phone
+1. Edit files in `crafts/` (and `api/idea.js`, `api/crafts.js`, `api/music.js` for the server parts).
+2. Run `node tools/stamp_crafts.js` (sets `crafts/sw.js` VERSION from a hash of the app's files).
+3. Test: `node tests/crafts.test.js && node tests/music.test.js` (crafts.test fails if step 2 was skipped), plus the
+   YumYum tests if api/recipe.js or lib/ changed. Bump `const VERSION = '1.x'` in crafts/index.html for visible changes.
+4. Commit as djvas1975 and push to `main`; Vercel deploys in about a minute.
+How phones get it (built and tested Oct 1, 2026, Playwright with a real service worker): the service worker loads the
+app's files from the internet first (saved copy only offline or after 4 s), so every open shows the newest version.
+If the app sits open in the background, coming back to it after 10+ minutes checks for a new sw.js; the new version
+takes over and the page reloads itself (`appUpdated`: right away if no sheet is open, no lesson playing and nothing
+typed; otherwise a toast "Artistry has an update · Reload", or the reload happens when she leaves the app). Her saved
+ideas live in IndexedDB on her phone and are never touched by updates. The home-screen name and icon are Chrome's
+(manifest updates, up to about a day).
+
+Share-menu formats checked offline (Oct 1, 2026, `crafts/index.html` `findUrl`): TikTok vm./full links with or without
+words, Instagram reel/post with `?igsh=…==`, YouTube youtu.be and shorts with `?si=`, Facebook share/r, share/v,
+share/p and fb.watch, Pinterest pin.it with words and full pin links, Chrome pages. iPhones have no Share-menu
+target for web apps, so there it's Copy link + the Add button.
 
 ## Learn music tab (v1.1, built Sept 30, 2026)
 Asked for: "a section for playing music" for Dave's son's mom **Steph**, an amateur piano, guitar, drums, ukulele, banjo

@@ -13,6 +13,7 @@ const { readers } = require('./recipe');
 module.exports = async (req, res) => {
   if (!cors(req, res)) return;
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+  if (req.query && req.query.selftest) { await selfTest(req, res); return; }
   const url = String((req.query && req.query.url) || '').trim();
   const bad = badUrl(url);
   if (bad) { res.status(400).json({ ok: false, error: bad }); return; }
@@ -176,6 +177,36 @@ function tidyTitle(t) {
   if (t.length > 90) { const cut = t.slice(0, 90); t = cut.slice(0, cut.lastIndexOf(' ') > 50 ? cut.lastIndexOf(' ') : 90).replace(/[,;:\s]+$/, '') + '…'; }
   return t;
 }
+
+/* ---------- health check: one real public post from each app the Share menu is used from ---------- */
+// GET /api/idea/<anything>?selftest=1   (add &only=tiktok,pinterest to run some)
+const SELFTEST = [
+  { app: 'tiktok', url: 'https://www.tiktok.com/@artwork_by_s/video/7484754422837349654' },
+  { app: 'instagram', url: 'https://www.instagram.com/p/BsOGulcndj-/' },
+  { app: 'youtube', url: 'https://youtu.be/_QCt3UBTS1Y?si=Ab12Cd34Ef56Gh78' },
+  { app: 'facebook', url: 'https://www.facebook.com/amadorartscouncil/videos/sloth-miniature-acrylic-painting-tutorial/807635033101615/' },
+  { app: 'facebook', url: 'https://www.facebook.com/foodiligence/posts/1520738373405084' },
+  { app: 'pinterest', url: 'https://www.pinterest.com/pin/445293481972007886/' }
+];
+async function selfTest(req, res) {
+  const only = String(req.query.only || '').split(',').filter(Boolean);
+  const extra = String(req.query.add || '').split('|').map(s => s.trim()).filter(u => u && !badUrl(u)).slice(0, 4).map(url => ({ app: platformOf(url), url }));
+  const list = SELFTEST.concat(extra).filter(t => !only.length || only.includes(t.app));
+  let Cats = null, Music = null;
+  try { Cats = require('../crafts/cats.js'); Music = require('../crafts/music.js'); } catch (e) {}
+  const out = await Promise.all(list.map(async t => {
+    const t0 = Date.now();
+    try {
+      const r = await Promise.race([readIdea(t.url), new Promise((_, rej) => setTimeout(() => rej(new Error('took over 35 s')), 35000))]);
+      const s = Cats ? Cats.sortPost({ title: r.title, caption: r.caption, url: r.finalUrl }) : {};
+      const m = Music ? Music.detect(r.title + ' ' + r.caption.slice(0, 300)) : {};
+      return { app: t.app, ok: true, ms: Date.now() - t0, platform: r.platform, kind: r.kind, title: r.title.slice(0, 70), caption: r.caption.length, photo: r.image ? hostOf(r.image) : '', author: r.author, files: m.isMusic ? 'music:' + m.inst.join('/') : (s.type ? s.type + ':' + s.category + (s.sure ? '' : '?') : 'asks') };
+    } catch (e) { return { app: t.app, ok: false, ms: Date.now() - t0, url: t.url, error: e.message }; }
+  }));
+  res.setHeader('Cache-Control', 'no-store');
+  res.status(200).json({ ok: true, at: new Date().toISOString(), passed: out.filter(x => x.ok && x.photo).length + ' of ' + out.length + ' read with a photo', results: out });
+}
+function hostOf(u) { try { return new URL(u).hostname; } catch (e) { return ''; } }
 
 module.exports.readIdea = readIdea;
 module.exports.tidyTitle = tidyTitle;

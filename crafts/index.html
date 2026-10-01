@@ -761,8 +761,9 @@ function welcome() {
     ${inst}
     <ol class="steps">
       <li><span>Open a video or post in Instagram, TikTok, YouTube, Facebook or Pinterest.</span></li>
-      <li><span>Tap <b>Share</b>, then pick <b>Artistry</b>. In Instagram, tap <b>Share</b> and then <b>Share to…</b> if you don’t see it.</span></li>
-      <li><span>It reads the post and files it under <b>Painting</b> or <b>Crafts</b> for you.</span></li>
+      <li><span>Tap <b>Share</b>, then pick <b>Artistry</b>. If it isn’t in the first row, tap <b>More</b> or <b>Share to…</b> to see all your apps.</span></li>
+      <li><span>It reads the post and files it under <b>Painting</b>, <b>Crafts</b> or <b>Music</b> for you.</span></li>
+      <li><span>No Share button? Tap <b>Copy link</b>, come back here and tap the button below.</span></li>
     </ol>
     <button class="btn red" data-act="add">${I(IC.plus)}Paste a link instead</button></div>`;
 }
@@ -2041,6 +2042,34 @@ function loadMusicState(m, merge) {
   (m.dismissedSongs || []).forEach(x => MS.dismissedSongs.add(x));
   if (merge) saveMusic();
 }
+// Updates: every open loads the newest app (the service worker asks the internet first). If the app was left open in
+// the background, coming back to it checks for a newer version, and the new version takes over by reloading the page
+// (right away when she isn't in the middle of something, otherwise when she next leaves the app, or with Reload).
+let updatePending = false;
+function watchUpdates() {
+  const had = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && !updatePending) appUpdated(); });
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    let last = Date.now();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && updatePending && !busyNow()) reloadApp();
+      else if (document.visibilityState === 'visible' && Date.now() - last > 10 * 60e3) { last = Date.now(); reg.update().catch(() => {}); }
+    });
+  }).catch(() => {});
+}
+function busyNow() {
+  const a = document.activeElement;
+  return !$('#sheetwrap').hidden || (S.route.v === 'video' && !!YTP) || !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.value);
+}
+function reloadApp() {
+  const v = S.route.v, go = v === 'music' || v === 'video' ? 'music' : v === 'ideas' ? 'ideas' : '';
+  location.replace(location.pathname + (go ? '?go=' + go : ''));
+}
+function appUpdated() {
+  updatePending = true;
+  if (!busyNow()) reloadApp();
+  else toast('Artistry has an update', 'Reload', reloadApp);
+}
 async function init() {
   const qs = new URLSearchParams(location.search);
   const shared = { url: qs.get('url') || '', text: qs.get('text') || '', title: qs.get('title') || '' };
@@ -2059,7 +2088,7 @@ async function init() {
   if (!ok) toast('This browser won’t let the app save. Ideas will be lost when you close it.');
   if (findUrl(shared.url) || findUrl(shared.text) || findUrl(shared.title) || shared.text) openSave(shared);
   else if (qs.has('add')) openSave({});
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && location.protocol === 'https:') watchUpdates();
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
 init();
