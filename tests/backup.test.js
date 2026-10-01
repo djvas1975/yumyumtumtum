@@ -39,15 +39,24 @@ const backup = n => ({ app: 'yumyumtumtum', version: 1, recipes: Array.from({ le
   const empty = await call('GET', { op: 'info' }, K);
   ok(empty.body.empty === true && !files.size, 'nothing saved yet: says so and claims nothing');
   const first = await call('POST', { op: 'photo', id: 'p-first' }, K, Buffer.from([1, 2, 3]));
-  ok(first.body.ok && files.has('backup/_owner.json'), 'the first thing sent can be a photo (the phone sends photos before the backup)');
+  ok(first.body.ok && files.has('backup/_people.json'), 'the first thing sent can be a photo (the phone sends photos before the backup)');
+  const home = Array.from(files.keys()).find(k => /^backup\/u\/[0-9a-f]{32}\/photos\/p-first$/.test(k)).replace(/photos\/p-first$/, '');
   const s1 = await call('POST', { op: 'save', day: '2026-09-29', daily: '1' }, K, backup(3));
-  ok(s1.body.ok && s1.body.recipes === 3 && files.has('backup/latest.json') && files.has('backup/days/2026-09-29.json') && files.has('backup/_owner.json'), 'first save: latest, today\'s copy, and the code claims the store');
-  ok(!/7KQ2/.test(files.get('backup/_owner.json').body.toString()), 'the code itself is never stored, only a hash');
+  ok(s1.body.ok && s1.body.recipes === 3 && files.has(home + 'latest.json') && files.has(home + 'days/2026-09-29.json'), 'first save: latest and today\'s copy, in this person\'s own folder');
+  ok(!/7KQ2/.test(Array.from(files.keys()).join(' ') + files.get('backup/_people.json').body.toString()), 'the code itself is never stored, only a hash');
   const before = ops.length;
   const s2 = await call('POST', { op: 'save', day: '2026-09-29' }, { 'x-backup-key': 'yum 7kq2 9ztm 4wxa plm3' }, JSON.stringify(backup(4)));
   ok(s2.body.ok && ops.slice(before).filter(x => /^put/.test(x)).length === 1, 'later saves write just one file (code typed in lower case with spaces still works)');
   const wrong = await call('GET', { op: 'get' }, { 'x-backup-key': 'YUM-AAAA-BBBB-CCCC-DDDD' });
-  ok(wrong.code === 403 && wrong.body.wrongKey, 'a different code is refused');
+  ok(wrong.body.ok === false && wrong.body.empty, 'a code with no backup gets nothing back');
+  // a family member: their own code, their own folder
+  const MOM = { 'x-backup-key': 'YUM-MMMM-2222-3333-4444' };
+  const m1 = await call('POST', { op: 'save', day: '2026-09-29', daily: '1' }, MOM, backup(7));
+  const mg = await call('GET', { op: 'get', day: 'latest' }, MOM);
+  const dg = await call('GET', { op: 'get', day: 'latest' }, K);
+  ok(m1.body.ok && JSON.parse(mg.raw).recipes.length === 7 && JSON.parse(dg.raw).recipes.length === 4, 'family members each get their own backup; nobody sees anyone else\'s');
+  const momPhoto = await call('GET', { op: 'photo', id: 'p-first' }, MOM);
+  ok(momPhoto.code === 404, 'one person can\'t get another person\'s photos');
   const junk = await call('POST', { op: 'save' }, K, { hello: 1 });
   ok(junk.code === 400, 'refuses something that isn\'t a backup');
 
@@ -61,14 +70,21 @@ const backup = n => ({ app: 'yumyumtumtum', version: 1, recipes: Array.from({ le
   const p2 = await call('GET', { op: 'photo', id: 'p-abc' }, K);
   ok(p1.body.ok && Buffer.compare(p2.raw, pic) === 0 && p2.headers['Content-Type'] === 'image/jpeg', 'saves a photo and sends it back the same');
   const p3 = await call('POST', { op: 'photo', id: '../../etc' }, K, pic);
-  ok(p3.body.ok && files.has('backup/photos/etc'), 'photo ids can\'t climb out of the photos folder');
+  ok(p3.body.ok && files.has(home + 'photos/etc'), 'photo ids can\'t climb out of the photos folder');
 
   for (let d = 1; d <= 33; d++) await call('POST', { op: 'save', day: '2026-10-' + String(d).padStart(2, '0').replace(/^3[2-9]/, '31'), daily: '1' }, K, backup(1));
-  const days = Array.from(files.keys()).filter(k => k.indexOf('backup/days/') === 0);
-  ok(days.length === 30 && !days.includes('backup/days/2026-09-29.json'), 'keeps the newest 30 daily copies -> ' + days.length);
+  const days = Array.from(files.keys()).filter(k => k.indexOf(home + 'days/') === 0);
+  ok(days.length === 30 && !days.includes(home + 'days/2026-09-29.json'), 'keeps the newest 30 daily copies -> ' + days.length);
   const info = await call('GET', { op: 'info' }, K);
   ok(info.body.ok && info.body.latest && info.body.days.length === 30 && info.body.days[0].day === '2026-10-31', 'info lists the latest and the days, newest first');
   ok(info.headers['Cache-Control'] === 'private, no-store', 'answers are never cached');
+  ok(Array.from(files.keys()).some(k => k.indexOf('backup/u/') === 0 && /days\/2026-09-29/.test(k)), 'the other person\'s daily copy was left alone');
+  // at most MAX_PEOPLE codes can start a backup
+  for (let i = 3; i <= api.MAX_PEOPLE; i++) await call('POST', { op: 'save' }, { 'x-backup-key': 'YUM-PPPP-' + String(i).padStart(4, '0') + '-QQQQ-RRRR' }, backup(1));
+  const extra = await call('POST', { op: 'save' }, { 'x-backup-key': 'YUM-ZZZZ-ZZZZ-ZZZZ-ZZZZ' }, backup(1));
+  ok(extra.body.full === true, 'a stranger can\'t fill the store: room for ' + api.MAX_PEOPLE + ' people');
+  const still = await call('POST', { op: 'save' }, K, backup(2));
+  ok(still.body.ok, 'people already in keep backing up when it\'s full');
 
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);

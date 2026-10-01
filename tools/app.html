@@ -165,6 +165,12 @@ body[data-route="recipe"] #view{padding-bottom:calc(112px + env(safe-area-inset-
 .catline .chip{height:32px;padding:0 12px;font-size:13.5px}
 .cl-none{font-weight:700;color:var(--ink-3);font-size:14px}
 .catauto{display:block;margin-top:14px}
+.namecard{margin:14px 0 4px;padding:14px;border-radius:16px;background:var(--saffron-soft);display:flex;flex-direction:column;gap:4px}
+.namecard b{font-size:16px;font-weight:800}
+.namecard > span{font-size:14px;color:var(--ink-2)}
+.namerow{display:flex;gap:8px;margin-top:6px}
+.namerow .inp{flex:1;min-width:0}
+.namecard .linkbtn{align-self:flex-start;margin-top:4px}
 .cstat{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink-2)}
 .cstat.ok{color:var(--basil)}
 .cstat.bad{color:var(--danger)}
@@ -738,7 +744,7 @@ const EX = [
 ];
 
 /* ---------- store ---------- */
-const DEFAULT_SETTINGS = {name:'Dave'};
+const DEFAULT_SETTINGS = {name:''};
 const CACHE_KEY = 'yyt-cloud-cache-v1', LOCAL_KEY = 'yyt-local-v1';
 const Store = {mode:'starting', db:null, assets:null, downloads:null, recipes:new Map(), cols:new Map(), settings:Object.assign({}, DEFAULT_SETTINGS)};
 function fill(o){
@@ -1045,7 +1051,8 @@ const V = {};
 V.home = () => {
   const all = sorted(list(), 'new');
   const head = '<header class="topbar"><div class="wrap brandbar">' + LOGO + '<span class="wordmark"><span class="y">Yum</span>Yum</span></div></header>';
-  const greet = '<h1 class="greet">' + esc(greeting()) + '</h1><p class="greet-sub">What are we cooking?</p>';
+  const greet = '<h1 class="greet">' + esc(greeting()) + '</h1><p class="greet-sub">What are we cooking?</p>'
+    + (!(Store.settings.name || '').trim() && !Store.settings.nameSkip ? '<div class="namecard"><b>Welcome to YumYum!</b><span>What should we call you?</span><form id="nameform" class="namerow" autocomplete="off"><input class="inp" id="hname" maxlength="40" placeholder="Your first name" autocomplete="given-name" aria-label="Your first name"><button type="submit" class="btn primary sm">Save</button></form><button class="linkbtn sm" data-act="noname">Skip</button></div>' : '');
   if (!all.length) return head + '<div class="wrap">' + greet + kitchenCardHTML() + '<div class="empty">' + LOGO + '<h3>Your recipe box is empty</h3><p>Tap the + button to save a recipe from TikTok, Instagram, YouTube, Pinterest, or any website.</p><button class="btn primary" data-act="add">' + icon('plus') + 'Save your first recipe</button>' + (canRead() ? '<button class="btn ghost" data-go="discover">' + icon('globe') + 'Find new recipes</button>' : '') + '</div></div>';
   const vids = all.filter(isVideo).slice(0, 10);
   const quick = all.filter(r => r.time && r.time <= 30).slice(0, 10);
@@ -1212,6 +1219,7 @@ V.me = () => {
     + '<div class="statrow">' + mini(all.length, 'Recipes') + mini(Store.cols.size, 'Collections') + mini(vids, 'Videos') + mini(cooked, 'Times cooked') + '</div>'
     + (installEvt ? '<section class="panel"><h2>Put it on your home screen</h2><p>Installs YumYum as an app with its own icon. It also shows up when you tap Share in TikTok, Instagram, YouTube, or Chrome.</p><div class="acts"><button class="btn primary" data-act="install">' + icon('download') + 'Install app</button></div></section>' : '')
     + tastePanel()
+    + sharePanel()
     + cloudPanel()
     + '<section class="panel"><h2>Backup file</h2><p>One file with every recipe, collection, and photo. Keep a copy somewhere safe, like Google Drive or iCloud.</p><div class="acts">'
     + (canBackup ? '<button class="btn primary" data-act="export">' + icon('download') + 'Download backup</button>' : '')
@@ -1219,7 +1227,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 1.5</p></div>';
+    + '<p class="ver">YumYum · version 1.6</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1277,7 +1285,7 @@ function refresh(){
     rq = 0;
     const r = cur();
     if (r.name === 'search' && $('#results')) renderResults();
-    else if (!(document.activeElement && ['myname', 'dq', 'pq', 'neverin', 'gq'].indexOf(document.activeElement.id) >= 0)) {
+    else if (!(document.activeElement && ['myname', 'dq', 'pq', 'neverin', 'gq', 'hname'].indexOf(document.activeElement.id) >= 0)) {
       const y = window.scrollY; const sx = {};
       $$('[data-sx]').forEach(el => { sx[el.dataset.sx] = el.scrollLeft; });
       $('#view').innerHTML = (V[r.name] || V.home)(r);
@@ -4033,7 +4041,7 @@ async function cloudBackup(manual){
   if (!manual) {
     if (rev === CLOUD.lastRev) return false;
     const since = CLOUD.last ? Date.now() - Date.parse(CLOUD.last) : 1e12;
-    if (since < 5 * 60e3) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudBackup(false), 5 * 60e3 - since + 1000); return false; }
+    if (since < 10 * 60e3) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudBackup(false), 10 * 60e3 - since + 1000); return false; }
     if (navigator.onLine === false) return false;
   }
   CLOUD_BUSY = true; redrawCloud();
@@ -4060,7 +4068,7 @@ async function cloudBackup(manual){
     Object.assign(CLOUD, {last:now(), lastDay:day, lastRev:rev, lastCount:recs.length, err:''}); saveCloud();
     return true;
   } catch (e) {
-    CLOUD.err = e.needsSetup ? 'setup' : e.wrongKey ? 'Your cloud backup was made with a different recovery code. Use Restore from cloud with that code.' : (e.message || 'The backup didn\'t go through.');
+    CLOUD.err = e.needsSetup ? 'setup' : (e.message || 'The backup didn\'t go through.');
     saveCloud();
     return false;
   } finally { CLOUD_BUSY = false; redrawCloud(); }
@@ -4071,10 +4079,20 @@ function whenText(iso){
   const day = d.toLocaleDateString('en-CA'); const y = new Date(Date.now() - 864e5).toLocaleDateString('en-CA');
   return day === localDay() ? 'today at ' + t : day === y ? 'yesterday at ' + t : fmtDate(iso) + ' at ' + t;
 }
+function sharePanel(){
+  if (!onPhone()) return '';
+  return '<section class="panel"><h2>Share YumYum</h2><p>Send the app to family. Each person gets their own recipes, kitchen, and grocery list on their own phone, and the app updates for everyone by itself.</p><div class="acts"><button class="btn ghost" data-act="shareapp">' + icon('ext') + 'Share the app</button></div></section>';
+}
+async function shareApp(){
+  const url = 'https://djvas1975.github.io/yumyumtumtum/';
+  const text = 'Here\'s YumYum, my recipe app. Open the link, then tap Install (Android) or Share > Add to Home Screen (iPhone). Your recipes stay on your own phone.';
+  if (navigator.share) { try { await navigator.share({title:'YumYum', text:text, url:url}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  copyText(text + ' ' + url);
+}
 function cloudPanel(){
   if (!onPhone()) return '';
   let st;
-  if (!CLOUD.on) st = '<p>Backs up your recipes, photos, collections, kitchen, and grocery list to your own private storage, all by itself. Get everything back on any phone with your recovery code.</p>';
+  if (!CLOUD.on) st = '<p>Backs up your recipes, photos, collections, kitchen, and grocery list to private cloud storage, all by itself. Get everything back on any phone with your recovery code.</p>';
   else if (CLOUD_BUSY) st = '<p class="cstat"><span class="spin sm"></span>Backing up…</p>';
   else if (CLOUD.err === 'setup') st = '<p class="cstat warn">Waiting on the storage to be set up in Vercel. Backups start as soon as it is.</p>';
   else if (CLOUD.err) st = '<p class="cstat bad">' + esc(CLOUD.err) + '</p>';
@@ -4136,7 +4154,7 @@ async function crFind(){
     if (!j.latest && !j.days.length) throw Object.assign(new Error(''), {empty:true});
     CR.info = j; CR.step = 'pick'; CR.pick = j.latest ? 'latest' : j.days[0].day; CR.busy = '';
   } catch (e) {
-    CR.busy = ''; CR.err = e.wrongKey ? 'That code doesn\'t match your backup. Check it and try again.' : e.empty ? 'There\'s no backup in the cloud yet.' : e.needsSetup ? 'Cloud backup isn\'t set up in Vercel yet.' : e.message;
+    CR.busy = ''; CR.err = e.wrongKey || e.empty ? 'No backup found for that code. Check it and try again.' : e.needsSetup ? 'Cloud backup isn\'t set up in Vercel yet.' : e.message;
   }
   crRedraw();
 }
@@ -4169,6 +4187,9 @@ async function removeExamples(){
   toast('Examples removed');
 }
 
+document.addEventListener('submit', e => {
+  if (e.target && e.target.id === 'nameform') { e.preventDefault(); const v = ($('#hname') || {}).value || ''; if (!v.trim()) return; const el = $('#hname'); if (el) el.blur(); putSettings({name:v.trim().slice(0, 40)}); refresh(); toast('Nice to meet you, ' + v.trim().split(' ')[0] + '!'); }
+});
 /* ---------- events ---------- */
 const A = {
   add: () => openEditor(null),
@@ -4236,6 +4257,8 @@ const A = {
   setcat: t => openCatSheet(t.dataset.id || cur().id),
   catsave: () => catSave(false),
   catauto: () => catSave(true),
+  noname: () => putSettings({nameSkip:true}),
+  shareapp: () => shareApp(),
   swapnote: t => saveSwapNote(t.dataset.id, +t.dataset.i),
   seelist: t => go({name:'list', lview:'recipe', focus:t.dataset.id}),
   tolist: t => { const r = Store.recipes.get(t.dataset.id || cur().id); if (r) openToList({id:r.id, title:r.title, ingredients:r.ingredients}); },
