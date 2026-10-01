@@ -171,6 +171,9 @@ h2.sect{font-size:20px;font-weight:800;margin:26px 4px 8px;letter-spacing:-.01em
 .searchbar input::placeholder{color:var(--muted)}
 .panel{margin:10px 0;padding:16px;border-radius:20px;background:var(--soft)}
 .panel h3{margin:0 0 6px;font-size:16px}
+.sharecard{display:flex;align-items:center;gap:12px}
+.sharecard>div{flex:1;min-width:0}
+.sharecard p{margin:0;font-size:13.5px;line-height:1.35}
 
 /* bottom icons */
 #nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--bg);border-top:1px solid var(--line);padding:2px 6px env(safe-area-inset-bottom,0px)}
@@ -305,7 +308,7 @@ h2.sect{font-size:20px;font-weight:800;margin:26px 4px 8px;letter-spacing:-.01em
 <script>
 (() => {
 'use strict';
-const VERSION = '1.2';
+const VERSION = '1.3';
 const READER_V = 1;
 const Cats = window.Cats;
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
@@ -887,6 +890,7 @@ function vSaved() {
   const mus = S.pins.filter(p => p.type === 'music').length;
   let h = `<div class="pagehead"><h1>Your boards</h1><p>${plural(S.pins.length - mus, 'idea')} saved${made ? ' · ' + made + ' made' : ''}${mus ? ' · Music: ' + musicCount(S.pins.filter(p => p.type === 'music')) : ''}</p></div>`;
   if (!standalone()) h += `<div class="note"><b>Put it on your home screen</b> so it shows up in the Share menu.<div class="row" style="margin-top:10px">${S.installEvt ? `<button class="btn red sm" data-act="install">Install app</button>` : `<span>In Chrome, tap ⋮, then <b>Add to Home screen</b> or <b>Install app</b>.</span>`}</div></div>`;
+  if (S.owner) h += `<div class="panel sharecard"><div><h3>Share Artistry</h3><p class="muted">Sends the link and how to install it in a text. Only shows on your phone.</p></div><button class="btn red sm" data-act="share-app">${I(IC.share)}Share</button></div>`;
   h += `<div class="boards">${keys.map(boardCard).join('')}</div>`;
   if (cats.length) h += `<h2 class="sect">By category</h2><div class="boards">${cats.map(boardCard).join('')}</div>`;
   h += `<h2 class="sect">What it’s learned</h2>`;
@@ -904,7 +908,7 @@ function vSaved() {
   if (avoid.length) h += `<div class="panel"><h3>Not for me</h3><p class="muted" style="margin:0 0 6px;font-size:14px">Ideas like these show up less. Tap one to take it off.</p><div class="taglist">${avoid.map(a => `<button data-act="unavoid" data-k="${a.k}" data-v="${esc(a.v)}">${esc(a.l)} ✕</button>`).join('')}</div></div>`;
   h += `<h2 class="sect">Backup</h2><div class="panel"><p class="muted" style="margin:0 0 10px;font-size:14px">Your ideas and photos are saved on this phone. Download a backup now and then, or to move to a new phone.</p>
     <div class="row"><button class="btn ink sm" data-act="backup">${I(IC.download)}Download backup</button><button class="btn gray sm" data-act="restore">${I(IC.upload)}Restore a backup</button></div></div>
-    <p class="muted center" style="font-size:12.5px;margin:22px 0">Artistry ${VERSION}</p>`;
+    <p class="muted center" style="font-size:12.5px;margin:22px 0" data-act="ver">Artistry ${VERSION}</p>`;
   return h;
 }
 function vBoard(key) {
@@ -1327,6 +1331,26 @@ function notForMe(it) {
   if (S.route.v === 'idea') history.back(); else renderRoute(true);
   toast('Got it. You’ll see fewer like that.');
 }
+// The Share Artistry button (Boards) shows only on phones where it was turned on: Dave opens the app once with
+// ?me=dave (or taps the version line on Boards 5 times). Turn it off with ?me=off. Kept in kv 'owner', not in backups.
+const APP_URL = 'https://yumyumtumtum.vercel.app/crafts/';
+const APP_INVITE = 'Hey, I made you an app for your painting, craft and music stuff. It’s called Artistry.\n\n'
+  + 'Open this link in Chrome: ' + APP_URL + '\n\n'
+  + 'Then tap the 3 dots at the top right and pick Install app (or Add to Home screen).\n\n'
+  + 'After that, when you see something you like on TikTok, Instagram, YouTube, Facebook or Pinterest, tap Share and pick Artistry. '
+  + 'It saves it and sorts it for you. If you don’t see Artistry right away, tap More. There’s also a Music tab with songs to learn and lessons.';
+function shareApp() {
+  if (navigator.share) navigator.share({ title: 'Artistry', text: APP_INVITE }).catch(() => {});
+  else if (navigator.clipboard) navigator.clipboard.writeText(APP_INVITE).then(() => toast('Link and steps copied. Paste them in a text.'), () => toast(APP_URL));
+  else toast(APP_URL);
+}
+function setOwner(on) {
+  S.owner = !!on;
+  kvSet('owner', S.owner);
+  toast(S.owner ? 'Share button is on for this phone (Boards)' : 'Share button is off for this phone');
+  if (S.route.v === 'saved') renderRoute(true);
+}
+let verTaps = [];
 function sharePin(title, url) {
   if (navigator.share) navigator.share({ title, url }).catch(() => {});
   else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Link copied'), () => toast(url));
@@ -1379,6 +1403,8 @@ document.addEventListener('click', async e => {
     case 'board-sort': S.boardSort = el.dataset.s; renderRoute(true); break;
     case 'unavoid': if (el.dataset.k === 'tag') delete S.taste.avoidTags[el.dataset.v]; else delete S.taste.avoidCats[el.dataset.v]; saveTaste(); renderRoute(true); break;
     case 'backup': backup(); break;
+    case 'share-app': shareApp(); break;
+    case 'ver': { const now = Date.now(); verTaps = verTaps.filter(t => now - t < 3000).concat(now); if (verTaps.length >= 5) { verTaps = []; setOwner(!S.owner); } } break;
     case 'restore': $('#restoreFile').click(); break;
     case 'close-sheet': closeSheet(); break;
     case 'f-type': if (F) { F.type = el.dataset.t; F.touched = true; if (F.type === 'music') { const mg = musicGuess(); F.category = mg.md.inst.find(i => MS.prefs.insts.includes(i)) || mg.md.inst[0] || MS.prefs.insts[0]; if (!F.genres.length) F.genres = mg.md.genres.slice(0, 3); F.artist = F.artist || mg.md.artist; F.song = F.song || mg.md.song; } else { const g = Cats.sortPost({ title: F.title, caption: F.caption + '\n' + F.shareText, url: F.url }); F.category = g[F.type] || 'other'; } renderSave(); } break;
@@ -2078,7 +2104,8 @@ async function init() {
   S.route = start;
   renderRoute();
   const ok = await DB.open();
-  const [pins, taste, dismissed, music] = await Promise.all([DB.all('pins').catch(() => []), kvGet('taste').catch(() => null), kvGet('dismissed').catch(() => null), kvGet('music').catch(() => null)]);
+  const [pins, taste, dismissed, music, owner] = await Promise.all([DB.all('pins').catch(() => []), kvGet('taste').catch(() => null), kvGet('dismissed').catch(() => null), kvGet('music').catch(() => null), kvGet('owner').catch(() => null)]);
+  S.owner = owner === true;
   if (music) loadMusicState(music);
   S.pins = (pins || []).sort((a, b) => b.createdAt - a.createdAt);
   if (taste) S.taste = Object.assign({ avoidTags: {}, avoidCats: {}, views: {} }, taste);
@@ -2086,6 +2113,8 @@ async function init() {
   S.ready = true;
   renderRoute();
   if (!ok) toast('This browser won’t let the app save. Ideas will be lost when you close it.');
+  if (qs.get('me') === 'dave') setOwner(true);
+  else if (qs.get('me') === 'off') setOwner(false);
   if (findUrl(shared.url) || findUrl(shared.text) || findUrl(shared.title) || shared.text) openSave(shared);
   else if (qs.has('add')) openSave({});
   if ('serviceWorker' in navigator && location.protocol === 'https:') watchUpdates();

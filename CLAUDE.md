@@ -406,7 +406,7 @@ had to be set up on GitHub or Vercel.
 | Share health check | `/api/idea/<anything>?selftest=1` reads one real public post from TikTok, Instagram, YouTube (youtu.be link), Facebook (a video and a post) and Pinterest on Vercel and reports title, caption length, photo host, and how it would be filed. `&only=facebook,pinterest` runs some; `&add=<url>|<url>` adds up to 4 more. |
 | Live-check aliases | `/api/idea/<anything>?url=`, `/api/crafts/<anything>?q=`, `/api/music/<anything>?inst=` (vercel.json rewrites). WebFetch in Claude sessions cached `/api/crafts?...` by path and ignored new query strings, so use a fresh alias path per check. New paths ask Dave to approve the fetch. |
 
-What it does (v1.0; v1.1 added Music, v1.2 the Artistry name and icon):
+What it does (v1.0; v1.1 added Music, v1.2 the Artistry name and icon, v1.3 Dave's Share Artistry button):
 - Pinterest look: white (or dark) background, 2-5 column masonry of rounded photo pins, text tabs All / Painting / Crafts
   with category chips, red Save buttons, bottom icons Home, Search, Add, Music, Ideas, Boards.
 - Share > Brush & Glue (manifest `share_target`, GET with title/text/url) opens the Save sheet, reads the post, and
@@ -422,6 +422,10 @@ What it does (v1.0; v1.1 added Music, v1.2 the Artistry name and icon):
   its category, Not for me -2. Shown on Boards > What it's learned, with a removable Not for me list.
 - Boards: All, Painting, Crafts, Music, Favorites, Want to try, Made it, and one per category, with collage covers.
 - Backup: Boards > Download backup (JSON with photos) and Restore. No cloud backup yet.
+- Share Artistry (v1.3, Oct 1, 2026): a card on Boards that sends the link and install steps by text (`shareApp`,
+  `APP_INVITE`). Dave asked for it "only on my app": it shows only on a phone where it was turned on by opening
+  `https://yumyumtumtum.vercel.app/crafts/?me=dave` once (or tapping the version line on Boards 5 times; `?me=off`
+  or 5 taps again turns it off). The flag is kv `owner` on that phone and isn't in backups, so Steph never sees it.
 - Categories (crafts/cats.js): Painting: Acrylic, Watercolor, Paint pouring, Rock painting, Dot art & mandalas,
   Painted pumpkins/glass & more, Oil, Gouache, Spray paint, Furniture & signs, Walls & murals, Drawing & sketching,
   Kids painting. Crafts: Wood, Paper, Resin, Cricut & vinyl, Sewing & fabric, Yarn & crochet, Jewelry & beads, Clay,
