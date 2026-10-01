@@ -104,13 +104,22 @@ async function readPin(url, trace) {
   }
   if (!image && !title && !desc) throw new Error('Pinterest wouldn’t share this pin’s details.');
   link = decode(link);
+  // the project page the pin links to usually has the supply list
+  let supplies = [];
+  if (link && !/pinterest\.|pin\.it/i.test(link) && !badUrl(link)) {
+    try {
+      const pg = await Promise.race([readPage(link, trace), new Promise((_, rej) => setTimeout(() => rej(new Error('project page took too long')), 9000))]);
+      supplies = pg.supplies || [];
+      if (!desc && pg.caption) desc = pg.caption;
+    } catch (e) { if (trace) trace.push('project page: ' + e.message); }
+  }
   return {
     platform: 'pinterest', finalUrl: id ? 'https://www.pinterest.com/pin/' + id + '/' : page, kind: 'post',
     title: tidyTitle(clean(title).replace(/\s*\|\s*Pinterest.*$/i, '') || firstLine(desc)),
     caption: clean(desc) === clean(title) ? '' : String(desc || '').trim(),
     image: decode(image), width: w, height: h, author, siteName: 'Pinterest',
     link: link && !/pinterest\.|pin\.it/i.test(link) && !badUrl(link) ? link : '',
-    supplies: []
+    supplies
   };
 }
 function pinId(u) {
@@ -147,11 +156,41 @@ async function readPage(url, trace) {
     if (!desc && howto.description) desc = clean(decode(howto.description));
     if (trace) trace.push('project card: ' + supplies.length + ' supplies');
   }
+  if (!supplies.length) {
+    supplies = listedSupplies(html);
+    if (trace && supplies.length) trace.push('supply list on the page: ' + supplies.length);
+  }
   if (image) { try { image = new URL(decode(image), finalUrl).href; } catch (e) { image = ''; } }
   return {
     platform: 'web', finalUrl, kind: 'page', title: tidyTitle(title), caption: clean(desc),
     image, width: w, height: h, author: '', siteName: site, link: '', supplies
   };
+}
+// Most craft blogs list supplies under a "Supplies" / "Materials" / "What you'll need" heading, or in a Create card
+const SUP_HEAD = /\b(supplies|supply list|materials|what you(?:'|’|&#8217;|&rsquo;)?ll need|what you need|you will need|you(?:'|’|&#8217;|&rsquo;)?ll need|tools and materials|things you(?:'|’|&#8217;|&rsquo;)?ll need)\b/i;
+function listedSupplies(html) {
+  const strip = x => clean(decode(String(x || '').replace(/<[^>]+>/g, ' '))).replace(/\s+/g, ' ').trim();
+  const card = html.match(/<(?:div|ul)[^>]+class="[^"]*(?:mv-create-supplies|mv-create-tools|wprm-recipe-equipment|tasty-recipes-equipment|supply-list|supplies-list)[^"]*"[\s\S]*?<\/(?:ul|div)>/i);
+  let block = card ? card[0] : '';
+  if (!block) {
+    const re = /<(h[1-6]|p|strong|b)\b[^>]*>([\s\S]{0,160}?)<\/\1>/gi;
+    let m;
+    while ((m = re.exec(html))) {
+      const head = strip(m[2]);
+      if (head.length > 70 || !SUP_HEAD.test(head)) continue;
+      const after = html.slice(m.index + m[0].length, m.index + m[0].length + 4000);
+      const list = after.match(/^[\s\S]{0,600}?(<(ul|ol)\b[\s\S]*?<\/\2>)/i);
+      if (list) { block = list[1]; break; }
+    }
+  }
+  if (!block) return [];
+  const out = [];
+  for (const li of block.match(/<li\b[\s\S]*?<\/li>/gi) || []) {
+    const t = strip(li).replace(/\s*\((?:affiliate|link|amazon)[^)]*\)\s*/gi, ' ').trim();
+    if (t && t.length <= 120 && !out.includes(t)) out.push(t);
+    if (out.length >= 25) break;
+  }
+  return out;
 }
 function findType(node, re, seen) {
   seen = seen || new Set();
@@ -200,7 +239,7 @@ async function selfTest(req, res) {
       const r = await Promise.race([readIdea(t.url), new Promise((_, rej) => setTimeout(() => rej(new Error('took over 35 s')), 35000))]);
       const s = Cats ? Cats.sortPost({ title: r.title, caption: r.caption, url: r.finalUrl }) : {};
       const m = Music ? Music.detect(r.title + ' ' + r.caption.slice(0, 300), r.author) : {};
-      return { app: t.app, ok: true, ms: Date.now() - t0, platform: r.platform, kind: r.kind, title: r.title.slice(0, 70), caption: r.caption.length, photo: r.image ? hostOf(r.image) : '', author: r.author, files: m.isMusic ? 'music:' + m.inst.join('/') : (s.type ? s.type + ':' + s.category + (s.sure ? '' : '?') : 'asks') };
+      return { app: t.app, ok: true, ms: Date.now() - t0, platform: r.platform, kind: r.kind, title: r.title.slice(0, 70), caption: r.caption.length, photo: r.image ? hostOf(r.image) : '', author: r.author, pageSupplies: (r.supplies || []).length, files: m.isMusic ? 'music:' + m.inst.join('/') : (s.type ? s.type + ':' + s.category + (s.sure ? '' : '?') : 'asks') };
     } catch (e) { return { app: t.app, ok: false, ms: Date.now() - t0, url: t.url, error: e.message }; }
   }));
   res.setHeader('Cache-Control', 'no-store');
@@ -209,5 +248,6 @@ async function selfTest(req, res) {
 function hostOf(u) { try { return new URL(u).hostname; } catch (e) { return ''; } }
 
 module.exports.readIdea = readIdea;
+module.exports.listedSupplies = listedSupplies;
 module.exports.tidyTitle = tidyTitle;
 module.exports.firstLine = firstLine;

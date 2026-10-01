@@ -28,7 +28,7 @@ it automatically. In any other chat, attach this file and say what you want chan
 | Code (public repo, branch `main`) | https://github.com/djvas1975/yumyumtumtum |
 | Recipe reader + Discover service (Vercel, free Hobby plan, auto-deploys from GitHub) | https://yumyumtumtum.vercel.app |
 | claude.ai copy of the app (private, reader and Discover don't work there) | https://claude.ai/artifact/Jm3hSva7uWbKcXmYypsxje |
-| **Artistry** (was Brush & Glue), the painting, crafts and music-lessons app for Steph (separate app, same repo and Vercel project; see the end of this file) | https://yumyumtumtum.vercel.app/crafts/ |
+| **Artistry** (was Brush & Glue), the painting, crafts, holidays, supplies and music-lessons app for Steph (separate app, same repo and Vercel project; see the end of this file) | https://yumyumtumtum.vercel.app/crafts/ |
 
 Dave's recipes live **on his phone** (the browser's IndexedDB). Since v1.4, **Cloud backup** (Me tab)
 copies them automatically to a private Vercel Blob store in his own Vercel account (see "Cloud
@@ -392,79 +392,125 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 # Artistry (formerly Brush & Glue): the painting, crafts and music app, built Sept 30, 2026
 
-**Renamed Artistry on Oct 1, 2026 (v1.2), with a new icon from Dave's picture.** Only the name people see changed: the
-web address (`/crafts/`), the phone's storage (IndexedDB `brushglue`, cache names `bng-`), and the backup format
-(`app:'brushglue'`) keep the old name on purpose, so nothing saved is lost and old backups still restore. The app is
-for Steph (Dave's son's mom); see the Learn music section below.
+**Version 2.0 (Oct 1, 2026): a full redesign.** Dave asked for "a mix of Pinterest, Instagram, YouTube, Facebook… take
+the best of each app and make one really cool, useful, fun app for collecting art, crafts, painting, music tutorials and
+more", sharing from social media kept, sorting by kind and **holiday**, learning what "we" like, **supplies gathered for
+each shared project** and "I have these supplies and the app tells us what we're missing", "as if we're charging $20 a
+month". He saw the first-look screenshots before it went live.
 
-Dave asked for "an app that stores and categorizes arts and crafts ideas", painting ideas and craft ideas kept
-apart, that learns what he likes, then: "look similar to Pinterest", "sharing like YumYum", "share an Instagram
-video to the app and it categorizes it". It's a separate installable app that lives in this repo so nothing new
-had to be set up on GitHub or Vercel.
+Renamed Artistry on Oct 1, 2026 (v1.2), icon from Dave's picture. Only the name people see changed: the web address
+(`/crafts/`), the phone's storage (IndexedDB `brushglue`, cache names `bng-`), and the backup format (`app:'brushglue'`)
+keep the old name on purpose, so nothing saved is lost and old backups still restore. The app is for Steph (Dave's
+son's mom); see the Learn music section below. It's a separate installable app in this repo (same GitHub and Vercel).
 
 | What | Where |
 |---|---|
 | The app (install from Chrome on Android) | https://yumyumtumtum.vercel.app/crafts/ (served by Vercel, NOT GitHub Pages, so its scope doesn't sit inside YumYum's) |
-| App files | `crafts/index.html` (the whole app), `crafts/cats.js` (the sorter, shared with tests), `crafts/music.js` (Learn music data and lesson reader, shared with api/music.js and tests), `crafts/manifest.webmanifest` (name, icons, Share menu), `crafts/sw.js` (offline and updates; `VERSION` is stamped by `node tools/stamp_crafts.js`), `crafts/icons/` |
-| Icons | App icon from Dave's picture `tools/artistry-icon-art.jpg` (ukulele, paint palette, leaves, music notes on a teal tile): `python3 tools/make_artistry_icons.py [picture] [preview.png]` finds the tile, fills its corners, and writes icon-512/192, icon-maskable-512/192 (86% on a blurred copy of itself so round and rounded-square launchers keep the ukulele and palette), logo-128, apple-touch-icon. `tools/make_crafts_icons.py` draws the teal long-press shortcut icons (add, ideas, music); `--old` redraws the retired red palette icon into tools/old-crafts-icons/. To change the icon again, attach the new picture and run make_artistry_icons.py with it. |
-| Post reader | `api/idea.js`: `GET /api/idea?url=` -> `{platform, kind, title, caption, image, width, height, author, siteName, link, supplies}`. Instagram/TikTok/YouTube/Facebook use the readers exported from api/recipe.js (`module.exports.readers`); Pinterest uses the pin-info widget JSON; websites use og tags plus a schema.org HowTo supply list. |
+| App files | `crafts/index.html` (page shell and all CSS), `crafts/app.js` (all the app's code: views, storage, learning, save sheet, music, backup, updates), `crafts/cats.js` (Painting/Crafts sorter), `crafts/holidays.js` (holidays, dates, countdowns), `crafts/supplies.js` (supply finder and My supplies check; also used by api/idea.js tests), `crafts/music.js` (Learn music data), `crafts/fonts/` (Poppins Medium/Bold, Latin subset, OFL.txt), `crafts/manifest.webmanifest`, `crafts/sw.js` (offline and updates; `VERSION` is stamped by `node tools/stamp_crafts.js`), `crafts/icons/` |
+| Icons | App icon from Dave's picture `tools/artistry-icon-art.jpg` (ukulele, paint palette, leaves, music notes on a teal tile): `python3 tools/make_artistry_icons.py [picture] [preview.png]` finds the tile, fills its corners, and writes icon-512/192, icon-maskable-512/192 (86% on a blurred copy of itself so round and rounded-square launchers keep the ukulele and palette), logo-128, apple-touch-icon. `tools/make_crafts_icons.py` draws the teal long-press shortcut icons (add, ideas, supplies, music); `--old` redraws the retired red palette icon into tools/old-crafts-icons/. To change the icon again, attach the new picture and run make_artistry_icons.py with it. |
+| Post reader | `api/idea.js`: `GET /api/idea?url=` -> `{platform, kind, title, caption, image, width, height, author, siteName, link, supplies}`. Instagram/TikTok/YouTube/Facebook use the readers exported from api/recipe.js (`module.exports.readers`); Pinterest uses the pin-info widget JSON and then reads the blog the pin links to for its supply list (9 s limit); websites use og tags plus the supply list from a schema.org HowTo card, a Create/WPRM/Tasty card, or the list under a "Supplies"/"Materials"/"What you'll need" heading (`listedSupplies`). |
 | Blog finder | `api/crafts.js`: `GET /api/crafts?q=&type=painting|craft|both&n=&page=` -> items `{title,url,image,width,height,sourceName,kind}` from 42 WordPress craft/painting blogs (their `/wp-json/wp/v2/posts?search=`). `debug=1` reports each site; `sites=trial` tries sites marked `trial: true`. Titles must mention the search (unless that leaves fewer than 6). Food posts, giveaways, reviews are skipped. |
-| Tests | `node tests/crafts.test.js` (sorter cases, reader with fake Instagram/Pinterest/blog pages, finder), `node tests/music.test.js` (lesson reader, song list, api/music.js with a fake YouTube, with and without a key) |
-| Share health check | `/api/idea/<anything>?selftest=1` reads one real public post from TikTok, Instagram, YouTube (youtu.be link), Facebook (a video and a post) and Pinterest on Vercel and reports title, caption length, photo host, and how it would be filed. `&only=facebook,pinterest` runs some; `&add=<url>|<url>` adds up to 4 more. |
+| Tests | `node tests/crafts.test.js` (sorter, reader with fake pages, finder, sw.js stamp), `node tests/music.test.js`, `node tests/holidays.test.js` (dates, countdowns, detection), `node tests/supplies.test.js` (real-style captions, blog lists, check against My supplies) |
+| Share health check | `/api/idea/<anything>?selftest=1` reads one real public post from TikTok, Instagram, YouTube (youtu.be link), Facebook (a video and a post) and Pinterest on Vercel and reports title, caption length, photo host, supplies found on the page, and how it would be filed. `&only=facebook,pinterest` runs some; `&add=<url>|<url>` adds up to 4 more. |
 | Live-check aliases | `/api/idea/<anything>?url=`, `/api/crafts/<anything>?q=`, `/api/music/<anything>?inst=` (vercel.json rewrites). WebFetch in Claude sessions cached `/api/crafts?...` by path and ignored new query strings, so use a fresh alias path per check. New paths ask Dave to approve the fetch. |
 
-What it does (v1.0; v1.1 added Music, v1.2 the Artistry name and icon, v1.3 Dave's Share Artistry button):
-- Pinterest look: white (or dark) background, 2-5 column masonry of rounded photo pins, text tabs All / Painting / Crafts
-  with category chips, red Save buttons, bottom icons Home, Search, Add, Music, Ideas, Boards.
-- Share > Brush & Glue (manifest `share_target`, GET with title/text/url) opens the Save sheet, reads the post, and
-  files it: board (Painting or Crafts), category, tags. When the words don't clearly point one way (`sure` false) it
-  asks "Painting or crafts? Tap one." instead of guessing. Photos are downloaded through `/api/image`, shrunk to
-  736px JPEG and kept in IndexedDB (`brushglue`: stores `pins`, `photos`, `kv`) because Instagram photo links expire.
-- Pin page: big photo, Play here (embeds for YouTube, TikTok `embed/v2`, Instagram `/p/<code>/embed/`, Facebook
-  video plugin), Open in Instagram, favorite, share, Want to try / Made it, board pill, tags, supplies, notes,
-  "More like this" (his own similar pins, then blog projects).
-- Ideas for you: queries built from his top categories and tags plus the season (Oct = halloween/fall), ranked on the
-  phone by taste; topic chips; More ideas loads page 2; ⋯ > Not for me hides it and counts against its tags/category.
-- Learning (free, on the phone, no AI): save 1, favorite +3, made +2, opens +0.5 each (max 4), opening an idea +0.3 to
-  its category, Not for me -2. Shown on Boards > What it's learned, with a removable Not for me list.
-- Boards: All, Painting, Crafts, Music, Favorites, Want to try, Made it, and one per category, with collage covers.
-- Backup: Boards > Download backup (JSON with photos) and Restore. No cloud backup yet.
-- Share Artistry (v1.3, Oct 1, 2026): a card on Boards that sends the link and install steps by text (`shareApp`,
-  `APP_INVITE`). Dave asked for it "only on my app": it shows only on a phone where it was turned on by opening
-  `https://yumyumtumtum.vercel.app/crafts/?me=dave` once (or tapping the version line on Boards 5 times; `?me=off`
-  or 5 taps again turns it off). The flag is kv `owner` on that phone and isn't in backups, so Steph never sees it.
+## Design (v2.0)
+- Colors from the icon: paper #fff / ink #17201e, mist #eef3f1 surfaces, **teal #0b7a72** (brand, nav, toggles), **coral
+  #ff4d5e** (Save, hearts), **sun #ffb51f** (holidays, countdowns, "Need 2", Making), cobalt (painting), mint (have it,
+  Ready, Made it), plum (music). Dark mode has its own set (`prefers-color-scheme`). Poppins (self-hosted) for headings,
+  buttons and chips; the phone's font for reading. Emoji are the phone's own (Noto on Android).
+- The one loud thing: **painted rings** (`paintRing(seed)`: five palette-colored arcs, a little different per item) on the
+  Instagram-style circle rows. Topic tiles are paint-dab shapes. The + in the bottom bar is a teal paint dab.
+- Bottom bar: Home, Explore, (+ Save), Music, Studio. No all-caps labels.
+- What came from where: Pinterest = masonry wall, boards, Save, More like this. Instagram = circle row (holiday
+  countdowns, Making, Ready, Practice, creators), double-tap a photo to heart it, Studio profile with stats, highlight
+  circles and a grid of her own "Made it" photos. YouTube = lesson player (speed, loop), Keep practicing with a red
+  progress bar, creators like subscriptions. Facebook = "You saved this 3 weeks ago" memory card (Make it / Not now,
+  snoozes 7 days, kv `memo`), To make / Making / Made it.
+
+## What it does (v2.0)
+- **Home:** Artistry mark, shopping-list basket with a count, search. Circle row: + Save, holidays in the next 75 days
+  with "4w"/"9d" tags, Making, Ready to make, Practice (a lesson marked Learning), top creators (2+ saves). Memory card
+  (5+ saves; an old "To make" project, preferring ones whose holiday is within 45 days, loved, or ready). Filter chips:
+  All, Painting, Crafts, Music, the next holiday that has saves, Ready to make, Making. Masonry of everything she saved
+  (music lessons included) with platform glyph, play badge, Making/Made it stamps, heart, and "Ready"/"Need 2" (when
+  she has 3+ supplies listed) plus the holiday emoji. "Picked for you" row after the first 8. First open: welcome card
+  (name, install, share steps, My supplies).
+- **Explore:** search (her saves by title, caption, notes, tags, supply names, kind, holiday, creator; songs; blog
+  results), Holidays coming up cards, Browse by kind (paint-dab tiles, 9 then "All 29"), Your creators, Ideas for you
+  (topic chips incl. the next holiday) with More ideas.
+- **Project page:** full-bleed photo (double-tap = love), Play here, title, creator (tap for their page), Open in X,
+  heart/share/edit, To make / Making / Made it (Made it = confetti + "Add a photo of yours"), **Supplies card** (have X
+  of Y meter, tap a row to mark it on hand, which updates My supplies; "Usually needs" rows when the post lists none;
+  Add N to my list; Edit), holiday pills with countdowns, kind pill, tags, How it's made (caption), notes, Yours (her
+  photos), project page link, More like this (her saves, then blogs; holiday-aware).
+- **Holiday page** (`{v:'holiday', k}`): painted-ring header, countdown and date, Ready to make, Your ideas, Ideas for
+  the holiday (blog finder, `HOL_Q`). "All" lists every holiday, celebration and season.
+- **My supplies** (`{v:'supplies', tab}` from Home basket, Studio, or `?go=supplies`): I have (type with suggestions, or
+  tap common supplies by store section; "Count the basics as on hand" switch) and Shopping list (by store section,
+  "For <project>", check off, "Bought the checked ones" moves them into I have, Share list as text, Clear checked).
+- **Studio:** profile (name via Edit name), saved/made/songs learned, My supplies, Share Artistry (owner only), holiday
+  highlight circles, tabs Boards (Everything, Painting, Crafts, Music, Favorites, Want to make, Making now, Made it,
+  Ready to make, plus each kind) / Made (3-column grid of her photos) / Taste (lean, favorite kinds, holidays, creators,
+  tags, music lately, Not for me), install card, Backup/Restore, version line (5 taps = owner switch).
+- **Save sheet** (Share menu or +): reads the post, picks the board (Painting/Crafts/Music) and kind (8 shown, More…),
+  **Holiday or season** chips (found ones on, next holidays offered), "Found 5 supplies · You have 2 of 5", tags, notes.
+  Saving an Explore idea also reads its blog page in the background for the supply list.
+- Learning (free, on the phone): weights save 1, favorite +3, made +2, making +1.5, opens +0.5 each (max 4); kinds, tags,
+  holidays and creators; idea ranking adds holidays she saves for and holidays within 45 days.
+- Data on each art pin (added at save, or once at startup for older saves): `needs` (from `Supplies.gather`; `needsEdited`
+  when she edits), `holidays` (from `Holidays.detect`, editable), `status` 'want'|'making'|'made', `madePhotos` (photo
+  keys `<pinId>:m<time>` in the `photos` store). kv: `stash` {have, custom, basics}, `shop` [{k, sid, name, g, pins,
+  done}], `profile` {name}, `memo` {snooze}. Backups include all of these and the made photos.
+- Share Artistry (v1.3): a button in Studio that sends the link and install steps by text (`shareApp`, `APP_INVITE`),
+  only on a phone where it was turned on by opening `https://yumyumtumtum.vercel.app/crafts/?me=dave` once (or 5 taps
+  on the version line in Studio; `?me=off` or 5 taps again turns it off). kv `owner`, not in backups.
 - Categories (crafts/cats.js): Painting: Acrylic, Watercolor, Paint pouring, Rock painting, Dot art & mandalas,
   Painted pumpkins/glass & more, Oil, Gouache, Spray paint, Furniture & signs, Walls & murals, Drawing & sketching,
   Kids painting. Crafts: Wood, Paper, Resin, Cricut & vinyl, Sewing & fabric, Yarn & crochet, Jewelry & beads, Clay,
   Candles & soap, Wreaths & florals, Glass & mosaic, Holiday & seasonal, Home decor, Kids crafts, Upcycle & DIY,
   Diamond art & kits.
+- Holidays (crafts/holidays.js): New Year's, Valentine's, St. Patrick's, Easter (computus), Cinco de Mayo, Mother's Day
+  (2nd Sun May), Father's Day (3rd Sun June), Fourth of July, Back to school (Aug 15), Halloween, Día de los Muertos,
+  Thanksgiving (4th Thu Nov), Hanukkah (Wikipedia table 2025-2030; no date after that), Christmas, Kwanzaa; plus
+  Birthdays & parties, Weddings & showers, Graduation (no date) and the four seasons. Weak words (pumpkin, skull,
+  heart…) need a second hint.
+- Supplies (crafts/supplies.js): ~150 supplies in 12 store sections with keywords (longest match wins), `fam` for
+  stand-ins (any canvas), `basic` for things most homes have, `LIKELY` usual supplies per kind, `listed()` reads lists
+  under Supplies/Materials/You'll need headings (bullets, one-line lists, amounts, links and colors in parentheses
+  handled), `gather()` = list + things named in the post + usual ones when fewer than 2, `check()` against My supplies.
 
-Checked live Sept 30, 2026: the reader read a real public Instagram post (caption, creator, cdninstagram photo) through
-the embed page; the finder returned 60+ real projects with photos and sizes for "painted rocks". Not checked live yet:
-sharing from Dave's own phone, a real Instagram reel of a craft, and the installed app's Share menu entry.
+Checked live Sept 30, 2026: the reader read a real public Instagram post through the embed page; the finder returned
+60+ real projects for "painted rocks". Oct 1, 2026: the share health check read a real TikTok, Instagram, YouTube,
+Facebook (video and post) and Pinterest post, all with photos. Not checked yet: sharing from a real phone.
 
 Sites that answer (Sept 30, 2026) are listed in api/crafts.js; the ones that turned Vercel away are in its comment.
 An earlier claude.ai artifact version (https://claude.ai/artifact/2CjJ4k1XatYWvESKhAYXVm) is superseded by this app.
 
 Ideas not built yet: cloud backup (could share YumYum's Vercel Blob once it's set up), YouTube/TikTok search in
-Ideas (needs an official API key), reading what's said in TikTok videos for supply lists.
+Ideas (needs an official API key), reading what's said in TikTok videos for supply lists, store prices for the
+shopping list.
 
 ## Changing Artistry (the routine) and how updates reach Steph's phone
-1. Edit files in `crafts/` (and `api/idea.js`, `api/crafts.js`, `api/music.js` for the server parts).
+1. Edit files in `crafts/` (most changes are in `crafts/app.js` and the CSS in `crafts/index.html`; server parts in
+   `api/idea.js`, `api/crafts.js`, `api/music.js`).
 2. Run `node tools/stamp_crafts.js` (sets `crafts/sw.js` VERSION from a hash of the app's files, and fingerprints the
    icon addresses in the manifest so a new icon reaches installed phones).
-3. Test: `node tests/crafts.test.js && node tests/music.test.js` (crafts.test fails if step 2 was skipped), plus the
-   YumYum tests if api/recipe.js or lib/ changed. Bump `const VERSION = '1.x'` in crafts/index.html for visible changes.
+3. Test: `node tests/crafts.test.js && node tests/music.test.js && node tests/holidays.test.js && node tests/supplies.test.js`
+   (crafts.test fails if step 2 was skipped), plus the YumYum tests if api/recipe.js or lib/ changed. Bump
+   `const VERSION = '2.x'` in crafts/app.js for visible changes. For a screen check, serve the repo folder, open
+   /crafts/ in Playwright at 390x844 and route `**/api/**` to fakes (the reader features need https, so the test copy
+   replaces `location.protocol === 'https:'` in app.js with `true`).
 4. Commit as djvas1975 and push to `main`; Vercel deploys in about a minute.
-How phones get it (built and tested Oct 1, 2026, Playwright with a real service worker): the service worker loads the
-app's files from the internet first (saved copy only offline or after 4 s), so every open shows the newest version.
-If the app sits open in the background, coming back to it after 10+ minutes checks for a new sw.js; the new version
-takes over and the page reloads itself (`appUpdated`: right away if no sheet is open, no lesson playing and nothing
-typed; otherwise a toast "Artistry has an update · Reload", or the reload happens when she leaves the app). Her saved
-ideas live in IndexedDB on her phone and are never touched by updates. The home-screen name and icon are Chrome's
-(manifest updates, up to about a day).
+How phones get it (tested Oct 1, 2026, Playwright with a real service worker, again after the v2.0 redesign): the
+service worker loads the app's files from the internet first (saved copy only offline or after 4 s), so every open
+shows the newest version. If the app sits open in the background, coming back to it after 10+ minutes checks for a new
+sw.js; the new version takes over and the page reloads itself (`appUpdated`: right away if no sheet is open, no lesson
+playing and nothing typed; otherwise a toast "Artistry has an update · Reload", or the reload happens when she leaves
+the app). Her saved ideas live in IndexedDB on her phone and are never touched by updates. The home-screen name and
+icon are Chrome's (manifest updates, up to about a day).
 
-Share-menu formats checked offline (Oct 1, 2026, `crafts/index.html` `findUrl`): TikTok vm./full links with or without
+Share-menu formats checked offline (Oct 1, 2026, `findUrl` in crafts/app.js): TikTok vm./full links with or without
 words, Instagram reel/post with `?igsh=…==`, YouTube youtu.be and shorts with `?si=`, Facebook share/r, share/v,
 share/p and fb.watch, Pinterest pin.it with words and full pin links, Chrome pages. iPhones have no Share-menu
 target for web apps, so there it's Copy link + the Add button.
@@ -484,8 +530,9 @@ never in the repo. Free quota: 10,000 units a day; a search costs 100, a channel
 - Without the key (works now): Songs to learn (147 songs, ranked by her taste, genre chips), song sheet (pick the
   instrument, Lessons on YouTube link, chords/tabs/sheet music links, Want to learn / Learning / Learned it, Not for
   me), Free teachers on YouTube (24 channels), Free places to learn, search shows matching songs + a YouTube search
-  button, and Share > Brush & Glue from the YouTube app files the lesson under Music with instrument and genre
-  (`musicGuess()` in the Save sheet; the board picker has Painting / Crafts / Music). Saved lessons play inside the app.
+  button, and Share > Artistry from the YouTube app files the lesson under Music with instrument and genre
+  (`musicGuess()` in the Save sheet in crafts/app.js; the Save sheet lets her switch Painting / Crafts / Music).
+  Saved lessons play inside the app.
 - With the key: Picked for you (up to 4 searches from her taste, refreshed at most every 30 minutes, 6 hours if
   nothing changed), New from free teachers, in-app lesson search, Find a lesson on a song, More lessons like this.
 - Lesson page: YouTube IFrame player (falls back to a plain embed if the API script is blocked), Speed 0.5x / 0.75x /

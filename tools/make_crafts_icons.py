@@ -102,6 +102,11 @@ def shortcut(kind, size=96):
     if kind == "add":
         d.rounded_rectangle([s * 0.5 - w / 2, s * 0.26, s * 0.5 + w / 2, s * 0.74], radius=w // 2, fill="white")
         d.rounded_rectangle([s * 0.26, s * 0.5 - w / 2, s * 0.74, s * 0.5 + w / 2], radius=w // 2, fill="white")
+    elif kind == "supplies":  # a basket
+        d.polygon([(s * .22, s * .42), (s * .78, s * .42), (s * .70, s * .76), (s * .30, s * .76)], fill="white")
+        d.arc([s * .33, s * .2, s * .67, s * .56], 180, 360, fill="white", width=int(w * .8))
+        for x in (.4, .5, .6):
+            d.line([(s * x, s * .5), (s * x, s * .68)], fill=(10, 122, 118, 255), width=int(w * .45))
     elif kind == "music":  # two eighth notes joined by a beam
         r = s * 0.085
         for cx, cy in ((s * 0.36, s * 0.68), (s * 0.66, s * 0.62)):
@@ -126,6 +131,7 @@ def main():
     shortcut("add").save(os.path.join(OUT, "shortcut-add.png"))
     shortcut("ideas").save(os.path.join(OUT, "shortcut-ideas.png"))
     shortcut("music").save(os.path.join(OUT, "shortcut-music.png"))
+    shortcut("supplies").save(os.path.join(OUT, "shortcut-supplies.png"))
     if "--old" not in sys.argv:
         return
     # the retired Brush & Glue palette icon, written beside this script (not into the app)

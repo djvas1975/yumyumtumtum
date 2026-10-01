@@ -4,284 +4,446 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Artistry</title>
-<meta name="description" content="Save painting and craft ideas from Instagram, TikTok, YouTube, Pinterest and any website.">
+<meta name="description" content="Save painting, craft and music ideas from Instagram, TikTok, YouTube, Facebook, Pinterest and any website. Artistry sorts them, finds the supplies, and learns what you like.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0f1513" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/logo-128.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preload" href="fonts/poppins-bold.woff" as="font" type="font/woff" crossorigin>
 <style>
-/* Layout: a Pinterest-style board. Masonry of rounded photo pins, text tabs on top, five icons pinned to the bottom. */
+/* Artistry: a personal studio for art, craft and music projects.
+   Colors come from the app icon (teal tile, coral and sun paint dabs, cobalt, mint, the plum of the music notes).
+   Poppins for headings and buttons, the phone's own font for reading. The one loud thing is the painted rings. */
+@font-face{font-family:Poppins;src:url(fonts/poppins-medium.woff) format("woff");font-weight:500;font-display:swap}
+@font-face{font-family:Poppins;src:url(fonts/poppins-bold.woff) format("woff");font-weight:700;font-display:swap}
 :root{
-  --bg:#ffffff; --fg:#111111; --muted:#5f5f5f; --soft:#efefef; --soft-2:#e2e2e2; --line:#e6e6e6; --sheet:#ffffff;
-  --red:#e60023; --red-press:#b3001b; --on-red:#ffffff; --ink:#111111; --on-ink:#ffffff;
-  --ph-p:#e3e9fb; --ph-p-ink:#1f2f66; --ph-c:#dcefe5; --ph-c-ink:#124a36; --ph-m:#ece4fb; --ph-m-ink:#3b2470; --mu:#6d28d9;
-  --scrim:rgba(0,0,0,.42);
-  --font:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --r:16px; --gap:8px; --nav-h:62px;
+  --paper:#ffffff; --ink:#17201e; --ink-2:#4b5754; --ink-3:#7c8885;
+  --mist:#eef3f1; --mist-2:#dfe8e5; --line:#e3e9e7; --sheet:#ffffff; --scrim:rgba(12,22,20,.46);
+  --teal:#0b7a72; --on-teal:#ffffff; --teal-soft:#dcf0ec;
+  --coral:#ff4d5e; --coral-press:#e2374a; --on-coral:#ffffff; --coral-soft:#ffe4e7;
+  --sun:#ffb51f; --sun-ink:#7a4d00; --sun-soft:#fff1cf;
+  --cobalt:#2e62f0; --cobalt-soft:#e3eaff;
+  --mint:#0f9d74; --mint-soft:#dbf3ea;
+  --plum:#8a3fd6; --plum-soft:#efe4fb;
+  --display:Poppins, ui-sans-serif, system-ui, sans-serif;
+  --font:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --gut:12px; --nav-h:64px; --r:16px;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#111111; --fg:#f1f1f1; --muted:#a8a8a8; --soft:#262626; --soft-2:#353535; --line:#2b2b2b; --sheet:#1c1c1c;
-    --ink:#f1f1f1; --on-ink:#111111;
-    --ph-p:#232c4d; --ph-p-ink:#d1dbff; --ph-c:#1a392d; --ph-c-ink:#bcecd7; --ph-m:#2e2448; --ph-m-ink:#ddd0ff; --mu:#c4b5fd;
-    --scrim:rgba(0,0,0,.62);
+    --paper:#0f1513; --ink:#e8f0ed; --ink-2:#a9b7b3; --ink-3:#7f8d89;
+    --mist:#1a2422; --mist-2:#263230; --line:#21302c; --sheet:#151d1b; --scrim:rgba(0,0,0,.62);
+    --teal:#3ec4b6; --on-teal:#06201d; --teal-soft:#13393a;
+    --coral:#ff6b79; --coral-press:#ff8a95; --on-coral:#2a0a0e; --coral-soft:#3e1d22;
+    --sun:#ffc54d; --sun-ink:#ffe0a0; --sun-soft:#3a2d10;
+    --cobalt:#89a5ff; --cobalt-soft:#1c2648;
+    --mint:#3cd2a3; --mint-soft:#123a30;
+    --plum:#c69cff; --plum-soft:#2c2140;
     color-scheme:dark;
   }
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font:15px/1.4 var(--font);-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+body{background:var(--paper);color:var(--ink);font:15px/1.45 var(--font);-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 a{color:inherit}
-:focus-visible{outline:3px solid #0074e8;outline-offset:2px}
+img{max-width:100%}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:8px}
 .ic{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .ic.fill{fill:currentColor;stroke:none}
+.emo{font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;font-style:normal;line-height:1}
+h1,h2,h3,.disp{font-family:var(--display);font-weight:700;letter-spacing:-.01em}
+.muted{color:var(--ink-2)}
+.faint{color:var(--ink-3)}
 
-#main{max-width:1280px;margin:0 auto;padding:0 10px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 28px)}
+#main{max-width:1180px;margin:0 auto;padding:0 var(--gut) calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 36px)}
 
-/* top of each tab */
-.topbar{position:sticky;top:0;z-index:20;background:var(--bg);margin:0 -10px;padding:calc(env(safe-area-inset-top,0px) + 6px) 10px 4px}
-.tabs{display:flex;justify-content:center;gap:26px}
-.tabs button{border:0;background:none;font-weight:700;font-size:16px;padding:10px 2px 12px;position:relative;color:var(--fg)}
-.tabs button[aria-selected="true"]::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:3px;border-radius:2px;background:var(--fg)}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+/* top of a tab */
+.top{position:sticky;top:0;z-index:20;background:var(--paper);margin:0 calc(-1 * var(--gut));padding:calc(env(safe-area-inset-top,0px) + 8px) var(--gut) 6px}
+.bar{display:flex;align-items:center;gap:10px;min-height:48px}
+.bar .grow{flex:1;min-width:0}
+.mark{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:700;font-size:25px;letter-spacing:-.02em}
+.mark img{width:32px;height:32px;border-radius:9px;display:block}
+.pagehead{padding:calc(env(safe-area-inset-top,0px) + 12px) 2px 4px}
+.pagehead h1{margin:0;font-size:27px;line-height:1.15}
+.pagehead p{margin:4px 0 0;color:var(--ink-2)}
+h2.sect{font-size:19px;margin:26px 2px 10px;display:flex;align-items:baseline;gap:10px}
+h2.sect .more{margin-left:auto;font-family:var(--font);font-size:14px;font-weight:600;color:var(--teal);border:0;background:none;padding:4px 0;text-decoration:none}
+.iconbtn{width:44px;height:44px;border-radius:50%;border:0;background:none;display:grid;place-items:center;color:var(--ink);position:relative;flex:none;text-decoration:none}
+.iconbtn:active{background:var(--mist)}
+.iconbtn.on{color:var(--coral)}
+.iconbtn.on .ic{fill:currentColor}
+.count{position:absolute;top:5px;right:4px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--coral);color:var(--on-coral);font:700 11px/18px var(--font);text-align:center}
+
+/* chips */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:6px 0 8px;margin:0 calc(-1 * var(--gut));padding-left:var(--gut);padding-right:var(--gut);scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;border:0;background:var(--soft);border-radius:999px;padding:10px 15px;font-weight:600;font-size:14px;white-space:nowrap}
-.chip[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
-.pagehead{padding:calc(env(safe-area-inset-top,0px) + 14px) 4px 6px}
-.pagehead h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-.01em}
-.pagehead p{margin:4px 0 0;color:var(--muted)}
-h2.sect{font-size:20px;font-weight:800;margin:26px 4px 8px;letter-spacing:-.01em}
-.muted{color:var(--muted)}
+.chip{flex:none;border:0;background:var(--mist);border-radius:999px;padding:9px 15px;font:500 14px var(--display);white-space:nowrap;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.chip .emo{font-size:15px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 
-/* masonry of pins */
-.masonry{display:flex;gap:var(--gap);align-items:flex-start;margin-top:6px}
+/* the painted rings (stories) */
+.stories{display:flex;gap:14px;overflow-x:auto;margin:2px calc(-1 * var(--gut)) 4px;padding:6px var(--gut) 4px;scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.story{flex:none;width:78px;border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;color:var(--ink)}
+.ring{position:relative;width:74px;height:74px;display:grid;place-items:center}
+.ring svg.paint{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ring .in{width:62px;height:62px;border-radius:50%;background:var(--mist);display:grid;place-items:center;overflow:hidden;font-size:30px;border:2px solid var(--paper)}
+.ring .in img{width:100%;height:100%;object-fit:cover;display:block}
+.ring .in.add{background:var(--teal-soft);color:var(--teal)}
+.ring .in.letter{font:700 24px var(--display);color:#fff}
+.ring .tag{position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);background:var(--sun);color:#3d2700;font:700 10.5px/1 var(--font);padding:3px 6px;border-radius:999px;border:2px solid var(--paper);white-space:nowrap}
+.story b{font:500 11.5px/1.15 var(--display);max-width:78px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.story.one b{display:block;white-space:nowrap;text-overflow:ellipsis}
+.story small{font-size:11px;color:var(--ink-3);margin-top:-4px}
+
+/* masonry of project cards */
+.masonry{display:flex;gap:10px;align-items:flex-start;margin-top:6px}
 .mcol{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px}
 .pin{position:relative;cursor:pointer;min-width:0}
-.pin-media{position:relative;border-radius:var(--r);overflow:hidden;background:var(--soft)}
-.pin-media img{display:block;width:100%;height:100%;object-fit:cover}
-.pin-media.ph{display:flex;align-items:flex-end;padding:14px 12px;font-weight:800;font-size:17px;line-height:1.2;overflow-wrap:anywhere}
-.pin-media.ph.painting{background:var(--ph-p);color:var(--ph-p-ink)}
-.pin-media.ph.craft{background:var(--ph-c);color:var(--ph-c-ink)}
-.pin-media.ph.music{background:var(--ph-m);color:var(--ph-m-ink)}
-.pin-foot{display:flex;align-items:flex-start;gap:2px;padding:6px 0 0 4px}
+.media{position:relative;border-radius:var(--r);overflow:hidden;background:var(--mist)}
+.media img{display:block;width:100%;height:100%;object-fit:cover}
+.media.ph{display:flex;align-items:flex-end;padding:14px 12px;font:700 17px/1.2 var(--display);overflow-wrap:anywhere}
+.ph.painting{background:var(--cobalt-soft);color:var(--cobalt)}
+.ph.craft{background:var(--teal-soft);color:var(--teal)}
+.ph.music{background:var(--plum-soft);color:var(--plum)}
+.plat{position:absolute;left:8px;top:8px;width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.94);display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.plat .ic{width:15px;height:15px}
+.play{position:absolute;right:8px;top:8px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;display:grid;place-items:center}
+.play .ic{width:12px;height:12px}
+.stamp{position:absolute;left:8px;bottom:8px;display:inline-flex;align-items:center;gap:4px;background:rgba(255,255,255,.95);color:#17201e;border-radius:999px;padding:4px 9px 4px 7px;font:700 11.5px/1 var(--font);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.stamp .ic{width:13px;height:13px;stroke-width:3}
+.stamp.made{background:var(--mint);color:#fff}
+.stamp.making{background:var(--sun);color:#3d2700}
+.heart{position:absolute;right:8px;bottom:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.95);color:var(--coral);display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.heart .ic{width:15px;height:15px}
+.pin-foot{display:flex;align-items:flex-start;gap:2px;padding:7px 0 0 3px}
 .pin-text{flex:1;min-width:0}
-.pin-title{font-size:13px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.pin-sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
-.dots{border:0;background:none;width:30px;height:24px;display:grid;place-items:center;border-radius:12px;flex:none;color:var(--fg)}
-.dots .ic{width:20px;height:20px}
-.badge{position:absolute;display:grid;place-items:center;border-radius:999px}
-.badge.play{left:8px;top:8px;width:28px;height:28px;background:rgba(0,0,0,.55);color:#fff}
-.badge.play .ic{width:14px;height:14px}
-.badge.fav{right:8px;bottom:8px;width:30px;height:30px;background:#fff;color:#e60023;box-shadow:0 1px 4px rgba(0,0,0,.2)}
-.badge.fav .ic{width:17px;height:17px}
-.badge.made{left:8px;bottom:8px;padding:4px 9px 4px 7px;background:#fff;color:#111;font-size:12px;font-weight:700;gap:3px;display:flex;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.2)}
-.badge.made .ic{width:14px;height:14px;stroke-width:3}
-.badge.made.mst{left:auto;bottom:auto;right:8px;top:8px}
-.save-pill{position:absolute;right:8px;top:8px;border:0;border-radius:999px;background:var(--red);color:#fff;font-weight:700;font-size:14px;padding:9px 14px}
-.save-pill.done{background:#111;color:#fff}
-.skel{border-radius:var(--r);background:var(--soft);animation:pulse 1.2s ease-in-out infinite alternate}
+.pin-title{font-size:13.5px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.pin-sub{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:4px;font-size:12px;color:var(--ink-3)}
+.need{display:inline-flex;align-items:center;gap:3px;border-radius:999px;padding:2px 8px;font-weight:700;font-size:11.5px;background:var(--sun-soft);color:var(--sun-ink)}
+.need.ok{background:var(--mint-soft);color:var(--mint)}
+.need .ic{width:12px;height:12px;stroke-width:3}
+.holi{font-size:13px}
+.dots{border:0;background:none;width:30px;height:26px;display:grid;place-items:center;border-radius:13px;flex:none;color:var(--ink-2)}
+.dots .ic{width:19px;height:19px}
+.save-pill{position:absolute;right:8px;top:8px;border:0;border-radius:999px;background:var(--coral);color:var(--on-coral);font:700 13.5px var(--display);padding:8px 13px}
+.save-pill.done{background:var(--ink);color:var(--paper)}
+.why{font-size:12px;color:var(--teal);font-weight:600}
+.skel{border-radius:var(--r);background:var(--mist);animation:pulse 1.2s ease-in-out infinite alternate}
 @keyframes pulse{from{opacity:.55}to{opacity:1}}
 
-/* empty / welcome */
-.welcome{margin:16px 4px 6px;padding:22px 18px;border-radius:24px;background:var(--soft)}
-.welcome h1{margin:0 0 6px;font-size:24px;font-weight:800;letter-spacing:-.01em}
-.welcome p{margin:0 0 12px;color:var(--muted)}
-.steps{margin:0 0 16px;padding:0;list-style:none;display:grid;gap:10px;counter-reset:s}
-.steps li{display:flex;gap:12px;align-items:flex-start;counter-increment:s}
-.steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--on-ink);display:grid;place-items:center;font-weight:800;font-size:13px}
+/* horizontal rows */
+.hscroll{display:flex;gap:10px;overflow-x:auto;margin:0 calc(-1 * var(--gut));padding:2px var(--gut) 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+.hscroll::-webkit-scrollbar{display:none}
+.tcard{flex:0 0 150px;cursor:pointer;scroll-snap-align:start;min-width:0}
+.tcard .media{aspect-ratio:4/5}
+.tcard b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;line-height:1.3;margin-top:6px}
+
+/* cards with a tint */
+.card{margin:12px 0;padding:16px;border-radius:22px;background:var(--mist)}
+.card h3{margin:0 0 4px;font-size:16.5px}
+.card p{margin:0}
+.card.sun{background:var(--sun-soft)}
+.card.mint{background:var(--mint-soft)}
+.card.teal{background:var(--teal-soft)}
+.memory{display:flex;gap:14px;align-items:center}
+.memory .thumb{width:84px;height:104px;border-radius:14px;overflow:hidden;flex:none;background:var(--mist-2);cursor:pointer}
+.memory .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.memory .txt{flex:1;min-width:0}
+.memory small{display:block;color:var(--sun-ink);font-weight:700;font-size:12.5px;margin-bottom:2px}
+.memory b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:700 15.5px/1.25 var(--display)}
+
+/* buttons */
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 20px;border-radius:999px;border:0;font-weight:700;font-size:16px;text-decoration:none;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 20px;border-radius:999px;border:0;font:500 15.5px var(--display);text-decoration:none;white-space:nowrap;color:var(--ink)}
 .btn .ic{width:20px;height:20px}
-.btn.red{background:var(--red);color:var(--on-red)}
-.btn.red:active{background:var(--red-press)}
-.btn.gray{background:var(--soft);color:var(--fg)}
-.btn.ink{background:var(--ink);color:var(--on-ink)}
-.btn.sm{height:38px;padding:0 15px;font-size:14.5px}
+.btn.coral{background:var(--coral);color:var(--on-coral)}
+.btn.coral:active{background:var(--coral-press)}
+.btn.teal{background:var(--teal);color:var(--on-teal)}
+.btn.gray{background:var(--mist)}
+.btn.ink{background:var(--ink);color:var(--paper)}
+.btn.line{background:none;box-shadow:inset 0 0 0 2px var(--mist-2)}
+.btn.sm{height:38px;padding:0 15px;font-size:14px}
+.btn.wide{width:100%}
 .btn[disabled]{opacity:.45;cursor:default}
-.linkbtn{border:0;background:none;padding:0;font-weight:700;text-decoration:underline;text-underline-offset:3px}
-.note{margin:10px 4px;padding:12px 14px;border-radius:16px;background:var(--soft);font-size:14px;color:var(--muted)}
+.linkbtn{border:0;background:none;padding:0;font-weight:700;color:var(--teal);text-decoration:none}
+.note{margin:12px 0;padding:13px 15px;border-radius:16px;background:var(--mist);font-size:14px;color:var(--ink-2)}
 .center{text-align:center}
-.spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--soft-2);border-top-color:var(--red);animation:spin .8s linear infinite;flex:none}
+.spinner{width:22px;height:22px;border-radius:50%;border:3px solid var(--mist-2);border-top-color:var(--teal);animation:spin .8s linear infinite;flex:none}
 @keyframes spin{to{transform:rotate(360deg)}}
-.loadrow{display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;color:var(--muted)}
+.loadrow{display:flex;align-items:center;justify-content:center;gap:10px;padding:18px;color:var(--ink-2)}
 
-/* pin page */
-.cu{max-width:640px;margin:0 auto}
-.cu-media{position:relative;border-radius:28px;overflow:hidden;background:var(--soft);margin:calc(env(safe-area-inset-top,0px) + 8px) -2px 0}
-.cu-media img{display:block;width:100%;height:auto;max-height:78vh;object-fit:cover}
-.cu-media.ph{min-height:260px;display:flex;align-items:flex-end;padding:24px;font-size:26px;font-weight:800;line-height:1.15}
-.cu-media.ph.painting{background:var(--ph-p);color:var(--ph-p-ink)}
-.cu-media.ph.craft{background:var(--ph-c);color:var(--ph-c-ink)}
-.cu-media iframe{display:block;width:100%;border:0;background:#000}
-.cu-top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;z-index:3;pointer-events:none}
-.round{pointer-events:auto;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.94);color:#111;display:grid;place-items:center;box-shadow:0 1px 6px rgba(0,0,0,.22)}
+/* welcome */
+.welcome{margin:10px 0;padding:22px 18px;border-radius:26px;background:var(--teal-soft)}
+.welcome h2{margin:0 0 4px;font-size:23px}
+.welcome p{margin:0 0 14px;color:var(--ink-2)}
+.namefield{display:flex;gap:8px;margin:0 0 16px}
+.namefield input{flex:1;min-width:0;height:48px;border:0;border-radius:999px;padding:0 18px;background:var(--paper);font-size:16px;outline:none}
+.steps{margin:0 0 16px;padding:0;list-style:none;display:grid;gap:12px;counter-reset:s}
+.steps li{display:flex;gap:12px;align-items:flex-start;counter-increment:s}
+.steps li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--teal);color:var(--on-teal);display:grid;place-items:center;font:700 13px var(--display)}
+
+/* topic tiles: paint-dab shapes */
+.dabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:14px 10px;margin-top:6px}
+.dab{border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink);text-align:center}
+.dab .blob{width:76px;height:70px;display:grid;place-items:center;font-size:32px}
+.dab:nth-child(5n+1) .blob{background:var(--coral-soft);border-radius:58% 42% 55% 45% / 52% 60% 40% 48%}
+.dab:nth-child(5n+2) .blob{background:var(--sun-soft);border-radius:45% 55% 40% 60% / 60% 45% 55% 40%}
+.dab:nth-child(5n+3) .blob{background:var(--mint-soft);border-radius:62% 38% 50% 50% / 45% 55% 45% 55%}
+.dab:nth-child(5n+4) .blob{background:var(--cobalt-soft);border-radius:50% 50% 38% 62% / 58% 42% 58% 42%}
+.dab:nth-child(5n+5) .blob{background:var(--plum-soft);border-radius:40% 60% 58% 42% / 50% 50% 50% 50%}
+.dab b{font:500 12.5px/1.2 var(--display)}
+.dab small{font-size:11.5px;color:var(--ink-3);margin-top:-4px}
+
+/* holiday cards */
+.hcards{display:flex;gap:10px;overflow-x:auto;margin:0 calc(-1 * var(--gut));padding:2px var(--gut) 8px;scrollbar-width:none}
+.hcards::-webkit-scrollbar{display:none}
+.hcard{flex:0 0 152px;border:0;text-align:left;padding:14px;border-radius:22px;background:var(--sun-soft);color:var(--ink);display:flex;flex-direction:column;gap:2px;min-height:150px}
+.hcard .emo{font-size:38px;margin-bottom:8px}
+.hcard b{font:700 15.5px/1.2 var(--display)}
+.hcard small{color:var(--sun-ink);font-weight:700;font-size:12.5px}
+.hcard span{color:var(--ink-2);font-size:12.5px;margin-top:auto}
+
+/* a project's own page */
+.cu{max-width:680px;margin:0 auto}
+.hero{position:relative;margin:0 calc(-1 * var(--gut));background:var(--mist);border-radius:0 0 28px 28px;overflow:hidden}
+.hero img{display:block;width:100%;height:auto;max-height:76vh;object-fit:cover}
+.hero.ph{min-height:300px;display:flex;align-items:flex-end;padding:26px 20px;font:700 26px/1.15 var(--display)}
+.hero iframe{display:block;width:100%;border:0;background:#000}
+.hero .float{position:absolute;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;right:10px;display:flex;justify-content:space-between;z-index:3;pointer-events:none}
+.round{pointer-events:auto;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.95);color:#17201e;display:grid;place-items:center;box-shadow:0 1px 6px rgba(0,0,0,.22)}
 .round .ic{width:22px;height:22px}
-.playbig{position:absolute;inset:0;margin:auto;width:74px;height:74px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;display:grid;place-items:center}
-.playbig .ic{width:30px;height:30px}
-.cu-actions{display:flex;align-items:center;gap:6px;padding:12px 2px 4px}
-.cu-actions .grow{flex:1}
-.iconbtn{width:46px;height:46px;border-radius:50%;border:0;background:none;display:grid;place-items:center;color:var(--fg)}
-.iconbtn.on{color:var(--red)}
-.iconbtn.on .ic{fill:currentColor}
-.cu-body{padding:4px 6px 0}
-.by{display:flex;align-items:center;gap:10px;margin:8px 0 10px}
-.pdot{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px;flex:none}
-.by b{display:block;font-size:15px}
-.by small{color:var(--muted);font-size:13px}
-.cu h1{font-size:26px;line-height:1.2;font-weight:800;margin:4px 0 8px;letter-spacing:-.01em;overflow-wrap:anywhere}
-.cap{white-space:pre-line;margin:0 0 6px;overflow-wrap:anywhere}
-.cap.clip{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
-.boardrow{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}
-.bpill{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;background:var(--soft);padding:9px 14px;font-weight:700;font-size:14px}
-.bpill .ic{width:18px;height:18px}
-.seg2{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;background:var(--soft);border-radius:999px;margin:12px 0}
-.seg2 button{border:0;background:none;border-radius:999px;height:40px;font-weight:700}
-.seg2 button[aria-pressed="true"]{background:var(--bg);box-shadow:0 1px 4px rgba(0,0,0,.18)}
-.taglist{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
-.taglist button,.taglist span{border:0;background:var(--soft);border-radius:999px;padding:7px 12px;font-size:13.5px;font-weight:600}
-.minihead{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
-.sup{margin:0;padding-left:20px}
-.sup li{margin:3px 0}
+.playbig{position:absolute;inset:0;margin:auto;width:76px;height:76px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;display:grid;place-items:center;backdrop-filter:blur(4px)}
+.playbig .ic{width:30px;height:30px;margin-left:3px}
+.burst{position:absolute;inset:0;margin:auto;width:110px;height:110px;color:#fff;pointer-events:none;animation:burst .8s ease-out forwards;filter:drop-shadow(0 4px 12px rgba(0,0,0,.35))}
+@keyframes burst{0%{transform:scale(.3);opacity:0}15%{transform:scale(1.1);opacity:1}30%{transform:scale(.95)}70%{opacity:1}100%{transform:scale(1.15);opacity:0}}
+.cu-body{padding:14px 2px 0}
+.cu h1{font-size:25px;line-height:1.2;margin:0 0 10px;overflow-wrap:anywhere}
+.by{display:flex;align-items:center;gap:10px;margin:0 0 4px}
+.by .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 15px var(--display);flex:none}
+.by .who{flex:1;min-width:0}
+.by b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.by small{color:var(--ink-3);font-size:13px}
+.react{display:flex;align-items:center;gap:4px;margin:12px -6px 2px}
+.react .grow{flex:1}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--mist);border-radius:999px;margin:12px 0}
+.seg3 button{border:0;background:none;border-radius:999px;height:42px;font:500 13.5px var(--display);padding:0 4px;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--ink-2)}
+.seg3 button .ic{width:17px;height:17px}
+.seg3 button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.14)}
+.seg3 button[aria-pressed="true"][data-s="made"],.seg3 button[aria-pressed="true"][data-s="learned"]{background:var(--mint);color:#fff}
+.seg3 button[aria-pressed="true"][data-s="making"],.seg3 button[aria-pressed="true"][data-s="learning"]{background:var(--sun);color:#3d2700}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.pill{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;background:var(--mist);padding:8px 13px;font:500 13.5px var(--display);color:var(--ink);text-decoration:none}
+.pill .ic{width:17px;height:17px}
+.pill.sun{background:var(--sun-soft)}
+.pill.sun small{color:var(--sun-ink);font:700 12px var(--font)}
+.cap{white-space:pre-line;margin:0 0 6px;overflow-wrap:anywhere;color:var(--ink)}
+.cap.clip{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.mini{font:700 15px var(--display);margin:22px 0 8px}
 
-/* boards */
-.boards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:18px 10px;margin-top:10px}
+/* supplies */
+.sup{margin:16px 0;border-radius:22px;background:var(--mist);padding:16px 14px 10px}
+.sup-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sup-head h3{margin:0;font-size:17px;flex:1}
+.meter{height:8px;border-radius:4px;background:var(--mist-2);overflow:hidden;margin:2px 0 10px}
+.meter i{display:block;height:100%;border-radius:4px;background:var(--mint)}
+.srows{display:grid;gap:2px;grid-template-columns:minmax(0,1fr)}
+.srow{display:flex;align-items:center;gap:12px;padding:8px 4px;border-radius:12px;border:0;background:none;text-align:left;width:100%;min-width:0;color:var(--ink)}
+.srow:active{background:var(--mist-2)}
+.tick{width:26px;height:26px;border-radius:50%;flex:none;display:grid;place-items:center;box-shadow:inset 0 0 0 2px var(--ink-3);color:transparent}
+.tick .ic{width:15px;height:15px;stroke-width:3.2}
+.srow.have .tick{background:var(--mint);box-shadow:none;color:#fff}
+.srow .nm{flex:1;min-width:0}
+.srow .nm b{display:block;font-weight:600;font-size:15px}
+.srow .nm small{display:block;color:var(--ink-3);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srow.have .nm b{color:var(--ink-2)}
+.srow .gi{font-size:18px;width:24px;text-align:center}
+.sup .likely{font-size:12.5px;color:var(--ink-3);margin:6px 4px 4px}
+.sup .acts{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+
+/* studio */
+.prof{display:flex;align-items:center;gap:16px;padding:calc(env(safe-area-inset-top,0px) + 18px) 2px 6px}
+.prof .ring{width:92px;height:92px}
+.prof .ring .in{width:78px;height:78px}
+.prof h1{margin:0;font-size:24px;line-height:1.15}
+.stats{display:flex;gap:18px;margin-top:6px}
+.stats div{display:flex;flex-direction:column}
+.stats b{font:700 18px var(--display)}
+.stats small{color:var(--ink-2);font-size:12.5px}
+.tabs2{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:16px calc(-1 * var(--gut)) 0;padding:0 var(--gut);position:sticky;top:0;background:var(--paper);z-index:15}
+.tabs2 button{flex:1;border:0;background:none;padding:13px 4px;font:500 14.5px var(--display);color:var(--ink-3);position:relative}
+.tabs2 button[aria-selected="true"]{color:var(--ink)}
+.tabs2 button[aria-selected="true"]::after{content:"";position:absolute;left:18%;right:18%;bottom:-1px;height:3px;border-radius:2px;background:var(--ink)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin:3px calc(-1 * var(--gut)) 0}
+.grid3 > div{aspect-ratio:1;background:var(--mist);position:relative;cursor:pointer;overflow:hidden}
+.grid3 img{width:100%;height:100%;object-fit:cover;display:block}
+.boards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:18px 10px;margin-top:12px}
 .board{cursor:pointer;min-width:0}
-.collage{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:2px;aspect-ratio:1.45/1;border-radius:var(--r);overflow:hidden;background:var(--soft)}
-.collage > div{background:var(--soft-2);min-width:0;min-height:0}
+.collage{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:2px;aspect-ratio:1.4/1;border-radius:var(--r);overflow:hidden;background:var(--mist)}
+.collage > div{background:var(--mist-2);min-width:0;min-height:0;display:grid;place-items:center;font-size:28px}
 .collage > div:first-child{grid-row:1 / span 2}
 .collage img{width:100%;height:100%;object-fit:cover;display:block}
-.board b{display:block;margin:7px 2px 0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.board small{display:block;margin:0 2px;color:var(--muted);font-size:13px}
-.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.tile{position:relative;border:0;padding:0;border-radius:var(--r);overflow:hidden;aspect-ratio:1.7/1;background:var(--soft);text-align:left}
-.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.tile span{position:absolute;left:0;right:0;bottom:0;padding:22px 12px 10px;font-weight:800;font-size:15px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.65))}
-.tile.painting{background:var(--ph-p)}
-.tile.craft{background:var(--ph-c)}
-.tile.noimg span{background:none;color:var(--fg)}
-.split{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--soft);margin:6px 0}
+.board b{display:block;margin:7px 2px 0;font:500 14.5px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.board small{display:block;margin:0 2px;color:var(--ink-3);font-size:12.5px}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--mist-2);margin:8px 0 4px}
 .split i{display:block;height:100%}
-.searchbar{display:flex;align-items:center;gap:10px;height:48px;padding:0 16px;border-radius:999px;background:var(--soft);color:var(--muted)}
-.searchbar input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:16px;color:var(--fg);height:100%}
-.searchbar input::placeholder{color:var(--muted)}
-.panel{margin:10px 0;padding:16px;border-radius:20px;background:var(--soft)}
-.panel h3{margin:0 0 6px;font-size:16px}
-.sharecard{display:flex;align-items:center;gap:12px}
-.sharecard>div{flex:1;min-width:0}
-.sharecard p{margin:0;font-size:13.5px;line-height:1.35}
+.card .taglist span,.card .taglist button{background:var(--paper)}
+.taglist{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.taglist span,.taglist button{border:0;background:var(--mist);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600;color:var(--ink)}
 
-/* bottom icons */
-#nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--bg);border-top:1px solid var(--line);padding:2px 6px env(safe-area-inset-bottom,0px)}
-#nav .in{max-width:600px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
-#nav button{border:0;background:none;color:var(--muted);height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600}
-#nav button[aria-current="page"]{color:var(--fg)}
-#nav button[aria-current="page"] .ic{stroke-width:2.7}
+/* my supplies */
+.addsup{display:flex;gap:8px;margin:8px 0 4px}
+.addsup input{flex:1;min-width:0;height:48px;border:0;border-radius:999px;background:var(--mist);padding:0 18px;font-size:16px;outline:none}
+.sugg{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.ghead{display:flex;align-items:center;gap:8px;margin:20px 2px 8px;font:700 15.5px var(--display)}
+.ghead .emo{font-size:20px}
+.ghead small{margin-left:auto;font:600 12.5px var(--font);color:var(--ink-3)}
+.toggles{display:flex;flex-wrap:wrap;gap:7px}
+.tog{border:0;border-radius:999px;background:var(--mist);padding:9px 14px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.tog .ic{width:15px;height:15px;stroke-width:3}
+.tog[aria-pressed="true"]{background:var(--mint);color:#fff}
+.tog.custom[aria-pressed="true"]{background:var(--teal);color:var(--on-teal)}
+.switch{display:flex;align-items:center;gap:12px;padding:12px 2px}
+.switch .t{flex:1}
+.switch .t b{display:block}
+.switch .t small{color:var(--ink-2)}
+.sw{width:52px;height:32px;border-radius:16px;border:0;background:var(--mist-2);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s}
+.sw[aria-checked="true"]{background:var(--teal)}
+.sw[aria-checked="true"]::after{left:23px}
+.shopitem{display:flex;align-items:flex-start;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.shopitem .nm{flex:1;min-width:0}
+.shopitem .nm b{display:block;font-weight:600}
+.shopitem .nm small{display:block;color:var(--ink-3);font-size:12.5px}
+.shopitem.done .nm b{text-decoration:line-through;color:var(--ink-3)}
+.shopitem .x{border:0;background:none;color:var(--ink-3);width:34px;height:34px;border-radius:50%;display:grid;place-items:center}
+
+/* bottom bar */
+#nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--paper);border-top:1px solid var(--line);padding:0 6px env(safe-area-inset-bottom,0px)}
+#nav .in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);align-items:end}
+#nav button{border:0;background:none;color:var(--ink-3);height:var(--nav-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:500 11px var(--display)}
+#nav button[aria-current="page"]{color:var(--ink)}
+#nav button[aria-current="page"] .ic{stroke-width:2.6}
 #nav .ic{width:26px;height:26px}
+#nav .fab{position:relative}
+#nav .fab span.dabbtn{width:54px;height:50px;margin-top:-18px;display:grid;place-items:center;background:var(--teal);color:var(--on-teal);border-radius:58% 42% 52% 48% / 55% 52% 48% 45%;box-shadow:0 6px 16px rgba(11,122,114,.35)}
+#nav .fab span.dabbtn .ic{width:28px;height:28px;stroke-width:2.6}
 
 /* sheets */
 #sheetwrap{position:fixed;inset:0;z-index:50;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center}
-#sheet{width:100%;max-width:640px;max-height:calc(100% - 20px - env(safe-area-inset-top,0px));overflow-y:auto;background:var(--sheet);border-radius:26px 26px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:up .22s ease-out}
+#sheet{width:100%;max-width:640px;max-height:calc(100% - 20px - env(safe-area-inset-top,0px));overflow-y:auto;background:var(--sheet);border-radius:28px 28px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:up .22s ease-out}
 @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
-@media (min-width:720px){#sheetwrap{align-items:center}#sheet{border-radius:26px;max-height:92%}}
-.grip{width:40px;height:5px;border-radius:3px;background:var(--soft-2);margin:4px auto 8px}
+@media (min-width:720px){#sheetwrap{align-items:center}#sheet{border-radius:28px;max-height:92%}}
+.grip{width:40px;height:5px;border-radius:3px;background:var(--mist-2);margin:4px auto 10px}
 .shead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
-.shead h2{margin:0;font-size:20px;font-weight:800}
-.field{display:grid;gap:6px;margin-top:14px}
-.field > label,.flabel{font-size:13px;font-weight:700;color:var(--muted)}
-.field input,.field textarea{width:100%;min-width:0;border:2px solid transparent;border-radius:16px;background:var(--soft);padding:12px 14px;font-size:16px;color:var(--fg);outline:none}
-.field input:focus,.field textarea:focus{border-color:var(--soft-2)}
+.shead h2{margin:0;font-size:20px}
+.field{display:grid;gap:6px;margin-top:16px}
+.field > label,.flabel{font:500 13.5px var(--display);color:var(--ink-2)}
+.field input,.field textarea{width:100%;min-width:0;border:2px solid transparent;border-radius:16px;background:var(--mist);padding:12px 14px;font-size:16px;color:var(--ink);outline:none}
+.field input:focus,.field textarea:focus{border-color:var(--teal)}
 .field textarea{resize:vertical;min-height:70px}
-.preview{display:flex;gap:12px;align-items:center;margin-top:12px;padding:10px;border-radius:18px;background:var(--soft)}
-.preview .thumb{width:74px;height:92px;border-radius:12px;overflow:hidden;flex:none;background:var(--soft-2)}
+.preview{display:flex;gap:12px;align-items:center;margin-top:12px;padding:10px;border-radius:20px;background:var(--mist)}
+.preview .thumb{width:76px;height:96px;border-radius:14px;overflow:hidden;flex:none;background:var(--mist-2)}
 .preview .thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .preview .ptext{min-width:0;flex:1}
 .preview .ptext b{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:15px}
-.preview small{color:var(--muted);font-size:13px}
+.preview small{color:var(--ink-3);font-size:13px}
 .boardpick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.boardpick button{height:54px;border-radius:16px;border:2px solid var(--soft-2);background:none;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:800;font-size:15px;padding:0 4px}
-.boardpick button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
-.boardpick.ask button{border-color:var(--red)}
+.boardpick button{height:56px;border-radius:18px;border:2px solid var(--mist-2);background:none;display:flex;align-items:center;justify-content:center;gap:6px;font:500 15px var(--display);padding:0 4px;color:var(--ink)}
+.boardpick button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.boardpick.ask button{border-color:var(--coral)}
 .catpick{display:flex;flex-wrap:wrap;gap:6px}
-.catpick button{border:0;background:var(--soft);border-radius:999px;padding:8px 13px;font-weight:600;font-size:14px}
-.catpick button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
-.hint{font-size:13px;color:var(--muted);margin:2px 0 0}
-.hint.bad{color:var(--red)}
-.sactions{display:flex;gap:8px;margin-top:18px}
+.catpick button{border:0;background:var(--mist);border-radius:999px;padding:8px 13px;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:5px;color:var(--ink)}
+.catpick button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.catpick button.hol[aria-pressed="true"]{background:var(--sun);color:#3d2700}
+.hint{font-size:13px;color:var(--ink-3);margin:2px 0 0}
+.hint.bad{color:var(--coral)}
+.found{display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;border-radius:18px;background:var(--mint-soft);color:var(--ink)}
+.found .emo{font-size:22px}
+.found small{display:block;color:var(--ink-2)}
+.sactions{display:flex;gap:8px;margin-top:20px}
 .sactions .btn{flex:1}
 .menu{display:grid;gap:2px;margin-top:4px}
-.menu button{display:flex;align-items:center;gap:14px;border:0;background:none;border-radius:14px;padding:14px 10px;font-size:16px;font-weight:600;text-align:left}
-.menu button:active{background:var(--soft)}
-.menu button.danger{color:var(--red)}
+.menu button,.menu a{display:flex;align-items:center;gap:14px;border:0;background:none;border-radius:14px;padding:14px 10px;font-size:16px;font-weight:600;text-align:left;text-decoration:none;color:var(--ink)}
+.menu button:active,.menu a:active{background:var(--mist)}
+.menu .danger{color:var(--coral)}
 
-#toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);z-index:60;transform:translate(-50%,10px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;background:#111;color:#fff;border-radius:16px;padding:12px 14px 12px 16px;font-weight:600;font-size:15px;display:flex;align-items:center;gap:14px;max-width:calc(100% - 24px);width:max-content;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);z-index:60;transform:translate(-50%,10px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;background:#17201e;color:#fff;border-radius:16px;padding:12px 14px 12px 16px;font-weight:600;font-size:15px;display:flex;align-items:center;gap:14px;max-width:calc(100% - 24px);width:max-content;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 #toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-#toast button{border:0;background:#fff;color:#111;border-radius:999px;padding:7px 12px;font-weight:800;font-size:14px}
+#toast button{border:0;background:#fff;color:#17201e;border-radius:999px;padding:7px 12px;font:700 14px var(--display)}
+#confetti{position:fixed;inset:0;z-index:70;pointer-events:none}
 
-/* Learn music */
-.mu-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:6px 4px 10px}
-.mu-head h1{margin:0;font-size:28px;font-weight:800;letter-spacing:-.01em}
-.mu-head p{margin:3px 0 0;color:var(--muted);font-size:14px}
-.mu-head p b{color:var(--mu)}
+/* music (Learn music tab and lesson pages) */
+.mu-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 2px 8px}
+.mu-head h1{margin:0;font-size:27px}
+.mu-head p{margin:3px 0 0;color:var(--ink-2);font-size:14px}
+.mu-head p b{color:var(--plum)}
+.searchbar{display:flex;align-items:center;gap:10px;height:48px;padding:0 16px;border-radius:999px;background:var(--mist);color:var(--ink-3)}
+.searchbar input{flex:1;min-width:0;border:0;background:transparent;outline:none;font-size:16px;color:var(--ink);height:100%}
+.searchbar input::placeholder{color:var(--ink-3)}
 .vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));gap:18px 10px;margin-top:6px}
-.hscroll{display:flex;gap:10px;overflow-x:auto;margin:0 -10px;padding:2px 10px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.hscroll::-webkit-scrollbar{display:none}
 .vcard{cursor:pointer;min-width:0}
-.vcard.h{flex:0 0 210px}
-.vthumb{position:relative;border-radius:14px;overflow:hidden;background:var(--soft);aspect-ratio:16/9}
+.vcard.h{flex:0 0 220px}
+.vthumb{position:relative;border-radius:14px;overflow:hidden;background:var(--mist);aspect-ratio:16/9}
 .vthumb img{width:100%;height:100%;object-fit:cover;display:block}
-.vthumb.stile{display:flex;align-items:flex-end;gap:6px;padding:10px;color:#fff;font-weight:800;font-size:15px;line-height:1.2}
+.vthumb.stile{display:flex;align-items:flex-end;gap:6px;padding:10px;color:#fff;font:700 15px/1.2 var(--display)}
 .vthumb.stile .ic{position:absolute;right:10px;top:10px;width:22px;height:22px;opacity:.85}
-.vdur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.78);color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:2px 6px}
-.vsaved{position:absolute;left:6px;top:6px;background:#111;color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px}
-.vtitle{font-size:14px;font-weight:700;line-height:1.3;margin-top:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
-.vsub{font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.vwhy{font-size:12px;color:var(--mu);font-weight:700;margin-top:3px}
-.slist{display:grid;gap:2px;margin-top:4px}
-.srow{display:flex;align-items:center;gap:12px;padding:9px 4px;border-radius:14px;cursor:pointer}
-.srow:active{background:var(--soft)}
-.sbadge{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:none}
+.vprog{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.35)}
+.vprog i{display:block;height:100%;background:var(--coral)}
+.vdur{position:absolute;right:6px;bottom:7px;background:rgba(0,0,0,.78);color:#fff;font-size:12px;font-weight:700;border-radius:6px;padding:2px 6px}
+.vsaved{position:absolute;left:6px;top:6px;background:#17201e;color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px}
+.vtitle{font-size:14px;font-weight:600;line-height:1.3;margin-top:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.vsub{font-size:12.5px;color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vwhy{font-size:12px;color:var(--plum);font-weight:700;margin-top:3px}
+.slist{display:grid;gap:2px;margin-top:4px;grid-template-columns:minmax(0,1fr)}
+.songrow{min-width:0}
+.songrow{display:flex;align-items:center;gap:12px;padding:9px 4px;border-radius:14px;cursor:pointer}
+.songrow:active{background:var(--mist)}
+.sbadge{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;color:#fff;flex:none}
 .sbadge .ic{width:22px;height:22px}
 .stext{flex:1;min-width:0}
 .stext b{display:block;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stext small{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stext em{display:block;font-style:normal;color:var(--mu);font-size:12px;font-weight:700}
-.sadd{width:40px;height:40px;border-radius:50%;border:0;background:var(--soft);display:grid;place-items:center;flex:none;color:var(--fg)}
+.stext small{display:block;color:var(--ink-3);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stext em{display:block;font-style:normal;color:var(--plum);font-size:12px;font-weight:700}
+.sadd{width:40px;height:40px;border-radius:50%;border:0;background:var(--mist);display:grid;place-items:center;flex:none;color:var(--ink)}
 .sadd .ic{width:20px;height:20px}
-.sadd.on{background:var(--ink);color:var(--on-ink)}
+.sadd.on{background:var(--ink);color:var(--paper)}
 .g-alternative{background:#5b5bd6}.g-rock{background:#c2410c}.g-classical{background:#8a6d3b}.g-pop{background:#db2777}.g-rap{background:#334155}
 .g-classicrock{background:#b45309}.g-oldies{background:#0e7490}.g-motown{background:#7c3aed}.g-country{background:#a16207}.g-bluegrass{background:#15803d}
 .g-blues{background:#1d4ed8}.g-jazz{background:#9f1239}.g-folk{background:#4d7c0f}.g-gospel{background:#6d28d9}.g-latin{background:#dc2626}.g-movie{background:#475569}.g-holiday{background:#b91c1c}.g-other{background:#6b7280}
-.tch{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:999px;background:var(--soft);text-decoration:none;max-width:260px}
-.tch i{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;font-style:normal;font-weight:800;font-size:14px;background:#e00;flex:none}
+.tch{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:999px;background:var(--mist);text-decoration:none;max-width:260px}
+.tch i{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 14px var(--display);font-style:normal;background:var(--plum);flex:none}
 .tch span{min-width:0}
 .tch b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tch small{display:block;color:var(--muted);font-size:12px}
+.tch small{display:block;color:var(--ink-3);font-size:12px}
 .res{display:grid;gap:8px}
-.res a{display:block;padding:12px 14px;border-radius:16px;background:var(--soft);text-decoration:none}
+.res a{display:block;padding:13px 15px;border-radius:18px;background:var(--mist);text-decoration:none}
 .res b{display:block;font-size:15px}
-.res small{color:var(--muted);font-size:13px}
-.player{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:16/9;margin-top:6px}
-.player.tall{aspect-ratio:9/16;max-height:70vh;margin-left:auto;margin-right:auto}
+.res small{color:var(--ink-2);font-size:13px}
+.player{position:relative;border-radius:0 0 22px 22px;overflow:hidden;background:#000;aspect-ratio:16/9;margin:0 calc(-1 * var(--gut))}
+.player.tall{aspect-ratio:9/16;max-height:70vh;margin-left:auto;margin-right:auto;border-radius:22px}
 .player iframe,.player #ytp{position:absolute;inset:0;width:100%;height:100%;border:0}
 .pposter{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.92}
 .pmsg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;font-weight:700;padding:20px;text-align:center}
-.practice{display:grid;gap:8px;margin:12px 0 4px;padding:12px;border-radius:16px;background:var(--soft)}
+.practice{display:grid;gap:8px;margin:12px 0 4px;padding:12px;border-radius:18px;background:var(--mist)}
 .prow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
-.plabel{font-size:13px;font-weight:800;min-width:84px}
-.seg{display:inline-flex;gap:4px;padding:3px;background:var(--bg);border-radius:999px}
-.seg button{border:0;background:none;border-radius:999px;padding:7px 12px;font-weight:700;font-size:13.5px}
-.seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
-.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--soft);border-radius:999px;margin:12px 0}
-.seg3 button{border:0;background:none;border-radius:999px;height:40px;font-weight:700;font-size:13.5px;padding:0 4px}
-.seg3 button[aria-pressed="true"]{background:var(--bg);box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.plabel{font:500 13px var(--display);min-width:84px}
+.seg{display:inline-flex;gap:4px;padding:3px;background:var(--paper);border-radius:999px}
+.seg button{border:0;background:none;border-radius:999px;padding:7px 12px;font-weight:700;font-size:13.5px;color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 .mlink{display:flex;align-items:center;gap:14px;border-radius:14px;padding:13px 10px;font-size:16px;font-weight:600;text-decoration:none}
-.mlink:active{background:var(--soft)}
+.mlink:active{background:var(--mist)}
 .small{font-size:13px}
+.vpage .player{margin:6px 0 0;border-radius:18px}
+.cu-actions{display:flex;align-items:center;gap:6px;padding:12px 0 4px}
+.cu-actions .grow{flex:1}
+.pdot{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 13px var(--display);flex:none}
+.minihead{font:700 15px var(--display);margin:20px 0 8px}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -291,1837 +453,22 @@ h2.sect{font-size:20px;font-weight:800;margin:26px 4px 8px;letter-spacing:-.01em
 <nav id="nav" aria-label="Sections">
   <div class="in">
     <button data-tab="home" aria-label="Home"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7"/><path d="M5.5 9.5V20h13V9.5"/></svg>Home</button>
-    <button data-tab="search" aria-label="Search"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>Search</button>
-    <button data-tab="add" aria-label="Save an idea"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+    <button data-tab="explore" aria-label="Explore"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="m15.6 8.4-2.2 5-5 2.2 2.2-5z"/></svg>Explore</button>
+    <button data-tab="add" class="fab" aria-label="Save an idea"><span class="dabbtn"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></button>
     <button data-tab="music" aria-label="Learn music"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>Music</button>
-    <button data-tab="ideas" aria-label="Ideas for you"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.1V16h5v-.1c0-.8.4-1.6 1.1-2.1A6 6 0 0 0 12 3z"/></svg>Ideas</button>
-    <button data-tab="saved" aria-label="Your boards"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="9" rx="2"/><rect x="13.5" y="3.5" width="7" height="5" rx="2"/><rect x="13.5" y="11.5" width="7" height="9" rx="2"/><rect x="3.5" y="15.5" width="7" height="5" rx="2"/></svg>Boards</button>
+    <button data-tab="studio" aria-label="Your studio"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5c-4.7 0-8.5 3.4-8.5 7.8 0 4.6 3.6 8.2 8 8.2 1.4 0 1.9-.7 1.9-1.5 0-1.2-1.2-1.6-1.2-2.7 0-1 .8-1.6 2-1.6h2c2.5 0 4.3-1.6 4.3-4.1 0-3.4-3.8-6.1-8.5-6.1z"/><circle cx="7.8" cy="11" r="1.2" class="fillc"/><circle cx="10.8" cy="7.6" r="1.2"/><circle cx="15.2" cy="8.3" r="1.2"/></svg>Studio</button>
   </div>
 </nav>
 
 <div id="sheetwrap" hidden><div id="sheet" role="dialog" aria-modal="true" aria-label="Details"></div></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="restoreFile" accept="application/json,.json" hidden>
+<input type="file" id="madeFile" accept="image/*" hidden>
 
 <script src="cats.js"></script>
 <script src="music.js"></script>
-<script>
-(() => {
-'use strict';
-const VERSION = '1.3';
-const READER_V = 1;
-const Cats = window.Cats;
-const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-const API = (LOCAL || /(^|\.)vercel\.app$/.test(location.hostname)) ? '' : 'https://yumyumtumtum.vercel.app';
-
-/* ---------- helpers ---------- */
-const $ = (s, r = document) => r.querySelector(s);
-const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const enc = encodeURIComponent;
-const rid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-const plural = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-const I = (d, cls) => `<svg class="ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
-const IC = {
-  back: '<path d="M15 5l-7 7 7 7"/>',
-  dots: '<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>',
-  heart: '<path d="M12 20.3l-1.2-1.1C6.2 15.1 3.5 12.6 3.5 9.4 3.5 6.9 5.4 5 7.9 5c1.6 0 3.1.8 4.1 2 1-1.2 2.5-2 4.1-2 2.5 0 4.4 1.9 4.4 4.4 0 3.2-2.7 5.7-7.3 9.8z"/>',
-  share: '<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/>',
-  ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/>',
-  play: '<path d="M8 5v14l11-7z"/>',
-  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
-  x: '<path d="M6 6l12 12M18 6L6 18"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  pencil: '<path d="M4.5 19.5h4l10-10-4-4-10 10z"/><path d="M13 7l4 4"/>',
-  trash: '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/>',
-  brush: '<path d="M14.6 3.6l5.8 5.8-7.9 7.9a2.6 2.6 0 0 1-1.2.7l-2.4.6-.5-.5.6-2.4c.1-.5.4-.9.7-1.2z"/><path d="M8.4 16.4c-2.3-.4-4.4 1-4.9 3.9 2.2.3 4.4-.4 5.4-2"/>',
-  scissors: '<circle cx="6" cy="6" r="2.8"/><circle cx="6" cy="18" r="2.8"/><path d="M20 4.5L8.2 15.8M14.3 14.2L20 19.5M8.2 8.2l3.6 3.4"/>',
-  eyeoff: '<path d="M3 3l18 18"/><path d="M10.6 5.1A9.7 9.7 0 0 1 12 5c5 0 8.5 4.5 9.5 7a13 13 0 0 1-2.7 3.8M6.3 6.4A13.4 13.4 0 0 0 2.5 12c1 2.5 4.5 7 9.5 7 1.6 0 3-.4 4.3-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
-  swap: '<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
-  download: '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
-  note: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>',
-  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
-  upload: '<path d="M12 16V5M7 10l5-5 5 5M5 20h14"/>'
-};
-const PLAT = {
-  instagram: { name: 'Instagram', color: '#C13584', short: 'IG', open: 'Open in Instagram' },
-  tiktok: { name: 'TikTok', color: '#111111', short: 'TT', open: 'Watch on TikTok' },
-  youtube: { name: 'YouTube', color: '#FF0000', short: 'YT', open: 'Watch on YouTube' },
-  facebook: { name: 'Facebook', color: '#1877F2', short: 'FB', open: 'Open in Facebook' },
-  pinterest: { name: 'Pinterest', color: '#E60023', short: 'P', open: 'Open in Pinterest' },
-  web: { name: 'Website', color: '#5f6b66', short: 'W', open: 'Visit site' }
-};
-function platformOf(url) {
-  let h = '';
-  try { h = new URL(url).hostname.toLowerCase().replace(/^(www|m|mobile|vm|vt)\./, ''); } catch (e) { return 'web'; }
-  if (/(^|\.)tiktok\.com$/.test(h)) return 'tiktok';
-  if (/(^|\.)instagram\.com$|^instagr\.am$/.test(h)) return 'instagram';
-  if (h === 'youtu.be' || /(^|\.)youtube\.com$/.test(h)) return 'youtube';
-  if (/(^|\.)facebook\.com$|^fb\.watch$|^fb\.com$/.test(h)) return 'facebook';
-  if (h === 'pin.it' || /(^|\.)pinterest\.[a-z.]+$/.test(h)) return 'pinterest';
-  return 'web';
-}
-function hostOf(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } }
-function findUrl(text) {
-  const t = String(text || '');
-  const m = t.match(/https?:\/\/[^\s<>"']+/i) || t.match(/\b(?:www\.)?[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|it|be|me|watch|co|us|io|app|tv|ly|uk)\/[^\s<>"']*/i);
-  return m ? m[0].replace(/[),.!?'"]+$/, '') : '';
-}
-function normUrl(u) {
-  u = String(u || '').trim();
-  if (!u) return '';
-  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
-  try { const x = new URL(u); return /^https?:$/.test(x.protocol) && x.hostname.includes('.') ? x.href : ''; } catch (e) { return ''; }
-}
-async function getJSON(url, ms) {
-  const ctl = new AbortController();
-  const t = setTimeout(() => ctl.abort(), ms || 30000);
-  try {
-    const r = await fetch(url, { signal: ctl.signal });
-    return await r.json();
-  } finally { clearTimeout(t); }
-}
-const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-
-/* ---------- storage on the phone (IndexedDB) ---------- */
-const DB = {
-  db: null, mem: { pins: new Map(), photos: new Map(), kv: new Map() },
-  open() {
-    return new Promise(res => {
-      let r;
-      // the storage keeps the old name (the app was Brush & Glue until Oct 1, 2026) so nothing saved is lost
-      try { r = indexedDB.open('brushglue', 1); } catch (e) { res(false); return; }
-      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('pins', { keyPath: 'id' }); d.createObjectStore('photos'); d.createObjectStore('kv'); };
-      r.onsuccess = () => { this.db = r.result; res(true); };
-      r.onerror = () => res(false);
-    });
-  },
-  req(store, mode, fn) {
-    if (!this.db) return Promise.resolve(fn(null));
-    return new Promise((res, rej) => {
-      const t = this.db.transaction(store, mode);
-      const q = fn(t.objectStore(store));
-      t.oncomplete = () => res(q && 'result' in q ? q.result : undefined);
-      t.onerror = () => rej(t.error);
-      t.onabort = () => rej(t.error);
-    });
-  },
-  all(store) { return this.db ? this.req(store, 'readonly', s => s.getAll()) : Promise.resolve(Array.from(this.mem[store].values())); },
-  get(store, key) { return this.db ? this.req(store, 'readonly', s => s.get(key)) : Promise.resolve(this.mem[store].get(key)); },
-  put(store, val, key) {
-    if (!this.db) { this.mem[store].set(key === undefined ? val.id : key, val); return Promise.resolve(); }
-    return this.req(store, 'readwrite', s => key === undefined ? s.put(val) : s.put(val, key));
-  },
-  del(store, key) { if (!this.db) { this.mem[store].delete(key); return Promise.resolve(); } return this.req(store, 'readwrite', s => s.delete(key)); }
-};
-const kvGet = k => DB.get('kv', k);
-const kvSet = (k, v) => DB.put('kv', v, k).catch(() => {});
-
-/* ---------- state ---------- */
-const S = {
-  pins: [],
-  taste: { avoidTags: {}, avoidCats: {}, views: {} },
-  dismissed: new Set(),
-  route: { v: 'home' },
-  homeTab: 'all', homeCat: 'all',
-  boardSort: 'new',
-  ideas: { items: [], topic: 'foryou', loading: false, error: '', at: 0, sig: '', page: 1 },
-  more: new Map(),      // "more like this" answers by search
-  web: new Map(),       // idea cards on screen: key -> item
-  search: { q: '', cat: '', results: [], loading: false, error: '' },
-  installEvt: null,
-  ready: false
-};
-function savePin(p) { p.updatedAt = Date.now(); return DB.put('pins', p).catch(() => toast('Couldn’t save on this phone. Is its storage full?')); }
-function saveTaste() { kvSet('taste', S.taste); }
-
-/* ---------- photos: kept on the phone so they never expire ---------- */
-const photoURLs = new Map();
-async function photoURL(id) {
-  if (photoURLs.has(id)) return photoURLs.get(id);
-  const blob = await DB.get('photos', id).catch(() => null);
-  if (!blob) return '';
-  const u = URL.createObjectURL(blob);
-  photoURLs.set(id, u);
-  return u;
-}
-async function shrink(blob) {
-  let src, w, h;
-  try { src = await createImageBitmap(blob); w = src.width; h = src.height; }
-  catch (e) {
-    src = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(blob); });
-    w = src.naturalWidth; h = src.naturalHeight;
-  }
-  if (!w || !h) throw new Error('empty image');
-  const sc = Math.min(1, 736 / w);
-  const cv = document.createElement('canvas');
-  cv.width = Math.round(w * sc); cv.height = Math.round(h * sc);
-  cv.getContext('2d').drawImage(src, 0, 0, cv.width, cv.height);
-  const out = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.85));
-  return { blob: out || blob, w: cv.width, h: cv.height };
-}
-async function fetchPhoto(url) {
-  if (!url) return null;
-  for (const u of [API + '/api/image?url=' + enc(url), url]) {
-    try {
-      const r = await fetch(u);
-      if (!r.ok) continue;
-      const b = await r.blob();
-      if (!/^image\//.test(b.type)) continue;
-      return await shrink(b);
-    } catch (e) { /* try the next way */ }
-  }
-  return null;
-}
-function hydrate(root) {
-  for (const img of $$('img[data-photo]', root || document)) {
-    const id = img.dataset.photo;
-    img.removeAttribute('data-photo');
-    photoURL(id).then(u => { if (u) img.src = u; else if (img.dataset.orig) { img.src = img.dataset.orig; img.dataset.proxy = '1'; } });
-  }
-}
-// a web photo that won't load directly: try it through the photo helper once, then show the title instead
-document.addEventListener('error', e => {
-  const im = e.target;
-  if (!(im instanceof HTMLImageElement) || !im.dataset.proxy) return;
-  if (im.dataset.proxy === '1' && im.dataset.orig) { im.dataset.proxy = '2'; im.src = API + '/api/image?url=' + enc(im.dataset.orig); return; }
-  const box = im.closest('.pin-media,.cu-media,.thumb,.tile,.collage > div');
-  im.remove();
-  if (!box) return;
-  if (box.classList.contains('pin-media')) { box.classList.add('ph', box.dataset.type || 'painting'); const s = document.createElement('span'); s.textContent = box.dataset.title || ''; box.prepend(s); }
-  else if (box.classList.contains('tile')) box.classList.add('noimg');
-  else if (box.classList.contains('cu-media')) { box.classList.add('ph', box.dataset.type || 'painting'); box.style.minHeight = '220px'; }
-}, true);
-
-/* ---------- what it learns ---------- */
-const GENERIC_TAGS = new Set(['easy', 'kids', 'gift', 'diy', 'craft', 'crafts', 'painting', 'art']);
-const weightOf = p => p.example ? 0 : 1 + (p.liked ? 3 : 0) + (p.status === 'made' ? 2 : 0) + Math.min(p.opens || 0, 4) * 0.5;
-function learn() {
-  const cat = {}, catN = {}, tag = {}, type = { painting: 0, craft: 0 };
-  let n = 0, liked = 0, made = 0;
-  for (const p of S.pins) {
-    if (p.example || p.type === 'music') continue;
-    n++; if (p.liked) liked++; if (p.status === 'made') made++;
-    const w = weightOf(p), ck = p.type + ':' + p.category;
-    type[p.type] += w;
-    cat[ck] = (cat[ck] || 0) + w; catN[ck] = (catN[ck] || 0) + 1;
-    for (const t of p.tags || []) tag[t] = (tag[t] || 0) + w;
-  }
-  for (const [k, v] of Object.entries(S.taste.views || {})) cat[k] = (cat[k] || 0) + Math.min(v, 6) * 0.3;
-  for (const [t, c] of Object.entries(S.taste.avoidTags || {})) tag[t] = (tag[t] || 0) - 2 * c;
-  for (const [k, c] of Object.entries(S.taste.avoidCats || {})) cat[k] = (cat[k] || 0) - 2 * c;
-  return { cat, catN, tag, type, n, liked, made };
-}
-function scoreItem(it, L) {
-  let s = (L.cat[it.type + ':' + it.category] || 0);
-  for (const t of it.tags || []) s += 0.6 * (L.tag[t] || 0);
-  const tot = L.type.painting + L.type.craft;
-  if (tot) s += 1.5 * (L.type[it.type] || 0) / tot;
-  return s;
-}
-const topCats = (L, k) => Object.entries(L.cat).filter(([key, w]) => w > 0 && !key.endsWith(':other')).sort((a, b) => b[1] - a[1]).slice(0, k).map(([key]) => { const [type, id] = key.split(':'); return { type, id, key }; });
-const topTags = (L, k) => Object.entries(L.tag).filter(([t, w]) => w > 0 && !GENERIC_TAGS.has(t)).sort((a, b) => b[1] - a[1]).slice(0, k).map(([t]) => t);
-
-/* ---------- Ideas for you (painting and craft blogs, ranked on the phone) ---------- */
-const CAT_Q = {
-  painting: { acrylic: 'acrylic painting', watercolor: 'watercolor', pour: 'acrylic pour', rock: 'painted rocks', dot: 'dot mandala', objects: 'painted pumpkins', oil: 'oil painting', gouache: 'gouache', spray: 'spray paint', furniture: 'painted furniture', wall: 'mural', drawing: 'drawing', kids: 'painting for kids', other: 'painting' },
-  craft: { wood: 'wood craft', paper: 'paper craft', resin: 'resin', cricut: 'cricut', sewing: 'sewing', yarn: 'crochet', jewelry: 'bracelet', clay: 'clay', candles: 'candle', florals: 'wreath', glass: 'stained glass', holiday: '', decor: 'home decor', kids: 'kids craft', upcycle: 'upcycle', diamond: 'diamond painting', other: 'craft' }
-};
-const SEASON = [['valentines', 'winter'], ['valentines', 'winter'], ['st patricks', 'spring'], ['easter', 'spring'], ['spring', 'mothers day'], ['summer', 'fathers day'], ['4th of july', 'summer'], ['summer', 'back to school'], ['fall', 'back to school'], ['halloween', 'fall'], ['thanksgiving', 'fall'], ['christmas', 'winter']];
-function catQuery(type, id) {
-  if (type === 'craft' && id === 'holiday') return SEASON[new Date().getMonth()][0] + ' craft';
-  if (type === 'painting' && id === 'objects' && ![8, 9, 10].includes(new Date().getMonth())) return 'glass painting';
-  return CAT_Q[type === 'craft' ? 'craft' : 'painting'][id] || '';
-}
-function ideaQueries(topic) {
-  if (topic && topic !== 'foryou') {
-    if (topic.startsWith('cat:')) { const [, type, id] = topic.split(':'); return [{ q: catQuery(type, id), type, reason: '' }]; }
-    if (topic.startsWith('tag:')) return [{ q: topic.slice(4), type: 'both', reason: '' }];
-    return [{ q: topic, type: 'both', reason: '' }];
-  }
-  const L = learn();
-  const season = SEASON[new Date().getMonth()];
-  const qs = [];
-  for (const c of topCats(L, 3)) {
-    const q = catQuery(c.type, c.id);
-    if (q) qs.push({ q, type: c.type, reason: 'Because you like ' + Cats.catLabel(c.type, c.id) });
-  }
-  const tags = topTags(L, 2);
-  if (tags[0]) {
-    const lead = L.type.craft > L.type.painting ? 'craft' : 'painting';
-    qs.push({ q: tags[0] + ' ' + lead, type: lead, reason: 'Because you save #' + tags[0] + ' ideas' });
-  }
-  qs.push({ q: season[0] + ' craft', type: 'craft', reason: 'For ' + titleCase(season[0]) });
-  qs.push({ q: season[0] === 'fall' ? 'fall painting' : season[0] + ' painting', type: 'painting', reason: 'For ' + titleCase(season[0]) });
-  if (qs.length < 5) for (const d of [{ q: 'acrylic painting', type: 'painting' }, { q: 'painted rocks', type: 'painting' }, { q: 'wood craft', type: 'craft' }, { q: 'watercolor', type: 'painting' }, { q: 'dollar tree craft', type: 'craft' }]) {
-    if (qs.length >= 5) break;
-    if (!qs.some(x => x.q === d.q)) qs.push(Object.assign({ reason: 'To get you started' }, d));
-  }
-  const seen = new Set();
-  return qs.filter(x => x.q && !seen.has(x.q) && seen.add(x.q)).slice(0, 6);
-}
-function titleCase(s) { return String(s).replace(/\b\w/g, c => c.toUpperCase()); }
-// the same project can show up under two addresses; its title gives it away
-const tkey = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-const isSaved = it => S.pins.some(p => p.url === it.url || (p.source === 'ideas' && tkey(p.title) === tkey(it.title)));
-function tasteSig() { return JSON.stringify(ideaQueries('foryou').map(q => q.q)); }
-function webItem(x, reason) {
-  const sorted = Cats.sortPost({ title: x.title, url: x.url });
-  const type = sorted.type || (x.kind === 'painting' ? 'painting' : 'craft');
-  return {
-    key: x.url, url: x.url, title: x.title, image: x.image, width: x.width || 0, height: x.height || 0,
-    sourceName: x.sourceName || hostOf(x.url), type, category: sorted.type === type ? sorted.category : (sorted[type] || 'other'),
-    tags: sorted.tags, reason: reason || '', web: true
-  };
-}
-async function askCrafts(q, type, n, page) {
-  const j = await getJSON(API + '/api/crafts?q=' + enc(q) + '&type=' + (type || 'both') + '&n=' + (n || 4) + (page > 1 ? '&page=' + page : ''), 30000);
-  if (!j || !j.ok) throw new Error((j && j.error) || 'No answer');
-  return j.items || [];
-}
-async function loadIdeas(force, append) {
-  const topic = S.ideas.topic;
-  const sig = topic + '|' + tasteSig();
-  if (S.ideas.loading) return;
-  const fresh = Date.now() - S.ideas.at < 6 * 3600e3;
-  if (!force && !append) {
-    if (S.ideas.sig === sig && fresh && (S.ideas.items.length || S.ideas.error)) return;
-    if (topic === 'foryou') {
-      const c = await kvGet('ideas').catch(() => null);
-      if (c && c.sig === sig && Date.now() - c.at < 6 * 3600e3 && c.items && c.items.length) { Object.assign(S.ideas, { items: c.items, at: c.at, sig, error: '', page: c.page || 1 }); refreshIdeasViews(); return; }
-    }
-  }
-  S.ideas.sig = sig; S.ideas.at = Date.now();
-  if (!navigator.onLine) { S.ideas.error = 'You’re offline. New ideas need the internet.'; refreshIdeasViews(); return; }
-  const page = append ? (S.ideas.page || 1) + 1 : 1;
-  S.ideas.loading = true; S.ideas.error = '';
-  refreshIdeasViews();
-  const qs = ideaQueries(topic);
-  const lists = await Promise.all(qs.map(q => askCrafts(q.q, q.type, topic === 'foryou' ? 3 : 6, page).then(items => items.map(x => webItem(x, q.reason))).catch(() => [])));
-  const L = learn();
-  const have = new Set(S.pins.map(p => p.url).concat(S.pins.map(p => p.link || '')).concat(S.pins.map(p => tkey(p.title))));
-  lists.forEach(l => l.sort((a, b) => scoreItem(b, L) - scoreItem(a, L)));
-  const out = append ? S.ideas.items.slice() : [], seen = new Set(out.map(x => x.url).concat(out.map(x => tkey(x.title))));
-  const before = out.length;
-  for (let i = 0; i < 40; i++) for (const l of lists) {
-    const it = l[i];
-    if (!it || seen.has(it.url) || seen.has(tkey(it.title)) || have.has(it.url) || have.has(tkey(it.title)) || S.dismissed.has(it.url)) continue;
-    if ((S.taste.avoidCats[it.type + ':' + it.category] || 0) >= 2) continue;
-    seen.add(it.url); seen.add(tkey(it.title)); out.push(it);
-  }
-  S.ideas.loading = false;
-  if (out.length === before) {
-    if (append) toast('That’s all the new ideas for now. Try a different topic.');
-    else S.ideas.error = 'Couldn’t get new ideas right now. Try again in a minute.';
-  } else {
-    Object.assign(S.ideas, { items: out.slice(0, 160), page });
-    if (topic === 'foryou') kvSet('ideas', { items: S.ideas.items, at: S.ideas.at, sig, page });
-  }
-  refreshIdeasViews();
-}
-function refreshIdeasViews() {
-  if (['ideas', 'home'].includes(S.route.v)) renderRoute(true);
-}
-
-/* ---------- masonry ---------- */
-function colCount() {
-  const w = Math.min(window.innerWidth, 1280) - 20;
-  return w < 520 ? 2 : w < 800 ? 3 : w < 1080 ? 4 : 5;
-}
-function arOf(w, h) { return w && h ? Math.max(0.6, Math.min(1.9, h / w)) : 1.3; }
-function masonry(items, card) {
-  const n = colCount(), cols = Array.from({ length: n }, () => []), heights = new Array(n).fill(0);
-  for (const it of items) {
-    const ar = it.web ? arOf(it.width, it.height) : (it.img ? arOf(it.img.w, it.img.h) : (it.imageUrl ? 1.3 : 1.05));
-    const k = heights.indexOf(Math.min(...heights));
-    cols[k].push(card(it, ar));
-    heights[k] += ar + 0.28;
-  }
-  return `<div class="masonry">${cols.map(c => `<div class="mcol">${c.join('')}</div>`).join('')}</div>`;
-}
-function pinCard(p, ar) {
-  const t = p.type === 'craft' ? 'craft' : p.type === 'music' ? 'music' : 'painting';
-  let media;
-  if (p.photo) media = `<img data-photo="${esc(p.id)}" data-orig="${esc(p.imageUrl || '')}" alt="">`;
-  else if (p.imageUrl) media = `<img src="${esc(p.imageUrl)}" data-orig="${esc(p.imageUrl)}" data-proxy="1" loading="lazy" referrerpolicy="no-referrer" alt="">`;
-  const ph = !media;
-  return `<div class="pin" data-act="open-pin" data-id="${esc(p.id)}">
-    <div class="pin-media${ph ? ' ph ' + t : ''}" data-type="${t}" data-title="${esc(p.title)}" style="aspect-ratio:1/${ph ? 1.05 : ar}">${ph ? esc(p.title) : media}
-      ${p.kind === 'video' ? `<span class="badge play">${I(IC.play, 'fill')}</span>` : ''}
-      ${p.liked ? `<span class="badge fav">${I(IC.heart, 'fill')}</span>` : ''}
-      ${p.status === 'made' ? `<span class="badge made">${I(IC.check)}Made it</span>` : ''}
-      ${p.type === 'music' && (p.mstatus === 'learned' || p.mstatus === 'learning') ? `<span class="badge made mst">${p.mstatus === 'learned' ? I(IC.check) + 'Learned' : 'Learning'}</span>` : ''}
-    </div>
-    <div class="pin-foot"><div class="pin-text"><div class="pin-title">${esc(p.title)}</div></div>
-      <button class="dots" data-act="pin-menu" data-id="${esc(p.id)}" aria-label="More options for ${esc(p.title)}">${I(IC.dots, 'fill')}</button></div>
-  </div>`;
-}
-function ideaCard(it, ar) {
-  S.web.set(it.key, it);
-  const saved = isSaved(it);
-  return `<div class="pin" data-act="open-idea" data-k="${esc(it.key)}">
-    <div class="pin-media" data-type="${it.type}" data-title="${esc(it.title)}" style="aspect-ratio:1/${ar}">
-      <img src="${esc(it.image)}" data-orig="${esc(it.image)}" data-proxy="1" loading="lazy" referrerpolicy="no-referrer" alt="">
-      <button class="save-pill${saved ? ' done' : ''}" data-act="save-idea" data-k="${esc(it.key)}">${saved ? 'Saved' : 'Save'}</button>
-    </div>
-    <div class="pin-foot"><div class="pin-text"><div class="pin-title">${esc(it.title)}</div><div class="pin-sub">${esc(it.reason || it.sourceName)}</div></div>
-      <button class="dots" data-act="idea-menu" data-k="${esc(it.key)}" aria-label="More options">${I(IC.dots, 'fill')}</button></div>
-  </div>`;
-}
-function skeleton(n) {
-  const ars = [1.4, 1.1, 1.6, 1.25, 1.5, 1.2, 1.35, 1.55];
-  return masonry(Array.from({ length: n || 8 }, (_, i) => ({ web: true, width: 100, height: ars[i % ars.length] * 100 })), (it, ar) => `<div class="skel" style="aspect-ratio:1/${ar}"></div>`);
-}
-
-/* ---------- routing (the phone's back button works) ---------- */
-const TABS = ['home', 'search', 'music', 'ideas', 'saved'];
-function go(route, replace) {
-  const cur = Object.assign({}, history.state || S.route, { y: window.scrollY });
-  history.replaceState(cur, '');
-  if (replace) history.replaceState(route, ''); else history.pushState(route, '');
-  S.route = route;
-  renderRoute();
-  window.scrollTo(0, 0);
-}
-function goTab(v) {
-  if (v === 'add') { openSave({}); return; }
-  if (S.route.v === v) { window.scrollTo({ top: 0, behavior: 'smooth' }); if (v === 'home') { S.homeCat = 'all'; renderRoute(true); } return; }
-  go({ v }, TABS.includes(S.route.v));
-}
-window.addEventListener('popstate', e => {
-  const st = e.state || { v: 'home' };
-  if (!$('#sheetwrap').hidden && !st.sheet) {
-    hideSheet();
-    const after = afterClose; afterClose = null;
-    if (after) after();
-    return;
-  }
-  S.route = st;
-  renderRoute();
-  requestAnimationFrame(() => window.scrollTo(0, st.y || 0));
-});
-function renderRoute(keepScroll) {
-  const r = S.route;
-  const tab = TABS.includes(r.v) ? r.v : (r.from || '');
-  for (const b of $$('#nav button')) { if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); }
-  const main = $('#main');
-  const y = window.scrollY;
-  if (!S.ready) { main.innerHTML = `<div class="loadrow" style="margin-top:40vh"><span class="spinner"></span>Opening your boards…</div>`; return; }
-  // a lesson that's playing keeps playing when its page refreshes
-  if (r.v === 'video' && keepScroll && curV && (curV.id === r.k || (r.pin && savedVid(curV.id) && savedVid(curV.id).id === r.pin))) { refreshVideoBits(curV); return; }
-  stopPlayer();
-  if (r.v === 'home') main.innerHTML = vHome();
-  else if (r.v === 'search') main.innerHTML = vSearch();
-  else if (r.v === 'ideas') main.innerHTML = vIdeas();
-  else if (r.v === 'saved') main.innerHTML = vSaved();
-  else if (r.v === 'board') main.innerHTML = vBoard(r.key);
-  else if (r.v === 'pin') main.innerHTML = vPin(S.pins.find(p => p.id === r.id));
-  else if (r.v === 'idea') main.innerHTML = vIdea(S.web.get(r.k) || r.item);
-  else if (r.v === 'music') main.innerHTML = vMusic();
-  else if (r.v === 'video') main.innerHTML = vVideo(r);
-  else main.innerHTML = vHome();
-  hydrate(main);
-  if (keepScroll) window.scrollTo(0, y);
-  if (r.v === 'music') loadMusicFeed(false);
-  if (r.v === 'video') { const v = r.pin ? (S.pins.find(x => x.id === r.pin) && pinVid(S.pins.find(x => x.id === r.pin))) : (MS.vids.get(r.k) || r.item); if (v) { annot(v); if (!keepScroll) mEvent('open', v, 1); loadVMore(v); } }
-  if (r.v === 'pin' || r.v === 'idea') loadMore(r);
-  if (r.v === 'ideas' || (r.v === 'home' && S.pins.filter(p => !p.example && p.type !== 'music').length < 6)) loadIdeas(false);
-}
-let resizeT = 0;
-window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (!['pin', 'idea', 'video'].includes(S.route.v)) renderRoute(true); }, 200); });
-
-/* ---------- Home ---------- */
-function vHome() {
-  const tab = S.homeTab;
-  const art = S.pins.filter(p => p.type !== 'music');
-  const mine = art.filter(p => tab === 'all' || p.type === tab);
-  const counts = {};
-  for (const p of mine) counts[p.category] = (counts[p.category] || 0) + 1;
-  if (S.homeCat !== 'all' && !counts[S.homeCat]) S.homeCat = 'all';
-  const list = mine.filter(p => S.homeCat === 'all' || p.category === S.homeCat).sort((a, b) => b.createdAt - a.createdAt);
-  let h = `<div class="topbar"><div class="tabs" role="tablist">${[['all', 'All'], ['painting', 'Painting'], ['craft', 'Crafts']].map(([k, l]) => `<button role="tab" data-act="home-tab" data-t="${k}" aria-selected="${tab === k}">${l}</button>`).join('')}</div>`;
-  if (tab !== 'all' && mine.length) {
-    h += `<div class="chips"><button class="chip" data-act="home-cat" data-c="all" aria-pressed="${S.homeCat === 'all'}">All ${tab === 'craft' ? 'crafts' : 'painting'}</button>${Cats.catList(tab).filter(c => counts[c.id]).map(c => `<button class="chip" data-act="home-cat" data-c="${c.id}" aria-pressed="${S.homeCat === c.id}">${esc(c.label)}</button>`).join('')}</div>`;
-  }
-  h += `</div>`;
-  if (!art.length) {
-    h += welcome();
-  } else if (!mine.length) {
-    h += `<div class="note">No ${tab === 'craft' ? 'craft' : 'painting'} ideas yet. Share a post to Artistry and it lands here.</div>`;
-  } else {
-    h += masonry(list, pinCard);
-  }
-  const real = art.filter(p => !p.example).length;
-  if (tab === 'all' && real < 6) {
-    h += `<h2 class="sect">${art.length ? 'More ideas for you' : 'Ideas to get you started'}</h2>` + ideasBlock(12);
-  }
-  return h;
-}
-function welcome() {
-  const inst = standalone() ? '' : `<div class="note" style="margin:0 0 14px;background:var(--bg)"><b>Install it first</b> so Artistry shows up in the Share menu.<div class="row" style="margin-top:10px">${S.installEvt ? `<button class="btn red sm" data-act="install">Install app</button>` : ''}<span>${S.installEvt ? 'Or in' : 'In'} Chrome, tap the ⋮ menu, then <b>Add to Home screen</b> or <b>Install app</b>.</span></div></div>`;
-  return `<div class="welcome"><h1>Save your first idea</h1>
-    ${inst}
-    <ol class="steps">
-      <li><span>Open a video or post in Instagram, TikTok, YouTube, Facebook or Pinterest.</span></li>
-      <li><span>Tap <b>Share</b>, then pick <b>Artistry</b>. If it isn’t in the first row, tap <b>More</b> or <b>Share to…</b> to see all your apps.</span></li>
-      <li><span>It reads the post and files it under <b>Painting</b>, <b>Crafts</b> or <b>Music</b> for you.</span></li>
-      <li><span>No Share button? Tap <b>Copy link</b>, come back here and tap the button below.</span></li>
-    </ol>
-    <button class="btn red" data-act="add">${I(IC.plus)}Paste a link instead</button></div>`;
-}
-function ideasBlock(max) {
-  const it = S.ideas;
-  if (it.items.length) return masonry(it.items.slice(0, max || 200), ideaCard);
-  if (it.loading) return skeleton(8);
-  if (it.error) return `<div class="note center">${esc(it.error)}<div style="margin-top:10px"><button class="btn gray sm" data-act="ideas-retry">Try again</button></div></div>`;
-  return skeleton(8);
-}
-
-/* ---------- Ideas for you ---------- */
-function vIdeas() {
-  const L = learn();
-  const chips = [{ id: 'foryou', label: 'For you' }];
-  for (const c of topCats(L, 4)) if (catQuery(c.type, c.id)) chips.push({ id: 'cat:' + c.type + ':' + c.id, label: Cats.catLabel(c.type, c.id) });
-  for (const t of topTags(L, 3)) chips.push({ id: 'tag:' + t, label: '#' + t });
-  const season = SEASON[new Date().getMonth()];
-  for (const s of season) chips.push({ id: s + ' craft', label: titleCase(s) });
-  for (const d of ['acrylic painting', 'painted rocks', 'watercolor', 'wood craft', 'crochet', 'cricut', 'resin', 'dollar tree craft']) if (!chips.some(c => c.label.toLowerCase() === d || c.id === d)) chips.push({ id: d, label: titleCase(d) });
-  const seen = new Set();
-  return `<div class="topbar"><div class="pagehead" style="padding-top:8px"><h1>Ideas for you</h1><p>${L.n ? `Picked from craft and painting blogs using what you save, heart and make.` : `Save a few ideas and these start leaning toward what you like.`}</p></div>
-    <div class="chips">${chips.filter(c => !seen.has(c.id) && seen.add(c.id)).map(c => `<button class="chip" data-act="topic" data-t="${esc(c.id)}" aria-pressed="${S.ideas.topic === c.id}">${esc(c.label)}</button>`).join('')}</div></div>
-    ${ideasBlock()}
-    ${S.ideas.items.length ? `<div class="center" style="margin:22px 0">${S.ideas.loading ? `<div class="loadrow"><span class="spinner"></span>Finding more…</div>` : `<button class="btn gray" data-act="ideas-more">More ideas</button>`}</div>` : ''}`;
-}
-
-/* ---------- Search ---------- */
-function vSearch() {
-  return `<div class="topbar" style="padding-bottom:8px"><label class="searchbar" for="q">${I('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>')}
-    <input id="q" type="search" enterkeyhint="search" placeholder="Search your ideas and craft blogs" value="${esc(S.search.q)}" autocomplete="off"></label></div>
-    <div id="sres">${searchResults()}</div>`;
-}
-function searchResults() {
-  const q = S.search.q.trim();
-  if (!q) {
-    const tiles = [];
-    for (const type of ['painting', 'craft']) for (const c of Cats.catList(type)) {
-      if (c.id === 'other' || !catQuery(type, c.id)) continue;
-      const mine = S.pins.filter(p => p.type === type && p.category === c.id);
-      tiles.push({ type, c, n: mine.length, pin: mine.find(p => p.photo || p.imageUrl) });
-    }
-    tiles.sort((a, b) => b.n - a.n);
-    return `<h2 class="sect">Browse ideas</h2><div class="tiles">${tiles.map(t => `<button class="tile ${t.type}${t.pin ? '' : ' noimg'}" data-act="tile" data-type="${t.type}" data-c="${t.c.id}">${t.pin ? (t.pin.photo ? `<img data-photo="${esc(t.pin.id)}" alt="">` : `<img src="${esc(t.pin.imageUrl)}" data-orig="${esc(t.pin.imageUrl)}" data-proxy="1" referrerpolicy="no-referrer" alt="">`) : ''}<span>${esc(t.c.label)}${t.n ? ' · ' + t.n : ''}</span></button>`).join('')}</div>`;
-  }
-  const words = q.toLowerCase().replace(/^#/, '').split(/\s+/).filter(Boolean);
-  const mine = S.pins.filter(p => {
-    if (S.search.cat) return p.type + ':' + p.category === S.search.cat;
-    const hay = [p.title, p.caption, p.notes, (p.tags || []).join(' '), (p.supplies || []).join(' '), Cats.catLabel(p.type, p.category), p.type === 'craft' ? 'craft crafts' : 'painting paint', p.author, p.siteName].join(' ').toLowerCase();
-    return words.every(w => hay.includes(w));
-  }).sort((a, b) => b.createdAt - a.createdAt);
-  let h = `<h2 class="sect">Your ideas${mine.length ? ' · ' + mine.length : ''}</h2>`;
-  h += mine.length ? masonry(mine, pinCard) : `<div class="note">Nothing saved matches “${esc(q)}” yet.</div>`;
-  h += `<h2 class="sect">From craft and painting blogs</h2>`;
-  if (S.search.loading) h += skeleton(6);
-  else if (S.search.error) h += `<div class="note">${esc(S.search.error)}</div>`;
-  else if (S.search.results.length) h += masonry(S.search.results, ideaCard);
-  else h += `<div class="note">No blog projects found for “${esc(q)}”. Try fewer words.</div>`;
-  return h;
-}
-let searchT = 0, searchN = 0;
-function runSearch(q, cat) {
-  S.search.q = q; S.search.cat = cat || '';
-  clearTimeout(searchT);
-  const box = $('#sres');
-  if (!q.trim()) { S.search.results = []; if (box) { box.innerHTML = searchResults(); hydrate(box); } return; }
-  S.search.loading = true; S.search.error = '';
-  if (box) { box.innerHTML = searchResults(); hydrate(box); }
-  const my = ++searchN;
-  searchT = setTimeout(async () => {
-    let items = [];
-    try { items = (await askCrafts(q.replace(/^#/, ''), 'both', 6)).map(x => webItem(x, '')); }
-    catch (e) { if (my === searchN) S.search.error = navigator.onLine ? 'Couldn’t search the blogs right now.' : 'You’re offline. Blog search needs the internet.'; }
-    if (my !== searchN) return;
-    S.search.loading = false;
-    const L = learn();
-    const seenT = new Set();
-    S.search.results = items.filter(x => !S.dismissed.has(x.url) && !seenT.has(tkey(x.title)) && seenT.add(tkey(x.title))).sort((a, b) => scoreItem(b, L) - scoreItem(a, L));
-    const b = $('#sres');
-    if (b && S.route.v === 'search') { b.innerHTML = searchResults(); hydrate(b); }
-  }, 450);
-}
-
-/* ---------- Boards ---------- */
-const BOARDS = [['all', 'All ideas'], ['painting', 'Painting'], ['craft', 'Crafts'], ['music', 'Music'], ['fav', 'Favorites'], ['want', 'Want to try'], ['made', 'Made it']];
-function musicCount(items) {
-  const songs = items.filter(p => p.kind === 'song').length, les = items.length - songs;
-  return [les ? plural(les, 'lesson') : '', songs ? plural(songs, 'song') : ''].filter(Boolean).join(', ') || 'Nothing yet';
-}
-function boardItems(key) {
-  const art = S.pins.filter(p => p.type !== 'music');
-  if (key === 'all') return art;
-  if (key === 'painting' || key === 'craft' || key === 'music') return S.pins.filter(p => p.type === key);
-  if (key === 'fav') return art.filter(p => p.liked);
-  if (key === 'want') return art.filter(p => p.status !== 'made');
-  if (key === 'made') return art.filter(p => p.status === 'made');
-  if (key.startsWith('cat:')) { const [, t, c] = key.split(':'); return S.pins.filter(p => p.type === t && p.category === c); }
-  return [];
-}
-function boardName(key) {
-  const b = BOARDS.find(x => x[0] === key);
-  if (b) return b[1];
-  if (key.startsWith('cat:')) { const [, t, c] = key.split(':'); return Cats.catLabel(t, c); }
-  return 'Board';
-}
-function collage(items) {
-  const withPic = items.filter(p => p.photo || p.imageUrl).sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
-  const cell = p => p ? (p.photo ? `<img data-photo="${esc(p.id)}" alt="">` : `<img src="${esc(p.imageUrl)}" data-orig="${esc(p.imageUrl)}" data-proxy="1" referrerpolicy="no-referrer" alt="">`) : '';
-  return `<div class="collage"><div>${cell(withPic[0])}</div><div>${cell(withPic[1])}</div><div>${cell(withPic[2])}</div></div>`;
-}
-function boardCard(key) {
-  const items = boardItems(key);
-  return `<div class="board" data-act="board" data-key="${esc(key)}">${collage(items)}<b>${esc(boardName(key))}</b><small>${key === 'music' ? musicCount(items) : plural(items.length, 'idea')}</small></div>`;
-}
-function vSaved() {
-  const L = learn();
-  const keys = BOARDS.map(b => b[0]).filter(k => ['all', 'painting', 'craft'].includes(k) || boardItems(k).length);
-  const cats = [];
-  for (const type of ['painting', 'craft']) for (const c of Cats.catList(type)) if (S.pins.some(p => p.type === type && p.category === c.id)) cats.push('cat:' + type + ':' + c.id);
-  const made = S.pins.filter(p => p.type !== 'music' && p.status === 'made').length;
-  const mus = S.pins.filter(p => p.type === 'music').length;
-  let h = `<div class="pagehead"><h1>Your boards</h1><p>${plural(S.pins.length - mus, 'idea')} saved${made ? ' · ' + made + ' made' : ''}${mus ? ' · Music: ' + musicCount(S.pins.filter(p => p.type === 'music')) : ''}</p></div>`;
-  if (!standalone()) h += `<div class="note"><b>Put it on your home screen</b> so it shows up in the Share menu.<div class="row" style="margin-top:10px">${S.installEvt ? `<button class="btn red sm" data-act="install">Install app</button>` : `<span>In Chrome, tap ⋮, then <b>Add to Home screen</b> or <b>Install app</b>.</span>`}</div></div>`;
-  if (S.owner) h += `<div class="panel sharecard"><div><h3>Share Artistry</h3><p class="muted">Sends the link and how to install it in a text. Only shows on your phone.</p></div><button class="btn red sm" data-act="share-app">${I(IC.share)}Share</button></div>`;
-  h += `<div class="boards">${keys.map(boardCard).join('')}</div>`;
-  if (cats.length) h += `<h2 class="sect">By category</h2><div class="boards">${cats.map(boardCard).join('')}</div>`;
-  h += `<h2 class="sect">What it’s learned</h2>`;
-  if (!L.n) h += `<div class="note">Nothing yet. It learns from what you save, heart, mark as made and open, and from ideas you mark Not for me.</div>`;
-  else {
-    const tot = L.type.painting + L.type.craft || 1, pp = Math.round(L.type.painting / tot * 100);
-    const tc = topCats(L, 5), tt = topTags(L, 10);
-    h += `<div class="panel"><h3>${pp >= 60 ? 'You lean toward painting' : pp <= 40 ? 'You lean toward crafts' : 'A good mix of painting and crafts'}</h3>
-      <div class="split" role="img" aria-label="${pp}% painting, ${100 - pp}% crafts"><i style="width:${pp}%;background:#3a5bd9"></i><i style="width:${100 - pp}%;background:#1a9a6c"></i></div>
-      <div class="muted" style="font-size:13px">${pp}% painting · ${100 - pp}% crafts</div>
-      ${tc.length ? `<div class="minihead">Favorite kinds</div><div class="taglist">${tc.map(c => `<span>${esc(Cats.catLabel(c.type, c.id))}</span>`).join('')}</div>` : ''}
-      ${tt.length ? `<div class="minihead">Tags you come back to</div><div class="taglist">${tt.map(t => `<span>#${esc(t)}</span>`).join('')}</div>` : ''}</div>`;
-  }
-  const avoid = Object.keys(S.taste.avoidTags).map(t => ({ k: 'tag', v: t, l: '#' + t })).concat(Object.keys(S.taste.avoidCats).map(c => { const [t, id] = c.split(':'); return { k: 'cat', v: c, l: Cats.catLabel(t, id) }; }));
-  if (avoid.length) h += `<div class="panel"><h3>Not for me</h3><p class="muted" style="margin:0 0 6px;font-size:14px">Ideas like these show up less. Tap one to take it off.</p><div class="taglist">${avoid.map(a => `<button data-act="unavoid" data-k="${a.k}" data-v="${esc(a.v)}">${esc(a.l)} ✕</button>`).join('')}</div></div>`;
-  h += `<h2 class="sect">Backup</h2><div class="panel"><p class="muted" style="margin:0 0 10px;font-size:14px">Your ideas and photos are saved on this phone. Download a backup now and then, or to move to a new phone.</p>
-    <div class="row"><button class="btn ink sm" data-act="backup">${I(IC.download)}Download backup</button><button class="btn gray sm" data-act="restore">${I(IC.upload)}Restore a backup</button></div></div>
-    <p class="muted center" style="font-size:12.5px;margin:22px 0" data-act="ver">Artistry ${VERSION}</p>`;
-  return h;
-}
-function vBoard(key) {
-  const sorts = [['new', 'Newest'], ['az', 'A to Z'], ['opened', 'Most opened']];
-  let items = boardItems(key);
-  if (S.boardSort === 'az') items.sort((a, b) => a.title.localeCompare(b.title));
-  else if (S.boardSort === 'opened') items.sort((a, b) => (b.opens || 0) - (a.opens || 0) || b.createdAt - a.createdAt);
-  else items.sort((a, b) => b.createdAt - a.createdAt);
-  return `<div class="topbar"><div class="row" style="padding-top:4px"><button class="iconbtn" data-act="back" aria-label="Back">${I(IC.back)}</button><div style="min-width:0"><h1 style="margin:0;font-size:22px;font-weight:800">${esc(boardName(key))}</h1><div class="muted" style="font-size:13px">${key === 'music' ? musicCount(items) : plural(items.length, 'idea')}</div></div></div>
-    <div class="chips">${sorts.map(([k, l]) => `<button class="chip" data-act="board-sort" data-s="${k}" aria-pressed="${S.boardSort === k}">${l}</button>`).join('')}</div></div>
-    ${items.length ? masonry(items, pinCard) : `<div class="note">Nothing here yet.</div>`}`;
-}
-
-/* ---------- a pin's own page ---------- */
-function embedOf(p) {
-  const u = p.url || '';
-  if (p.platform === 'youtube') {
-    const id = (u.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([\w-]{6,})/) || [])[1];
-    if (id) return { src: 'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0', ar: /shorts\//.test(u) ? 1.78 : 0.5625 };
-  }
-  if (p.platform === 'tiktok') {
-    const id = (u.match(/\/(?:video|photo)\/(\d{8,})/) || [])[1];
-    if (id) return { src: 'https://www.tiktok.com/embed/v2/' + id, ar: 1.78 };
-  }
-  if (p.platform === 'instagram') {
-    const code = (u.match(/instagram\.com\/(?:[\w.]+\/)?(?:p|reels?|tv)\/([\w-]{5,})/i) || [])[1];
-    if (code) return { src: 'https://www.instagram.com/p/' + code + '/embed/', ar: 1.62 };
-  }
-  if (p.platform === 'facebook' && p.kind === 'video') return { src: 'https://www.facebook.com/plugins/video.php?href=' + enc(u) + '&show_text=false', ar: 1.78 };
-  return null;
-}
-function openLabel(p) {
-  const pl = PLAT[p.platform] || PLAT.web;
-  if (p.platform === 'web') return 'Visit ' + (p.siteName || hostOf(p.url) || 'site');
-  return pl.open;
-}
-function vPin(p) {
-  if (!p) return `<div class="note" style="margin-top:30px">That idea isn’t here anymore.</div>`;
-  const t = p.type === 'craft' ? 'craft' : 'painting';
-  const pl = PLAT[p.platform] || PLAT.web;
-  const emb = embedOf(p);
-  const media = p.photo ? `<img data-photo="${esc(p.id)}" data-orig="${esc(p.imageUrl || '')}" alt="">` : p.imageUrl ? `<img src="${esc(p.imageUrl)}" data-orig="${esc(p.imageUrl)}" data-proxy="1" referrerpolicy="no-referrer" alt="">` : '';
-  const who = p.author || p.siteName || hostOf(p.url);
-  return `<div class="cu">
-    <div class="cu-media${media ? '' : ' ph ' + t}" id="cumedia">
-      <div class="cu-top"><button class="round" data-act="back" aria-label="Back">${I(IC.back)}</button><button class="round" data-act="pin-menu" data-id="${esc(p.id)}" aria-label="More options">${I(IC.dots, 'fill')}</button></div>
-      ${media || esc(p.title)}
-      ${emb ? `<button class="playbig" data-act="play" data-id="${esc(p.id)}" aria-label="Play here">${I(IC.play, 'fill')}</button>` : ''}
-    </div>
-    <div class="cu-actions">
-      <button class="iconbtn${p.liked ? ' on' : ''}" data-act="like" data-id="${esc(p.id)}" aria-pressed="${!!p.liked}" aria-label="${p.liked ? 'Remove from favorites' : 'Add to favorites'}">${I(IC.heart)}</button>
-      <button class="iconbtn" data-act="share" data-id="${esc(p.id)}" aria-label="Share">${I(IC.share)}</button>
-      <span class="grow"></span>
-      ${p.url ? `<a class="btn gray" href="${esc(p.url)}" target="_blank" rel="noopener" data-act="open" data-id="${esc(p.id)}">${esc(openLabel(p))}</a>` : ''}
-    </div>
-    <div class="cu-body">
-      ${who ? `<div class="by"><span class="pdot" style="background:${pl.color}">${pl.short}</span><div><b>${esc(who)}</b><small>${p.platform === 'web' ? esc(hostOf(p.url)) : 'on ' + pl.name}</small></div></div>` : ''}
-      <h1>${esc(p.title)}</h1>
-      ${p.caption && p.caption.trim() !== p.title ? `<p class="cap clip" id="cap">${esc(p.caption)}</p>${p.caption.length > 260 || (p.caption.match(/\n/g) || []).length > 4 ? `<button class="linkbtn" data-act="cap-more">More</button>` : ''}` : ''}
-      <div class="boardrow">
-        <button class="bpill" data-act="edit" data-id="${esc(p.id)}">${I(t === 'craft' ? IC.scissors : IC.brush)}${t === 'craft' ? 'Crafts' : 'Painting'} · ${esc(Cats.catLabel(t, p.category))}</button>
-        <button class="bpill" data-act="edit" data-id="${esc(p.id)}">${I(IC.pencil)}Edit</button>
-      </div>
-      <div class="seg2" role="group" aria-label="Status"><button data-act="status" data-id="${esc(p.id)}" data-s="want" aria-pressed="${p.status !== 'made'}">Want to try</button><button data-act="status" data-id="${esc(p.id)}" data-s="made" aria-pressed="${p.status === 'made'}">Made it</button></div>
-      ${(p.tags || []).length ? `<div class="taglist">${p.tags.map(g => `<button data-act="tag" data-t="${esc(g)}">#${esc(g)}</button>`).join('')}</div>` : ''}
-      ${(p.supplies || []).length ? `<div class="minihead">Supplies</div><ul class="sup">${p.supplies.map(s => `<li>${esc(s)}</li>`).join('')}</ul>` : ''}
-      ${p.notes ? `<div class="minihead">Your notes</div><p class="cap">${esc(p.notes)}</p>` : ''}
-      ${p.link ? `<div class="minihead">Project page</div><a href="${esc(p.link)}" target="_blank" rel="noopener" style="font-weight:700;overflow-wrap:anywhere">${esc(hostOf(p.link))}</a>` : ''}
-    </div>
-    <h2 class="sect">More like this</h2><div id="more">${skeleton(4)}</div>
-  </div>`;
-}
-function vIdea(it) {
-  if (!it) return `<div class="note" style="margin-top:30px">That idea isn’t here anymore. <button class="linkbtn" data-act="back">Go back</button></div>`;
-  S.web.set(it.key, it);
-  const saved = S.pins.find(p => p.url === it.url);
-  const t = it.type;
-  return `<div class="cu">
-    <div class="cu-media" id="cumedia">
-      <div class="cu-top"><button class="round" data-act="back" aria-label="Back">${I(IC.back)}</button><button class="round" data-act="idea-menu" data-k="${esc(it.key)}" aria-label="More options">${I(IC.dots, 'fill')}</button></div>
-      <img src="${esc(it.image)}" data-orig="${esc(it.image)}" data-proxy="1" referrerpolicy="no-referrer" alt="">
-    </div>
-    <div class="cu-actions">
-      <button class="iconbtn" data-act="share-idea" data-k="${esc(it.key)}" aria-label="Share">${I(IC.share)}</button>
-      <span class="grow"></span>
-      <a class="btn gray" href="${esc(it.url)}" target="_blank" rel="noopener">Visit site</a>
-      ${saved ? `<button class="btn ink" data-act="open-pin" data-id="${esc(saved.id)}">Saved</button>` : `<button class="btn red" data-act="save-idea" data-k="${esc(it.key)}">Save</button>`}
-    </div>
-    <div class="cu-body">
-      <div class="by"><span class="pdot" style="background:${PLAT.web.color}">${esc((it.sourceName || 'W').charAt(0))}</span><div><b>${esc(it.sourceName)}</b><small>${esc(hostOf(it.url))}</small></div></div>
-      <h1>${esc(it.title)}</h1>
-      <div class="boardrow"><span class="bpill">${I(t === 'craft' ? IC.scissors : IC.brush)}${t === 'craft' ? 'Crafts' : 'Painting'} · ${esc(Cats.catLabel(t, it.category))}</span></div>
-      ${it.reason ? `<p class="muted">${esc(it.reason)}</p>` : ''}
-      <p class="muted" style="font-size:14px">Tap <b>Visit site</b> for the full how-to and supply list.</p>
-    </div>
-    <h2 class="sect">More like this</h2><div id="more">${skeleton(4)}</div>
-  </div>`;
-}
-async function loadMore(r) {
-  const box = $('#more');
-  if (!box) return;
-  const base = r.v === 'pin' ? S.pins.find(p => p.id === r.id) : (S.web.get(r.k) || r.item);
-  if (!base) { box.innerHTML = ''; return; }
-  const baseUrl = base.url;
-  const own = S.pins.filter(p => p.url !== baseUrl).map(p => {
-    let s = 0;
-    if (p.type === base.type) s += 1;
-    if (p.category === base.category && base.category !== 'other') s += 3;
-    for (const t of p.tags || []) if ((base.tags || []).includes(t)) s += 1;
-    return { p, s };
-  }).filter(x => x.s >= 3).sort((a, b) => b.s - a.s).slice(0, 6).map(x => x.p);
-  const tag = (base.tags || []).find(t => !GENERIC_TAGS.has(t) && t.length < 16);
-  const q = [catQuery(base.type, base.category) || (base.type === 'craft' ? 'craft' : 'painting'), tag && !catQuery(base.type, base.category).includes(tag) ? tag : ''].join(' ').trim();
-  const draw = web => {
-    const b = $('#more');
-    if (!b || S.route !== r) return;
-    let h = '';
-    if (own.length) h += `<div class="minihead" style="margin-left:4px">From your boards</div>` + masonry(own, pinCard);
-    const skip = new Set([tkey(base.title)].concat(own.map(p => tkey(p.title))));
-    const w = (web || []).filter(x => x.url !== baseUrl && !S.dismissed.has(x.url) && !skip.has(tkey(x.title)) && (skip.add(tkey(x.title)), true));
-    if (w.length) h += (own.length ? `<div class="minihead" style="margin:18px 0 0 4px">From craft and painting blogs</div>` : '') + masonry(w, ideaCard);
-    if (!h) h = `<div class="note">${navigator.onLine ? 'Nothing else like this yet.' : 'You’re offline. More ideas need the internet.'}</div>`;
-    b.innerHTML = h;
-    hydrate(b);
-  };
-  if (S.more.has(q)) { draw(S.more.get(q)); return; }
-  if (own.length) draw(null);
-  try {
-    const items = (await askCrafts(q, base.type, 3)).map(x => webItem(x, ''));
-    const L = learn();
-    items.sort((a, b) => scoreItem(b, L) - scoreItem(a, L));
-    S.more.set(q, items.slice(0, 18));
-    draw(S.more.get(q));
-  } catch (e) { draw([]); }
-}
-
-/* ---------- sheets ---------- */
-let afterClose = null;
-function showSheet(html, label) {
-  const wrap = $('#sheetwrap'), sh = $('#sheet');
-  sh.innerHTML = html;
-  sh.setAttribute('aria-label', label || 'Details');
-  if (wrap.hidden) {
-    wrap.hidden = false;
-    document.body.style.overflow = 'hidden';
-    history.pushState(Object.assign({}, S.route, { sheet: true }), '');
-  }
-  hydrate(sh);
-}
-function hideSheet() {
-  $('#sheetwrap').hidden = true;
-  $('#sheet').innerHTML = '';
-  document.body.style.overflow = '';
-  F = null;
-}
-function closeSheet(then) {
-  if ($('#sheetwrap').hidden) { if (then) then(); return; }
-  afterClose = then || null;
-  if (history.state && history.state.sheet) history.back();
-  else { hideSheet(); const a = afterClose; afterClose = null; if (a) a(); }
-}
-$('#sheetwrap').addEventListener('click', e => { if (e.target.id === 'sheetwrap') closeSheet(); });
-
-function pinMenu(p) {
-  if (p.type === 'music') {
-    const st = p.mstatus || 'want';
-    showSheet(`<div class="grip"></div><div class="shead"><h2>${esc(p.title)}</h2></div>
-    <div class="seg3" role="group" aria-label="Where you are with it" style="margin:0 4px 10px">${[['want', 'Want to learn'], ['learning', 'Learning'], ['learned', 'Learned it']].map(([k, l]) => `<button data-act="pin-mstatus" data-id="${esc(p.id)}" data-s="${k}" data-close="1" aria-pressed="${st === k}">${l}</button>`).join('')}</div>
-    <div class="menu">
-    <button data-act="like" data-id="${esc(p.id)}" data-close="1">${I(IC.heart)}${p.liked ? 'Remove from favorites' : 'Add to favorites'}</button>
-    <button data-act="edit" data-id="${esc(p.id)}">${I(IC.pencil)}Edit or change instrument</button>
-    <button data-act="share" data-id="${esc(p.id)}" data-close="1">${I(IC.share)}Share</button>
-    <button class="danger" data-act="delete" data-id="${esc(p.id)}">${I(IC.trash)}Delete</button>
-  </div>`, 'Options');
-    return;
-  }
-  showSheet(`<div class="grip"></div><div class="shead"><h2>${esc(p.title)}</h2></div><div class="menu">
-    <button data-act="like" data-id="${esc(p.id)}" data-close="1">${I(IC.heart)}${p.liked ? 'Remove from favorites' : 'Add to favorites'}</button>
-    <button data-act="status" data-id="${esc(p.id)}" data-s="${p.status === 'made' ? 'want' : 'made'}" data-close="1">${I(IC.check)}${p.status === 'made' ? 'Move back to Want to try' : 'Mark as made'}</button>
-    <button data-act="edit" data-id="${esc(p.id)}">${I(IC.pencil)}Edit or change category</button>
-    <button data-act="move" data-id="${esc(p.id)}" data-close="1">${I(IC.swap)}Move to ${p.type === 'craft' ? 'Painting' : 'Crafts'}</button>
-    <button data-act="share" data-id="${esc(p.id)}" data-close="1">${I(IC.share)}Share</button>
-    <button class="danger" data-act="delete" data-id="${esc(p.id)}">${I(IC.trash)}Delete</button>
-  </div>`, 'Options');
-}
-function ideaMenu(it) {
-  const saved = S.pins.some(p => p.url === it.url);
-  showSheet(`<div class="grip"></div><div class="shead"><h2>${esc(it.title)}</h2></div><div class="menu">
-    ${saved ? '' : `<button data-act="save-idea" data-k="${esc(it.key)}" data-close="1">${I(IC.plus)}Save to ${it.type === 'craft' ? 'Crafts' : 'Painting'}</button>`}
-    <button data-act="not-for-me" data-k="${esc(it.key)}" data-close="1">${I(IC.eyeoff)}Not for me</button>
-    <button data-act="visit" data-k="${esc(it.key)}" data-close="1">${I(IC.ext)}Visit ${esc(it.sourceName)}</button>
-  </div>`, 'Options');
-}
-
-/* ---------- the Save sheet: reads the link and files it ---------- */
-let F = null;
-function openSave(o) {
-  const url = normUrl(findUrl(o.url || '') || findUrl(o.text || '') || findUrl(o.title || '') || '');
-  F = {
-    mode: 'new', id: null, url, shareText: [o.title, o.text].filter(Boolean).join('\n').replace(url, ' ').trim(),
-    reading: false, readErr: '', read: false,
-    title: '', caption: '', author: '', siteName: '', platform: url ? platformOf(url) : 'web', kind: 'post', link: '', supplies: [],
-    imageUrl: '', img: null, photo: null, photoP: null,
-    type: null, sure: false, category: 'other', tags: [], suggested: [], notes: '', status: 'want', touched: false, genres: [], artist: '', song: ''
-  };
-  renderSave(true);
-  if (url) readLink();
-}
-function openEdit(p) {
-  F = {
-    mode: 'edit', id: p.id, url: p.url, shareText: '', reading: false, readErr: '', read: true,
-    title: p.title, caption: p.caption || '', author: p.author || '', siteName: p.siteName || '', platform: p.platform || platformOf(p.url), kind: p.kind || 'post',
-    link: p.link || '', supplies: p.supplies || [], imageUrl: p.imageUrl || '', img: p.img || null, photo: null, photoP: null,
-    type: p.type, sure: true, category: p.category, tags: (p.tags || []).slice(), suggested: [], notes: p.notes || '', status: p.status || 'want', touched: true, delArm: 0,
-    genres: (p.genres || []).slice(), artist: p.artist || '', song: p.song || ''
-  };
-  F.suggested = suggestFor();
-  renderSave(true);
-}
-function suggestFor() {
-  const s = Cats.sortPost({ title: F.title, caption: F.caption + '\n' + F.shareText, url: F.url, supplies: F.supplies });
-  return s.tags.filter(t => !F.tags.includes(t));
-}
-function musicGuess() {
-  const text = [F.title, F.caption, F.shareText].join('\n');
-  const md = Music.detect(text, F.author);
-  const art = Cats.classify(text);
-  const artTop = Math.max(art.score.painting, art.score.craft);
-  return { md, isMusic: md.isMusic && md.score >= 3 && md.score * 1.5 >= artTop };
-}
-function refile() {
-  if (F.touched) { F.suggested = suggestFor(); return; }
-  const s = Cats.sortPost({ title: F.title, caption: F.caption + '\n' + F.shareText, url: F.url, supplies: F.supplies, notes: F.notes });
-  const mg = musicGuess();
-  if (mg.isMusic) {
-    const P = mProfile();
-    F.type = 'music'; F.sure = true; F.guess = { type: 'music' };
-    F.category = mg.md.inst.find(i => MS.prefs.insts.includes(i)) || mg.md.inst[0] || MS.prefs.insts.slice().sort((a, b) => (P.inst[b] || 0) - (P.inst[a] || 0))[0];
-    F.genres = mg.md.genres.slice(0, 3); F.artist = mg.md.artist; F.song = mg.md.song; F.mlevel = mg.md.level;
-    return;
-  }
-  F.sure = !!(s.type && s.sure);
-  F.type = F.sure ? s.type : null;
-  F.guess = s;
-  F.category = F.type ? s.category : 'other';
-  if (!F.tags.length) F.tags = s.tags.slice(0, 4);
-  F.suggested = s.tags.filter(t => !F.tags.includes(t));
-}
-async function readLink() {
-  const f = F;
-  f.reading = true; f.readErr = '';
-  renderSave();
-  let j = null;
-  try { j = await getJSON(API + '/api/idea?url=' + enc(f.url) + '&v=' + READER_V, 50000); }
-  catch (e) { j = { ok: false, error: navigator.onLine ? 'That took too long.' : 'You’re offline.' }; }
-  if (F !== f) return;
-  f.reading = false;
-  if (j && j.ok) {
-    f.read = true;
-    f.title = f.title || j.title || '';
-    f.caption = j.caption || '';
-    f.author = j.author || ''; f.siteName = j.siteName || ''; f.platform = j.platform || f.platform;
-    f.kind = j.kind || 'post'; f.link = j.link || ''; f.supplies = j.supplies || [];
-    if (j.finalUrl && !/\/embed/.test(j.finalUrl)) f.finalUrl = j.finalUrl;
-    f.imageUrl = j.image || '';
-    if (j.width && j.height) f.img = { w: j.width, h: j.height };
-    if (f.imageUrl) f.photoP = fetchPhoto(f.imageUrl).then(ph => { if (F === f && ph) { f.photo = ph; f.img = { w: ph.w, h: ph.h }; if (!f.reading) renderSave(); } return ph; });
-  } else {
-    f.readErr = (j && j.error) || 'Couldn’t read that post.';
-    if (!f.title && f.shareText) f.title = f.shareText.split('\n')[0].slice(0, 90);
-  }
-  refile();
-  renderSave();
-}
-function renderSave(first) {
-  const f = F;
-  if (!f) return;
-  const t = f.type;
-  const pl = PLAT[f.platform] || PLAT.web;
-  const guess = f.guess && f.guess.type;
-  const boardHint = f.mode === 'edit' ? '' : f.reading ? '' : t ? (f.sure && !f.touched ? 'Sorted automatically. Tap to change it.' : '') : (f.read || f.readErr || f.title ? 'Painting, crafts or music? Tap one.' : '');
-  const canSave = !f.reading && !!t && (f.title.trim() || f.url);
-  const cats = t === 'music' ? MS.prefs.insts.concat(Music.INSTRUMENTS.map(i => i.id).filter(i => !MS.prefs.insts.includes(i))).map(i => ({ id: i, label: Music.instLabel(i) })) : t ? Cats.catList(t) : [];
-  if (f.photo && !f.photoURL) f.photoURL = URL.createObjectURL(f.photo.blob);
-  const thumb = f.photo ? `<img src="${f.photoURL}" alt="">` : f.imageUrl ? `<img src="${esc(f.imageUrl)}" data-orig="${esc(f.imageUrl)}" data-proxy="1" referrerpolicy="no-referrer" alt="">` : '';
-  const html = `<div class="grip"></div>
-    <div class="shead"><h2>${f.mode === 'edit' ? 'Edit idea' : 'Save idea'}</h2><button class="iconbtn" data-act="close-sheet" aria-label="Close">${I(IC.x)}</button></div>
-    ${f.mode === 'new' ? `<div class="field"><label for="fUrl">Link</label><input id="fUrl" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste an Instagram, TikTok, YouTube or web link" value="${esc(f.url)}">
-      ${!f.url ? `<p class="hint">In the app, tap Share, then Copy link. Long-press this box to paste.</p>` : ''}</div>` : ''}
-    ${f.url || f.mode === 'edit' ? `<div class="preview">
-      <div class="thumb">${thumb}</div>
-      <div class="ptext">${f.reading ? `<div class="row"><span class="spinner"></span><b>Reading the post…</b></div><small>Getting the photo and caption from ${esc(pl.name)}</small>`
-        : `<b>${esc(f.title || 'Untitled idea')}</b><small>${esc(f.author ? f.author + ' · ' : '')}${esc(f.platform === 'web' ? (f.siteName || hostOf(f.url)) : pl.name)}</small>${f.readErr ? `<p class="hint bad">${esc(f.readErr)} You can still save it.</p>` : ''}`}</div>
-    </div>` : ''}
-    <div class="field"><label for="fTitle">Title</label><input id="fTitle" type="text" maxlength="140" autocomplete="off" placeholder="What is it?" value="${esc(f.title)}"></div>
-    <div class="field"><span class="flabel">Board</span>
-      <div class="boardpick${!t && (f.read || f.readErr) ? ' ask' : ''}">
-        <button data-act="f-type" data-t="painting" aria-pressed="${t === 'painting'}">${I(IC.brush)}Painting</button>
-        <button data-act="f-type" data-t="craft" aria-pressed="${t === 'craft'}">${I(IC.scissors)}Crafts</button>
-        <button data-act="f-type" data-t="music" aria-pressed="${t === 'music'}">${I(IC.note)}Music</button>
-      </div>
-      ${boardHint ? `<p class="hint${t ? '' : ' bad'}">${esc(boardHint)}${!t && guess ? ' It looks like ' + (guess === 'craft' ? 'crafts' : guess === 'music' ? 'music' : 'painting') + '.' : ''}</p>` : ''}
-    </div>
-    ${t ? `<div class="field"><span class="flabel">${t === 'music' ? 'Instrument' : 'Category'}</span><div class="catpick">${cats.map(c => `<button data-act="f-cat" data-c="${c.id}" aria-pressed="${f.category === c.id}">${esc(c.label)}</button>`).join('')}</div></div>` : ''}
-    ${t === 'music' ? `<div class="field"><span class="flabel">Genre</span><div class="catpick">${Music.GENRES.map(g => `<button data-act="f-genre" data-g="${g.id}" aria-pressed="${(f.genres || []).includes(g.id)}">${esc(g.label)}</button>`).join('')}</div></div>` : ''}
-    <div class="field"${t === 'music' ? ' hidden' : ''}><span class="flabel">Tags</span><div class="catpick">${f.tags.map(g => `<button data-act="f-untag" data-t="${esc(g)}" aria-pressed="true">#${esc(g)} ✕</button>`).join('')}${f.suggested.slice(0, 6).map(g => `<button data-act="f-tag" data-t="${esc(g)}">+ ${esc(g)}</button>`).join('')}</div>
-      <input id="fTag" type="text" autocomplete="off" autocapitalize="off" placeholder="Add a tag and press Enter"></div>
-    <div class="field"><label for="fNotes">Notes</label><textarea id="fNotes" rows="2" placeholder="Anything to remember (optional)">${esc(f.notes)}</textarea></div>
-    <div class="sactions">
-      ${f.mode === 'edit' ? `<button class="btn gray" data-act="f-delete" style="flex:0 0 auto;color:var(--red)">${f.delArm ? 'Tap again to delete' : 'Delete'}</button>` : ''}
-      <button class="btn red" data-act="f-save" ${canSave ? '' : 'disabled'}>${f.reading ? 'Reading…' : !t ? 'Pick a board to save' : f.mode === 'edit' ? 'Save changes' : 'Save'}</button>
-    </div>`;
-  const focusId = document.activeElement && document.activeElement.id;
-  const caret = document.activeElement && 'selectionStart' in document.activeElement ? document.activeElement.selectionStart : null;
-  showSheet(html, f.mode === 'edit' ? 'Edit idea' : 'Save idea');
-  if (focusId && $('#' + focusId)) { const el = $('#' + focusId); el.focus(); try { if (caret != null) el.setSelectionRange(caret, caret); } catch (e) {} }
-  else if (first && f.mode === 'new' && !f.url) setTimeout(() => $('#fUrl') && $('#fUrl').focus(), 80);
-}
-document.addEventListener('input', e => {
-  if (!F) return;
-  const id = e.target.id;
-  if (id === 'fTitle') { F.title = e.target.value; clearTimeout(F.t); F.t = setTimeout(() => { if (!F || F.touched) return; const before = F.type + F.category; refile(); if (before !== F.type + F.category) renderSave(); }, 500); }
-  else if (id === 'fNotes') F.notes = e.target.value;
-  else if (id === 'fUrl') {
-    const raw = e.target.value;
-    const u = normUrl(findUrl(raw) || (/\s/.test(raw.trim()) ? '' : raw));
-    clearTimeout(F.t);
-    if (u && u !== F.url) {
-      if (/\s/.test(raw.trim())) F.shareText = raw.replace(findUrl(raw), ' ').trim();
-      F.t = setTimeout(() => { if (!F) return; Object.assign(F, { url: u, platform: platformOf(u), read: false, readErr: '', imageUrl: '', img: null, photo: null, photoP: null }); readLink(); }, 350);
-    }
-  }
-});
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && e.target.id === 'fTag' && F) {
-    e.preventDefault();
-    for (const t of e.target.value.split(/[,#]+/).map(x => x.trim().toLowerCase()).filter(Boolean)) if (!F.tags.includes(t)) F.tags.push(t.slice(0, 30));
-    e.target.value = '';
-    F.suggested = F.suggested.filter(t => !F.tags.includes(t));
-    renderSave();
-    $('#fTag') && $('#fTag').focus();
-  }
-  if (e.key === 'Escape' && !$('#sheetwrap').hidden) closeSheet();
-});
-async function saveForm() {
-  const f = F;
-  if (!f || !f.type) return;
-  const tag = $('#fTag') && $('#fTag').value.trim();
-  if (tag) for (const t of tag.split(/[,#]+/).map(x => x.trim().toLowerCase()).filter(Boolean)) if (!f.tags.includes(t)) f.tags.push(t);
-  const title = f.title.trim() || (f.url ? (PLAT[f.platform] || PLAT.web).name + ' ' + (f.type === 'craft' ? 'craft idea' : f.type === 'music' ? Music.instLabel(f.category).toLowerCase() + ' lesson' : 'painting idea') : '');
-  if (!title) { $('#fTitle') && $('#fTitle').focus(); return; }
-  const btn = $('[data-act="f-save"]');
-  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
-  const now = Date.now();
-  if (f.mode === 'edit') {
-    const p = S.pins.find(x => x.id === f.id);
-    if (!p) { closeSheet(); return; }
-    Object.assign(p, { title, type: f.type, category: f.category, tags: f.tags, notes: f.notes.trim() });
-    if (f.type === 'music') Object.assign(p, { insts: [f.category], genres: f.genres, mstatus: p.mstatus || 'want', kind: p.kind === 'song' ? 'song' : (p.videoId || ytIdOf(p.url) ? 'video' : p.kind), videoId: p.videoId || ytIdOf(p.url) });
-    await savePin(p);
-    closeSheet(() => renderRoute(true));
-    toast('Changes saved');
-    return;
-  }
-  const p = {
-    id: 'p' + rid(), url: f.finalUrl || f.url || '', shared: f.url || '', platform: f.platform, kind: f.kind, title, caption: f.caption, author: f.author,
-    siteName: f.siteName, link: f.link, supplies: f.supplies, type: f.type, category: f.category, tags: f.tags, notes: f.notes.trim(),
-    status: 'want', liked: false, opens: 0, createdAt: now, updatedAt: now, imageUrl: f.imageUrl, img: f.img, photo: false, source: f.source || 'shared'
-  };
-  if (f.type === 'music') {
-    const vid = f.platform === 'youtube' ? ytIdOf(p.url) : '';
-    Object.assign(p, { insts: [f.category], genres: f.genres, artist: f.artist || '', song: f.song || '', mstatus: 'want', videoId: vid, kind: vid ? 'video' : p.kind, short: /\/shorts\//.test(p.url) });
-    if (vid && !p.imageUrl) p.imageUrl = 'https://i.ytimg.com/vi/' + vid + '/hqdefault.jpg';
-    mEvent('save', { insts: [f.category], genres: f.genres, artist: f.artist, channel: f.author }, 2);
-  }
-  if (f.photoP && !f.photo) await Promise.race([f.photoP, sleep(8000)]);
-  if (f.photo) { try { await DB.put('photos', f.photo.blob, p.id); p.photo = true; p.img = { w: f.photo.w, h: f.photo.h }; } catch (e) {} }
-  S.pins.unshift(p);
-  await savePin(p);
-  if (p.type === 'music') {
-    closeSheet(() => { if (S.route.v === 'music') renderRoute(); else go({ v: 'music' }, TABS.includes(S.route.v)); });
-    toast('Saved to Music · ' + Music.instLabel(p.category), p.videoId ? 'Play it' : null, () => go({ v: 'video', pin: p.id, k: p.videoId, from: 'music' }));
-    return;
-  }
-  S.ideas.items = S.ideas.items.filter(x => x.url !== p.url);
-  const where = (p.type === 'craft' ? 'Crafts' : 'Painting') + ' · ' + Cats.catLabel(p.type, p.category);
-  closeSheet(() => {
-    S.homeTab = 'all'; S.homeCat = 'all';
-    if (S.route.v === 'home') { renderRoute(); window.scrollTo(0, 0); } else go({ v: 'home' }, TABS.includes(S.route.v));
-  });
-  toast('Saved to ' + where, 'View', () => go({ v: 'pin', id: p.id, from: 'home' }));
-  if (!p.photo && p.imageUrl) fetchPhoto(p.imageUrl).then(async ph => { if (ph) { await DB.put('photos', ph.blob, p.id).catch(() => {}); p.photo = true; p.img = { w: ph.w, h: ph.h }; await savePin(p); if (['home', 'board'].includes(S.route.v)) renderRoute(true); } });
-}
-async function saveIdea(it) {
-  if (!it || S.pins.some(p => p.url === it.url)) return;
-  const now = Date.now();
-  const p = {
-    id: 'p' + rid(), url: it.url, shared: it.url, platform: 'web', kind: 'page', title: it.title, caption: '', author: '', siteName: it.sourceName,
-    link: '', supplies: [], type: it.type, category: it.category, tags: it.tags || [], notes: '', status: 'want', liked: false, opens: 0,
-    createdAt: now, updatedAt: now, imageUrl: it.image, img: it.width && it.height ? { w: it.width, h: it.height } : null, photo: false, source: 'ideas'
-  };
-  S.pins.unshift(p);
-  await savePin(p);
-  for (const b of $$(`[data-act="save-idea"][data-k="${CSS.escape(it.key)}"]`)) { b.textContent = 'Saved'; b.classList.add('done'); if (b.classList.contains('btn')) { b.className = 'btn ink'; b.dataset.act = 'open-pin'; b.dataset.id = p.id; } }
-  toast('Saved to ' + (p.type === 'craft' ? 'Crafts' : 'Painting') + ' · ' + Cats.catLabel(p.type, p.category), 'Change', () => openEdit(p));
-  const ph = await fetchPhoto(it.image);
-  if (ph) { await DB.put('photos', ph.blob, p.id).catch(() => {}); p.photo = true; p.img = { w: ph.w, h: ph.h }; await savePin(p); }
-}
-function notForMe(it) {
-  if (!it) return;
-  S.dismissed.add(it.url);
-  kvSet('dismissed', Array.from(S.dismissed).slice(-600));
-  for (const t of it.tags || []) if (!GENERIC_TAGS.has(t)) S.taste.avoidTags[t] = (S.taste.avoidTags[t] || 0) + 1;
-  const ck = it.type + ':' + it.category;
-  if (it.category !== 'other') S.taste.avoidCats[ck] = (S.taste.avoidCats[ck] || 0) + 1;
-  saveTaste();
-  S.ideas.items = S.ideas.items.filter(x => x.url !== it.url);
-  S.search.results = S.search.results.filter(x => x.url !== it.url);
-  for (const [k, v] of S.more) S.more.set(k, v.filter(x => x.url !== it.url));
-  if (S.route.v === 'idea') history.back(); else renderRoute(true);
-  toast('Got it. You’ll see fewer like that.');
-}
-// The Share Artistry button (Boards) shows only on phones where it was turned on: Dave opens the app once with
-// ?me=dave (or taps the version line on Boards 5 times). Turn it off with ?me=off. Kept in kv 'owner', not in backups.
-const APP_URL = 'https://yumyumtumtum.vercel.app/crafts/';
-const APP_INVITE = 'Hey, I made you an app for your painting, craft and music stuff. It’s called Artistry.\n\n'
-  + 'Open this link in Chrome: ' + APP_URL + '\n\n'
-  + 'Then tap the 3 dots at the top right and pick Install app (or Add to Home screen).\n\n'
-  + 'After that, when you see something you like on TikTok, Instagram, YouTube, Facebook or Pinterest, tap Share and pick Artistry. '
-  + 'It saves it and sorts it for you. If you don’t see Artistry right away, tap More. There’s also a Music tab with songs to learn and lessons.';
-function shareApp() {
-  if (navigator.share) navigator.share({ title: 'Artistry', text: APP_INVITE }).catch(() => {});
-  else if (navigator.clipboard) navigator.clipboard.writeText(APP_INVITE).then(() => toast('Link and steps copied. Paste them in a text.'), () => toast(APP_URL));
-  else toast(APP_URL);
-}
-function setOwner(on) {
-  S.owner = !!on;
-  kvSet('owner', S.owner);
-  toast(S.owner ? 'Share button is on for this phone (Boards)' : 'Share button is off for this phone');
-  if (S.route.v === 'saved') renderRoute(true);
-}
-let verTaps = [];
-function sharePin(title, url) {
-  if (navigator.share) navigator.share({ title, url }).catch(() => {});
-  else if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => toast('Link copied'), () => toast(url));
-}
-
-/* ---------- taps ---------- */
-document.addEventListener('click', async e => {
-  const el = e.target.closest('[data-act]');
-  if (!el) return;
-  const a = el.dataset.act, id = el.dataset.id, k = el.dataset.k;
-  const pin = id ? S.pins.find(p => p.id === id) : null;
-  const it = k ? S.web.get(k) : null;
-  const inSheet = !!el.closest('#sheet');
-  const thenClose = fn => { if (inSheet && el.dataset.close) closeSheet(fn); else fn(); };
-  if (/^(m-|ms-|mset-|v-|open-video)/.test(a)) { await musicTap(a, el, inSheet); return; }
-  switch (a) {
-    case 'home-tab': S.homeTab = el.dataset.t; S.homeCat = 'all'; renderRoute(); window.scrollTo(0, 0); break;
-    case 'home-cat': S.homeCat = el.dataset.c; renderRoute(true); break;
-    case 'add': openSave({}); break;
-    case 'install': if (S.installEvt) { S.installEvt.prompt(); S.installEvt.userChoice.finally(() => { S.installEvt = null; renderRoute(true); }); } break;
-    case 'open-pin': if (pin && pin.type === 'music') { e.preventDefault(); const go2 = () => { if (pin.kind === 'song') { const s = SONGS.find(x => songKey(x) === akey(pin.title + ' ' + pin.artist)); if (s) songSheet(s); else window.open(pin.url, '_blank', 'noopener'); } else go({ v: 'video', pin: pin.id, k: pin.videoId, from: TABS.includes(S.route.v) ? S.route.v : S.route.from }); }; if (inSheet) closeSheet(go2); else go2(); break; }
-      if (pin) { e.preventDefault(); if (inSheet) closeSheet(() => go({ v: 'pin', id: pin.id, from: S.route.from || S.route.v })); else go({ v: 'pin', id: pin.id, from: TABS.includes(S.route.v) ? S.route.v : S.route.from }); } break;
-    case 'open-idea': if (it) { S.taste.views[it.type + ':' + it.category] = (S.taste.views[it.type + ':' + it.category] || 0) + 1; saveTaste(); go({ v: 'idea', k: it.key, item: it, from: TABS.includes(S.route.v) ? S.route.v : S.route.from }); } break;
-    case 'pin-menu': if (pin) pinMenu(pin); break;
-    case 'idea-menu': if (it) ideaMenu(it); break;
-    case 'save-idea': if (it) thenClose(() => saveIdea(it)); break;
-    case 'not-for-me': if (it) thenClose(() => notForMe(it)); break;
-    case 'visit': if (it) thenClose(() => window.open(it.url, '_blank', 'noopener')); break;
-    case 'share-idea': if (it) sharePin(it.title, it.url); break;
-    case 'back': history.length > 1 ? history.back() : go({ v: 'home' }, true); break;
-    case 'like': if (pin) { pin.liked = !pin.liked; await savePin(pin); if (pin.type === 'music' && pin.liked) mEvent('like', { insts: pin.insts || [pin.category], genres: pin.genres, artist: pin.artist, channel: pin.kind === 'video' ? pin.author : '' }, 3); thenClose(() => renderRoute(true)); if (pin.liked) toast('Added to favorites'); } break;
-    case 'pin-mstatus': if (pin) { const st = el.dataset.s; pin.mstatus = st; await savePin(pin); mEvent('status', { insts: pin.insts || [pin.category], genres: pin.genres, artist: pin.artist, channel: pin.kind === 'video' ? pin.author : '' }, STATUS_W[st]); thenClose(() => renderRoute(true)); if (st === 'learned') toast('Nice! Another one learned.'); } break;
-    case 'status': if (pin) { const made = el.dataset.s === 'made'; pin.status = made ? 'made' : 'want'; if (made) pin.madeAt = Date.now(); await savePin(pin); thenClose(() => renderRoute(true)); if (made) toast('Nice! Marked as made.'); } break;
-    case 'move': if (pin) { pin.type = pin.type === 'craft' ? 'painting' : 'craft'; const s = Cats.sortPost({ title: pin.title, caption: pin.caption, url: pin.url }); pin.category = s[pin.type] || 'other'; await savePin(pin); thenClose(() => renderRoute(true)); toast('Moved to ' + (pin.type === 'craft' ? 'Crafts' : 'Painting') + ' · ' + Cats.catLabel(pin.type, pin.category), 'Change', () => openEdit(pin)); } break;
-    case 'edit': if (pin) openEdit(pin); break;
-    case 'delete': if (pin) {
-      if (el.dataset.arm) { await deletePin(pin); closeSheet(() => { if (S.route.v === 'pin') history.back(); else renderRoute(true); }); }
-      else { el.dataset.arm = '1'; el.lastChild.textContent = 'Tap again to delete'; }
-    } break;
-    case 'share': if (pin) thenClose(() => sharePin(pin.title, pin.url || pin.link)); break;
-    case 'open': if (pin) { pin.opens = (pin.opens || 0) + 1; pin.lastOpened = Date.now(); savePin(pin); } break;
-    case 'play': if (pin) { const em = embedOf(pin); const box = $('#cumedia'); if (em && box) { const w = box.clientWidth; box.innerHTML = `<div class="cu-top"><button class="round" data-act="back" aria-label="Back">${I(IC.back)}</button></div><iframe src="${esc(em.src)}" style="height:${Math.round(Math.min(w * em.ar, window.innerHeight * 0.8))}px" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="${esc(pin.title)}"></iframe>`; pin.opens = (pin.opens || 0) + 1; savePin(pin); } } break;
-    case 'cap-more': { const c = $('#cap'); if (c) { c.classList.toggle('clip'); el.textContent = c.classList.contains('clip') ? 'More' : 'Less'; } } break;
-    case 'tag': go({ v: 'search' }); runSearch(el.dataset.t); $('#q') && ($('#q').value = el.dataset.t); break;
-    case 'topic': S.ideas.topic = el.dataset.t; S.ideas.items = []; S.ideas.sig = ''; S.ideas.error = ''; S.ideas.page = 1; renderRoute(); loadIdeas(true); break;
-    case 'ideas-more': loadIdeas(false, true); break;
-    case 'ideas-retry': loadIdeas(true); break;
-    case 'tile': { const t = el.dataset.type, c = el.dataset.c; const q = catQuery(t, c); $('#q').value = Cats.catLabel(t, c); runSearch(q, S.pins.some(p => p.type === t && p.category === c) ? t + ':' + c : ''); window.scrollTo(0, 0); } break;
-    case 'board': go({ v: 'board', key: el.dataset.key, from: 'saved' }); break;
-    case 'board-sort': S.boardSort = el.dataset.s; renderRoute(true); break;
-    case 'unavoid': if (el.dataset.k === 'tag') delete S.taste.avoidTags[el.dataset.v]; else delete S.taste.avoidCats[el.dataset.v]; saveTaste(); renderRoute(true); break;
-    case 'backup': backup(); break;
-    case 'share-app': shareApp(); break;
-    case 'ver': { const now = Date.now(); verTaps = verTaps.filter(t => now - t < 3000).concat(now); if (verTaps.length >= 5) { verTaps = []; setOwner(!S.owner); } } break;
-    case 'restore': $('#restoreFile').click(); break;
-    case 'close-sheet': closeSheet(); break;
-    case 'f-type': if (F) { F.type = el.dataset.t; F.touched = true; if (F.type === 'music') { const mg = musicGuess(); F.category = mg.md.inst.find(i => MS.prefs.insts.includes(i)) || mg.md.inst[0] || MS.prefs.insts[0]; if (!F.genres.length) F.genres = mg.md.genres.slice(0, 3); F.artist = F.artist || mg.md.artist; F.song = F.song || mg.md.song; } else { const g = Cats.sortPost({ title: F.title, caption: F.caption + '\n' + F.shareText, url: F.url }); F.category = g[F.type] || 'other'; } renderSave(); } break;
-    case 'f-genre': if (F) { const g = el.dataset.g; F.genres = F.genres.includes(g) ? F.genres.filter(x => x !== g) : F.genres.concat(g); renderSave(); } break;
-    case 'f-cat': if (F) { F.category = el.dataset.c; F.touched = true; renderSave(); } break;
-    case 'f-tag': if (F) { F.tags.push(el.dataset.t); F.suggested = F.suggested.filter(t => t !== el.dataset.t); renderSave(); } break;
-    case 'f-untag': if (F) { F.tags = F.tags.filter(t => t !== el.dataset.t); renderSave(); } break;
-    case 'f-save': saveForm(); break;
-    case 'f-delete': if (F) {
-      if (!F.delArm) { F.delArm = 1; renderSave(); }
-      else { const p = S.pins.find(x => x.id === F.id); if (p) await deletePin(p); closeSheet(() => { if (S.route.v === 'pin') history.back(); else renderRoute(true); }); }
-    } break;
-  }
-});
-for (const b of $$('#nav button')) b.addEventListener('click', () => { if (!$('#sheetwrap').hidden) closeSheet(() => goTab(b.dataset.tab)); else goTab(b.dataset.tab); });
-document.addEventListener('input', e => { if (e.target.id === 'q') runSearch(e.target.value); });
-async function deletePin(p) {
-  S.pins = S.pins.filter(x => x.id !== p.id);
-  await DB.del('pins', p.id).catch(() => {});
-  await DB.del('photos', p.id).catch(() => {});
-  toast('Idea deleted');
-}
-
-/* ---------- Learn music ---------- */
-const M = window.Music;
-const DAY = 864e5, HALF = 14 * DAY;
-const MS = {
-  prefs: { insts: M.DEFAULT_INST.slice(), genres: M.DEFAULT_GENRES.slice(), level: 'beginner' },
-  events: [], dismissed: new Set(), dismissedSongs: new Set(),
-  inst: 'all', genre: 'all', songsShown: 8, picksShown: 12,
-  feed: { items: [], at: 0, loading: false, error: '', sig: '', needsKey: false },
-  picks: { items: [], at: 0, loading: false, sig: '' },
-  full: false,
-  q: '', search: { items: [], loading: false, error: '', needsKey: false },
-  vids: new Map(), more: new Map()
-};
-const GENRE_Q = { alternative: 'alternative', rock: 'rock', classical: 'classical', pop: 'pop', rap: 'rap', classicrock: 'classic rock', oldies: 'oldies', motown: 'motown', country: 'country', bluegrass: 'bluegrass', blues: 'blues', jazz: 'jazz', folk: 'folk', gospel: 'gospel', latin: 'latin', movie: 'movie theme', holiday: 'christmas' };
-const LEVELS = [['beginner', 'Beginner'], ['some', 'Some experience'], ['any', 'Any level']];
-const RESOURCES = [
-  { name: 'JustinGuitar', url: 'https://www.justinguitar.com/', inst: ['guitar', 'ukulele'], d: 'Free step-by-step guitar and ukulele courses, plus song lessons.' },
-  { name: 'Ultimate Guitar', url: 'https://www.ultimate-guitar.com/', inst: ['guitar', 'ukulele', 'banjo', 'bass', 'mandolin'], d: 'Chords and tabs for most songs. Free with ads; some extras cost money.' },
-  { name: 'Songsterr', url: 'https://www.songsterr.com/', inst: ['guitar', 'bass', 'drums'], d: 'Tabs that play along, including drum parts. Free with limits.' },
-  { name: 'MuseScore', url: 'https://musescore.com/', inst: ['piano', 'trumpet', 'violin', 'guitar'], d: 'Sheet music shared by players. Free to view; some downloads need a paid plan.' },
-  { name: 'IMSLP', url: 'https://imslp.org/', inst: ['piano', 'trumpet', 'violin', 'guitar'], d: 'Free library of public-domain classical sheet music.' },
-  { name: 'Banjo Ben Clark', url: 'https://www.youtube.com/channel/UCIDxRRdowWusv8-IO0lpVfg', inst: ['banjo', 'guitar'], d: 'Free bluegrass banjo and guitar lessons on YouTube.' }
-];
-function saveMusic() { kvSet('music', { prefs: MS.prefs, events: MS.events.slice(-500), dismissed: Array.from(MS.dismissed).slice(-500), dismissedSongs: Array.from(MS.dismissedSongs) }); }
-const akey = a => String(a || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-const instWord = i => (M.instLabel(i) || '').split(' ')[0].toLowerCase();
-const herInst = () => MS.inst !== 'all' ? [MS.inst] : MS.prefs.insts;
-const lvLabel = l => l === 'easy' ? 'Easy' : l === 'medium' ? 'Medium' : l === 'hard' ? 'Harder' : '';
-function fmtDur(s) { if (!s) return ''; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = Math.floor(s % 60); return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); }
-function hash(str) { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
-function ytIdOf(u) { const m = String(u || '').match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([\w-]{6,})/); return m ? m[1] : ''; }
-
-// What she's into: everything she does adds weight; the last two weeks count the most.
-function mEvent(k, f, w) {
-  f = f || {};
-  MS.events.push({ t: Date.now(), k, i: (f.insts || f.inst || []).slice(0, 3), g: (f.genres || []).slice(0, 3), a: akey(f.artist), c: f.channel || '', w });
-  if (MS.events.length > 500) MS.events.splice(0, MS.events.length - 500);
-  saveMusic();
-}
-function mProfile() {
-  const P = { inst: {}, genre: {}, artist: {}, channel: {}, rec: { inst: {}, genre: {}, artist: {} } };
-  for (const i of MS.prefs.insts) P.inst[i] = 1;
-  for (const g of MS.prefs.genres) P.genre[g] = 1;
-  const now = Date.now();
-  for (const e of MS.events) {
-    const age = now - e.t, w = e.w * Math.pow(0.5, age / HALF);
-    for (const i of e.i) P.inst[i] = (P.inst[i] || 0) + w;
-    for (const g of e.g) P.genre[g] = (P.genre[g] || 0) + w;
-    if (e.a) P.artist[e.a] = (P.artist[e.a] || 0) + w;
-    if (e.c) P.channel[e.c] = (P.channel[e.c] || 0) + w * 0.6;
-    if (age < 21 * DAY && e.w > 0) {
-      for (const i of e.i) P.rec.inst[i] = (P.rec.inst[i] || 0) + e.w;
-      for (const g of e.g) P.rec.genre[g] = (P.rec.genre[g] || 0) + e.w;
-      if (e.a) P.rec.artist[e.a] = (P.rec.artist[e.a] || 0) + e.w;
-    }
-  }
-  return P;
-}
-const topOf = (o, min) => Object.entries(o).filter(([, w]) => w >= (min || 0.01)).sort((a, b) => b[1] - a[1]).map(([k]) => k);
-function lately(P) {
-  const out = [], i = topOf(P.rec.inst, 2)[0], g = topOf(P.rec.genre, 2)[0], a = topOf(P.rec.artist, 2)[0];
-  if (i) out.push(M.instLabel(i));
-  if (g) out.push(M.genreLabel(g));
-  if (a) out.push(titleCase(a));
-  return out;
-}
-function annot(v) {
-  if (!v.d) {
-    v.d = M.detect(v.title + ' ' + (v.desc || '').slice(0, 160));
-    v.insts = v.d.inst.length ? v.d.inst : (v.inst || []);
-    v.genres = v.d.genres; v.artist = v.d.artist; v.song = v.d.song;
-  }
-  return v;
-}
-function fitsInst(v) { annot(v); const want = herInst(); return v.insts.some(i => want.includes(i)); }
-const savedVid = id => S.pins.find(p => p.type === 'music' && p.videoId === id);
-function mScore(v, P) {
-  annot(v);
-  let s = 1.3 * Math.max(0, ...v.insts.map(i => P.inst[i] || 0));
-  for (const g of v.genres) s += P.genre[g] || 0;
-  if (v.artist) s += 1.5 * (P.artist[akey(v.artist)] || 0);
-  s += P.channel[v.channel] || 0;
-  if (MS.prefs.level === 'beginner') s += v.d.level === 'easy' ? 0.8 : v.d.level === 'harder' ? -1 : 0;
-  if (v.short) s -= 0.7;
-  if ((Date.now() - Date.parse(v.published || 0)) / DAY < 45) s += 0.4;
-  return s;
-}
-function mWhy(v, P) {
-  annot(v);
-  const rg = v.genres.find(g => (P.rec.genre[g] || 0) >= 2);
-  if (rg) return 'You’re into ' + M.genreLabel(rg) + ' lately';
-  if (v.artist && (P.artist[akey(v.artist)] || 0) >= 1.5) return 'You like ' + v.artist;
-  const ri = v.insts.find(i => (P.rec.inst[i] || 0) >= 2);
-  if (ri) return 'You’ve been playing ' + M.instLabel(ri).toLowerCase() + ' lately';
-  const fg = v.genres.find(g => MS.prefs.genres.includes(g));
-  if (fg) return 'One of your genres: ' + M.genreLabel(fg);
-  if (v.d.level === 'easy') return 'Good for beginners';
-  return '';
-}
-function candidateVideos(P) {
-  const seen = new Set(), out = [];
-  for (const v of MS.picks.items.concat(MS.feed.items)) {
-    if (!v || seen.has(v.id) || MS.dismissed.has(v.id) || savedVid(v.id)) continue;
-    seen.add(v.id);
-    if (fitsInst(v)) out.push(v);
-  }
-  out.sort((a, b) => mScore(b, P) - mScore(a, P));
-  // no more than two in a row from one teacher
-  const res = [], per = {}, rest = [];
-  for (const v of out) { if ((per[v.channel] || 0) < 2 || res.length >= 12) { res.push(v); per[v.channel] = (per[v.channel] || 0) + 1; } else rest.push(v); }
-  return res.slice(0, 12).concat(rest, res.slice(12));
-}
-
-// Songs to learn (from crafts/music.js), ranked by her genres, artists and instruments
-const songKey = s => akey(s.t + ' ' + s.a);
-const SONGS = M.SONGS.map((s, i) => Object.assign({ i }, s));
-const savedSong = s => S.pins.find(p => p.type === 'music' && p.kind === 'song' && akey(p.title + ' ' + p.artist) === songKey(s));
-function songScore(s, P) {
-  let x = 0;
-  for (const g of s.g) x += P.genre[g] || 0;
-  x += 1.5 * (P.artist[akey(s.a)] || 0);
-  const fit = s.fit.filter(i => herInst().includes(i));
-  x += fit.length ? 1 + 0.6 * Math.max(...fit.map(i => P.inst[i] || 0)) : -3;
-  if (MS.prefs.level === 'beginner') x += s.lv === 'easy' ? 0.8 : s.lv === 'hard' ? -1.2 : 0;
-  x += (hash(songKey(s) + new Date().toDateString()) % 100) / 250; // a little variety from day to day
-  return x;
-}
-function songList(P) {
-  return SONGS.filter(s => !MS.dismissedSongs.has(songKey(s)) && (MS.genre === 'all' || s.g.includes(MS.genre)) && s.fit.some(x => herInst().includes(x)))
-    .map(s => ({ s, x: songScore(s, P) })).sort((a, b) => b.x - a.x).map(o => o.s);
-}
-function songWhy(s, P) {
-  const rg = s.g.find(g => (P.rec.genre[g] || 0) >= 2);
-  if (rg) return 'You’re into ' + M.genreLabel(rg) + ' lately';
-  if ((P.artist[akey(s.a)] || 0) >= 1.5) return 'You like ' + s.a;
-  const ri = s.fit.find(i => herInst().includes(i) && (P.rec.inst[i] || 0) >= 2);
-  if (ri) return 'Great on ' + M.instLabel(ri).toLowerCase();
-  return '';
-}
-function bestInst(s, P) {
-  const want = herInst(), fit = s.fit.filter(i => want.includes(i));
-  if (MS.inst !== 'all' && want.includes(MS.inst)) return MS.inst;
-  return (fit.length ? fit : want).slice().sort((a, b) => (P.inst[b] || 0) - (P.inst[a] || 0))[0];
-}
-
-// lessons from the server
-function refreshMusic() { if (S.route.v === 'music') renderRoute(true); }
-async function loadMusicFeed(force) {
-  const sig = MS.prefs.insts.slice().sort().join(',');
-  if (MS.feed.loading) return;
-  if (!force && MS.feed.sig === sig && Date.now() - MS.feed.at < 3 * 3600e3) return;
-  if (!force) {
-    const c = await kvGet('mfeed').catch(() => null);
-    if (c && c.sig === sig && Date.now() - c.at < 3 * 3600e3) { Object.assign(MS.feed, { items: c.items || [], at: c.at, sig, needsKey: !!c.needsKey, error: '' }); MS.full = !!c.full; refreshMusic(); if (MS.full) loadMusicPicks(false); return; }
-  }
-  MS.feed.sig = sig; MS.feed.at = Date.now();
-  if (!navigator.onLine) { MS.feed.error = 'offline'; refreshMusic(); return; }
-  MS.feed.loading = true;
-  refreshMusic();
-  try {
-    const j = await getJSON(API + '/api/music?inst=' + enc(sig) + '&n=200', 30000);
-    if (j && j.ok) { MS.feed.items = j.items || []; MS.full = !!j.fullSearch; MS.feed.needsKey = !!j.needsKey; MS.feed.error = ''; }
-    else MS.feed.error = (j && j.error) || 'error';
-  } catch (e) { MS.feed.error = 'error'; }
-  MS.feed.loading = false;
-  if (!MS.feed.error) kvSet('mfeed', { items: MS.feed.items, at: MS.feed.at, sig, full: MS.full, needsKey: MS.feed.needsKey });
-  refreshMusic();
-  if (MS.full) loadMusicPicks(false);
-}
-function pickQueries(P) {
-  const insts = herInst().slice().sort((a, b) => (P.inst[b] || 0) - (P.inst[a] || 0));
-  const qs = [], i1 = insts[0], i2 = insts[1];
-  const genres = topOf(P.genre).filter(g => GENRE_Q[g]);
-  if (genres[0]) qs.push(GENRE_Q[genres[0]] + ' songs ' + instWord(i1) + ' tutorial' + (MS.prefs.level === 'beginner' ? ' easy' : ''));
-  const a = topOf(P.artist, 1)[0];
-  if (a) qs.push(a + ' ' + instWord(i1) + ' tutorial');
-  const learning = S.pins.find(p => p.type === 'music' && p.mstatus === 'learning' && (p.song || p.kind === 'song'));
-  if (learning) qs.push((learning.song || learning.title) + ' ' + (learning.artist || '') + ' ' + instWord(learning.category) + ' lesson');
-  const s = songList(P)[0];
-  if (s) qs.push(s.t + ' ' + (s.a === 'Traditional' || s.a === 'Anonymous' ? '' : s.a) + ' ' + instWord(bestInst(s, P)) + ' tutorial');
-  if (i2 && genres[1]) qs.push(GENRE_Q[genres[1]] + ' ' + instWord(i2) + ' lesson beginner');
-  return Array.from(new Set(qs.map(q => q.replace(/\s+/g, ' ').trim()))).slice(0, 4);
-}
-async function loadMusicPicks(force) {
-  if (!MS.full || MS.picks.loading) return;
-  const qs = pickQueries(mProfile());
-  const sig = JSON.stringify(qs);
-  // each search uses 100 of the free 10,000 daily YouTube units, so picks refresh at most every 30 minutes (6 hours if nothing changed)
-  const fresh = (at, same) => Date.now() - at < (same ? 6 * 3600e3 : 30 * 60e3);
-  if (!force && MS.picks.items.length && fresh(MS.picks.at, MS.picks.sig === sig)) return;
-  if (!force && !MS.picks.items.length) {
-    const c = await kvGet('mpicks').catch(() => null);
-    if (c && c.items && c.items.length && fresh(c.at, c.sig === sig)) { Object.assign(MS.picks, { items: c.items, at: c.at, sig: c.sig }); refreshMusic(); return; }
-  }
-  MS.picks.loading = true; MS.picks.sig = sig; MS.picks.at = Date.now();
-  const lists = await Promise.all(qs.map(q => getJSON(API + '/api/music?op=search&n=10&q=' + enc(q), 30000).then(j => (j && j.items) || []).catch(() => [])));
-  const items = [].concat(...lists);
-  MS.picks.loading = false;
-  if (items.length) { MS.picks.items = items; kvSet('mpicks', { items, at: MS.picks.at, sig }); }
-  refreshMusic();
-}
-let mT = 0, mN = 0;
-function musicSearch(q, now) {
-  MS.q = q;
-  clearTimeout(mT);
-  const box = $('#mres');
-  const paint = () => { const b = $('#mres'); if (b && S.route.v === 'music') { b.innerHTML = MS.q.trim() ? musicResults() : musicHome(mProfile()); hydrate(b); } };
-  if (!q.trim() || (q.trim().length < 3 && !now)) { MS.search.items = []; MS.search.loading = false; MS.search.error = ''; MS.search.needsKey = false; mN++; paint(); return; }
-  MS.search.loading = true; MS.search.error = '';
-  if (box) paint();
-  const my = ++mN;
-  mT = setTimeout(async () => {
-    let qq = q.trim();
-    const d = M.detect(qq);
-    if (!d.inst.length && MS.inst !== 'all') qq += ' ' + instWord(MS.inst);
-    if (!/tutorial|lesson|how to|chords|tabs/i.test(qq)) qq += ' tutorial';
-    mEvent('search', { insts: d.inst.length ? d.inst : (MS.inst !== 'all' ? [MS.inst] : []), genres: d.genres, artist: d.artist }, 1);
-    let items = [], needsKey = false, err = '';
-    try {
-      const j = await getJSON(API + '/api/music?op=search&n=16&q=' + enc(qq), 30000);
-      if (j && j.ok) { items = j.items || []; needsKey = !!j.needsKey; MS.full = !!j.fullSearch; } else err = (j && j.error) || 'Couldn’t search right now.';
-    } catch (e) { err = navigator.onLine ? 'Couldn’t search right now.' : 'You’re offline. Searching needs the internet.'; }
-    if (my !== mN) return;
-    Object.assign(MS.search, { items, needsKey, error: err, loading: false });
-    paint();
-  }, now ? 0 : 1100);
-}
-
-// cards and rows
-function vcard(v, mode, why) {
-  annot(v);
-  MS.vids.set(v.id, v);
-  const saved = savedVid(v.id);
-  return `<div class="vcard${mode === 'h' ? ' h' : ''}" data-act="open-video" data-k="${esc(v.id)}">
-    <div class="vthumb"><img src="${esc(v.thumb)}" loading="lazy" referrerpolicy="no-referrer" alt="">${v.dur ? `<span class="vdur">${fmtDur(v.dur)}</span>` : v.short ? '<span class="vdur">Short</span>' : ''}${saved ? `<span class="vsaved">${saved.mstatus === 'learned' ? 'Learned' : saved.mstatus === 'learning' ? 'Learning' : 'Saved'}</span>` : ''}</div>
-    <div class="vtitle">${esc(v.title)}</div>
-    <div class="vsub">${esc(v.channel)}${v.insts[0] ? ' · ' + esc(M.instLabel(v.insts[0])) : ''}</div>
-    ${why ? `<div class="vwhy">${esc(why)}</div>` : ''}
-  </div>`;
-}
-function pinVid(p) {
-  return { id: p.videoId, title: p.title, channel: p.author || '', url: p.url, thumb: p.imageUrl || ('https://i.ytimg.com/vi/' + p.videoId + '/hqdefault.jpg'), short: !!p.short, dur: p.dur || 0, published: '', desc: p.caption || '', inst: p.insts || [p.category], pinId: p.id };
-}
-function songRow(s, P) {
-  const saved = savedSong(s), why = songWhy(s, P);
-  return `<div class="srow" data-act="m-song" data-s="${s.i}">
-    <div class="sbadge g-${esc(s.g[0])}">${I(IC.note)}</div>
-    <div class="stext"><b>${esc(s.t)}</b><small>${esc(s.a)} · ${esc(M.genreLabel(s.g[0]))} · ${lvLabel(s.lv)}</small>${why ? `<em>${esc(why)}</em>` : ''}</div>
-    <button class="sadd${saved ? ' on' : ''}" data-act="m-song-add" data-s="${s.i}" aria-label="${saved ? 'On your list' : 'Add to my songs'}">${I(saved ? IC.check : IC.plus)}</button>
-  </div>`;
-}
-function songTile(p) {
-  return `<div class="vcard h" data-act="open-pin" data-id="${esc(p.id)}">
-    <div class="vthumb stile g-${esc((p.genres || ['other'])[0])}">${I(IC.note)}<span>${esc(p.title)}</span>${p.mstatus === 'learning' ? '<span class="vsaved">Learning</span>' : ''}</div>
-    <div class="vtitle">${esc(p.title)}</div><div class="vsub">${esc(p.artist || '')}${p.category ? ' · ' + esc(M.instLabel(p.category)) : ''}</div>
-  </div>`;
-}
-function vskel(n) { return `<div class="vgrid">${Array.from({ length: n || 4 }, () => '<div><div class="vthumb skel"></div><div class="skel" style="height:12px;margin-top:8px;border-radius:6px"></div></div>').join('')}</div>`; }
-function teachersBlock(P) {
-  const want = herInst();
-  const list = M.TEACHERS.filter(t => t.inst.some(i => want.includes(i))).sort((a, b) => Math.max(...b.inst.map(i => P.inst[i] || 0)) - Math.max(...a.inst.map(i => P.inst[i] || 0)) || (P.channel[b.name] || 0) - (P.channel[a.name] || 0));
-  if (!list.length) return '';
-  return `<h2 class="sect">Free teachers on YouTube</h2><div class="hscroll">${list.map(t => `<a class="tch" href="https://www.youtube.com/channel/${esc(t.id)}" target="_blank" rel="noopener" data-act="m-teacher" data-n="${esc(t.name)}"><i>${esc(t.name.replace(/^The /, '').charAt(0))}</i><span><b>${esc(t.name)}</b><small>${esc(t.inst.map(M.instLabel).join(', '))}</small></span></a>`).join('')}</div>`;
-}
-function resourcesBlock() {
-  const want = herInst();
-  const list = RESOURCES.filter(r => r.inst.some(i => want.includes(i)));
-  if (!list.length) return '';
-  return `<h2 class="sect">Free places to learn</h2><div class="res">${list.map(r => `<a href="${esc(r.url)}" target="_blank" rel="noopener"><b>${esc(r.name)}</b><small>${esc(r.d)}</small></a>`).join('')}</div>`;
-}
-function keyNote() {
-  return `<div class="note"><b>Want lesson videos right on this page?</b> It takes a free YouTube key, set up once on the app’s server. Until then, tap a song for lessons on YouTube, or share a lesson from the YouTube app to Artistry and it lands here.</div>`;
-}
-
-// the Music tab
-function vMusic() {
-  const P = mProfile(), late = lately(P);
-  return `<div class="topbar">
-    <div class="mu-head"><div><h1>Learn music</h1><p>${late.length ? 'Lately you’re into <b>' + late.map(esc).join('</b> · <b>') + '</b>' : 'Songs to learn and free lessons, picked for you'}</p></div>
-      <button class="iconbtn" data-act="m-settings" aria-label="Your instruments and genres">${I(IC.sliders)}</button></div>
-    <label class="searchbar" for="mq">${I('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>')}<input id="mq" type="search" enterkeyhint="search" placeholder="Search a song, artist or skill" value="${esc(MS.q)}" autocomplete="off"></label>
-    <div class="chips" style="margin-top:6px">${[['all', 'All']].concat(MS.prefs.insts.map(i => [i, M.instLabel(i)])).map(([k, l]) => `<button class="chip" data-act="m-inst" data-i="${k}" aria-pressed="${MS.inst === k}">${esc(l)}</button>`).join('')}</div>
-  </div>
-  <div id="mres">${MS.q.trim() ? musicResults() : musicHome(P)}</div>`;
-}
-function musicHome(P) {
-  let h = '';
-  const mine = S.pins.filter(p => p.type === 'music' && p.mstatus !== 'learned' && (MS.inst === 'all' || (p.insts || [p.category]).includes(MS.inst)))
-    .sort((a, b) => (b.mstatus === 'learning') - (a.mstatus === 'learning') || (b.lastOpened || b.createdAt) - (a.lastOpened || a.createdAt));
-  if (mine.length) h += `<h2 class="sect">Keep practicing</h2><div class="hscroll">${mine.slice(0, 15).map(p => p.kind === 'song' ? songTile(p) : vcard(pinVid(p), 'h')).join('')}</div>`;
-  const vids = candidateVideos(P);
-  if (vids.length) {
-    h += `<h2 class="sect">Picked for you</h2><div class="vgrid">${vids.slice(0, MS.picksShown).map(v => vcard(v, '', mWhy(v, P))).join('')}</div>`;
-    if (vids.length > MS.picksShown) h += `<div class="center" style="margin:12px 0"><button class="btn gray sm" data-act="m-more-picks">More lessons</button></div>`;
-  } else if (MS.feed.loading || MS.picks.loading) h += `<h2 class="sect">Picked for you</h2>` + vskel(4);
-  const songs = songList(P);
-  h += `<h2 class="sect">Songs to learn</h2><div class="chips">${[['all', 'All genres']].concat(MS.prefs.genres.map(g => [g, M.genreLabel(g)])).map(([k, l]) => `<button class="chip" data-act="m-genre" data-g="${k}" aria-pressed="${MS.genre === k}">${esc(l)}</button>`).join('')}</div>`;
-  h += songs.length ? `<div class="slist">${songs.slice(0, MS.songsShown).map(s => songRow(s, P)).join('')}</div>` + (songs.length > MS.songsShown ? `<div class="center" style="margin:10px 0"><button class="btn gray sm" data-act="m-more-songs">More songs</button></div>` : '')
-    : `<div class="note">No songs on the list for that mix yet. Try another genre, or search for any song above.</div>`;
-  const fresh = MS.feed.items.map(annot).filter(v => fitsInst(v) && !MS.dismissed.has(v.id)).sort((a, b) => (b.published || '').localeCompare(a.published || '')).slice(0, 12);
-  if (fresh.length) h += `<h2 class="sect">New from free teachers</h2><div class="hscroll">${fresh.map(v => vcard(v, 'h')).join('')}</div>`;
-  h += teachersBlock(P);
-  if (!MS.full && !MS.feed.loading) h += keyNote();
-  h += resourcesBlock();
-  return h;
-}
-function musicResults() {
-  const q = MS.q.trim(), P = mProfile();
-  const words = akey(q).split(' ').filter(w => w.length > 1);
-  const songs = SONGS.filter(s => { const hay = akey(s.t + ' ' + s.a + ' ' + s.g.map(M.genreLabel).join(' ')); return words.length && words.every(w => hay.includes(w)); }).slice(0, 8);
-  const mine = S.pins.filter(p => p.type === 'music' && words.length && words.every(w => akey(p.title + ' ' + (p.artist || '') + ' ' + (p.author || '')).includes(w)));
-  const yt = 'https://www.youtube.com/results?search_query=' + enc(q + (/tutorial|lesson/i.test(q) ? '' : ' tutorial'));
-  let h = `<h2 class="sect">Lessons for “${esc(q)}”</h2>`;
-  if (MS.search.loading) h += vskel(4);
-  else if (MS.search.error) h += `<div class="note">${esc(MS.search.error)}</div>`;
-  else if (MS.search.items.length) h += `<div class="vgrid">${MS.search.items.filter(v => !MS.dismissed.has(v.id)).map(v => vcard(v, '', '')).join('')}</div>`;
-  else if (q.length < 3) h += `<div class="note">Keep typing…</div>`;
-  else if (MS.search.needsKey) h += `<div class="note">Lesson search inside the app turns on with the free YouTube key. For now, YouTube has plenty.</div>`;
-  else h += `<div class="note">No lessons found for that. Try fewer words, or YouTube below.</div>`;
-  h += `<div class="row" style="margin:12px 4px"><a class="btn red" href="${esc(yt)}" target="_blank" rel="noopener">${I(IC.ext)}Search on YouTube</a></div>`;
-  if (songs.length) h += `<h2 class="sect">Songs to learn</h2><div class="slist">${songs.map(s => songRow(s, P)).join('')}</div>`;
-  if (mine.length) h += `<h2 class="sect">Your saved lessons</h2><div class="hscroll">${mine.map(p => p.kind === 'song' ? songTile(p) : vcard(pinVid(p), 'h')).join('')}</div>`;
-  return h;
-}
-
-// a lesson's own page: player with practice tools
-function vVideo(r) {
-  const p = r.pin ? S.pins.find(x => x.id === r.pin) : null;
-  const v = p ? pinVid(p) : (MS.vids.get(r.k) || r.item);
-  if (!v) return `<div class="note" style="margin-top:30px">That lesson isn’t here anymore. <button class="linkbtn" data-act="back">Go back</button></div>`;
-  annot(v);
-  MS.vids.set(v.id, v);
-  const saved = savedVid(v.id);
-  const st = saved ? saved.mstatus || 'want' : '';
-  const chips = v.insts.map(M.instLabel).concat(v.genres.map(M.genreLabel)).concat(v.d.level === 'easy' ? ['Beginner friendly'] : []);
-  const song = v.song ? SONGS.find(s => s.t === v.song) : null;
-  return `<div class="cu vpage">
-    <div class="row" style="padding-top:calc(env(safe-area-inset-top,0px) + 6px)"><button class="iconbtn" data-act="back" aria-label="Back">${I(IC.back)}</button><span style="flex:1"></span><button class="iconbtn" data-act="v-menu" data-k="${esc(v.id)}" aria-label="More options">${I(IC.dots, 'fill')}</button></div>
-    <div class="player${v.short ? ' tall' : ''}" id="player"><img class="pposter" src="${esc(v.thumb)}" referrerpolicy="no-referrer" alt=""><button class="playbig" data-act="v-play" data-k="${esc(v.id)}" aria-label="Play">${I(IC.play, 'fill')}</button></div>
-    <div class="practice" id="practice">
-      <div class="prow"><span class="plabel">Speed</span><div class="seg" role="group" aria-label="Speed">${[0.5, 0.75, 1].map(x => `<button data-act="v-speed" data-r="${x}" aria-pressed="${x === 1}">${x === 1 ? 'Normal' : x + '×'}</button>`).join('')}</div></div>
-      <div class="prow"><span class="plabel">Loop a part</span><div class="seg" role="group" aria-label="Loop"><button data-act="v-loop-a">Start here</button><button data-act="v-loop-b">End here</button><button data-act="v-loop-x">Off</button></div><span id="loopinfo" class="muted small"></span></div>
-    </div>
-    <div class="cu-body">
-      <h1>${esc(v.title)}</h1>
-      <div class="by"><span class="pdot" style="background:#FF0000">YT</span><div><b>${esc(v.channel)}</b><small>${v.views ? Number(v.views).toLocaleString() + ' views · ' : ''}YouTube</small></div></div>
-      ${chips.length ? `<div class="taglist">${chips.map(c => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
-      <div class="seg3" role="group" aria-label="Where you are with it">${[['want', 'Want to learn'], ['learning', 'Learning'], ['learned', 'Learned it']].map(([k, l]) => `<button data-act="v-status" data-k="${esc(v.id)}" data-s="${k}" aria-pressed="${st === k}">${l}</button>`).join('')}</div>
-      <div class="cu-actions" style="padding-top:0">
-        ${saved ? `<button class="iconbtn${saved.liked ? ' on' : ''}" data-act="v-like" data-k="${esc(v.id)}" aria-pressed="${!!saved.liked}" aria-label="Favorite">${I(IC.heart)}</button>` : `<button class="btn red sm" data-act="v-save" data-k="${esc(v.id)}">${I(IC.plus)}Save</button>`}
-        <button class="iconbtn" data-act="v-share" data-k="${esc(v.id)}" aria-label="Share">${I(IC.share)}</button>
-        <span class="grow"></span>
-        <a class="btn gray sm" href="${esc(v.url)}" target="_blank" rel="noopener">Open in YouTube</a>
-      </div>
-      ${song ? `<div class="minihead">The song</div><p style="margin:0 0 6px"><b>${esc(song.t)}</b> · ${esc(song.a)}</p><div class="row">${M.songLinks(song, v.insts[0]).slice(1).map(l => `<a class="btn gray sm" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join('')}</div>` : ''}
-      ${v.desc ? `<div class="minihead">About this lesson</div><p class="cap clip" id="cap">${esc(v.desc)}</p>` : ''}
-    </div>
-    <h2 class="sect">More lessons like this</h2><div id="vmore">${vskel(4)}</div>
-  </div>`;
-}
-async function loadVMore(v) {
-  annot(v);
-  const draw = list => {
-    const b = $('#vmore');
-    if (!b) return;
-    const w = (list || []).filter(x => x.id !== v.id && !MS.dismissed.has(x.id));
-    if (w.length) { b.innerHTML = `<div class="vgrid">${w.slice(0, 8).map(x => vcard(x, '', '')).join('')}</div>`; return; }
-    const inst = v.insts[0] || herInst()[0];
-    const t = M.TEACHERS.filter(x => x.inst.includes(inst));
-    b.innerHTML = `<div class="row" style="margin:4px"><a class="btn gray sm" href="https://www.youtube.com/results?search_query=${enc((v.song || v.artist || M.instLabel(inst)) + ' ' + instWord(inst) + ' tutorial')}" target="_blank" rel="noopener">${I(IC.ext)}Find more on YouTube</a></div>` + (t.length ? `<div class="hscroll" style="margin-top:8px">${t.map(x => `<a class="tch" href="https://www.youtube.com/channel/${esc(x.id)}" target="_blank" rel="noopener"><i>${esc(x.name.replace(/^The /, '').charAt(0))}</i><span><b>${esc(x.name)}</b><small>${esc(x.inst.map(M.instLabel).join(', '))}</small></span></a>`).join('')}</div>` : '');
-  };
-  const inst = v.insts[0];
-  const local = MS.feed.items.concat(MS.picks.items).map(annot).filter(x => x.id !== v.id && (x.channel === v.channel || (inst && x.insts.includes(inst)))).sort((a, b) => (b.channel === v.channel) - (a.channel === v.channel));
-  if (!MS.full) { draw(local); return; }
-  const q = ((v.song ? v.song + ' ' + (v.artist || '') : v.artist || '') + ' ' + (inst ? instWord(inst) : '') + ' tutorial').replace(/\s+/g, ' ').trim();
-  if (q === 'tutorial') { draw(local); return; }
-  if (MS.more.has(q)) { draw(MS.more.get(q).concat(local)); return; }
-  try { const j = await getJSON(API + '/api/music?op=search&n=10&q=' + enc(q), 30000); const items = (j && j.items) || []; MS.more.set(q, items); draw(items.concat(local)); }
-  catch (e) { draw(local); }
-}
-
-// the player (YouTube's own embed, so speed and looping work)
-let YTP = null, ytLoad = null, tick = 0, curV = null, loopA = null, loopB = null, watched = 0, watchEv = 0, wantRate = 1;
-function loadYT() {
-  if (window.YT && window.YT.Player) return Promise.resolve();
-  if (ytLoad) return ytLoad;
-  ytLoad = new Promise((res, rej) => {
-    const prev = window.onYouTubeIframeAPIReady;
-    window.onYouTubeIframeAPIReady = () => { try { if (prev) prev(); } catch (e) {} res(); };
-    const s = document.createElement('script');
-    s.src = 'https://www.youtube.com/iframe_api';
-    s.onerror = () => { ytLoad = null; rej(new Error('blocked')); };
-    document.head.appendChild(s);
-    setTimeout(() => { if (!(window.YT && window.YT.Player)) { ytLoad = null; rej(new Error('slow')); } }, 12000);
-  });
-  return ytLoad;
-}
-async function playVideo(v) {
-  const box = $('#player');
-  if (!box) return;
-  stopPlayer();
-  curV = v; wantRate = 1;
-  box.innerHTML = '<span class="spinner" style="position:absolute;inset:0;margin:auto"></span>';
-  const p = savedVid(v.id);
-  if (p) { p.opens = (p.opens || 0) + 1; p.lastOpened = Date.now(); savePin(p); }
-  try {
-    await loadYT();
-    if (curV !== v || !$('#player')) return;
-    $('#player').innerHTML = '<div id="ytp"></div>';
-    YTP = new window.YT.Player('ytp', {
-      videoId: v.id, width: '100%', height: '100%',
-      playerVars: { playsinline: 1, rel: 0, modestbranding: 1, autoplay: 1 },
-      events: {
-        onReady: e => { try { e.target.playVideo(); if (wantRate !== 1) e.target.setPlaybackRate(wantRate); } catch (er) {} },
-        onError: e => {
-          if ([100, 101, 150, 153].includes(e.data) && $('#player')) $('#player').innerHTML = `<div class="pmsg">This video only plays on YouTube.<a class="btn red sm" href="${esc(v.url)}" target="_blank" rel="noopener">Open in YouTube</a></div>`;
-        }
-      }
-    });
-    tick = setInterval(practiceTick, 250);
-  } catch (e) {
-    if (curV !== v || !$('#player')) return;
-    $('#player').innerHTML = `<iframe src="https://www.youtube.com/embed/${esc(v.id)}?autoplay=1&playsinline=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="${esc(v.title)}"></iframe>`;
-    const pr = $('#practice'); if (pr) pr.hidden = true;
-  }
-}
-function practiceTick() {
-  if (!YTP || typeof YTP.getPlayerState !== 'function') return;
-  let st, t;
-  try { st = YTP.getPlayerState(); t = YTP.getCurrentTime(); } catch (e) { return; }
-  if (loopA != null && loopB != null && t >= loopB) { try { YTP.seekTo(loopA, true); } catch (e) {} }
-  if (st === 1 && curV) {
-    watched += 0.25;
-    if (watched >= 30 * (watchEv + 1) && watchEv < 8) {
-      watchEv++;
-      mEvent('watch', curV, 0.5);
-      const p = savedVid(curV.id);
-      if (p) { p.practiced = (p.practiced || 0) + 30; savePin(p); }
-    }
-  }
-}
-function stopPlayer() {
-  clearInterval(tick); tick = 0;
-  try { if (YTP && YTP.destroy) YTP.destroy(); } catch (e) {}
-  YTP = null; curV = null; loopA = loopB = null; watched = 0; watchEv = 0;
-}
-function loopInfo() {
-  const el = $('#loopinfo');
-  if (!el) return;
-  const f = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
-  el.textContent = loopA != null && loopB != null ? 'Looping ' + f(loopA) + ' to ' + f(loopB) : loopA != null ? 'Starts at ' + f(loopA) + '. Now tap End here.' : '';
-}
-function refreshVideoBits(v) {
-  // update the parts of the lesson page that change, without restarting the video
-  const saved = savedVid(v.id);
-  for (const b of $$('[data-act="v-status"]')) b.setAttribute('aria-pressed', String(!!saved && (saved.mstatus || 'want') === b.dataset.s));
-  const save = $('[data-act="v-save"]');
-  if (save && saved) save.outerHTML = `<button class="iconbtn${saved.liked ? ' on' : ''}" data-act="v-like" data-k="${esc(v.id)}" aria-pressed="${!!saved.liked}" aria-label="Favorite">${I(IC.heart)}</button>`;
-  const like = $('[data-act="v-like"]');
-  if (like && saved) { like.classList.toggle('on', !!saved.liked); like.setAttribute('aria-pressed', String(!!saved.liked)); }
-  if (like && !saved) like.outerHTML = `<button class="btn red sm" data-act="v-save" data-k="${esc(v.id)}">${I(IC.plus)}Save</button>`;
-}
-
-// saving lessons and songs
-async function saveVideo(v, status) {
-  annot(v);
-  let p = savedVid(v.id);
-  if (p) { if (status) p.mstatus = status; await savePin(p); return p; }
-  const now = Date.now();
-  p = {
-    id: 'p' + rid(), type: 'music', kind: 'video', platform: 'youtube', url: v.url, videoId: v.id, title: v.title, author: v.channel, caption: v.desc || '',
-    imageUrl: v.thumb, img: { w: 480, h: 360 }, photo: false, category: v.insts[0] || herInst()[0] || 'guitar', insts: v.insts.length ? v.insts : [herInst()[0]],
-    genres: v.genres, artist: v.artist || '', song: v.song || '', short: !!v.short, dur: v.dur || 0, mstatus: status || 'want', status: 'want',
-    liked: false, opens: 0, tags: [], createdAt: now, updatedAt: now, source: 'music'
-  };
-  S.pins.unshift(p);
-  await savePin(p);
-  mEvent('save', v, 2);
-  return p;
-}
-async function saveSong(s, inst, status) {
-  let p = savedSong(s);
-  if (p) { p.mstatus = status || p.mstatus; if (inst) { p.category = inst; p.insts = [inst]; } await savePin(p); return p; }
-  const now = Date.now();
-  p = {
-    id: 'p' + rid(), type: 'music', kind: 'song', platform: 'web', url: M.songLinks(s, inst)[0].url, title: s.t, artist: s.a, author: s.a, caption: '',
-    imageUrl: '', img: null, photo: false, category: inst, insts: [inst], genres: s.g, level: s.lv, mstatus: status || 'want', status: 'want',
-    liked: false, opens: 0, tags: [], createdAt: now, updatedAt: now, source: 'songs'
-  };
-  S.pins.unshift(p);
-  await savePin(p);
-  mEvent('song', { insts: [inst], genres: s.g, artist: s.a }, 2);
-  return p;
-}
-const STATUS_W = { want: 1, learning: 2.5, learned: 3 };
-
-// sheets
-function songSheet(s) {
-  const P = mProfile(), want = MS.prefs.insts;
-  const inst = MS.songInst && want.includes(MS.songInst) ? MS.songInst : bestInst(s, P);
-  const links = M.songLinks(s, inst), saved = savedSong(s), st = saved ? saved.mstatus : '';
-  mEvent('look', { insts: [inst], genres: s.g, artist: s.a }, 0.5);
-  showSheet(`<div class="grip"></div>
-    <div class="shead"><div style="min-width:0"><h2>${esc(s.t)}</h2><div class="muted">${esc(s.a)} · ${esc(s.g.map(M.genreLabel).join(', '))} · ${lvLabel(s.lv)}</div></div><button class="iconbtn" data-act="close-sheet" aria-label="Close">${I(IC.x)}</button></div>
-    <div class="field"><span class="flabel">Play it on</span><div class="catpick">${want.map(i => `<button data-act="ms-inst" data-i="${i}" data-s="${s.i}" aria-pressed="${i === inst}">${esc(M.instLabel(i))}${s.fit.includes(i) ? ' ★' : ''}</button>`).join('')}</div><p class="hint">★ = sounds great on that instrument</p></div>
-    <div class="sactions">${MS.full ? `<button class="btn red" data-act="ms-find" data-s="${s.i}" data-i="${inst}">${I('<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>')}Find a lesson</button>` : `<a class="btn red" href="${esc(links[0].url)}" target="_blank" rel="noopener" data-act="ms-yt" data-s="${s.i}" data-i="${inst}">${I(IC.ext)}Lessons on YouTube</a>`}</div>
-    <div class="menu">${links.slice(1).map(l => `<a class="mlink" href="${esc(l.url)}" target="_blank" rel="noopener">${I(IC.ext)}${esc(l.label)}</a>`).join('')}</div>
-    <div class="seg3" role="group" aria-label="Where you are with it">${[['want', 'Want to learn'], ['learning', 'Learning'], ['learned', 'Learned it']].map(([k, l]) => `<button data-act="ms-status" data-s="${s.i}" data-i="${inst}" data-v="${k}" aria-pressed="${st === k}">${l}</button>`).join('')}</div>
-    <div class="menu">${saved ? `<button data-act="ms-remove" data-s="${s.i}">${I(IC.trash)}Take off my list</button>` : ''}<button data-act="ms-no" data-s="${s.i}" data-close="1">${I(IC.eyeoff)}Not for me</button></div>`, s.t);
-}
-function musicSettings() {
-  const p = MS.prefs;
-  showSheet(`<div class="grip"></div>
-    <div class="shead"><h2>Your music</h2><button class="iconbtn" data-act="mset-done" aria-label="Done">${I(IC.x)}</button></div>
-    <div class="field"><span class="flabel">Instruments you play</span><div class="catpick">${M.INSTRUMENTS.map(i => `<button data-act="mset-inst" data-i="${i.id}" aria-pressed="${p.insts.includes(i.id)}">${esc(i.label)}</button>`).join('')}</div></div>
-    <div class="field"><span class="flabel">Favorite genres</span><div class="catpick">${M.GENRES.map(g => `<button data-act="mset-genre" data-g="${g.id}" aria-pressed="${p.genres.includes(g.id)}">${esc(g.label)}</button>`).join('')}</div></div>
-    <div class="field"><span class="flabel">Lessons for</span><div class="catpick">${LEVELS.map(([k, l]) => `<button data-act="mset-level" data-l="${k}" aria-pressed="${p.level === k}">${l}</button>`).join('')}</div></div>
-    <div class="field"><span class="flabel">What it’s learned</span><p class="hint" style="margin:0">${(() => { const L = lately(mProfile()); return L.length ? 'Lately: ' + esc(L.join(', ')) + '. ' : ''; })()}It learns from what you save, play, mark Learning or Learned, search, and skip. The last two weeks count the most.</p>
-      <div class="row" style="margin-top:8px"><button class="btn gray sm" data-act="mset-reset">Start learning over</button></div></div>
-    <div class="sactions"><button class="btn red" data-act="mset-done">Done</button></div>`, 'Your music');
-}
-function videoMenu(v) {
-  const saved = savedVid(v.id);
-  showSheet(`<div class="grip"></div><div class="shead"><h2>${esc(v.title)}</h2></div><div class="menu">
-    ${saved ? `<button data-act="v-remove" data-k="${esc(v.id)}" data-close="1">${I(IC.trash)}Take off my lessons</button>` : `<button data-act="v-save" data-k="${esc(v.id)}" data-close="1">${I(IC.plus)}Save to my lessons</button>`}
-    <button data-act="v-no" data-k="${esc(v.id)}" data-close="1">${I(IC.eyeoff)}Not for me</button>
-    <button data-act="v-share" data-k="${esc(v.id)}" data-close="1">${I(IC.share)}Share</button>
-  </div>`, 'Options');
-}
-
-// taps on the Music tab, lesson pages and their sheets
-async function musicTap(a, el, inSheet) {
-  const k = el.dataset.k, v = k ? (MS.vids.get(k) || (S.route.item && S.route.item.id === k ? S.route.item : null) || (savedVid(k) && pinVid(savedVid(k)))) : null;
-  const s = el.dataset.s != null && el.dataset.s !== '' ? SONGS[+el.dataset.s] : null;
-  const after = fn => { if (inSheet && el.dataset.close) closeSheet(fn); else fn(); };
-  switch (a) {
-    case 'm-inst': MS.inst = el.dataset.i; if (MS.inst !== 'all') mEvent('chip', { insts: [MS.inst] }, 0.3); MS.songsShown = 8; if (MS.q.trim()) musicSearch(MS.q, true); renderRoute(true); return true;
-    case 'm-genre': MS.genre = el.dataset.g; if (MS.genre !== 'all') mEvent('chip', { genres: [MS.genre] }, 0.3); MS.songsShown = 8; renderRoute(true); return true;
-    case 'm-more-songs': MS.songsShown += 10; renderRoute(true); return true;
-    case 'm-more-picks': MS.picksShown += 12; renderRoute(true); return true;
-    case 'm-settings': musicSettings(); return true;
-    case 'm-teacher': mEvent('teacher', { channel: el.dataset.n, insts: (M.TEACHERS.find(t => t.name === el.dataset.n) || {}).inst || [] }, 0.5); return false;
-    case 'm-song': if (s) { MS.songInst = null; songSheet(s); } return true;
-    case 'm-song-add': if (s) { const P = mProfile(); const had = savedSong(s); if (had) { songSheet(s); return true; } await saveSong(s, bestInst(s, P), 'want'); toast('Added to your songs', 'Open', () => songSheet(s)); renderRoute(true); } return true;
-    case 'ms-inst': if (s) { MS.songInst = el.dataset.i; songSheet(s); } return true;
-    case 'ms-find': if (s) { const inst = el.dataset.i; closeSheet(() => { MS.inst = MS.prefs.insts.includes(inst) ? inst : 'all'; const q = s.t + (s.a === 'Traditional' || s.a === 'Anonymous' ? '' : ' ' + s.a) + ' ' + instWord(inst); renderRoute(true); const box = $('#mq'); if (box) box.value = q; musicSearch(q, true); window.scrollTo(0, 0); }); } return true;
-    case 'ms-yt': if (s) mEvent('look', { insts: [el.dataset.i], genres: s.g, artist: s.a }, 1); return false;
-    case 'ms-status': if (s) { const st = el.dataset.v; await saveSong(s, el.dataset.i, st); mEvent('status', { insts: [el.dataset.i], genres: s.g, artist: s.a }, STATUS_W[st]); if (st === 'learned') toast('Nice! Another song learned.'); songSheet(s); if (S.route.v === 'music') renderRoute(true); } return true;
-    case 'ms-remove': if (s) { const p = savedSong(s); if (p) await deletePin(p); songSheet(s); if (S.route.v === 'music') renderRoute(true); } return true;
-    case 'ms-no': if (s) { MS.dismissedSongs.add(songKey(s)); mEvent('no', { genres: s.g, artist: s.a }, -2); after(() => { if (S.route.v === 'music') renderRoute(true); }); toast('Got it. That one’s off the list.'); } return true;
-    case 'mset-inst': { const i = el.dataset.i, L = MS.prefs.insts; if (L.includes(i)) { if (L.length > 1) L.splice(L.indexOf(i), 1); } else L.push(i); if (MS.inst !== 'all' && !L.includes(MS.inst)) MS.inst = 'all'; saveMusic(); musicSettings(); } return true;
-    case 'mset-genre': { const g = el.dataset.g, L = MS.prefs.genres; if (L.includes(g)) L.splice(L.indexOf(g), 1); else L.push(g); if (MS.genre !== 'all' && !L.includes(MS.genre)) MS.genre = 'all'; saveMusic(); musicSettings(); } return true;
-    case 'mset-level': MS.prefs.level = el.dataset.l; saveMusic(); musicSettings(); return true;
-    case 'mset-reset': MS.events = []; MS.dismissed.clear(); MS.dismissedSongs.clear(); saveMusic(); toast('Starting fresh. It’ll learn from here.'); musicSettings(); return true;
-    case 'mset-done': closeSheet(() => { if (S.route.v === 'music') renderRoute(true); loadMusicFeed(false); }); return true;
-    case 'open-video': if (v) { const fromTab = TABS.includes(S.route.v) ? S.route.v : S.route.from; go({ v: 'video', k: v.id, item: { id: v.id, title: v.title, channel: v.channel, url: v.url, thumb: v.thumb, short: v.short, dur: v.dur, desc: v.desc, inst: v.inst || v.insts, published: v.published, views: v.views }, from: fromTab }); } return true;
-    case 'v-play': if (v) playVideo(v); return true;
-    case 'v-speed': { const r = +el.dataset.r; wantRate = r; for (const b of $$('[data-act="v-speed"]')) b.setAttribute('aria-pressed', String(+b.dataset.r === r)); try { if (YTP && YTP.setPlaybackRate) YTP.setPlaybackRate(r); } catch (e) {} if (!YTP) toast('Tap play, then pick a speed.'); } return true;
-    case 'v-loop-a': if (!YTP) { toast('Start the video first.'); return true; } try { loopA = YTP.getCurrentTime(); loopB = null; } catch (e) {} loopInfo(); return true;
-    case 'v-loop-b': if (!YTP) { toast('Start the video first.'); return true; } try { const t = YTP.getCurrentTime(); if (loopA == null) { loopA = Math.max(0, t - 10); } loopB = t; if (loopB <= loopA) { const x = loopA; loopA = loopB; loopB = x; } if (loopB - loopA < 1) loopB = loopA + 1; YTP.seekTo(loopA, true); } catch (e) {} loopInfo(); return true;
-    case 'v-loop-x': loopA = loopB = null; loopInfo(); return true;
-    case 'v-status': if (v) { const st = el.dataset.s; await saveVideo(v, st); mEvent('status', v, STATUS_W[st]); if (st === 'learned') toast('Nice! Another one learned.'); refreshVideoBits(v); } return true;
-    case 'v-save': if (v) { await saveVideo(v, 'want'); after(() => refreshVideoBits(v)); toast('Saved to your lessons'); } return true;
-    case 'v-like': if (v) { const p = savedVid(v.id); if (p) { p.liked = !p.liked; await savePin(p); if (p.liked) mEvent('like', v, 3); refreshVideoBits(v); } } return true;
-    case 'v-remove': if (v) { const p = savedVid(v.id); if (p) await deletePin(p); after(() => refreshVideoBits(v)); } return true;
-    case 'v-share': if (v) after(() => sharePin(v.title, v.url)); return true;
-    case 'v-menu': if (v) videoMenu(v); return true;
-    case 'v-no': if (v) { MS.dismissed.add(v.id); saveMusic(); mEvent('no', v, -3); after(() => { if (S.route.v === 'video') history.back(); else renderRoute(true); }); toast('Got it. You’ll see fewer like that.'); } return true;
-  }
-  return false;
-}
-document.addEventListener('input', e => { if (e.target.id === 'mq') musicSearch(e.target.value); });
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'mq') { e.preventDefault(); musicSearch(e.target.value, true); e.target.blur(); } });
-
-
-/* ---------- toast ---------- */
-let toastT = 0;
-function toast(msg, action, fn) {
-  const t = $('#toast');
-  t.innerHTML = `<span>${esc(msg)}</span>${action ? `<button>${esc(action)}</button>` : ''}`;
-  if (action) t.querySelector('button').onclick = () => { t.classList.remove('show'); fn(); };
-  t.classList.add('show');
-  clearTimeout(toastT);
-  toastT = setTimeout(() => t.classList.remove('show'), action ? 5000 : 2800);
-}
-
-/* ---------- backup ---------- */
-async function backup() {
-  const photos = {};
-  for (const p of S.pins) if (p.photo) {
-    const b = await DB.get('photos', p.id).catch(() => null);
-    if (b) photos[p.id] = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.onerror = () => r(''); fr.readAsDataURL(b); });
-  }
-  const data = { app: 'brushglue', v: 1, at: new Date().toISOString(), pins: S.pins, taste: S.taste, dismissed: Array.from(S.dismissed), music: { prefs: MS.prefs, events: MS.events, dismissed: Array.from(MS.dismissed), dismissedSongs: Array.from(MS.dismissedSongs) }, photos };
-  const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'artistry-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-  document.body.appendChild(a); a.click(); a.remove();
-  toast('Backup downloaded (' + plural(S.pins.length, 'idea') + ')');
-}
-$('#restoreFile').addEventListener('change', async e => {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-  let d;
-  try { d = JSON.parse(await file.text()); } catch (err) { toast('That file isn’t an Artistry backup.'); return; }
-  if (!d || d.app !== 'brushglue' || !Array.isArray(d.pins)) { toast('That file isn’t an Artistry backup.'); return; }
-  let added = 0;
-  for (const p of d.pins) {
-    const cur = S.pins.find(x => x.id === p.id);
-    if (cur && (cur.updatedAt || 0) >= (p.updatedAt || 0)) continue;
-    if (d.photos && d.photos[p.id]) { try { const b = await (await fetch(d.photos[p.id])).blob(); await DB.put('photos', b, p.id); photoURLs.delete(p.id); p.photo = true; } catch (err) { p.photo = false; } }
-    else p.photo = false;
-    await DB.put('pins', p).catch(() => {});
-    if (cur) Object.assign(cur, p); else { S.pins.push(p); added++; }
-  }
-  if (d.taste) { S.taste = Object.assign({ avoidTags: {}, avoidCats: {}, views: {} }, d.taste); saveTaste(); }
-  if (Array.isArray(d.dismissed)) { d.dismissed.forEach(u => S.dismissed.add(u)); kvSet('dismissed', Array.from(S.dismissed)); }
-  if (d.music) loadMusicState(d.music, true);
-  S.pins.sort((a, b) => b.createdAt - a.createdAt);
-  renderRoute(true);
-  toast('Restored ' + plural(added, 'new idea'));
-});
-
-/* ---------- start ---------- */
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); S.installEvt = e; if (['home', 'saved'].includes(S.route.v)) renderRoute(true); });
-window.addEventListener('appinstalled', () => { S.installEvt = null; toast('Installed. Look for Artistry in the Share menu.'); renderRoute(true); });
-
-function loadMusicState(m, merge) {
-  if (m.prefs) {
-    const insts = (m.prefs.insts || []).filter(i => Music.INSTRUMENTS.some(x => x.id === i));
-    const genres = (m.prefs.genres || []).filter(g => Music.GENRES.some(x => x.id === g));
-    MS.prefs = { insts: insts.length ? insts : Music.DEFAULT_INST.slice(), genres, level: m.prefs.level || 'beginner' };
-  }
-  if (Array.isArray(m.events)) MS.events = merge ? MS.events.concat(m.events).sort((a, b) => a.t - b.t).slice(-500) : m.events.slice(-500);
-  (m.dismissed || []).forEach(x => MS.dismissed.add(x));
-  (m.dismissedSongs || []).forEach(x => MS.dismissedSongs.add(x));
-  if (merge) saveMusic();
-}
-// Updates: every open loads the newest app (the service worker asks the internet first). If the app was left open in
-// the background, coming back to it checks for a newer version, and the new version takes over by reloading the page
-// (right away when she isn't in the middle of something, otherwise when she next leaves the app, or with Reload).
-let updatePending = false;
-function watchUpdates() {
-  const had = !!navigator.serviceWorker.controller;
-  navigator.serviceWorker.addEventListener('controllerchange', () => { if (had && !updatePending) appUpdated(); });
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    let last = Date.now();
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden' && updatePending && !busyNow()) reloadApp();
-      else if (document.visibilityState === 'visible' && Date.now() - last > 10 * 60e3) { last = Date.now(); reg.update().catch(() => {}); }
-    });
-  }).catch(() => {});
-}
-function busyNow() {
-  const a = document.activeElement;
-  return !$('#sheetwrap').hidden || (S.route.v === 'video' && !!YTP) || !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.value);
-}
-function reloadApp() {
-  const v = S.route.v, go = v === 'music' || v === 'video' ? 'music' : v === 'ideas' ? 'ideas' : '';
-  location.replace(location.pathname + (go ? '?go=' + go : ''));
-}
-function appUpdated() {
-  updatePending = true;
-  if (!busyNow()) reloadApp();
-  else toast('Artistry has an update', 'Reload', reloadApp);
-}
-async function init() {
-  const qs = new URLSearchParams(location.search);
-  const shared = { url: qs.get('url') || '', text: qs.get('text') || '', title: qs.get('title') || '' };
-  const start = qs.get('go') === 'ideas' ? { v: 'ideas' } : qs.get('go') === 'music' ? { v: 'music' } : { v: 'home' };
-  history.replaceState(start, '', location.pathname);
-  S.route = start;
-  renderRoute();
-  const ok = await DB.open();
-  const [pins, taste, dismissed, music, owner] = await Promise.all([DB.all('pins').catch(() => []), kvGet('taste').catch(() => null), kvGet('dismissed').catch(() => null), kvGet('music').catch(() => null), kvGet('owner').catch(() => null)]);
-  S.owner = owner === true;
-  if (music) loadMusicState(music);
-  S.pins = (pins || []).sort((a, b) => b.createdAt - a.createdAt);
-  if (taste) S.taste = Object.assign({ avoidTags: {}, avoidCats: {}, views: {} }, taste);
-  if (Array.isArray(dismissed)) S.dismissed = new Set(dismissed);
-  S.ready = true;
-  renderRoute();
-  if (!ok) toast('This browser won’t let the app save. Ideas will be lost when you close it.');
-  if (qs.get('me') === 'dave') setOwner(true);
-  else if (qs.get('me') === 'off') setOwner(false);
-  if (findUrl(shared.url) || findUrl(shared.text) || findUrl(shared.title) || shared.text) openSave(shared);
-  else if (qs.has('add')) openSave({});
-  if ('serviceWorker' in navigator && location.protocol === 'https:') watchUpdates();
-  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-}
-init();
-})();
-</script>
+<script src="holidays.js"></script>
+<script src="supplies.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

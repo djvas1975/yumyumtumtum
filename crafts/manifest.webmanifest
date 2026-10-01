@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Artistry",
   "short_name": "Artistry",
-  "description": "Save painting and craft ideas and music lessons from Instagram, TikTok, YouTube, Pinterest and any website.",
+  "description": "Save painting, craft and music ideas from Instagram, TikTok, YouTube, Facebook, Pinterest and any website. Artistry sorts them, finds the supplies, and learns what you like.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -53,12 +53,24 @@
       ]
     },
     {
-      "name": "Ideas for you",
-      "short_name": "Ideas",
-      "url": "./?go=ideas",
+      "name": "Explore ideas",
+      "short_name": "Explore",
+      "url": "./?go=explore",
       "icons": [
         {
           "src": "icons/shortcut-ideas.png?v=bacca8e8",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My supplies",
+      "short_name": "Supplies",
+      "url": "./?go=supplies",
+      "icons": [
+        {
+          "src": "icons/shortcut-supplies.png?v=628a029b",
           "sizes": "96x96",
           "type": "image/png"
         }
