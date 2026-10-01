@@ -103,6 +103,14 @@ module.exports = async (req, res) => {
       return [];
     }
   }));
+  // blog searches also match words deep in a post, so keep the ones whose title mentions the search
+  // (unless that leaves too few to show)
+  const roots = q.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !STOP.has(w)).map(stem);
+  if (roots.length) {
+    const fits = it => it.title.toLowerCase().split(/[^a-z0-9]+/).some(w => roots.some(r => w.startsWith(r)));
+    const kept = lists.map(l => l.filter(fits));
+    if (kept.reduce((a, l) => a + l.length, 0) >= 6) lists.splice(0, lists.length, ...kept);
+  }
   // take turns between sites so no one site crowds the rest out
   const items = [], seen = new Set();
   for (let i = 0; i < n; i++) for (const l of lists) {
@@ -148,6 +156,9 @@ const SKIP = /\b(gift guide|giveaway|sale|deals?|shop update|coupon|affiliate|po
 // recipes and food posts that some craft blogs also run
 const FOOD = /\b(recipes?|cake|cakes|cheesecakes?|cookies?|cupcakes?|muffins?|brownies?|bars|dip|soup|chili|casserole|smoothie|cocktail|mocktail|latte|punch|salad|bread|pie|fudge|edible|snack|treats? recipe|dinner|breakfast|appetizer)\b/i;
 const NOT_FOOD = /\b(craft|diy|paint|painted|painting|crochet|knit|sew|svg|cricut|wood|clay|felt|paper|printable|ornament|decor|wreath|box|boxes|toppers?|holders?|coasters?)\b/i;
+
+const STOP = new Set(['and', 'the', 'for', 'with', 'diy', 'easy', 'how', 'make', 'ideas', 'idea', 'your', 'you', 'best', 'simple', 'cute', 'fun']);
+const stem = w => w.replace(/(ing|ed|es|s)$/, '').replace(/^(.{3,}?)e$/, '$1') || w;
 
 function withTimeout(p, ms) {
   let t;
