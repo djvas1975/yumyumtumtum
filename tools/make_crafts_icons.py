@@ -98,6 +98,14 @@ def shortcut(kind, size=96):
     if kind == "add":
         d.rounded_rectangle([s * 0.5 - w / 2, s * 0.26, s * 0.5 + w / 2, s * 0.74], radius=w // 2, fill="white")
         d.rounded_rectangle([s * 0.26, s * 0.5 - w / 2, s * 0.74, s * 0.5 + w / 2], radius=w // 2, fill="white")
+    elif kind == "music":  # two eighth notes joined by a beam
+        r = s * 0.085
+        for cx, cy in ((s * 0.36, s * 0.68), (s * 0.66, s * 0.62)):
+            d.ellipse([cx - r * 1.25, cy - r, cx + r * 1.25, cy + r], fill="white")
+            d.rectangle([cx + r * 1.25 - w * 0.6, cy - s * 0.36, cx + r * 1.25, cy], fill="white")
+        x1, x2 = s * 0.36 + r * 1.25 - w * 0.6, s * 0.66 + r * 1.25
+        y1, y2 = s * 0.68 - s * 0.36, s * 0.62 - s * 0.36
+        d.polygon([(x1, y1), (x2, y2), (x2, y2 + w * 1.1), (x1, y1 + w * 1.1)], fill="white")
     else:  # ideas: a four-point sparkle
         c = s / 2
         pts = []
@@ -118,6 +126,7 @@ def main():
     tile(180, False, 0.8).convert("RGB").save(os.path.join(OUT, "apple-touch-icon.png"), optimize=True)
     shortcut("add").save(os.path.join(OUT, "shortcut-add.png"))
     shortcut("ideas").save(os.path.join(OUT, "shortcut-ideas.png"))
+    shortcut("music").save(os.path.join(OUT, "shortcut-music.png"))
     if len(sys.argv) > 1:
         sheet = Image.new("RGBA", (1100, 560), (255, 255, 255, 255))
         sheet.alpha_composite(tile(512, True, 0.86), (20, 24))

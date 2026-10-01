@@ -220,10 +220,40 @@
     S('River Flows in You', 'Yiruma', ['classical', 'pop'], 'medium', ['piano'])
   ];
 
+  // Free YouTube teachers. inst = what each mostly teaches. Ids looked up from their @handles on Sept 30, 2026
+  // (api/music.js op=resolve). @AndyGuitar turned out to be a different person, so it's left out.
+  const TEACHERS = [
+  { id: 'UCBNkm8o5LiEVLxO8w0p2sfQ', name: 'JustinGuitar', inst: ['guitar', 'ukulele'] },
+  { id: 'UCmnlTWVJysjWPFiZhQ5uudg', name: 'Marty Music', inst: ['guitar'] },
+  { id: 'UCasFZzbM8JJ6dqSVEgL9VVg', name: 'GuitarZero2Hero', inst: ['guitar'] },
+  { id: 'UC_Oa7Ph3v94om5OyxY1nPKg', name: 'Paul Davids', inst: ['guitar'] },
+  { id: 'UCypK49m1uPqClYnWkF0UQFw', name: 'Lauren Bateman', inst: ['guitar'] },
+  { id: 'UCIDxRRdowWusv8-IO0lpVfg', name: 'Banjo Ben Clark', inst: ['banjo', 'guitar'] },
+  { id: 'UCa5mOPOZPa8VG7BxbT49buw', name: 'FreeBanjoLessons', inst: ['banjo'] },
+  { id: 'UC_DmCvOP5Q_eBMRDvqqRXjg', name: 'Pianote', inst: ['piano'] },
+  { id: 'UCZlOvB5LcAgJv3wwvWFOFLg', name: 'Bill Hilton', inst: ['piano'] },
+  { id: 'UCRJP1zG5H2bbeBxf364ZsJg', name: 'PianoVideoLessons', inst: ['piano'] },
+  { id: 'UCkSTviZrhnv6r-2tmxfP4ig', name: 'Lisa Witt', inst: ['piano'] },
+  { id: 'UCzTR9iSH-TFC4-ocDS_ll4A', name: 'Sheet Music Boss', inst: ['piano'] },
+  { id: 'UCBiJBaDaM3K6vPVggLhTyWA', name: 'Drumeo', inst: ['drums'] },
+  { id: 'UCwT7TWaFxT-UZAPa9wdNChA', name: 'Stephen Taylor', inst: ['drums'] },
+  { id: 'UCpgOBwN6S6dcbjRfaHScEtw', name: '180 DRUMS', inst: ['drums'] },
+  { id: 'UCHF88ovEEPETzNtEUbgGBuw', name: 'Bernadette Teaches Music', inst: ['ukulele', 'guitar'] },
+  { id: 'UC1HlihY-iNtOemAlYQq3GXQ', name: 'The Ukulele Teacher', inst: ['ukulele'] },
+  { id: 'UCD2q6i-C0ZLJUK-VCp49TJA', name: 'Cynthia Lin', inst: ['ukulele'] },
+  { id: 'UCDglnz22aXMzpug5HbD1bCA', name: 'Ukulele Underground', inst: ['ukulele'] },
+  { id: 'UCb9PLHw5LvYRLY60sI_Npwg', name: 'Trumpet Heroes (Steve Haase)', inst: ['trumpet'] },
+  { id: 'UC5YVld_zVuem9jd8qyTKWzQ', name: 'Trumpet Headquarters', inst: ['trumpet'] },
+  { id: 'UC-yDiHGGxqUZut6cKPKrkqQ', name: 'TRUMPETSIZZLE', inst: ['trumpet'] },
+  { id: 'UCxlX6UbpSffQsKNdtqDUMlQ', name: 'The Trumpet Prof', inst: ['trumpet'] },
+  { id: 'UC98oadJhTaKuj36JPH1zArg', name: 'Louis Dowdeswell', inst: ['trumpet'] }
+  ];
+
   function prep(text) {
-    const lower = String(text || '').toLowerCase().replace(/&/g, ' and ').replace(/[’']/g, '');
+    const lower = String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&/g, ' and ').replace(/[’']/g, '');
     return ' ' + lower.replace(/[^a-z0-9]+/g, ' ') + ' ';
   }
+  const ONE_WORD_OK = ['superstition', 'wonderwall', 'everlong', 'otherside', 'riptide', 'jolene', 'romanza'];
   const has = (T, k) => T.includes(' ' + k + ' ') || T.includes(' ' + k + 's ');
   const LESSON = ['how to play', 'tutorial', 'lesson', 'lessons', 'chords', 'tabs', 'tab', 'strumming', 'learn', 'play along', 'playalong', 'beginner', 'beginners', 'sheet music', 'cover', 'riff', 'scales', 'easy song', 'easy songs', 'practice', 'exercise', 'technique', 'music theory', 'notes', 'melody'];
 
@@ -240,12 +270,20 @@
       genres.push(g.id);
     }
     // a song from the starter list names its genre too
-    // short one-word titles ("Creep", "Perfect") only count when the artist is named too
-    const song = SONGS.find(x => {
-      const st = prep(x.t.replace(/\(.*?\)/g, '')).trim();
-      if (!st || !T.includes(' ' + st + ' ')) return false;
-      return st.split(' ').length >= 2 || (artist && prep(x.a).includes(' ' + artist + ' '));
-    });
+    // short one-word titles ("Creep", "Perfect") only count when the artist is named too, unless the word is the song
+    // a medley ("Somewhere Over the Rainbow / What a Wonderful World") matches on either part
+    // the longest matching title wins ("What a Wonderful World" over Sam Cooke's "Wonderful World"), and the named artist's song first
+    let song = null, best = 0;
+    for (const x of SONGS) {
+      const byArtist = !!artist && prep(x.a).includes(' ' + artist + ' ');
+      for (const part of x.t.split(' / ')) {
+        const st = prep(part.replace(/\(.*?\)/g, '')).trim();
+        if (!st || !T.includes(' ' + st + ' ')) continue;
+        if (st.split(' ').length < 2 && !ONE_WORD_OK.includes(st) && !byArtist) continue;
+        const sc = st.length + (byArtist ? 1000 : 0);
+        if (sc > best) { best = sc; song = x; }
+      }
+    }
     if (song) for (const g of song.g) if (!genres.includes(g)) genres.push(g);
     const lessonHits = LESSON.filter(k => has(T, k)).length;
     const level = /\b(advanced|intermediate|hard|difficult|pro level)\b/.test(T) ? 'harder' : /\b(beginner|beginners|easy|simple|first|basic|basics|absolute)\b/.test(T) ? 'easy' : '';
@@ -269,7 +307,7 @@
   const instLabel = id => (INSTRUMENTS.find(i => i.id === id) || { label: id }).label;
   const genreLabel = id => (GENRES.find(g => g.id === id) || { label: id }).label;
 
-  const API = { INSTRUMENTS, GENRES, DEFAULT_INST, DEFAULT_GENRES, ARTISTS, SONGS, detect, songLinks, instLabel, genreLabel, prep };
+  const API = { INSTRUMENTS, GENRES, DEFAULT_INST, DEFAULT_GENRES, ARTISTS, SONGS, TEACHERS, detect, songLinks, instLabel, genreLabel, prep };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   else root.Music = API;
 })(this);

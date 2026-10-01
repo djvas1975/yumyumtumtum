@@ -9,20 +9,81 @@
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
-  "categories": ["lifestyle", "education"],
+  "categories": [
+    "lifestyle",
+    "education"
+  ],
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
-    { "name": "Save an idea", "short_name": "Save", "url": "./?add=1", "icons": [{ "src": "icons/shortcut-add.png", "sizes": "96x96", "type": "image/png" }] },
-    { "name": "Ideas for you", "short_name": "Ideas", "url": "./?go=ideas", "icons": [{ "src": "icons/shortcut-ideas.png", "sizes": "96x96", "type": "image/png" }] }
+    {
+      "name": "Save an idea",
+      "short_name": "Save",
+      "url": "./?add=1",
+      "icons": [
+        {
+          "src": "icons/shortcut-add.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Ideas for you",
+      "short_name": "Ideas",
+      "url": "./?go=ideas",
+      "icons": [
+        {
+          "src": "icons/shortcut-ideas.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Learn music",
+      "short_name": "Music",
+      "url": "./?go=music",
+      "icons": [
+        {
+          "src": "icons/shortcut-music.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
   ],
   "share_target": {
     "action": "./",
     "method": "GET",
-    "params": { "title": "title", "text": "text", "url": "url" }
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
   }
 }

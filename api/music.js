@@ -1,24 +1,26 @@
 // Brush & Glue "Learn music": free lesson videos for piano, guitar, drums, ukulele, banjo, trumpet and more.
 //
 // GET /api/music?inst=guitar,ukulele        ->  the newest lessons from free teacher channels on YouTube for those instruments
+//                                               (needs YOUTUBE_API_KEY; YouTube's public RSS feeds return 404 for everyone
+//                                               since about Sept 1, 2026, but are still tried first in case they come back)
 // GET /api/music?op=search&q=my+girl+guitar ->  lessons for a song or topic. With a YOUTUBE_API_KEY (Vercel setting) this
 //                                               searches all of YouTube (YouTube Data API v3, free quota); without one it
 //                                               searches the teacher channels' recent uploads.
 // GET /api/music?op=resolve&h=JustinGuitar,Pianote&debug=1  ->  (setup only) channel ids for @handles
 // Options: n= (items), debug=1.
 //
-// Teacher channels are read through YouTube's public RSS feeds (youtube.com/feeds/videos.xml), which list each
-// channel's 15 newest uploads with title, thumbnail, views and description. No key or account needed.
+// With the free YouTube Data API v3 key (Vercel > Settings > Environment Variables > YOUTUBE_API_KEY): teacher uploads
+// come from each channel's uploads playlist (1 quota unit each) and search costs 100 units; the free quota is 10,000 a day.
+// Without a key the app still works (songs to learn, teacher links, saving shared lessons); answers say needsKey.
 // Each item: { id, title, channel, channelId, inst:[...], published, views, thumb, short, url, desc, dur }
 
 const { cors, fetchText, decode, clean } = require('../lib/parse');
 
 const enc = encodeURIComponent;
 
-// Free lesson channels. inst = what each mostly teaches. Ids checked on Sept 30, 2026 (see CLAUDE.md).
-const CHANNELS = [
-  // filled in from op=resolve; see below
-];
+// Free lesson channels (TEACHERS in crafts/music.js, shared with the app).
+const { TEACHERS } = require('../crafts/music.js');
+const CHANNELS = TEACHERS;
 
 // handles checked with op=resolve when picking the channels above
 const CANDIDATES = ['JustinGuitar', 'MartyMusic', 'AndyGuitar', 'GuitarZero2Hero', 'PaulDavids', 'PianoVideoLessons', 'LisaWitt', 'SheetMusicBoss', '180drums', 'BernadetteTeachesMusic', 'TheUkuleleTeacher', 'cynthialinmusic', 'UkuleleUnderground', 'FreeBanjoLessons', 'TrumpetHeroes', 'TrumpetHeadquarters', 'TRUMPETSIZZLE', 'TheTrumpetProf', 'LouisDowdeswell', 'pianote', 'PianoteOfficial', 'drumeo', 'DrumeoOfficial', 'stephentaylordrums', 'banjobenclark', 'BanjoBen', 'billhilton', 'BillHiltonPianoLessons', 'laurenbateman', 'ChristopherBillTrumpet', 'deeringbanjos', 'RockschoolLondon', 'MusicTheoryGuy'];
@@ -37,24 +39,6 @@ module.exports = async (req, res) => {
       res.status(200).json({ ok: true, channels: out });
       return;
     }
-    if (op === 'feedtest') {
-      // setup only: how YouTube's feeds answer this server
-      const id = String(qp.id || 'UCBNkm8o5LiEVLxO8w0p2sfQ');
-      const urls = ['https://www.youtube.com/feeds/videos.xml?channel_id=' + id, 'https://www.youtube.com/feeds/videos.xml?playlist_id=UU' + id.slice(2), 'http://www.youtube.com/feeds/videos.xml?channel_id=' + id];
-      const out = [];
-      for (const u of urls) {
-        for (const ua of ['Mozilla/5.0 (compatible; Feedfetcher-Google; +http://www.google.com/feedfetcher.html)', 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36']) {
-          try {
-            const r = await fetch(u, { redirect: 'follow', headers: { 'User-Agent': ua, Accept: '*/*' } });
-            const body = await r.text();
-            out.push({ u, ua: ua.slice(0, 30), status: r.status, len: body.length, entries: (body.match(/<entry>/g) || []).length, start: body.slice(0, 120) });
-          } catch (e) { out.push({ u, error: e.message }); }
-        }
-      }
-      res.setHeader('Cache-Control', 'no-store');
-      res.status(200).json({ ok: true, out });
-      return;
-    }
     if (op === 'search') {
       const q = clean(String(qp.q || '')).slice(0, 100);
       if (!q) { res.status(400).json({ ok: false, error: 'Type a song or lesson to look for.' }); return; }
@@ -71,7 +55,7 @@ module.exports = async (req, res) => {
         via = 'teachers';
       }
       res.setHeader('Cache-Control', debug ? 'no-store' : 's-maxage=21600, stale-while-revalidate=86400');
-      res.status(200).json({ ok: true, q, via, fullSearch: !!process.env.YOUTUBE_API_KEY, items, report: report || undefined });
+      res.status(200).json({ ok: true, q, via, fullSearch: !!process.env.YOUTUBE_API_KEY, needsKey: !process.env.YOUTUBE_API_KEY && !items.length, items, report: report || undefined });
       return;
     }
     // feeds: newest lessons for the chosen instruments
@@ -82,7 +66,7 @@ module.exports = async (req, res) => {
     const n = Math.max(1, Math.min(300, parseInt(qp.n, 10) || 150));
     items.sort((a, b) => (b.published || '').localeCompare(a.published || ''));
     res.setHeader('Cache-Control', debug ? 'no-store' : 's-maxage=10800, stale-while-revalidate=86400');
-    res.status(200).json({ ok: true, inst: want, fullSearch: !!process.env.YOUTUBE_API_KEY, items: items.slice(0, n), report: report || undefined });
+    res.status(200).json({ ok: true, inst: want, fullSearch: !!process.env.YOUTUBE_API_KEY, needsKey: !process.env.YOUTUBE_API_KEY && !items.length, items: items.slice(0, n), report: report || undefined });
   } catch (e) {
     res.status(200).json({ ok: false, error: (e && e.message) || 'Couldn’t get lessons right now.' });
   }
@@ -90,10 +74,14 @@ module.exports = async (req, res) => {
 
 /* ---------- teacher channels (public RSS feeds) ---------- */
 async function feeds(chans, report) {
+  if (process.env.YOUTUBE_API_KEY) {
+    try { return await apiUploads(chans, report); }
+    catch (e) { if (report) report.push('youtube uploads failed: ' + e.message); }
+  }
   const lists = await Promise.all(chans.map(async c => {
     const t0 = Date.now();
     try {
-      const { text } = await withTimeout(fetchText('https://www.youtube.com/feeds/videos.xml?channel_id=' + c.id, { headers: { Accept: 'application/atom+xml,application/xml,text/xml' } }), 8000);
+      const { text } = await withTimeout(fetchText('https://www.youtube.com/feeds/videos.xml?channel_id=' + c.id, { headers: { Accept: 'application/atom+xml,application/xml,text/xml' } }), 4000);
       const items = parseFeed(text, c);
       if (report) report.push({ ch: c.name, id: c.id, ms: Date.now() - t0, count: items.length, newest: items[0] ? items[0].title + ' (' + (items[0].published || '').slice(0, 10) + ')' : '' });
       return items;
@@ -139,29 +127,66 @@ function matchWords(items, q) {
   }).filter(x => x.s >= Math.min(words.length, 2)).sort((a, b) => b.s - a.s || b.it.views - a.it.views).map(x => x.it);
 }
 
+/* ---------- with a free YouTube Data API key in Vercel's settings ---------- */
+// each channel's newest uploads: its "uploads" playlist is UU + the channel id without UC (1 unit per channel)
+async function apiUploads(chans, report) {
+  const key = process.env.YOUTUBE_API_KEY;
+  const lists = await Promise.all(chans.map(async c => {
+    try {
+      const j = await getJson('https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=12&playlistId=UU' + c.id.slice(2) + '&key=' + enc(key));
+      if (j.error) throw new Error((j.error.errors && j.error.errors[0] && j.error.errors[0].reason) || j.error.message);
+      const items = (j.items || []).map(x => x.snippet || {}).filter(s => s.resourceId && s.resourceId.videoId && !/^(private|deleted) video$/i.test(s.title || '')).map(s => ({
+        id: s.resourceId.videoId, title: clean(decode(s.title || '')), channel: c.name, channelId: c.id, inst: c.inst,
+        published: s.publishedAt || '', views: 0, thumb: 'https://i.ytimg.com/vi/' + s.resourceId.videoId + '/hqdefault.jpg', short: false,
+        url: 'https://www.youtube.com/watch?v=' + s.resourceId.videoId, desc: clean(decode(s.description || '')).slice(0, 400), dur: 0
+      }));
+      if (report) report.push({ ch: c.name, count: items.length, newest: items[0] ? items[0].title : '' });
+      return items;
+    } catch (e) { if (report) report.push({ ch: c.name, count: 0, error: e.message }); return []; }
+  }));
+  const all = [].concat(...lists);
+  await addDetails(all, report);
+  return all;
+}
+// durations and views (1 unit per 50 videos); 60 seconds or less = a Short
+async function addDetails(items, report) {
+  const key = process.env.YOUTUBE_API_KEY;
+  for (let i = 0; i < items.length; i += 50) {
+    const part = items.slice(i, i + 50);
+    try {
+      const d = await getJson('https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=' + part.map(x => x.id).join(',') + '&key=' + enc(key));
+      const by = {};
+      for (const v of d.items || []) by[v.id] = v;
+      for (const x of part) {
+        const v = by[x.id];
+        if (!v) continue;
+        x.dur = isoSecs(v.contentDetails && v.contentDetails.duration);
+        x.views = parseInt(v.statistics && v.statistics.viewCount, 10) || 0;
+        x.short = x.dur > 0 && x.dur <= 60;
+        if (x.short) x.url = 'https://www.youtube.com/shorts/' + x.id;
+      }
+    } catch (e) { if (report) report.push('details failed: ' + e.message); }
+  }
+}
+
 /* ---------- all of YouTube (only with a free YouTube Data API key in Vercel's settings) ---------- */
 async function ytSearch(q, n, report) {
   const key = process.env.YOUTUBE_API_KEY;
   const url = 'https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&safeSearch=moderate&relevanceLanguage=en&maxResults=' + n + '&q=' + enc(q) + '&key=' + enc(key);
   const j = await getJson(url);
   if (j.error) throw new Error((j.error.errors && j.error.errors[0] && j.error.errors[0].reason) || j.error.message || 'YouTube said no');
-  const ids = (j.items || []).map(x => x.id && x.id.videoId).filter(Boolean);
-  if (report) report.push('youtube search: ' + ids.length + ' videos');
-  let details = {};
-  if (ids.length) {
-    try {
-      const d = await getJson('https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=' + ids.join(',') + '&key=' + enc(key));
-      for (const v of d.items || []) details[v.id] = { dur: isoSecs(v.contentDetails && v.contentDetails.duration), views: parseInt(v.statistics && v.statistics.viewCount, 10) || 0 };
-    } catch (e) { if (report) report.push('details failed: ' + e.message); }
-  }
-  return (j.items || []).filter(x => x.id && x.id.videoId).map(x => {
-    const s = x.snippet || {}, id = x.id.videoId, d = details[id] || {};
+  const items = (j.items || []).filter(x => x.id && x.id.videoId).map(x => {
+    const s = x.snippet || {}, id = x.id.videoId;
+    const ch = CHANNELS.find(c => c.id === s.channelId);
     return {
-      id, title: clean(decode(s.title || '')), channel: clean(decode(s.channelTitle || '')), channelId: s.channelId || '', inst: [],
-      published: s.publishedAt || '', views: d.views || 0, thumb: 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg',
-      short: d.dur > 0 && d.dur <= 60, url: 'https://www.youtube.com/watch?v=' + id, desc: clean(decode(s.description || '')).slice(0, 400), dur: d.dur || 0
+      id, title: clean(decode(s.title || '')), channel: clean(decode(s.channelTitle || '')), channelId: s.channelId || '', inst: ch ? ch.inst : [],
+      published: s.publishedAt || '', views: 0, thumb: 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg',
+      short: false, url: 'https://www.youtube.com/watch?v=' + id, desc: clean(decode(s.description || '')).slice(0, 400), dur: 0
     };
   });
+  if (report) report.push('youtube search: ' + items.length + ' videos');
+  await addDetails(items, report);
+  return items;
 }
 async function getJson(url) {
   const ctl = new AbortController();
@@ -196,6 +221,8 @@ function withTimeout(p, ms) {
 }
 
 module.exports.CHANNELS = CHANNELS;
+module.exports.apiUploads = apiUploads;
+module.exports.ytSearch = ytSearch;
 module.exports.parseFeed = parseFeed;
 module.exports.matchWords = matchWords;
 module.exports.isoSecs = isoSecs;

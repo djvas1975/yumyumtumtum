@@ -393,16 +393,16 @@ had to be set up on GitHub or Vercel.
 | What | Where |
 |---|---|
 | The app (install from Chrome on Android) | https://yumyumtumtum.vercel.app/crafts/ (served by Vercel, NOT GitHub Pages, so its scope doesn't sit inside YumYum's) |
-| App files | `crafts/index.html` (the whole app), `crafts/cats.js` (the sorter, shared with tests), `crafts/manifest.webmanifest` (name, icons, Share menu), `crafts/sw.js` (offline; bump `VERSION` when crafts/ changes), `crafts/icons/` |
+| App files | `crafts/index.html` (the whole app), `crafts/cats.js` (the sorter, shared with tests), `crafts/music.js` (Learn music data and lesson reader, shared with api/music.js and tests), `crafts/manifest.webmanifest` (name, icons, Share menu), `crafts/sw.js` (offline; bump `VERSION` when crafts/ changes), `crafts/icons/` |
 | Icons | `tools/make_crafts_icons.py` draws them (white palette with four paint dabs and a brush on a red tile) |
 | Post reader | `api/idea.js`: `GET /api/idea?url=` -> `{platform, kind, title, caption, image, width, height, author, siteName, link, supplies}`. Instagram/TikTok/YouTube/Facebook use the readers exported from api/recipe.js (`module.exports.readers`); Pinterest uses the pin-info widget JSON; websites use og tags plus a schema.org HowTo supply list. |
 | Blog finder | `api/crafts.js`: `GET /api/crafts?q=&type=painting|craft|both&n=&page=` -> items `{title,url,image,width,height,sourceName,kind}` from 42 WordPress craft/painting blogs (their `/wp-json/wp/v2/posts?search=`). `debug=1` reports each site; `sites=trial` tries sites marked `trial: true`. Titles must mention the search (unless that leaves fewer than 6). Food posts, giveaways, reviews are skipped. |
-| Tests | `node tests/crafts.test.js` (sorter cases, reader with fake Instagram/Pinterest/blog pages, finder) |
-| Live-check aliases | `/api/idea/<anything>?url=` and `/api/crafts/<anything>?q=` (vercel.json rewrites). WebFetch in Claude sessions cached `/api/crafts?...` by path and ignored new query strings, so use a fresh alias path per check. New paths ask Dave to approve the fetch. |
+| Tests | `node tests/crafts.test.js` (sorter cases, reader with fake Instagram/Pinterest/blog pages, finder), `node tests/music.test.js` (lesson reader, song list, api/music.js with a fake YouTube, with and without a key) |
+| Live-check aliases | `/api/idea/<anything>?url=`, `/api/crafts/<anything>?q=`, `/api/music/<anything>?inst=` (vercel.json rewrites). WebFetch in Claude sessions cached `/api/crafts?...` by path and ignored new query strings, so use a fresh alias path per check. New paths ask Dave to approve the fetch. |
 
 What it does (v1.0):
 - Pinterest look: white (or dark) background, 2-5 column masonry of rounded photo pins, text tabs All / Painting / Crafts
-  with category chips, red Save buttons, bottom icons Home, Search, Add, Ideas, Boards.
+  with category chips, red Save buttons, bottom icons Home, Search, Add, Music, Ideas, Boards.
 - Share > Brush & Glue (manifest `share_target`, GET with title/text/url) opens the Save sheet, reads the post, and
   files it: board (Painting or Crafts), category, tags. When the words don't clearly point one way (`sure` false) it
   asks "Painting or crafts? Tap one." instead of guessing. Photos are downloaded through `/api/image`, shrunk to
@@ -414,7 +414,7 @@ What it does (v1.0):
   phone by taste; topic chips; More ideas loads page 2; ⋯ > Not for me hides it and counts against its tags/category.
 - Learning (free, on the phone, no AI): save 1, favorite +3, made +2, opens +0.5 each (max 4), opening an idea +0.3 to
   its category, Not for me -2. Shown on Boards > What it's learned, with a removable Not for me list.
-- Boards: All, Painting, Crafts, Favorites, Want to try, Made it, and one per category, with collage covers.
+- Boards: All, Painting, Crafts, Music, Favorites, Want to try, Made it, and one per category, with collage covers.
 - Backup: Boards > Download backup (JSON with photos) and Restore. No cloud backup yet.
 - Categories (crafts/cats.js): Painting: Acrylic, Watercolor, Paint pouring, Rock painting, Dot art & mandalas,
   Painted pumpkins/glass & more, Oil, Gouache, Spray paint, Furniture & signs, Walls & murals, Drawing & sketching,
@@ -432,23 +432,39 @@ An earlier claude.ai artifact version (https://claude.ai/artifact/2CjJ4k1XatYWvE
 Ideas not built yet: cloud backup (could share YumYum's Vercel Blob once it's set up), YouTube/TikTok search in
 Ideas (needs an official API key), reading what's said in TikTok videos for supply lists.
 
-## Learn Music tab: IN PROGRESS (paused Sept 30, 2026, 6 pm)
-Asked for: a Music tab of its own for an amateur player of piano, guitar, drums, ukulele, banjo and trumpet who learns
-from YouTube tutorials. Favorite genres: alternative, rock, classical, pop, rap, classic rock, oldies, Motown,
-country, bluegrass. Recommend from her likes and learn what she's into lately.
-Done so far (not wired into the app yet):
-- `crafts/music.js`: instruments, genres, ~400 artist-to-genre names, 147 songs to learn (title, artist, genres,
-  level, best instruments), `detect(text)` (instrument, genres, artist, song, level, isMusic), `songLinks()` (YouTube
-  search, Ultimate Guitar, Songsterr, MuseScore, IMSLP).
-- `api/music.js`: newest lessons from free teacher channels via YouTube's public RSS feeds (no key); `op=search`
-  uses a YouTube Data API key if `YOUTUBE_API_KEY` is set in Vercel, else searches the feeds; `op=resolve` (setup
-  only) looks up channel ids from @handles. `CHANNELS` is still EMPTY: the last lookup (`/api/music/r3?op=resolve&debug=1`)
-  is waiting on a WebFetch approval. Handles that exist (r2 check): JustinGuitar, MartyMusic, AndyGuitar,
-  GuitarZero2Hero, PaulDavids, PianoVideoLessons, LisaWitt, SheetMusicBoss, 180drums, BernadetteTeachesMusic,
-  TheUkuleleTeacher, cynthialinmusic, UkuleleUnderground, FreeBanjoLessons, TrumpetHeroes, TrumpetHeadquarters,
-  TRUMPETSIZZLE, TheTrumpetProf, LouisDowdeswell. Not found: Pianote, billhiltonpiano, drumeo,
-  StephenTaylorDrumLessons, BanjoBenClark, ChristopherBill, LaurenBatemanGuitar (r3 tries other spellings).
-Next: fill CHANNELS with checked ids, add the Music tab to crafts/index.html (6th bottom icon; pins with type
-'music' kept out of the Painting/Crafts views; video page with the YouTube player, speed 0.5/0.75/1x and A-B loop;
-Songs to learn by genre; Picked for you ranked by a taste profile that weighs the last two weeks most; settings
-for instruments, genres, level), let the Save sheet file music links under Music, tests, publish, check live.
+## Learn music tab (v1.1, built Sept 30, 2026)
+Asked for: "a section for playing music" for Dave's son's mom **Steph**, an amateur piano, guitar, drums, ukulele, banjo
+and trumpet player who learns from YouTube tutorials. Her go-to genres: alternative, rock, classical, pop, rap, classic
+rock, oldies, Motown, country, bluegrass. "A tab by itself", recommendations from her likes, and learn what she's into lately.
+
+**YouTube's public RSS feeds are gone.** Every `youtube.com/feeds/videos.xml` URL returns 404 for everyone since about
+Sept 1, 2026 (checked from Vercel Sept 30 with three URL forms and two browser names; others report it too: github.com/miniflux/v2/issues/4261).
+Scraping YouTube pages breaks its terms, so it isn't done. Lesson videos inside the app need a free **YouTube Data API
+v3 key** in Vercel (Settings > Environment Variables > `YOUTUBE_API_KEY`, then redeploy). The key goes in Vercel only,
+never in the repo. Free quota: 10,000 units a day; a search costs 100, a channel's uploads 1, video details 1 per 50.
+**Status Sept 30, 2026: no key set yet** (answers say `needsKey: true`).
+
+- Without the key (works now): Songs to learn (147 songs, ranked by her taste, genre chips), song sheet (pick the
+  instrument, Lessons on YouTube link, chords/tabs/sheet music links, Want to learn / Learning / Learned it, Not for
+  me), Free teachers on YouTube (24 channels), Free places to learn, search shows matching songs + a YouTube search
+  button, and Share > Brush & Glue from the YouTube app files the lesson under Music with instrument and genre
+  (`musicGuess()` in the Save sheet; the board picker has Painting / Crafts / Music). Saved lessons play inside the app.
+- With the key: Picked for you (up to 4 searches from her taste, refreshed at most every 30 minutes, 6 hours if
+  nothing changed), New from free teachers, in-app lesson search, Find a lesson on a song, More lessons like this.
+- Lesson page: YouTube IFrame player (falls back to a plain embed if the API script is blocked), Speed 0.5x / 0.75x /
+  Normal, Loop a part (Start here / End here / Off, checked every 250 ms), status, favorite, share, Open in YouTube,
+  the song's chord/tab/sheet links.
+- Learning (on the phone, no AI): events `{t,k,i,g,a,c,w}` in kv `music` (last 500): save 2, song added 2, status
+  want 1 / learning 2.5 / learned 3, favorite 3, search 1, look at a song 0.5, every 30 s watched 0.5 (max 8),
+  instrument or genre chip 0.3, teacher link 0.5, Not for me -2 (song) / -3 (lesson). Weights halve every 14 days;
+  "Lately you're into …" uses the last 21 days. Her chosen instruments and genres start at weight 1. Settings sheet
+  (sliders button): instruments, genres, level (Beginner favors easy songs), Start learning over.
+- Music pins are `type:'music'`, `kind:'video'|'song'`, `insts`, `genres`, `artist`, `song`, `videoId`, `mstatus`.
+  They stay out of Home, Ideas, the art boards and the art taste. Backup/restore includes `music`.
+- Files: `crafts/music.js` (INSTRUMENTS, GENRES, 446 artist names -> genres, SONGS, TEACHERS with checked channel ids,
+  `detect(text)`, `songLinks()`), `api/music.js` (`?inst=` teacher uploads, `op=search`, `op=resolve` for setup:
+  channel ids from @handles), `tests/music.test.js`, music shortcut icon from `tools/make_crafts_icons.py`.
+- Checked offline with Playwright (fake API, both modes, light and dark, 390 px). Not checked yet: the live API with
+  a real key, and Steph's phone.
+
+Ideas not built yet for music: a practice log/streak, YouTube Shorts filter, a metronome.
