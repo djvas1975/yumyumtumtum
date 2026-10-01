@@ -21,7 +21,7 @@ const CHANNELS = [
 ];
 
 // handles checked with op=resolve when picking the channels above
-const CANDIDATES = ['JustinGuitar', 'MartyMusic', 'AndyGuitar', 'GuitarZero2Hero', 'LaurenBatemanGuitar', 'PaulDavids', 'Pianote', 'billhiltonpiano', 'PianoVideoLessons', 'LisaWitt', 'SheetMusicBoss', 'drumeo', 'StephenTaylorDrumLessons', '180drums', 'BernadetteTeachesMusic', 'TheUkuleleTeacher', 'cynthialinmusic', 'UkuleleUnderground', 'BanjoBenClark', 'FreeBanjoLessons', 'TrumpetHeroes', 'TrumpetHeadquarters', 'TRUMPETSIZZLE', 'TheTrumpetProf', 'LouisDowdeswell', 'ChristopherBill'];
+const CANDIDATES = ['JustinGuitar', 'MartyMusic', 'AndyGuitar', 'GuitarZero2Hero', 'PaulDavids', 'PianoVideoLessons', 'LisaWitt', 'SheetMusicBoss', '180drums', 'BernadetteTeachesMusic', 'TheUkuleleTeacher', 'cynthialinmusic', 'UkuleleUnderground', 'FreeBanjoLessons', 'TrumpetHeroes', 'TrumpetHeadquarters', 'TRUMPETSIZZLE', 'TheTrumpetProf', 'LouisDowdeswell', 'pianote', 'PianoteOfficial', 'drumeo', 'DrumeoOfficial', 'stephentaylordrums', 'banjobenclark', 'BanjoBen', 'billhilton', 'BillHiltonPianoLessons', 'laurenbateman', 'ChristopherBillTrumpet', 'deeringbanjos', 'RockschoolLondon', 'MusicTheoryGuy'];
 
 module.exports = async (req, res) => {
   if (!cors(req, res)) return;
@@ -163,12 +163,12 @@ function isoSecs(v) {
 async function resolveHandle(h) {
   try {
     const { text } = await withTimeout(fetchText('https://www.youtube.com/@' + enc(h)), 9000);
-    const id = (text.match(/"externalId":"(UC[\w-]{22})"/) || text.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[\w-]{22})"/) || text.match(/"channelId":"(UC[\w-]{22})"/) || [])[1] || '';
+    const id = (text.match(/"externalId"\s*:\s*"(UC[\w-]{22})"/) || text.match(/youtube\.com\/channel\/(UC[\w-]{22})/) || text.match(/itemprop="(?:identifier|channelId)"\s+content="(UC[\w-]{22})"/) || text.match(/"browseId"\s*:\s*"(UC[\w-]{22})"/) || text.match(/"channelId"\s*:\s*"(UC[\w-]{22})"/) || text.match(/\b(UC[\w-]{22})\b/) || [])[1] || '';
     const name = decode((text.match(/<meta property="og:title" content="([^"]*)"/) || [])[1] || '');
     const subs = ((text.match(/"subscriberCountText":\{[^}]*?"simpleText":"([^"]+)"/) || text.match(/([\d.]+[KM]?) subscribers/) || [])[1]) || '';
     let feed = 0;
     if (id) { try { const f = await withTimeout(fetchText('https://www.youtube.com/feeds/videos.xml?channel_id=' + id), 8000); feed = (f.text.match(/<entry>/g) || []).length; } catch (e) { feed = -1; } }
-    return { h, id, name, subs, feed };
+    return { h, id, name, feed, len: text.length };
   } catch (e) { return { h, id: '', error: e.message }; }
 }
 
