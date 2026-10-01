@@ -17,6 +17,9 @@
     },
     "api/crafts.js": {
       "maxDuration": 30
+    },
+    "api/music.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [
@@ -27,6 +30,10 @@
     {
       "source": "/api/idea/:tag",
       "destination": "/api/idea"
+    },
+    {
+      "source": "/api/music/:tag",
+      "destination": "/api/music"
     }
   ],
   "redirects": [
