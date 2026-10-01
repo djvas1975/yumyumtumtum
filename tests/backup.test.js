@@ -86,6 +86,27 @@ const backup = n => ({ app: 'yumyumtumtum', version: 1, recipes: Array.from({ le
   const still = await call('POST', { op: 'save' }, K, backup(2));
   ok(still.body.ok, 'people already in keep backing up when it\'s full');
 
+  // Artistry (&app=artistry): its own folders, its own list of people (YumYum's family list is full by now), its own codes
+  const ART = { 'x-backup-key': 'ART-7KQ2-9ZTM-4WXA-PLM3', origin: 'https://yumyumtumtum.vercel.app', host: 'yumyumtumtum.vercel.app' };
+  const art = n => ({ app: 'brushglue', v: 1, pins: Array.from({ length: n }, (_, i) => ({ id: 'p' + i, title: 'Idea ' + i })), practice: { sessions: [] } });
+  const a0 = await call('GET', { op: 'info', app: 'artistry' }, ART);
+  ok(a0.body.empty === true, 'artistry: nothing saved yet');
+  const ap = await call('POST', { op: 'photo', id: 'p1_m123', app: 'artistry' }, ART, pic);
+  const a1 = await call('POST', { op: 'save', day: '2026-10-01', daily: '1', app: 'artistry' }, ART, art(5));
+  const aKeys = Array.from(files.keys()).filter(k => k.indexOf('backup/a/') === 0);
+  ok(ap.body.ok && a1.body.ok && a1.body.pins === 5 && aKeys.some(k => /^backup\/a\/[0-9a-f]{32}\/latest\.json$/.test(k)) && aKeys.some(k => /photos\/p1_m123$/.test(k)) && files.has('backup/_artistry.json'), 'artistry: its own folder and people list, even with YumYum\'s family list full (Steph’s page is served by Vercel, same site)');
+  const aY = await call('POST', { op: 'save', app: 'artistry' }, ART, backup(2));
+  ok(aY.body.ok === false && /Artistry backup/.test(aY.body.error), 'artistry won’t take a YumYum backup -> ' + aY.body.error);
+  const yA = await call('POST', { op: 'save' }, K, art(2));
+  ok(yA.body.ok === false && /YumYum backup/.test(yA.body.error), 'YumYum won’t take an Artistry backup');
+  const ag = await call('GET', { op: 'get', day: 'latest', app: 'artistry' }, { 'x-backup-key': 'art 7kq2 9ztm 4wxa plm3' });
+  ok(JSON.parse(ag.raw).pins.length === 5, 'artistry: code typed in lower case with spaces gets it back');
+  const cross = await call('GET', { op: 'get', day: 'latest' }, { 'x-backup-key': 'YUM-7KQ2-9ZTM-4WXA-PLM3' });
+  const cross2 = await call('GET', { op: 'get', day: 'latest', app: 'artistry' }, K);
+  ok(JSON.parse(cross.raw).recipes && cross2.body.empty === true, 'the same letters in a YumYum code and an Artistry code are two different backups');
+  const ai = await call('GET', { op: 'info', app: 'artistry' }, ART);
+  ok(ai.body.ok && ai.body.days.length === 1 && ai.body.days[0].day === '2026-10-01', 'artistry: info lists its day');
+
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);
 })();

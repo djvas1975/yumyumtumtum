@@ -1,4 +1,6 @@
-// YumYum cloud backup: keeps each person's backup in Dave's private Vercel Blob store.
+// YumYum and Artistry cloud backup: keeps each person's backup in Dave's private Vercel Blob store.
+// Add &app=artistry for Artistry (the crafts app): its own folders (backup/a/…), its own list of people, its own
+// ART- codes, and it only takes Artistry backups. Without it, everything is YumYum's, as before.
 //
 // Dave and his family each have their own phone and their own recovery code. The phone sends its code in
 // the x-backup-key header, and each code gets its own folder, backup/u/<hash of the code>/, so nobody can
@@ -22,12 +24,16 @@ const { cors } = require('../lib/parse');
 
 const ROOT = 'backup/';
 const MAX_PEOPLE = 10;
+const APPS = {
+  yumyumtumtum: { dir: 'u/', people: '_people.json', salt: 'yyt:', prefix: /^YUM/, name: 'YumYum', check: o => o.app === 'yumyumtumtum' && Array.isArray(o.recipes), counts: o => ({ recipes: o.recipes.length }) },
+  artistry: { dir: 'a/', people: '_artistry.json', salt: 'art:', prefix: /^ART/, name: 'Artistry', check: o => o.app === 'brushglue' && Array.isArray(o.pins), counts: o => ({ pins: o.pins.length }) }
+};
 const KEEP_DAYS = 30;
 const MAX_BACKUP = 4 * 1024 * 1024;
 const MAX_PHOTO = 4 * 1024 * 1024;
 let BLOB = null; // the @vercel/blob SDK (tests swap in a fake)
 const blob = () => BLOB || (BLOB = require('@vercel/blob'));
-let PEOPLE = null; // cached list of code hashes that have a backup folder
+let PEOPLE = {}; // cached lists of code hashes that have a backup folder, per app
 
 module.exports = async (req, res) => {
   if (!cors(req, res)) return;
@@ -38,23 +44,24 @@ module.exports = async (req, res) => {
   const qp = req.query || {};
   const op = String(qp.op || '');
   if (!setUp()) { res.status(200).json({ ok: false, needsSetup: true, error: 'Cloud backup isn’t turned on in Vercel yet.' }); return; }
-  const key = normKey((req.headers || {})['x-backup-key']);
+  const A = APPS[String(qp.app || '') === 'artistry' ? 'artistry' : 'yumyumtumtum'];
+  const key = normKey((req.headers || {})['x-backup-key'], A);
   if (key.length < 12) { res.status(400).json({ ok: false, error: 'Missing the recovery code.' }); return; }
   const opts = { access: 'private' };
   const oidc = (req.headers || {})['x-vercel-oidc-token'];
   if (oidc) opts.oidcToken = String(oidc);
   try {
-    const hash = sha(key);
-    const home = ROOT + 'u/' + hash.slice(0, 32) + '/';
-    let people = await peopleList(opts, false);
-    if (people.indexOf(hash) < 0) people = await peopleList(opts, true); // someone may have just started on another phone
+    const hash = sha(A.salt + key);
+    const home = ROOT + A.dir + hash.slice(0, 32) + '/';
+    let people = await peopleList(A, opts, false);
+    if (people.indexOf(hash) < 0) people = await peopleList(A, opts, true); // someone may have just started on another phone
     if (people.indexOf(hash) < 0) {
       // only sending something (a backup or a photo) can start a new person's folder
       if (req.method !== 'POST' || (op !== 'save' && op !== 'photo')) { res.status(200).json({ ok: false, empty: true, error: 'There’s no backup in the cloud for that code.' }); return; }
       if (people.length >= MAX_PEOPLE) { res.status(200).json({ ok: false, full: true, error: 'The family backup is full (' + MAX_PEOPLE + ' people). Ask Dave to make room.' }); return; }
       people = people.concat([hash]);
-      await blob().put(ROOT + '_people.json', JSON.stringify({ people }), put(opts, 'application/json'));
-      PEOPLE = people;
+      await blob().put(ROOT + A.people, JSON.stringify({ people }), put(opts, 'application/json'));
+      PEOPLE[A.people] = people;
     }
 
     if (op === 'save' && req.method === 'POST') {
@@ -62,7 +69,7 @@ module.exports = async (req, res) => {
       if (!text) { res.status(400).json({ ok: false, error: 'The backup was empty.' }); return; }
       if (text.length > MAX_BACKUP) { res.status(413).json({ ok: false, error: 'The backup is too big to send in one piece.' }); return; }
       let o; try { o = JSON.parse(text); } catch (e) { o = null; }
-      if (!o || o.app !== 'yumyumtumtum' || !Array.isArray(o.recipes)) { res.status(400).json({ ok: false, error: 'That isn’t a YumYum backup.' }); return; }
+      if (!o || !A.check(o)) { res.status(400).json({ ok: false, error: 'That isn’t a' + (A.name === 'Artistry' ? 'n ' : ' ') + A.name + ' backup.' }); return; }
       await blob().put(home + 'latest.json', text, put(opts, 'application/json'));
       // the phone asks for a daily copy with its first backup of the day (keeps Vercel's free operations low)
       const day = /^\d{4}-\d{2}-\d{2}$/.test(String(qp.day || '')) ? String(qp.day) : new Date().toISOString().slice(0, 10);
@@ -72,7 +79,7 @@ module.exports = async (req, res) => {
         const old = (await listAll(home + 'days/', opts)).map(b => b.pathname).sort().reverse().slice(KEEP_DAYS);
         if (old.length) await blob().del(old, opts);
       }
-      res.status(200).json({ ok: true, at: new Date().toISOString(), size: text.length, recipes: o.recipes.length, daily });
+      res.status(200).json(Object.assign({ ok: true, at: new Date().toISOString(), size: text.length }, A.counts(o), { daily }));
       return;
     }
     if (op === 'photo' && req.method === 'POST') {
@@ -121,22 +128,22 @@ module.exports = async (req, res) => {
 };
 
 function setUp() { return !!(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN); }
-// "yum-7kq2 9ztm…" -> "7KQ29ZTM…"
-function normKey(k) { return String(k || '').toUpperCase().replace(/^YUM/, '').replace(/[^0-9A-Z]/g, '').slice(0, 64); }
-const sha = s => crypto.createHash('sha256').update('yyt:' + s).digest('hex');
+// "yum-7kq2 9ztm…" -> "7KQ29ZTM…" (Artistry: "art-…")
+function normKey(k, A) { return String(k || '').toUpperCase().replace(A.prefix, '').replace(/[^0-9A-Z]/g, '').slice(0, 64); }
+const sha = s => crypto.createHash('sha256').update(s).digest('hex');
 const cleanId = id => String(id || '').replace(/[^\w-]/g, '').slice(0, 80);
 const iso = d => { try { return new Date(d).toISOString(); } catch (e) { return ''; } };
 const put = (opts, contentType) => Object.assign({}, opts, { contentType, addRandomSuffix: false, allowOverwrite: true, cacheControlMaxAge: 60 });
 
-async function peopleList(opts, fresh) {
-  if (PEOPLE && !fresh) return PEOPLE;
+async function peopleList(A, opts, fresh) {
+  if (PEOPLE[A.people] && !fresh) return PEOPLE[A.people];
   let r = null;
-  try { r = await blob().get(ROOT + '_people.json', Object.assign({ useCache: false }, opts)); }
+  try { r = await blob().get(ROOT + A.people, Object.assign({ useCache: false }, opts)); }
   catch (e) { if (!/not.?found/i.test((e && (e.name + ' ' + e.message)) || '')) throw e; }
   let list = [];
   if (r && r.statusCode === 200) { try { list = JSON.parse(await new Response(r.stream).text()).people || []; } catch (e) { list = []; } }
-  PEOPLE = Array.isArray(list) ? list.filter(x => typeof x === 'string') : [];
-  return PEOPLE;
+  PEOPLE[A.people] = Array.isArray(list) ? list.filter(x => typeof x === 'string') : [];
+  return PEOPLE[A.people];
 }
 async function listAll(prefix, opts) {
   const out = []; let cursor;
@@ -167,5 +174,5 @@ function plain(e) {
   return 'The backup didn’t go through. It’ll try again later.';
 }
 
-module.exports._setBlob = b => { BLOB = b; PEOPLE = null; };
+module.exports._setBlob = b => { BLOB = b; PEOPLE = {}; };
 module.exports.MAX_PEOPLE = MAX_PEOPLE;

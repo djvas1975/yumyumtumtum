@@ -3,7 +3,7 @@
    (api/idea.js), finds blog projects (api/crafts.js) and music lessons (api/music.js). */
 (() => {
 'use strict';
-const VERSION = '2.1';
+const VERSION = '2.2';
 const READER_V = 3;
 const Cats = window.Cats, Hol = window.Holidays, Sup = window.Supplies;
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
@@ -136,7 +136,7 @@ const DB = {
   del(store, key) { if (!this.db) { this.mem[store].delete(key); return Promise.resolve(); } return this.req(store, 'readwrite', s => s.delete(key)); }
 };
 const kvGet = k => DB.get('kv', k);
-const kvSet = (k, v) => DB.put('kv', v, k).catch(() => {});
+const kvSet = (k, v) => { if (!NOSYNC.has(k)) cloudChanged(); return DB.put('kv', v, k).catch(() => {}); };
 
 /* ---------- state ---------- */
 const S = {
@@ -160,7 +160,7 @@ const S = {
   owner: false,
   ready: false
 };
-function savePin(p) { p.updatedAt = Date.now(); return DB.put('pins', p).catch(() => toast('Couldn’t save on this phone. Is its storage full?')); }
+function savePin(p) { p.updatedAt = Date.now(); cloudChanged(); return DB.put('pins', p).catch(() => toast('Couldn’t save on this phone. Is its storage full?')); }
 function saveTaste() { kvSet('taste', S.taste); }
 const saveStash = () => kvSet('stash', S.stash);
 const saveShop = () => kvSet('shop', S.shop);
@@ -878,8 +878,8 @@ function vStudio() {
     if (cats.length) h += `<h2 class="sect">By kind</h2><div class="boards">${cats.map(boardCard).join('')}</div>`;
   }
   if (!standalone()) h += `<div class="card teal" style="margin-top:26px"><h3>Put Artistry on your home screen</h3><p class="muted" style="font-size:14px">So it shows up in the Share menu of your other apps.</p><div class="row" style="margin-top:10px">${S.installEvt ? `<button class="btn teal sm" data-act="install">Install app</button>` : `<span class="muted" style="font-size:14px">In Chrome, tap ⋮, then <b>Install app</b> or <b>Add to Home screen</b>.</span>`}</div></div>`;
-  h += `<h2 class="sect">Backup</h2><div class="card"><p class="muted" style="font-size:14px;margin-bottom:10px">Everything you save stays on this phone. Download a backup now and then, or to move to a new phone.</p>
-    <div class="row"><button class="btn ink sm" data-act="backup">${I(IC.download)}Download backup</button><button class="btn gray sm" data-act="restore">${I(IC.upload)}Restore a backup</button></div></div>
+  h += `<h2 class="sect">Backup</h2>${cloudCard()}<div class="card bk"><h3>Backup file</h3><p class="muted" style="font-size:14px;margin-bottom:10px">Or keep a copy yourself: a file with everything, photos included.</p>
+    <div class="row"><button class="btn gray sm" data-act="backup">${I(IC.download)}Download backup</button><button class="btn gray sm" data-act="restore">${I(IC.upload)}Restore a backup</button></div></div>
     <p class="faint center" style="font-size:12.5px;margin:22px 0" data-act="ver">Artistry ${VERSION}</p>`;
   return h;
 }
@@ -1640,6 +1640,7 @@ document.addEventListener('click', async e => {
   const thenClose = fn => { if (inSheet && el.dataset.close) closeSheet(fn); else fn(); };
   if (/^(m-|ms-|mset-|v-|open-video)/.test(a)) { await musicTap(a, el, inSheet); return; }
   if (/^pr-/.test(a)) { await practiceTap(a, el, inSheet); return; }
+  if (/^(cloud-|cr-)/.test(a)) { await cloudTap(a, el); return; }
   if (el.tagName === 'A' && el.getAttribute('href') === '#') e.preventDefault();
   switch (a) {
     case 'tab': thenClose(() => goTab(el.dataset.tab)); break;
@@ -2366,20 +2367,15 @@ async function backup() {
   document.body.appendChild(a); a.click(); a.remove();
   toast('Backup downloaded (' + plural(S.pins.length, 'idea') + ')');
 }
-$('#restoreFile').addEventListener('change', async e => {
-  const file = e.target.files && e.target.files[0];
-  e.target.value = '';
-  if (!file) return;
-  let d;
-  try { d = JSON.parse(await file.text()); } catch (err) { toast('That file isn’t an Artistry backup.'); return; }
-  if (!d || d.app !== 'brushglue' || !Array.isArray(d.pins)) { toast('That file isn’t an Artistry backup.'); return; }
+// bring a backup back (from a file or the cloud): adds what's missing and newer copies; never deletes anything
+async function restoreData(d, getPhoto) {
   let added = 0;
   for (const p of d.pins) {
     const cur = S.pins.find(x => x.id === p.id);
     if (cur && (cur.updatedAt || 0) >= (p.updatedAt || 0)) continue;
-    if (d.photos && d.photos[p.id]) { try { const b = await (await fetch(d.photos[p.id])).blob(); await DB.put('photos', b, p.id); photoURLs.delete(p.id); p.photo = true; } catch (err) { p.photo = false; } }
-    else p.photo = false;
-    for (const key of p.madePhotos || []) { if (d.photos && d.photos[key]) { try { const b = await (await fetch(d.photos[key])).blob(); await DB.put('photos', b, key); } catch (err) {} } }
+    const pb = await getPhoto(p.id).catch(() => null);
+    if (pb) { await DB.put('photos', pb, p.id).catch(() => {}); photoURLs.delete(p.id); p.photo = true; } else p.photo = false;
+    for (const key of p.madePhotos || []) { const mb = await getPhoto(key).catch(() => null); if (mb) await DB.put('photos', mb, key).catch(() => {}); }
     await DB.put('pins', p).catch(() => {});
     if (cur) Object.assign(cur, p); else { S.pins.push(p); added++; }
   }
@@ -2387,13 +2383,211 @@ $('#restoreFile').addEventListener('change', async e => {
   if (Array.isArray(d.dismissed)) { d.dismissed.forEach(u => S.dismissed.add(u)); kvSet('dismissed', Array.from(S.dismissed)); }
   if (d.music) loadMusicState(d.music, true);
   if (d.practice) loadPractice(d.practice, true);
-  if (d.stash) { S.stash.have = Array.from(new Set(S.stash.have.concat(d.stash.have || []))); S.stash.custom = Array.from(new Set(S.stash.custom.concat(d.stash.custom || []))); saveStash(); }
+  if (d.stash) { S.stash.have = Array.from(new Set(S.stash.have.concat(d.stash.have || []))); S.stash.custom = Array.from(new Set(S.stash.custom.concat(d.stash.custom || []))); if (d.stash.basics === false) S.stash.basics = false; saveStash(); }
   if (Array.isArray(d.shop)) { for (const x of d.shop) if (!S.shop.some(y => y.k === x.k)) S.shop.push(x); saveShop(); }
   if (d.profile && d.profile.name && !S.profile.name) { S.profile.name = d.profile.name; saveProfile(); }
   S.pins.sort((a, b) => b.createdAt - a.createdAt);
+  return added;
+}
+$('#restoreFile').addEventListener('change', async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  let d;
+  try { d = JSON.parse(await file.text()); } catch (err) { toast('That file isn’t an Artistry backup.'); return; }
+  if (!d || d.app !== 'brushglue' || !Array.isArray(d.pins)) { toast('That file isn’t an Artistry backup.'); return; }
+  const added = await restoreData(d, async key => d.photos && d.photos[key] ? (await fetch(d.photos[key])).blob() : null);
   renderRoute(true);
   toast('Restored ' + plural(added, 'new idea'));
 });
+
+/* ---------- cloud backup: automatic, to the private Vercel Blob store in Dave's account (api/backup.js, app=artistry)
+   The recovery code (ART-XXXX-XXXX-XXXX-XXXX) stays on this phone, never in the backup. Every saved change bumps a
+   counter; a minute and a half after the last change (at most every 30 minutes, or 10 when she leaves the app) the
+   phone sends the backup. Photos go up once each. The first backup of the day also keeps a daily copy (30 days). */
+const CLOUD_LS = 'art-cloud-v1', REV_LS = 'art-rev';
+const lsGet = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const CLOUD = Object.assign({ on: false, key: '', last: '', lastDay: '', lastRev: -1, lastCount: 0, err: '', sent: {} }, lsGet(CLOUD_LS) || {});
+let cloudBusy = false, cloudT = 0, cloudPending = '', CR = null;
+const saveCloud = () => lsSet(CLOUD_LS, CLOUD);
+const localRev = () => +(lsGet(REV_LS) || 0);
+const NOSYNC = new Set(['ideas', 'mfeed', 'mpicks', 'owner']);
+function cloudChanged() {
+  lsSet(REV_LS, localRev() + 1);
+  if (!CLOUD.on) return;
+  clearTimeout(cloudT);
+  cloudT = setTimeout(() => cloudBackup(false), 90e3);
+}
+function newCode() {
+  const A = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  let s = '';
+  crypto.getRandomValues(new Uint8Array(16)).forEach(x => { s += A[x % A.length]; });
+  return 'ART-' + s.match(/.{4}/g).join('-');
+}
+const normCode = c => String(c || '').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^ART/, '');
+const fmtCode = c => { const n = normCode(c); return n.length === 16 ? 'ART-' + n.match(/.{4}/g).join('-') : String(c || '').trim().toUpperCase(); };
+const localDay = () => new Date().toLocaleDateString('en-CA');
+const safeId = k => String(k).replace(/[^\w-]/g, '_');
+async function cloudFetch(q, init, key) {
+  const ctrl = new AbortController(), tm = setTimeout(() => ctrl.abort(), 45000);
+  try { return await fetch(API + '/api/backup?app=artistry&' + q, Object.assign({}, init || {}, { signal: ctrl.signal, cache: 'no-store', headers: Object.assign({ 'x-backup-key': key || CLOUD.key }, (init || {}).headers || {}) })); }
+  catch (e) { throw new Error(e && e.name === 'AbortError' ? 'The backup took too long. It’ll try again later.' : 'Couldn’t reach the backup. Check your connection.'); }
+  finally { clearTimeout(tm); }
+}
+async function cloudJSON(q, init, key) {
+  const res = await cloudFetch(q, init, key);
+  let j = null;
+  try { j = await res.json(); } catch (e) {}
+  if (!j) throw new Error('The backup service didn’t answer right. It’ll try again later.');
+  if (!j.ok && j.app !== 'brushglue') throw Object.assign(new Error(j.error || 'The backup didn’t go through.'), { needsSetup: !!j.needsSetup, empty: !!j.empty, full: !!j.full });
+  return j;
+}
+async function cloudBackup(manual) {
+  if (!CLOUD.on || !CLOUD.key || cloudBusy || !S.ready) return false;
+  const rev = localRev();
+  if (!manual) {
+    if (rev === CLOUD.lastRev && !CLOUD.err) return false;
+    const since = CLOUD.last ? Date.now() - Date.parse(CLOUD.last) : 1e12;
+    const gap = (document.hidden ? 10 : 30) * 60e3;
+    if (since < gap) { clearTimeout(cloudT); cloudT = setTimeout(() => cloudBackup(false), gap - since + 1000); return false; }
+    if (navigator.onLine === false) return false;
+  }
+  cloudBusy = true; redrawCloud();
+  try {
+    const pins = S.pins.filter(p => !p.example);
+    if (!manual && CLOUD.lastCount >= 5 && pins.length < CLOUD.lastCount / 2) throw new Error('This phone has a lot fewer ideas than your last backup (' + pins.length + ' vs ' + CLOUD.lastCount + '), so the automatic backup stopped to keep that one safe. Tap Back up now if that’s right, or Restore to get them back.');
+    const refs = {};
+    for (const p of pins) {
+      for (const key of (p.photo ? [p.id] : []).concat(p.madePhotos || [])) {
+        const id = safeId(key);
+        if (!CLOUD.sent[id]) {
+          const b = await DB.get('photos', key).catch(() => null);
+          if (!b || !b.size) continue;
+          await cloudJSON('op=photo&id=' + enc(id), { method: 'POST', body: b, headers: { 'content-type': 'application/octet-stream', 'x-photo-type': b.type || 'image/jpeg' } });
+          CLOUD.sent[id] = 1; saveCloud();
+        }
+        refs[key] = id;
+      }
+    }
+    const pack = list => JSON.stringify({ app: 'brushglue', v: 1, at: new Date().toISOString(), pins: list, taste: S.taste, dismissed: Array.from(S.dismissed), music: { prefs: MS.prefs, events: MS.events, dismissed: Array.from(MS.dismissed), dismissedSongs: Array.from(MS.dismissedSongs) }, stash: S.stash, shop: S.shop, profile: S.profile, practice: { sessions: PR.sessions, goal: PR.goal }, photoRefs: refs });
+    let data = pack(pins);
+    // what's said in TikToks can be read again, so it's the first thing left out of a very big backup
+    if (data.length > 3800000) data = pack(pins.map(p => Object.assign({}, p, { speech: '' })));
+    if (data.length > 3800000) throw new Error('Your backup got too big to send in one piece. Ask Dave to have it split up.');
+    const day = localDay();
+    await cloudJSON('op=save&day=' + day + (CLOUD.lastDay !== day ? '&daily=1' : ''), { method: 'POST', body: data, headers: { 'content-type': 'application/json' } });
+    Object.assign(CLOUD, { last: new Date().toISOString(), lastDay: day, lastRev: rev, lastCount: pins.length, err: '' });
+    saveCloud();
+    return true;
+  } catch (e) {
+    CLOUD.err = e.needsSetup ? 'setup' : (e.message || 'The backup didn’t go through.');
+    saveCloud();
+    return false;
+  } finally { cloudBusy = false; redrawCloud(); }
+}
+function whenText(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return '';
+  const t = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), k = d.toLocaleDateString('en-CA');
+  return k === localDay() ? 'today at ' + t : k === new Date(Date.now() - 864e5).toLocaleDateString('en-CA') ? 'yesterday at ' + t : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' at ' + t;
+}
+function cloudCard() {
+  let st;
+  if (!CLOUD.on) st = `<p class="muted" style="font-size:14px">Copies your ideas, photos, supplies and practice log to private cloud storage (in Dave’s Vercel account) by itself. A new phone gets it all back with your recovery code.</p>`;
+  else if (cloudBusy) st = `<p class="cstat"><span class="spinner"></span>Backing up…</p>`;
+  else if (CLOUD.err === 'setup') st = `<p class="cstat warn">Waiting on Dave to set up the cloud storage. It starts backing up by itself once it’s ready. Everything is still safe on this phone.</p>`;
+  else if (CLOUD.err) st = `<p class="cstat bad">${esc(CLOUD.err)}</p>`;
+  else if (CLOUD.last) st = `<p class="cstat ok">${I(IC.check)}<span>Backed up ${esc(whenText(CLOUD.last))} · ${plural(CLOUD.lastCount, 'idea')}</span></p><p class="muted" style="font-size:13px;margin:4px 0 0">It backs up by itself after you save or change something.</p>`;
+  else st = `<p class="cstat">On. The first backup is coming up.</p>`;
+  return `<div class="card bk" id="cloudcard"><h3>Cloud backup</h3>${st}<div class="row" style="margin-top:12px">${CLOUD.on
+    ? `<button class="btn teal sm" data-act="cloud-now"${cloudBusy ? ' disabled' : ''}>${I(IC.upload)}Back up now</button><button class="btn gray sm" data-act="cloud-menu">More</button>`
+    : `<button class="btn teal sm" data-act="cloud-on">Turn on</button><button class="btn gray sm" data-act="cloud-restore">${I(IC.download)}Restore from cloud</button>`}</div></div>`;
+}
+function redrawCloud() { const c = $('#cloudcard'); if (c) c.outerHTML = cloudCard(); }
+function codeSheet(title, intro, code, foot) {
+  showSheet(`<div class="grip"></div><div class="shead"><h2>${esc(title)}</h2><button class="iconbtn" data-act="close-sheet" aria-label="Close">${I(IC.x)}</button></div>
+    <p class="muted" style="font-size:14.5px;margin:0 2px 12px">${intro}</p>
+    <div class="codebox" aria-label="Recovery code">${esc(code)}</div>
+    <div class="row" style="margin:12px 0 4px"><button class="btn gray sm" data-act="cloud-copy" data-code="${esc(code)}">Copy</button>${navigator.share ? `<button class="btn gray sm" data-act="cloud-share" data-code="${esc(code)}">${I(IC.share)}Share</button>` : ''}</div>
+    <p class="muted small" style="margin:8px 2px 0">Keep it private. Anyone with this code could see your backup.</p>${foot}`, title);
+}
+function crSheet() {
+  const head = `<div class="grip"></div><div class="shead"><h2>Restore from cloud</h2><button class="iconbtn" data-act="close-sheet" aria-label="Close">${I(IC.x)}</button></div>`;
+  const status = (CR.err ? `<p class="hint bad">${esc(CR.err)}</p>` : '') + (CR.busy ? `<p class="cstat"><span class="spinner"></span>${esc(CR.busy)}</p>` : '');
+  if (CR.step === 'code') return showSheet(head + `<p class="muted" style="font-size:14.5px;margin:0 2px 4px">Type your recovery code. It starts with ART.</p>
+    <div class="field"><label for="crCode">Recovery code</label><input id="crCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ART-XXXX-XXXX-XXXX-XXXX" value="${esc(CR.code)}"></div>${status}
+    <div class="sactions"><button class="btn teal" data-act="cr-find"${CR.busy ? ' disabled' : ''}>Find my backup</button></div>`, 'Restore from cloud');
+  const rows = [];
+  if (CR.info.latest) rows.push(`<button class="crrow" data-act="cr-get" data-day="latest"${CR.busy ? ' disabled' : ''}><b>Latest</b><small>${esc(whenText(CR.info.latest.at))}</small></button>`);
+  for (const d of CR.info.days || []) rows.push(`<button class="crrow" data-act="cr-get" data-day="${esc(d.day)}"${CR.busy ? ' disabled' : ''}><b>${esc(new Date(d.day + 'T12:00:00').toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' }))}</b><small>The first backup that day</small></button>`);
+  showSheet(head + `<p class="muted" style="font-size:14.5px;margin:0 2px 10px">Pick one. It adds what this phone is missing and doesn’t delete anything.</p><div class="crlist">${rows.join('')}</div>${status}`, 'Restore from cloud');
+}
+async function crFind() {
+  const box = $('#crCode');
+  CR.code = box ? box.value : CR.code;
+  if (normCode(CR.code).length < 12) { CR.err = 'That code looks too short. It’s ART and 16 letters and numbers.'; crSheet(); return; }
+  CR.err = ''; CR.busy = 'Looking for your backup…'; crSheet();
+  try { CR.info = await cloudJSON('op=info', null, fmtCode(CR.code)); CR.step = 'pick'; CR.busy = ''; if (!CR.info.latest) throw Object.assign(new Error('There’s no backup in the cloud for that code.'), { empty: true }); }
+  catch (e) { CR.busy = ''; CR.step = 'code'; CR.err = e.needsSetup ? 'Cloud backup isn’t set up yet. Ask Dave.' : e.message; }
+  crSheet();
+}
+async function crGet(day) {
+  const code = fmtCode(CR.code);
+  CR.err = ''; CR.busy = 'Getting your backup…'; crSheet();
+  try {
+    const d = await cloudJSON('op=get&day=' + enc(day), null, code);
+    if (!d || d.app !== 'brushglue' || !Array.isArray(d.pins)) throw new Error('That backup couldn’t be read.');
+    const refs = d.photoRefs || {};
+    let n = 0;
+    const total = Object.keys(refs).length;
+    const added = await restoreData(d, async key => {
+      if (!refs[key]) return null;
+      if (++n % 5 === 0) { CR.busy = 'Getting photos (' + n + ' of ' + total + ')…'; const s = $('#sheet .cstat'); if (s) s.lastChild.textContent = CR.busy; }
+      const r = await cloudFetch('op=photo&id=' + enc(refs[key]), null, code);
+      return r.ok ? r.blob() : null;
+    });
+    // keep backing up to the same place from this phone
+    Object.assign(CLOUD, { on: true, key: code, err: '', lastRev: -1, lastCount: d.pins.length, sent: Object.assign({}, CLOUD.sent, Object.fromEntries(Object.values(refs).map(id => [id, 1]))) });
+    saveCloud();
+    closeSheet(() => renderRoute(true));
+    toast('Restored ' + plural(added, 'new idea') + '. Cloud backup is on.');
+  } catch (e) { CR.busy = ''; CR.err = e.message; crSheet(); }
+}
+async function cloudTap(a, el) {
+  switch (a) {
+    case 'cloud-on':
+      cloudPending = CLOUD.key || newCode();
+      codeSheet('Turn on cloud backup', 'This is your <b>recovery code</b>. You’ll need it to get your ideas back on a new phone, so save it somewhere safe, like a note or a text to yourself.', cloudPending,
+        `<div class="sactions"><button class="btn gray" data-act="close-sheet" style="flex:0 0 auto">Cancel</button><button class="btn teal" data-act="cloud-start">I saved it. Turn on</button></div>`);
+      break;
+    case 'cloud-start': {
+      Object.assign(CLOUD, { on: true, key: cloudPending, err: '', lastRev: -1 }); saveCloud();
+      closeSheet(() => renderRoute(true));
+      const ok = await cloudBackup(true);
+      toast(ok ? 'Cloud backup is on. Backed up ' + plural(CLOUD.lastCount, 'idea') + '.' : CLOUD.err === 'setup' ? 'Cloud backup is on. It starts once Dave sets up the storage.' : 'Cloud backup is on');
+    } break;
+    case 'cloud-now': { const ok = await cloudBackup(true); if (ok) toast('Backed up ' + plural(CLOUD.lastCount, 'idea')); } break;
+    case 'cloud-menu':
+      showSheet(`<div class="grip"></div><div class="shead"><h2>Cloud backup</h2></div><div class="menu">
+        <button data-act="cloud-code">${I(IC.pencil)}See my recovery code</button>
+        <button data-act="cloud-restore">${I(IC.download)}Restore from cloud</button>
+        <button class="danger" data-act="cloud-off">${I(IC.x)}Turn off cloud backup</button></div>`, 'Cloud backup');
+      break;
+    case 'cloud-code': codeSheet('Your recovery code', 'Use it to get your ideas back on a new phone (Studio > Restore from cloud).', fmtCode(CLOUD.key), `<div class="sactions"><button class="btn ink" data-act="close-sheet">Done</button></div>`); break;
+    case 'cloud-off':
+      showSheet(`<div class="grip"></div><div class="shead"><h2>Turn off cloud backup?</h2></div><p class="muted" style="font-size:14.5px;margin:0 2px">Your backups stay in the cloud. This phone just stops sending new ones. You can turn it back on with the same code.</p>
+        <div class="sactions"><button class="btn gray" data-act="close-sheet">Keep it on</button><button class="btn coral" data-act="cloud-off-yes">Turn off</button></div>`, 'Turn off cloud backup');
+      break;
+    case 'cloud-off-yes': CLOUD.on = false; saveCloud(); closeSheet(() => renderRoute(true)); toast('Cloud backup is off'); break;
+    case 'cloud-copy': try { await navigator.clipboard.writeText(el.dataset.code); toast('Code copied'); } catch (e) { toast(el.dataset.code); } break;
+    case 'cloud-share': navigator.share({ title: 'Artistry recovery code', text: 'My Artistry recovery code: ' + el.dataset.code }).catch(() => {}); break;
+    case 'cloud-restore': CR = { step: 'code', code: CLOUD.key ? fmtCode(CLOUD.key) : '', err: '', busy: '', info: null }; crSheet(); break;
+    case 'cr-find': crFind(); break;
+    case 'cr-get': crGet(el.dataset.day); break;
+  }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden && CLOUD.on) cloudBackup(false); });
 /* ---------- practice tools: practice log and streak, metronome, tuner ---------- */
 // The log: lesson time (a lesson playing), metronome time, and the practice timer all count. A day counts toward the
 // streak with at least a minute. Kept in kv 'practice' and in backups. Math is in practice.js (tested).
@@ -2936,6 +3130,7 @@ async function init() {
   if (findUrl(shared.url) || findUrl(shared.text) || findUrl(shared.title) || shared.text) openSave(shared);
   else if (qs.has('add')) openSave({});
   if ('serviceWorker' in navigator && location.protocol === 'https:') watchUpdates();
+  if (CLOUD.on) setTimeout(() => cloudBackup(false), 20000);
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 }
 init();
