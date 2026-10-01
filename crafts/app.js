@@ -3,7 +3,7 @@
    (api/idea.js), finds blog projects (api/crafts.js) and music lessons (api/music.js). */
 (() => {
 'use strict';
-const VERSION = '2.0';
+const VERSION = '2.1';
 const READER_V = 3;
 const Cats = window.Cats, Hol = window.Holidays, Sup = window.Supplies;
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
@@ -20,6 +20,12 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const I = (d, cls) => `<svg class="ic${cls ? ' ' + cls : ''}" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
 const E = e => `<i class="emo">${e}</i>`;
 const IC = {
+  timer: '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V10M9.5 3h5M18.3 7.2l1.4-1.4"/>',
+  metro: '<path d="M9 3.5h6l3.6 17H5.4z"/><path d="M12 16.5l5.5-10"/><path d="M7.2 14.5h9.6"/>',
+  fork: '<path d="M8.5 3v6.5a3.5 3.5 0 0 0 7 0V3"/><path d="M12 13v8"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+  pause: '<rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/>',
+  stop: '<rect x="6" y="6" width="12" height="12" rx="2"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
   dots: '<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>',
   heart: '<path d="M12 20.3l-1.2-1.1C6.2 15.1 3.5 12.6 3.5 9.4 3.5 6.9 5.4 5 7.9 5c1.6 0 3.1.8 4.1 2 1-1.2 2.5-2 4.1-2 2.5 0 4.4 1.9 4.4 4.4 0 3.2-2.7 5.7-7.3 9.8z"/>',
@@ -559,7 +565,8 @@ function renderRoute(keepScroll) {
   // a lesson that's playing keeps playing when its page refreshes
   if (r.v === 'video' && keepScroll && curV && (curV.id === r.k || (r.pin && savedVid(curV.id) && savedVid(curV.id).id === r.pin))) { refreshVideoBits(curV); return; }
   stopPlayer();
-  const views = { home: vHome, explore: vExplore, studio: vStudio, music: vMusic, supplies: vSupplies, creator: () => vCreator(r.k), holiday: () => vHoliday(r.k), board: () => vBoard(r.key), pin: () => vPin(S.pins.find(p => p.id === r.id)), idea: () => vIdea(S.web.get(r.k) || r.item), video: () => vVideo(r) };
+  if (r.v !== 'tuner' && TUN.on) tunStop();
+  const views = { home: vHome, explore: vExplore, studio: vStudio, music: vMusic, supplies: vSupplies, creator: () => vCreator(r.k), holiday: () => vHoliday(r.k), board: () => vBoard(r.key), pin: () => vPin(S.pins.find(p => p.id === r.id)), idea: () => vIdea(S.web.get(r.k) || r.item), video: () => vVideo(r), practice: vPractice, metronome: vMetronome, tuner: vTuner };
   main.innerHTML = (views[r.v] || vHome)();
   hydrate(main);
   if (keepScroll) window.scrollTo(0, y);
@@ -568,6 +575,8 @@ function renderRoute(keepScroll) {
   if (r.v === 'pin' || r.v === 'idea') loadMore(r);
   if (r.v === 'holiday') loadHolidayIdeas(r.k);
   if (r.v === 'explore' || r.v === 'home') loadIdeas(false);
+  updatePill();
+  wake();
 }
 let resizeT = 0, lastCols = 0;
 window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (colCount() !== lastCols && !['pin', 'idea', 'video'].includes(S.route.v)) renderRoute(true); lastCols = colCount(); }, 200); });
@@ -588,7 +597,8 @@ function storiesRail() {
   const ready = readyPins();
   if (ready.length) items.push({ act: 'board', data: { key: 'ready' }, label: 'Ready', aria: 'Ready to make', seed: 'ready', tag: ready.length, inner: `<span class="in">${imgTag(ready[0]) || E('✅')}</span>` });
   const learning = S.pins.find(p => p.type === 'music' && p.mstatus === 'learning');
-  if (learning) items.push({ act: 'tab', data: { tab: 'music' }, label: 'Practice', seed: 'practice', inner: `<span class="in">${imgTag(learning) || E('🎸')}</span>` });
+  const pst = Pr.streak(PR.sessions);
+  if (learning || pst.days || PR.run) items.push({ act: 'pr-open', label: 'Practice', seed: 'practice', aria: 'Practice' + (pst.days ? ', ' + plural(pst.days, 'day') + ' in a row' : ''), tag: pst.days ? '🔥' + pst.days : '', inner: `<span class="in">${(learning && imgTag(learning)) || E('🎸')}</span>` });
   for (const c of topCreators(4)) items.push({ act: 'creator', data: { k: c.key }, label: c.name, one: true, seed: c.key, inner: `<span class="in letter" style="background:${letterColor(c.key)}">${esc(c.name.replace(/^@/, '').charAt(0).toUpperCase())}</span>` });
   return `<div class="stories" aria-label="Coming up">${items.map(storyBtn).join('')}</div>`;
 }
@@ -1629,6 +1639,7 @@ document.addEventListener('click', async e => {
   const inSheet = !!el.closest('#sheet');
   const thenClose = fn => { if (inSheet && el.dataset.close) closeSheet(fn); else fn(); };
   if (/^(m-|ms-|mset-|v-|open-video)/.test(a)) { await musicTap(a, el, inSheet); return; }
+  if (/^pr-/.test(a)) { await practiceTap(a, el, inSheet); return; }
   if (el.tagName === 'A' && el.getAttribute('href') === '#') e.preventDefault();
   switch (a) {
     case 'tab': thenClose(() => goTab(el.dataset.tab)); break;
@@ -2036,7 +2047,7 @@ function vMusic() {
   <div id="mres">${MS.q.trim() ? musicResults() : musicHome(P)}</div>`;
 }
 function musicHome(P) {
-  let h = '';
+  let h = practiceCard();
   const mine = S.pins.filter(p => p.type === 'music' && p.mstatus !== 'learned' && (MS.inst === 'all' || (p.insts || [p.category]).includes(MS.inst)))
     .sort((a, b) => (b.mstatus === 'learning') - (a.mstatus === 'learning') || (b.lastOpened || b.createdAt) - (a.lastOpened || a.createdAt));
   if (mine.length) h += `<h2 class="sect">Keep practicing</h2><div class="hscroll">${mine.slice(0, 15).map(p => p.kind === 'song' ? songTile(p) : vcard(pinVid(p), 'h')).join('')}</div>`;
@@ -2192,6 +2203,8 @@ function practiceTick() {
   }
 }
 function stopPlayer() {
+  if (curV) flushLesson(curV);
+  lessonLogged = 0;
   clearInterval(tick); tick = 0;
   try { if (YTP && YTP.destroy) YTP.destroy(); } catch (e) {}
   YTP = null; curV = null; loopA = loopB = null; watched = 0; watchEv = 0;
@@ -2345,7 +2358,7 @@ async function backup() {
       if (b) photos[key] = await asData(b);
     }
   }
-  const data = { app: 'brushglue', v: 1, at: new Date().toISOString(), pins: S.pins, taste: S.taste, dismissed: Array.from(S.dismissed), music: { prefs: MS.prefs, events: MS.events, dismissed: Array.from(MS.dismissed), dismissedSongs: Array.from(MS.dismissedSongs) }, stash: S.stash, shop: S.shop, profile: S.profile, photos };
+  const data = { app: 'brushglue', v: 1, at: new Date().toISOString(), pins: S.pins, taste: S.taste, dismissed: Array.from(S.dismissed), music: { prefs: MS.prefs, events: MS.events, dismissed: Array.from(MS.dismissed), dismissedSongs: Array.from(MS.dismissedSongs) }, stash: S.stash, shop: S.shop, profile: S.profile, practice: { sessions: PR.sessions, goal: PR.goal }, photos };
   const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2373,6 +2386,7 @@ $('#restoreFile').addEventListener('change', async e => {
   if (d.taste) { S.taste = Object.assign({ avoidTags: {}, avoidCats: {}, views: {} }, d.taste); saveTaste(); }
   if (Array.isArray(d.dismissed)) { d.dismissed.forEach(u => S.dismissed.add(u)); kvSet('dismissed', Array.from(S.dismissed)); }
   if (d.music) loadMusicState(d.music, true);
+  if (d.practice) loadPractice(d.practice, true);
   if (d.stash) { S.stash.have = Array.from(new Set(S.stash.have.concat(d.stash.have || []))); S.stash.custom = Array.from(new Set(S.stash.custom.concat(d.stash.custom || []))); saveStash(); }
   if (Array.isArray(d.shop)) { for (const x of d.shop) if (!S.shop.some(y => y.k === x.k)) S.shop.push(x); saveShop(); }
   if (d.profile && d.profile.name && !S.profile.name) { S.profile.name = d.profile.name; saveProfile(); }
@@ -2380,6 +2394,474 @@ $('#restoreFile').addEventListener('change', async e => {
   renderRoute(true);
   toast('Restored ' + plural(added, 'new idea'));
 });
+/* ---------- practice tools: practice log and streak, metronome, tuner ---------- */
+// The log: lesson time (a lesson playing), metronome time, and the practice timer all count. A day counts toward the
+// streak with at least a minute. Kept in kv 'practice' and in backups. Math is in practice.js (tested).
+const Pr = window.Practice;
+const PR = { sessions: [], goal: 15, run: null, met: { bpm: 80, beats: 4, sub: 1, accent: true }, tun: { id: '' }, inst: '', what: '', taps: [] };
+function savePractice() { kvSet('practice', { sessions: PR.sessions.slice(-1500), goal: PR.goal, run: PR.run, met: PR.met, tun: PR.tun, inst: PR.inst }); }
+function loadPractice(d, merge) {
+  if (!d) return;
+  if (Array.isArray(d.sessions)) {
+    if (merge) { const have = new Set(PR.sessions.map(s => s.id)); for (const s of d.sessions) if (s && s.id && !have.has(s.id)) PR.sessions.push(s); PR.sessions.sort((a, b) => a.t - b.t); }
+    else PR.sessions = d.sessions.filter(s => s && s.t);
+  }
+  if (!merge) {
+    if (d.goal) PR.goal = d.goal;
+    if (d.run && d.run.start) PR.run = d.run;
+    if (d.met) Object.assign(PR.met, d.met);
+    if (d.tun) Object.assign(PR.tun, d.tun);
+    if (d.inst) PR.inst = d.inst;
+  } else if (d.goal && !PR.sessions.length) PR.goal = d.goal;
+  if (merge) savePractice();
+}
+const instName = i => i ? M.instLabel(i) : 'Practice';
+const clockText = ms => { const s = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(x).padStart(2, '0'); };
+const elapsed = run => run ? (run.pausedAt || Date.now()) - run.start - (run.pausedMs || 0) : 0;
+function addSession(x) {
+  const mins = Math.round((x.mins || 0) * 10) / 10;
+  if (mins < 1) return null;
+  const before = Pr.streak(PR.sessions);
+  const s = { id: 's' + rid(), t: x.t || Date.now() - mins * 60000, mins, inst: x.inst || '', what: String(x.what || '').slice(0, 90), src: x.src || 'timer' };
+  PR.sessions.push(s);
+  PR.sessions.sort((a, b) => a.t - b.t);
+  savePractice();
+  const after = Pr.streak(PR.sessions);
+  if (Pr.dayKey(s.t) === Pr.dayKey(Date.now())) {
+    if (before.today < PR.goal && after.today >= PR.goal) { confetti(); toast('🎉 Daily goal done. ' + plural(after.days, 'day') + ' in a row!'); }
+    else if (!before.doneToday && after.doneToday) toast(after.days > 1 ? '🔥 ' + after.days + ' days in a row!' : 'First practice today. Nice!');
+  }
+  return s;
+}
+// lesson time: logged when the lesson stops or the app goes to the background (whole minutes)
+let lessonLogged = 0;
+function flushLesson(v) {
+  const secs = watched - lessonLogged;
+  if (!v || secs < 60) return;
+  lessonLogged = watched;
+  if (PR.run) return; // the timer already counts it
+  addSession({ mins: secs / 60, inst: (v.insts || [])[0] || '', what: v.title, src: 'lesson' });
+}
+
+// the goal ring: plum fills up; at the goal it closes as a painted ring
+function goalRing(mins, goal) {
+  const pct = Math.min(1, (mins || 0) / goal);
+  if (pct >= 1) return paintRing('goal' + Pr.dayKey(Date.now()));
+  const r = 33, C = 2 * Math.PI * r;
+  return `<svg class="paint" viewBox="0 0 74 74" aria-hidden="true"><circle cx="37" cy="37" r="${r}" fill="none" stroke="var(--mist-2)" stroke-width="4.5"/>${pct > 0.01 ? `<circle cx="37" cy="37" r="${r}" fill="none" stroke="var(--plum)" stroke-width="5.5" stroke-linecap="round" stroke-dasharray="${(C * pct).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 37 37)"/>` : ''}</svg>`;
+}
+function weekBars(wk, cls) {
+  const max = Math.max(PR.goal, ...wk.map(d => d.mins));
+  return `<div class="wk${cls ? ' ' + cls : ''}" aria-hidden="true">${wk.map(d => `<i class="${d.today ? 't' : ''}${d.mins >= PR.goal ? ' g' : ''}"><span class="b"><span style="height:${Math.max(d.mins ? 8 : 0, Math.round(d.mins / max * 100))}%"></span></span><em>${d.letter}</em></i>`).join('')}</div>`;
+}
+function toolButtons(noTimer) {
+  const run = PR.run;
+  return `<div class="ptools${noTimer ? ' two' : ''}">
+    ${noTimer ? '' : `<button class="ptool${run ? ' live' : ''}" data-act="pr-open">${I(IC.timer)}<span>${run ? esc(instName(run.inst)) : 'Practice'}<small${run ? ' class="prclock"' : ''}>${run ? clockText(elapsed(run)) : 'Timer'}</small></span></button>`}
+    <button class="ptool${MET.on ? ' live' : ''}" data-act="pr-met">${I(IC.metro)}<span>Metronome<small>${PR.met.bpm} BPM${MET.on ? ', on' : ''}</small></span></button>
+    <button class="ptool" data-act="pr-tuner">${I(IC.fork)}<span>Tuner<small>${esc(Pr.tuning(tunId()).name.split(',')[0])}</small></span></button>
+  </div>`;
+}
+// top of the Music tab
+function practiceCard() {
+  const st = Pr.streak(PR.sessions), wk = Pr.week(PR.sessions), today = Math.round(st.today);
+  const total = wk.reduce((s, d) => s + d.mins, 0);
+  return `<div class="pcard">
+    <button class="gring" data-act="pr-open" aria-label="Practice: ${today} of ${PR.goal} minutes today">${goalRing(st.today, PR.goal)}<span><b>${today}</b><small>of ${PR.goal} min</small></span></button>
+    <div class="ptxt">
+      <b>${st.days ? E('🔥') + plural(st.days, 'day') + ' in a row' : 'Start a streak today'}</b>
+      <small>${today >= PR.goal ? 'Today’s goal is done. Nice!' : total ? 'This week: ' + Pr.minsText(total) : 'Lessons, the metronome and the timer all count.'}</small>
+      ${weekBars(wk)}
+    </div>
+  </div>${toolButtons()}`;
+}
+function toolHead(title, extra) {
+  return `<div class="tophead"><button class="iconbtn" data-act="back" aria-label="Back">${I(IC.back)}</button><h1>${esc(title)}</h1><span class="grow"></span>${extra || ''}</div>`;
+}
+
+// Practice timer and log
+function vPractice() {
+  const run = PR.run, insts = MS.prefs.insts.length ? MS.prefs.insts : M.DEFAULT_INST;
+  const inst = run ? run.inst : (insts.includes(PR.inst) ? PR.inst : insts[0]);
+  const learning = S.pins.filter(p => p.type === 'music' && p.mstatus === 'learning').slice(0, 6);
+  const st = Pr.streak(PR.sessions), best = Pr.bestStreak(PR.sessions), wk = Pr.week(PR.sessions);
+  const total = wk.reduce((s, d) => s + d.mins, 0);
+  const now = st.today + (run ? elapsed(run) / 60000 : 0);
+  return `<div class="cu tool">
+    ${toolHead('Practice')}
+    <div class="bigring" id="bigring">${goalRing(now, PR.goal)}<div class="clock"><b class="prclock">${clockText(elapsed(run))}</b><small>${run ? (run.pausedAt ? 'Paused' : esc(instName(inst))) : Math.round(st.today) >= PR.goal ? Math.round(st.today) + ' min today. Goal done!' : Math.round(st.today) + ' of ' + PR.goal + ' min today'}</small></div></div>
+    ${run ? `<div class="row center gap">${run.pausedAt ? `<button class="btn teal big" data-act="pr-resume">${I(IC.play, 'fill')}Keep going</button>` : `<button class="btn gray big" data-act="pr-pause">${I(IC.pause, 'fill')}Pause</button>`}<button class="btn coral big" data-act="pr-done">${I(IC.check)}Done</button></div>
+      ${run.what ? `<p class="center muted small" style="margin:10px 0 0">Working on ${esc(run.what)}</p>` : ''}
+      <p class="center"><button class="linkbtn" style="color:var(--ink-2)" data-act="pr-discard">Don’t count this one</button></p>`
+    : `<div class="field"><span class="flabel">What are you playing?</span><div class="catpick">${insts.map(i => `<button data-act="pr-inst" data-i="${i}" aria-pressed="${i === inst}">${esc(M.instLabel(i))}</button>`).join('')}</div></div>
+      ${learning.length ? `<div class="field"><span class="flabel">Working on (if you want)</span><div class="catpick">${learning.map(p => `<button data-act="pr-what" data-id="${esc(p.id)}" aria-pressed="${PR.what === p.id}">${esc(String(p.song || p.title).slice(0, 34))}</button>`).join('')}</div></div>` : ''}
+      <button class="btn coral wide big" style="margin-top:18px" data-act="pr-start">${I(IC.play, 'fill')}Start practicing</button>`}
+    <div style="margin-top:18px">${toolButtons(true)}</div>
+    <h2 class="sect">Your practice</h2>
+    <div class="pstats"><div><b>${st.days ? E('🔥') + st.days : '0'}</b><small>days in a row</small></div><div><b>${best}</b><small>best streak</small></div><div><b>${Pr.minsText(total).replace('under a minute', '0 min')}</b><small>this week</small></div></div>
+    ${weekBars(wk, 'big')}
+    <div class="field"><span class="flabel">Daily goal</span><div class="catpick">${[5, 10, 15, 20, 30, 45, 60].map(g => `<button data-act="pr-goal" data-g="${g}" aria-pressed="${PR.goal === g}">${g} min</button>`).join('')}</div></div>
+    ${practiceHistory()}
+    <div class="row" style="margin:14px 2px"><button class="btn gray sm" data-act="pr-add">${I(IC.plus)}Add time you practiced</button></div>
+  </div>`;
+}
+function practiceHistory() {
+  const recent = PR.sessions.slice(-60).reverse();
+  if (!recent.length) return `<div class="note">Nothing logged yet. Start the timer, play a lesson, or turn on the metronome, and it shows up here.</div>`;
+  const byDay = new Map();
+  for (const s of recent) { const k = Pr.dayKey(s.t); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(s); }
+  const label = k => k === Pr.dayKey(Date.now()) ? 'Today' : k === Pr.dayKey(Date.now() - 864e5) ? 'Yesterday' : new Date(k + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  const src = s => s.src === 'lesson' ? 'Lesson' : s.src === 'metronome' ? 'Metronome' : s.src === 'added' ? 'Added' : 'Timer';
+  let h = '';
+  for (const [k, list] of Array.from(byDay).slice(0, 10)) {
+    h += `<div class="minihead">${esc(label(k))} · ${Pr.minsText(list.reduce((a, s) => a + s.mins, 0))}</div><div class="plog">${list.map(s => `<div class="pl"><span class="pdot2">${I(s.src === 'metronome' ? IC.metro : s.src === 'lesson' ? IC.play : IC.timer)}</span><span class="nm"><b>${esc(s.what || instName(s.inst))}</b><small>${esc([s.what ? instName(s.inst) : '', src(s), Pr.minsText(s.mins)].filter(x => x && x !== 'Practice').join(' · '))}</small></span><button class="iconbtn" data-act="pr-del" data-s="${esc(s.id)}" aria-label="Remove">${I(IC.x)}</button></div>`).join('')}</div>`;
+  }
+  return h;
+}
+function addTimeSheet() {
+  const insts = MS.prefs.insts.length ? MS.prefs.insts : M.DEFAULT_INST;
+  PR.add = PR.add || { mins: 15, inst: insts.includes(PR.inst) ? PR.inst : insts[0], day: 0 };
+  const a = PR.add;
+  showSheet(`<div class="grip"></div><div class="shead"><h2>Add practice time</h2><button class="iconbtn" data-act="close-sheet" aria-label="Close">${I(IC.x)}</button></div>
+    <div class="field"><span class="flabel">How long?</span><div class="catpick">${[5, 10, 15, 20, 30, 45, 60, 90].map(m => `<button data-act="pr-add-m" data-m="${m}" aria-pressed="${a.mins === m}">${Pr.minsText(m)}</button>`).join('')}</div></div>
+    <div class="field"><span class="flabel">Playing</span><div class="catpick">${insts.map(i => `<button data-act="pr-add-i" data-i="${i}" aria-pressed="${a.inst === i}">${esc(M.instLabel(i))}</button>`).join('')}</div></div>
+    <div class="field"><span class="flabel">When</span><div class="catpick">${[[0, 'Today'], [1, 'Yesterday'], [2, '2 days ago']].map(([d, l]) => `<button data-act="pr-add-d" data-d="${d}" aria-pressed="${a.day === d}">${l}</button>`).join('')}</div></div>
+    <div class="sactions"><button class="btn coral" data-act="pr-add-save">Add ${Pr.minsText(a.mins)}</button></div>`, 'Add practice time');
+}
+
+// Metronome: Web Audio clicks scheduled a little ahead (steady even when the phone is busy). When Artistry goes to
+// the background it schedules a minute ahead, since Chrome slows timers there; coming back reschedules.
+let AC = null;
+function audio() {
+  if (!AC) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return null; AC = new C(); }
+  if (AC.state === 'suspended') AC.resume().catch(() => {});
+  return AC;
+}
+const MET = { on: false, timer: 0, next: 0, i: 0, nodes: [], startedAt: 0 };
+function metStart() {
+  const c = audio();
+  if (!c) { toast('This phone’s browser can’t play the metronome.'); return; }
+  MET.on = true; MET.i = 0; MET.next = c.currentTime + 0.08; MET.startedAt = Date.now();
+  MET.timer = setInterval(metSched, 25);
+  metSched();
+  wake();
+}
+function metStop() {
+  if (!MET.on) return;
+  MET.on = false;
+  clearInterval(MET.timer);
+  metCancel(0);
+  const mins = (Date.now() - MET.startedAt) / 60000;
+  if (mins >= 1 && !PR.run) addSession({ mins, inst: PR.inst || '', what: 'With the metronome', src: 'metronome' });
+  for (const d of $$('#beatdots i')) d.classList.remove('on');
+  wake();
+}
+// drop clicks scheduled after time t (tempo change, stop, back from the background)
+function metCancel(t) {
+  const keep = [];
+  for (const n of MET.nodes) { if (n.t >= t) { try { n.g.disconnect(); } catch (e) {} } else keep.push(n); }
+  MET.nodes = keep;
+}
+function metRestart() {
+  if (!MET.on || !AC) return;
+  metCancel(AC.currentTime + 0.03);
+  MET.next = AC.currentTime + 0.06;
+  metSched();
+}
+function metSched() {
+  const c = AC;
+  if (!c || !MET.on) return;
+  const m = PR.met, ahead = document.hidden ? 65 : 0.12, per = 60 / m.bpm / m.sub;
+  while (MET.next < c.currentTime + ahead) {
+    const sub = MET.i % m.sub, beat = Math.floor(MET.i / m.sub) % m.beats;
+    click(MET.next, sub ? 0 : beat === 0 && m.accent ? 2 : 1);
+    if (!sub && !document.hidden) { const at = MET.next, b = beat; setTimeout(() => lightBeat(b), Math.max(0, (at - c.currentTime) * 1000)); }
+    MET.next += per; MET.i++;
+  }
+  const now = c.currentTime;
+  if (MET.nodes.length > 64) MET.nodes = MET.nodes.filter(n => n.t > now - 1);
+}
+function click(t, kind) {
+  const c = AC, o = c.createOscillator(), g = c.createGain();
+  o.type = 'triangle';
+  o.frequency.value = kind === 2 ? 1760 : kind === 1 ? 1175 : 880;
+  const peak = kind === 0 ? 0.28 : kind === 2 ? 0.9 : 0.6;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + (kind === 0 ? 0.035 : 0.06));
+  o.connect(g); g.connect(c.destination);
+  o.start(t); o.stop(t + 0.08);
+  MET.nodes.push({ t, g });
+}
+function lightBeat(b) {
+  if (!MET.on) return;
+  const dots = $$('#beatdots i');
+  dots.forEach((d, i) => d.classList.toggle('on', i === b));
+}
+function vMetronome() {
+  const m = PR.met;
+  return `<div class="cu tool">
+    ${toolHead('Metronome')}
+    <div class="bpm"><button class="pm" data-act="pr-bpm" data-d="-1" aria-label="Slower">−</button><div><b id="bpmnum">${m.bpm}</b><small>beats per minute</small></div><button class="pm" data-act="pr-bpm" data-d="1" aria-label="Faster">+</button></div>
+    <input type="range" class="range" id="bpmrange" min="30" max="250" step="1" value="${m.bpm}" aria-label="Tempo">
+    <div class="beatdots" id="beatdots">${Array.from({ length: m.beats }, (_, i) => `<i class="${i === 0 && m.accent ? 'acc' : ''}"></i>`).join('')}</div>
+    <div class="row center gap"><button class="btn ${MET.on ? 'ink' : 'coral'} big" data-act="pr-met-go" id="metgo">${MET.on ? I(IC.stop, 'fill') + 'Stop' : I(IC.play, 'fill') + 'Start'}</button><button class="btn gray big" data-act="pr-tap">Tap the beat</button></div>
+    <div class="psets">
+      <div><span class="plabel">Beats</span><div class="seg">${[2, 3, 4, 6].map(b => `<button data-act="pr-beats" data-b="${b}" aria-pressed="${m.beats === b}">${b}</button>`).join('')}</div></div>
+      <div><span class="plabel">Clicks per beat</span><div class="seg">${[1, 2, 3, 4].map(x => `<button data-act="pr-sub" data-x="${x}" aria-pressed="${m.sub === x}">${x}</button>`).join('')}</div></div>
+      <div class="switch"><div class="t"><b>Louder first beat</b></div><button class="sw" role="switch" data-act="pr-accent" aria-checked="${!!m.accent}" aria-label="Louder first beat"></button></div>
+    </div>
+    <p class="muted small center">Tap the beat 4 times to set the speed. Time with the metronome on counts as practice.</p>
+  </div>`;
+}
+function setBpm(v) {
+  PR.met.bpm = Math.max(30, Math.min(250, Math.round(v)));
+  const n = $('#bpmnum'); if (n) n.textContent = PR.met.bpm;
+  const r = $('#bpmrange'); if (r && +r.value !== PR.met.bpm) r.value = PR.met.bpm;
+  metRestart();
+  clearTimeout(setBpm.t); setBpm.t = setTimeout(savePractice, 600);
+  updatePill();
+}
+
+// Tuner: listens through the microphone only while its page is open (nothing is recorded or sent).
+const TUN = { on: false, stream: null, an: null, buf: null, timer: 0, hist: [], lastHeard: 0, lock: null, mute: 0, inTuneSince: 0, buzzed: false, err: '' };
+function tunId() {
+  if (PR.tun.id && Pr.TUNINGS.some(t => t.id === PR.tun.id)) return PR.tun.id;
+  const mine = Pr.TUNINGS.find(t => t.inst && MS.prefs.insts.includes(t.inst));
+  return mine ? mine.id : 'guitar';
+}
+function tunerList() {
+  const mine = MS.prefs.insts;
+  return Pr.TUNINGS.slice().sort((a, b) => (mine.includes(b.inst) || !b.inst ? 1 : 0) - (mine.includes(a.inst) || !a.inst ? 1 : 0)).filter(t => mine.includes(t.inst) || !t.inst || ['guitar', 'ukulele', 'banjo', 'trumpet'].includes(t.inst) || t.id === tunId());
+}
+// players number strings from the high one (1) to the low one; listed here low first, banjo's short 5th string first
+const stringLabel = (t, i) => String(t.strings.length - i);
+function gaugeSvg() {
+  const cx = 150, cy = 150, R = 118;
+  const pt = (r, deg) => { const a = (deg - 90) * Math.PI / 180; return [(cx + r * Math.cos(a)).toFixed(1), (cy + r * Math.sin(a)).toFixed(1)]; };
+  const arc = (d0, d1, r) => { const [x0, y0] = pt(r, d0), [x1, y1] = pt(r, d1); return `M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}`; };
+  let ticks = '';
+  for (let c = -50; c <= 50; c += 10) { const deg = c * 1.6, [x0, y0] = pt(R - 16, deg), [x1, y1] = pt(R - (c === 0 ? 30 : c % 50 === 0 ? 26 : 22), deg); ticks += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="var(--ink-3)" stroke-width="${c === 0 ? 3 : 2}" stroke-linecap="round"/>`; }
+  return `<svg viewBox="0 0 300 168" aria-hidden="true">
+    <path d="${arc(-82, -12, R)}" stroke="#2e62f0" stroke-width="9" fill="none" stroke-linecap="round" opacity=".85"/>
+    <path d="${arc(-9, 9, R + 1)}" stroke="#0f9d74" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="${arc(12, 82, R)}" stroke="#ff4d5e" stroke-width="9" fill="none" stroke-linecap="round" opacity=".85"/>
+    ${ticks}
+    <text x="${pt(R + 4, -88)[0]}" y="162" font-size="13" fill="var(--ink-2)" text-anchor="start" font-family="Poppins, sans-serif">♭ low</text>
+    <text x="${pt(R + 4, 88)[0]}" y="162" font-size="13" fill="var(--ink-2)" text-anchor="end" font-family="Poppins, sans-serif">high ♯</text>
+    <g id="needle" style="transform:rotate(0deg);transform-origin:150px 150px"><line x1="150" y1="150" x2="150" y2="${150 - R + 6}" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/><circle cx="150" cy="150" r="9" fill="var(--ink)"/></g>
+  </svg>`;
+}
+function vTuner() {
+  const t = Pr.tuning(tunId());
+  const lockNote = TUN.lock != null && t.strings[TUN.lock];
+  return `<div class="cu tool">
+    ${toolHead('Tuner')}
+    <div class="chips">${tunerList().map(x => `<button class="chip" data-act="pr-tun" data-t="${x.id}" aria-pressed="${x.id === t.id}">${esc(x.name)}</button>`).join('')}</div>
+    <div class="gauge${TUN.on ? '' : ' off'}" id="gauge">${gaugeSvg()}<div class="gnote" id="gnote"><b id="tnote">${TUN.on ? '·' : '♪'}</b><sub id="toct"></sub></div></div>
+    <p class="thint" id="thint">${TUN.on ? (t.strings.length ? 'Play one string' : 'Play a note') : ''}</p>
+    <p class="tfreq" id="tfreq"></p>
+    ${t.strings.length ? `<div class="strings" id="strings">${t.strings.map((s, i) => `<button data-act="pr-string" data-i="${i}" aria-pressed="${TUN.lock === i}"><b>${esc(Pr.nameOf(Pr.note(s)))}</b><small>${stringLabel(t, i)}</small></button>`).join('')}</div>
+      <p class="muted small center" style="margin:8px 0 0">${lockNote ? 'Tuning the ' + esc(Pr.nameOf(Pr.note(lockNote))) + ' string. Tap it again to let the tuner find the string.' : 'It finds the string by itself. Tap a string to hear how it should sound.'}</p>`
+    : t.transpose ? `<p class="muted small center">Shows the written note for a B♭ trumpet (it sounds a whole step lower). Too high: pull the main tuning slide out a little. Too low: push it in.</p>` : ''}
+    ${TUN.on ? '' : `<button class="btn coral wide big" style="margin-top:16px" data-act="pr-tun-go">${I(IC.mic)}Start listening</button>`}
+    ${TUN.err ? `<div class="note" style="margin-top:12px">${TUN.err === 'blocked' ? 'Artistry needs the microphone to hear you. When Chrome asks, tap Allow. If you said no before, open Chrome’s site settings for Artistry and turn the microphone on.' : 'Couldn’t find a microphone to listen with.'}</div>` : ''}
+    <p class="muted small center" style="margin-top:14px">It listens only while this page is open. Nothing is recorded or sent anywhere.</p>
+  </div>`;
+}
+async function tunStart() {
+  const c = audio();
+  if (!c || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { TUN.err = 'nomic'; renderRoute(true); return; }
+  try { TUN.stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }); }
+  catch (e) { TUN.err = e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'blocked' : 'nomic'; renderRoute(true); return; }
+  if (S.route.v !== 'tuner') { tunStop(); return; }
+  TUN.err = '';
+  const src = c.createMediaStreamSource(TUN.stream);
+  TUN.an = c.createAnalyser();
+  TUN.an.fftSize = 4096;
+  src.connect(TUN.an);
+  TUN.src = src;
+  TUN.buf = new Float32Array(TUN.an.fftSize);
+  TUN.on = true; TUN.hist = []; TUN.lastHeard = 0;
+  TUN.timer = setInterval(tunFrame, 70);
+  renderRoute(true);
+  wake();
+}
+function tunStop() {
+  clearInterval(TUN.timer); TUN.timer = 0;
+  try { if (TUN.src) TUN.src.disconnect(); } catch (e) {}
+  if (TUN.stream) for (const tr of TUN.stream.getTracks()) tr.stop();
+  TUN.stream = null; TUN.an = null; TUN.src = null; TUN.on = false;
+  wake();
+}
+function tunFrame() {
+  if (!TUN.on || !TUN.an || !AC) return;
+  if (Date.now() < TUN.mute) return;
+  const t = Pr.tuning(tunId());
+  TUN.an.getFloatTimeDomainData(TUN.buf);
+  const r = Pr.detect(TUN.buf, AC.sampleRate, t.lo, t.hi);
+  const now = Date.now();
+  if (r && r.clarity > 0.75) {
+    // a steady reading: the middle of the last few, after a jump to a new note starts fresh
+    const last = TUN.hist[TUN.hist.length - 1];
+    if (last && Math.abs(Pr.cents(r.freq, last)) > 80) TUN.hist = [];
+    TUN.hist.push(r.freq);
+    if (TUN.hist.length > 5) TUN.hist.shift();
+    TUN.lastHeard = now;
+    const f = TUN.hist.slice().sort((a, b) => a - b)[Math.floor(TUN.hist.length / 2)];
+    showPitch(f, t);
+  } else if (TUN.lastHeard && now - TUN.lastHeard > 1200) {
+    TUN.lastHeard = 0; TUN.hist = []; TUN.inTuneSince = 0; TUN.buzzed = false;
+    showPitch(null, t);
+  }
+}
+function showPitch(f, t) {
+  const note = $('#tnote'), oct = $('#toct'), hint = $('#thint'), fq = $('#tfreq'), needle = $('#needle'), g = $('#gnote');
+  if (!note) return;
+  if (!f) { note.textContent = '·'; oct.textContent = ''; hint.textContent = t.strings.length ? 'Play one string' : 'Play a note'; fq.textContent = ''; needle.style.transform = 'rotate(0deg)'; g.className = 'gnote'; for (const b of $$('#strings button')) b.classList.remove('hear'); return; }
+  let target, name, octave, c, si = null;
+  if (t.strings.length) {
+    const s = TUN.lock != null ? { i: TUN.lock, note: t.strings[TUN.lock], target: Pr.freqOf(Pr.note(t.strings[TUN.lock])) } : Pr.nearestString(f, t);
+    si = s.i; target = s.target; c = Pr.cents(f, target);
+    const m = Pr.note(s.note); name = Pr.nameOf(m); octave = Pr.octaveOf(m);
+  } else {
+    const m = Math.round(Pr.midiOf(f)); target = Pr.freqOf(m); c = Pr.cents(f, target);
+    const shown = m + (t.transpose || 0); name = Pr.nameOf(shown); octave = Pr.octaveOf(shown);
+  }
+  const ok = Math.abs(c) <= 5;
+  const cc = Math.max(-50, Math.min(50, c));
+  needle.style.transform = 'rotate(' + (cc * 1.6).toFixed(1) + 'deg)';
+  note.textContent = name; oct.textContent = octave;
+  g.className = 'gnote ' + (ok ? 'ok' : c < 0 ? 'lo' : 'hi');
+  const n = Math.round(Math.abs(c));
+  const str = t.strings.length;
+  hint.textContent = ok ? 'In tune' : Math.abs(c) > 50 ? (c < 0 ? (str ? 'Way low. Tighten it' : 'Way low') : (str ? 'Way high. Loosen it' : 'Way high'))
+    : c < 0 ? n + ' cents low' + (str ? '. Tighten a little' : t.transpose ? '. Push the slide in' : '') : n + ' cents high' + (str ? '. Loosen a little' : t.transpose ? '. Pull the slide out' : '');
+  fq.textContent = f.toFixed(1) + ' Hz' + (str ? ' · wants ' + target.toFixed(1) : '');
+  for (const b of $$('#strings button')) b.classList.toggle('hear', +b.dataset.i === si);
+  if (ok) {
+    if (!TUN.inTuneSince) TUN.inTuneSince = Date.now();
+    if (!TUN.buzzed && Date.now() - TUN.inTuneSince > 500) { TUN.buzzed = true; try { navigator.vibrate && navigator.vibrate(25); } catch (e) {} }
+  } else { TUN.inTuneSince = 0; TUN.buzzed = false; }
+}
+// how a string should sound (2 seconds); the tuner ignores the microphone meanwhile
+function playString(freq) {
+  const c = audio();
+  if (!c) return;
+  const t = c.currentTime, g = c.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.5, t + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 1.9);
+  g.connect(c.destination);
+  for (const [mult, type, amp] of [[1, 'triangle', 1], [2, 'sine', 0.35], [3, 'sine', 0.15]]) {
+    const o = c.createOscillator(), og = c.createGain();
+    o.type = type; o.frequency.value = freq * mult; og.gain.value = amp;
+    o.connect(og); og.connect(g); o.start(t); o.stop(t + 2);
+  }
+  TUN.mute = Date.now() + 2100;
+}
+
+// keep the screen on while the tuner or metronome is going, or the timer is open
+let wakeL = null;
+async function wake() {
+  const want = document.visibilityState === 'visible' && (MET.on || TUN.on || (!!PR.run && !PR.run.pausedAt && S.route.v === 'practice'));
+  try {
+    if (want && !wakeL && navigator.wakeLock) { wakeL = await navigator.wakeLock.request('screen'); wakeL.addEventListener('release', () => { wakeL = null; }); }
+    else if (!want && wakeL) { const w = wakeL; wakeL = null; await w.release(); }
+  } catch (e) { wakeL = null; }
+}
+// a little bar above the tabs while the timer or metronome runs on another page
+function updatePill() {
+  let pill = $('#prpill');
+  const v = S.route.v;
+  const show = (PR.run && v !== 'practice') || (MET.on && v !== 'metronome');
+  if (!show) { if (pill) pill.hidden = true; return; }
+  if (!pill) { pill = document.createElement('div'); pill.id = 'prpill'; document.body.appendChild(pill); }
+  pill.hidden = false;
+  pill.innerHTML = (PR.run && v !== 'practice' ? `<button data-act="pr-open"><i class="dot${PR.run.pausedAt ? ' paused' : ''}"></i>${esc(instName(PR.run.inst))} <b class="prclock">${clockText(elapsed(PR.run))}</b></button>` : '')
+    + (MET.on && v !== 'metronome' ? `<button data-act="pr-met">${I(IC.metro)}<b>${PR.met.bpm}</b></button><button data-act="pr-met-stop" aria-label="Stop the metronome">${I(IC.stop, 'fill')}</button>` : '');
+}
+setInterval(() => {
+  if (!PR.run) return;
+  const t = clockText(elapsed(PR.run));
+  for (const el of $$('.prclock')) el.textContent = t;
+  // the ring on the timer page fills as she goes
+  if (S.route.v === 'practice' && !PR.run.pausedAt && new Date().getSeconds() === 0) { const b = $('#bigring svg'); if (b) b.outerHTML = goalRing(Pr.streak(PR.sessions).today + elapsed(PR.run) / 60000, PR.goal); }
+}, 1000);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (curV) flushLesson(curV);
+    if (TUN.on) { tunStop(); }
+    if (MET.on) metSched(); // schedule a minute ahead
+  } else {
+    if (MET.on) metRestart();
+    if (S.route.v === 'tuner' && !TUN.on) renderRoute(true);
+  }
+  wake();
+});
+
+async function practiceTap(a, el, inSheet) {
+  const after = fn => { if (inSheet && el.dataset.close) closeSheet(fn); else fn(); };
+  const fromTab = () => TABS.includes(S.route.v) ? S.route.v : (S.route.from || 'music');
+  switch (a) {
+    case 'pr-open': if (S.route.v !== 'practice') after(() => go({ v: 'practice', from: fromTab() })); break;
+    case 'pr-met': if (S.route.v !== 'metronome') after(() => go({ v: 'metronome', from: fromTab() })); break;
+    case 'pr-tuner': if (S.route.v !== 'tuner') after(() => go({ v: 'tuner', from: fromTab() })); break;
+    case 'pr-inst': PR.inst = el.dataset.i; savePractice(); renderRoute(true); break;
+    case 'pr-what': PR.what = PR.what === el.dataset.id ? '' : el.dataset.id; renderRoute(true); break;
+    case 'pr-start': {
+      const insts = MS.prefs.insts.length ? MS.prefs.insts : M.DEFAULT_INST;
+      const inst = insts.includes(PR.inst) ? PR.inst : insts[0];
+      const w = PR.what ? S.pins.find(p => p.id === PR.what) : null;
+      PR.run = { start: Date.now(), pausedMs: 0, pausedAt: null, inst, what: w ? String(w.song || w.title).slice(0, 60) : '', pin: w ? w.id : '' };
+      PR.inst = inst; savePractice(); renderRoute(true); wake(); break;
+    }
+    case 'pr-pause': if (PR.run && !PR.run.pausedAt) { PR.run.pausedAt = Date.now(); savePractice(); renderRoute(true); wake(); } break;
+    case 'pr-resume': if (PR.run && PR.run.pausedAt) { PR.run.pausedMs += Date.now() - PR.run.pausedAt; PR.run.pausedAt = null; savePractice(); renderRoute(true); wake(); } break;
+    case 'pr-done': if (PR.run) {
+      const run = PR.run, mins = elapsed(run) / 60000;
+      PR.run = null; savePractice();
+      if (mins < 1) toast('Under a minute, so it wasn’t counted.');
+      else { const s = addSession({ t: run.start, mins, inst: run.inst, what: run.what, src: 'timer' }); if (s && !document.querySelector('#toast.show')) toast('Saved ' + Pr.minsText(mins) + ' of ' + instName(run.inst).toLowerCase()); if (run.pin) { const p = S.pins.find(x => x.id === run.pin); if (p) { p.practiced = (p.practiced || 0) + Math.round(mins * 60); savePin(p); } } mEvent('practice', { insts: [run.inst] }, Math.min(3, mins / 10)); }
+      renderRoute(true); wake();
+    } break;
+    case 'pr-discard': PR.run = null; savePractice(); renderRoute(true); wake(); toast('Not counted'); break;
+    case 'pr-goal': PR.goal = +el.dataset.g; savePractice(); renderRoute(true); break;
+    case 'pr-del': { const i = PR.sessions.findIndex(s => s.id === el.dataset.s); if (i >= 0) { const [s] = PR.sessions.splice(i, 1); savePractice(); renderRoute(true); toast('Removed', 'Undo', () => { PR.sessions.push(s); PR.sessions.sort((x, y) => x.t - y.t); savePractice(); renderRoute(true); }); } } break;
+    case 'pr-add': PR.add = null; addTimeSheet(); break;
+    case 'pr-add-m': PR.add.mins = +el.dataset.m; addTimeSheet(); break;
+    case 'pr-add-i': PR.add.inst = el.dataset.i; addTimeSheet(); break;
+    case 'pr-add-d': PR.add.day = +el.dataset.d; addTimeSheet(); break;
+    case 'pr-add-save': {
+      const a2 = PR.add, d = new Date(); d.setDate(d.getDate() - a2.day);
+      if (a2.day) d.setHours(18, 0, 0, 0); else d.setTime(Date.now() - a2.mins * 60000);
+      closeSheet(() => { addSession({ t: d.getTime(), mins: a2.mins, inst: a2.inst, what: '', src: 'added' }); renderRoute(true); });
+    } break;
+    case 'pr-met-go': if (MET.on) metStop(); else metStart(); renderRoute(true); break;
+    case 'pr-met-stop': metStop(); updatePill(); if (S.route.v === 'music') renderRoute(true); break;
+    case 'pr-bpm': setBpm(PR.met.bpm + (+el.dataset.d)); break;
+    case 'pr-tap': {
+      const now = performance.now();
+      PR.taps = PR.taps.filter(t => now - t < 4000).concat(now);
+      const bpm = Pr.tapTempo(PR.taps);
+      if (bpm) setBpm(bpm);
+      el.classList.add('tapped'); setTimeout(() => el.classList.remove('tapped'), 90);
+    } break;
+    case 'pr-beats': PR.met.beats = +el.dataset.b; savePractice(); metRestart(); renderRoute(true); break;
+    case 'pr-sub': PR.met.sub = +el.dataset.x; savePractice(); metRestart(); renderRoute(true); break;
+    case 'pr-accent': PR.met.accent = !PR.met.accent; savePractice(); renderRoute(true); break;
+    case 'pr-tun': PR.tun.id = el.dataset.t; TUN.lock = null; TUN.hist = []; savePractice(); renderRoute(true); break;
+    case 'pr-tun-go': tunStart(); break;
+    case 'pr-string': {
+      const t = Pr.tuning(tunId()), i = +el.dataset.i;
+      TUN.lock = TUN.lock === i ? null : i;
+      if (TUN.lock != null) playString(Pr.freqOf(Pr.note(t.strings[i])));
+      TUN.hist = [];
+      renderRoute(true);
+    } break;
+  }
+}
+
 /* ---------- start ---------- */
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); S.installEvt = e; if (['home', 'studio'].includes(S.route.v)) renderRoute(true); });
 window.addEventListener('appinstalled', () => { S.installEvt = null; toast('Installed. Look for Artistry in the Share menu.'); renderRoute(true); });
@@ -2412,10 +2894,10 @@ function watchUpdates() {
 }
 function busyNow() {
   const a = document.activeElement;
-  return !$('#sheetwrap').hidden || (S.route.v === 'video' && !!YTP) || !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.value);
+  return !$('#sheetwrap').hidden || (S.route.v === 'video' && !!YTP) || MET.on || TUN.on || !!(a && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.value);
 }
 function reloadApp() {
-  const v = S.route.v, go = v === 'music' || v === 'video' ? 'music' : v === 'explore' ? 'explore' : v === 'studio' ? 'studio' : '';
+  const v = S.route.v, go = ['music', 'video', 'practice', 'metronome', 'tuner'].includes(v) ? (['practice', 'metronome', 'tuner'].includes(v) ? v : 'music') : v === 'explore' ? 'explore' : v === 'studio' ? 'studio' : '';
   location.replace(location.pathname + (go ? '?go=' + go : ''));
 }
 function appUpdated() {
@@ -2427,18 +2909,19 @@ async function init() {
   const qs = new URLSearchParams(location.search);
   const shared = { url: qs.get('url') || '', text: qs.get('text') || '', title: qs.get('title') || '' };
   const g = qs.get('go');
-  const start = g === 'ideas' || g === 'explore' ? { v: 'explore' } : g === 'music' ? { v: 'music' } : g === 'studio' ? { v: 'studio' } : g === 'supplies' ? { v: 'supplies', tab: 'have', from: 'studio' } : { v: 'home' };
+  const start = g === 'ideas' || g === 'explore' ? { v: 'explore' } : g === 'music' ? { v: 'music' } : ['practice', 'metronome', 'tuner'].includes(g) ? { v: g, from: 'music' } : g === 'studio' ? { v: 'studio' } : g === 'supplies' ? { v: 'supplies', tab: 'have', from: 'studio' } : { v: 'home' };
   history.replaceState(start, '', location.pathname);
   S.route = start;
   renderRoute();
   const ok = await DB.open();
-  const [pins, taste, dismissed, music, owner, stash, shop, profile, memo] = await Promise.all(['pins', 'taste', 'dismissed', 'music', 'owner', 'stash', 'shop', 'profile', 'memo'].map((k, i) => (i === 0 ? DB.all('pins') : kvGet(k)).catch(() => null)));
+  const [pins, taste, dismissed, music, owner, stash, shop, profile, memo, practice] = await Promise.all(['pins', 'taste', 'dismissed', 'music', 'owner', 'stash', 'shop', 'profile', 'memo', 'practice'].map((k, i) => (i === 0 ? DB.all('pins') : kvGet(k)).catch(() => null)));
   if (stash) S.stash = Object.assign({ have: [], custom: [], basics: true }, stash);
   if (Array.isArray(shop)) S.shop = shop;
   if (profile) S.profile = Object.assign({ name: '' }, profile);
   if (memo) S.memo = Object.assign({ snooze: {} }, memo);
   S.owner = owner === true;
   if (music) loadMusicState(music);
+  if (practice) loadPractice(practice);
   S.pins = (pins || []).sort((a, b) => b.createdAt - a.createdAt);
   if (taste) S.taste = Object.assign({ avoidTags: {}, avoidCats: {}, views: {} }, taste);
   if (Array.isArray(dismissed)) S.dismissed = new Set(dismissed);
