@@ -363,8 +363,15 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   handles updates to the web app manifest": name and short_name are updatable on Android).
 - Installed phone icon: Chrome on Android checks the manifest when the app is opened (at most
   once every 24 hours), then swaps the icon after the app is closed and the phone is plugged in
-  on Wi-Fi (web.dev "How Chrome handles updates to the web app manifest"). To force it sooner,
-  back up first (Me > Download backup), then remove and re-add the home-screen icon.
+  on Wi-Fi (web.dev "How Chrome handles updates to the web app manifest"). A big name or icon change
+  shows a Chrome prompt to accept it (the other choice there uninstalls the app). To force it sooner,
+  back up first (Me > Download backup), then uninstall and reinstall from Chrome.
+- **Icon addresses carry a fingerprint** (`icons/icon-512.png?v=1a2b3c4d`, added by `pic()` in
+  tools/build.py, and by tools/stamp_crafts.js for Artistry). Since Chrome 144 (Jan 2026) an icon only
+  updates when its address in the manifest changes ("Icons are now considered unchanged if the icons
+  field in the manifest remains the same", developer.chrome.com "A better way to update your web
+  apps"). Found Oct 1, 2026: Dave's phone still had the first bowl icon five days after the photo
+  icon went live (the file names never changed), and the old name a day after the rename.
 
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.
@@ -444,7 +451,8 @@ Ideas (needs an official API key), reading what's said in TikTok videos for supp
 
 ## Changing Artistry (the routine) and how updates reach Steph's phone
 1. Edit files in `crafts/` (and `api/idea.js`, `api/crafts.js`, `api/music.js` for the server parts).
-2. Run `node tools/stamp_crafts.js` (sets `crafts/sw.js` VERSION from a hash of the app's files).
+2. Run `node tools/stamp_crafts.js` (sets `crafts/sw.js` VERSION from a hash of the app's files, and fingerprints the
+   icon addresses in the manifest so a new icon reaches installed phones).
 3. Test: `node tests/crafts.test.js && node tests/music.test.js` (crafts.test fails if step 2 was skipped), plus the
    YumYum tests if api/recipe.js or lib/ changed. Bump `const VERSION = '1.x'` in crafts/index.html for visible changes.
 4. Commit as djvas1975 and push to `main`; Vercel deploys in about a minute.

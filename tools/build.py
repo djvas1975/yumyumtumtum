@@ -5,6 +5,7 @@
 
 Writes to the repo root: index.html, manifest.webmanifest, sw.js, icons/, README.md, .nojekyll
 """
+import hashlib
 import json
 import os
 import sys
@@ -34,6 +35,20 @@ def build_index():
             f"<style>{RESET}</style>\n{head}</head>\n<body>\n{body}\n</body>\n</html>\n")
 
 
+def pic(rel):
+    """An icon's address with a fingerprint of the picture (icons/icon-512.png?v=1a2b3c4d).
+
+    Since Chrome 144 (Jan 2026), an installed app's icon only updates when the icon's address in the manifest
+    changes; a new picture saved under the same name is ignored. The fingerprint changes whenever the picture
+    does, so a new icon reaches installed phones without renaming files.
+    """
+    try:
+        with open(os.path.join(DIST, rel), "rb") as f:
+            return rel + "?v=" + hashlib.sha256(f.read()).hexdigest()[:8]
+    except OSError:
+        return rel
+
+
 def build_manifest():
     return {
         "id": BASE or "./",
@@ -48,18 +63,18 @@ def build_manifest():
         "theme_color": "#E0431F",
         "categories": ["food", "lifestyle"],
         "icons": [
-            {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-            {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-            {"src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
-            {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+            {"src": pic("icons/icon-192.png"), "sizes": "192x192", "type": "image/png", "purpose": "any"},
+            {"src": pic("icons/icon-512.png"), "sizes": "512x512", "type": "image/png", "purpose": "any"},
+            {"src": pic("icons/icon-maskable-192.png"), "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+            {"src": pic("icons/icon-maskable-512.png"), "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
         ],
         "shortcuts": [
             {"name": "Save a recipe", "short_name": "Save", "url": (BASE or "./") + "?add=1",
-             "icons": [{"src": "icons/shortcut-add.png", "sizes": "96x96", "type": "image/png"}]},
+             "icons": [{"src": pic("icons/shortcut-add.png"), "sizes": "96x96", "type": "image/png"}]},
             {"name": "What can I cook?", "short_name": "What can I cook", "url": (BASE or "./") + "?cook=1",
-             "icons": [{"src": "icons/shortcut-cook.png", "sizes": "96x96", "type": "image/png"}]},
+             "icons": [{"src": pic("icons/shortcut-cook.png"), "sizes": "96x96", "type": "image/png"}]},
             {"name": "Grocery list", "short_name": "Grocery list", "url": (BASE or "./") + "?go=list",
-             "icons": [{"src": "icons/shortcut-list.png", "sizes": "96x96", "type": "image/png"}]}
+             "icons": [{"src": pic("icons/shortcut-list.png"), "sizes": "96x96", "type": "image/png"}]}
         ],
         # Android sends shared links in "text" (sometimes "title"); the app reads all three
         "share_target": {

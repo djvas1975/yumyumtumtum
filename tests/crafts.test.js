@@ -38,6 +38,7 @@ ok(!mixed.sure || mixed.type, 'mixed caption gives a guess -> ' + J([mixed.type,
 ok(J(Cats.hashtags('Love it #FallCrafts #fyp #art #dollartree')) === J(['fallcrafts', 'dollartree']), 'hashtags drop the junk ones');
 const Stamp = require(path.join(R, 'tools/stamp_crafts.js'));
 ok(Stamp.current() === Stamp.hash(), 'crafts/sw.js is stamped for the current app files, so phones get this version (if not: node tools/stamp_crafts.js) -> ' + Stamp.current());
+ok(Stamp.pics(false), 'crafts/manifest.webmanifest icon addresses carry their pictures\' fingerprints, so a new icon reaches installed phones (if not: node tools/stamp_crafts.js)');
 ok(Cats.catLabel('craft', 'yarn') === 'Yarn & crochet' && Cats.catLabel('painting', 'nope') === 'Other painting', 'category labels');
 
 // ---------- the post reader and the blog finder, with a fake internet ----------

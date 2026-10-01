@@ -7,6 +7,7 @@ const crypto = require('crypto');
 
 const DIR = path.join(__dirname, '..', 'crafts');
 const SW = path.join(DIR, 'sw.js');
+const MANIFEST = path.join(DIR, 'manifest.webmanifest');
 
 function files() {
   const top = fs.readdirSync(DIR).filter(f => f !== 'sw.js' && fs.statSync(path.join(DIR, f)).isFile());
@@ -22,7 +23,21 @@ function current() {
   const m = fs.readFileSync(SW, 'utf8').match(/^const VERSION = '([^']+)';$/m);
   return m ? m[1] : '';
 }
+// Since Chrome 144 (Jan 2026) an installed app's icon only updates when the icon's address in the manifest changes;
+// a new picture saved under the same file name is ignored. So each icon address carries a fingerprint of its picture
+// (icons/icon-512.png?v=1a2b3c4d), and a new picture gets a new address by itself.
+function pics(write) {
+  const src = fs.readFileSync(MANIFEST, 'utf8');
+  const out = src.replace(/"src":(\s*)"(icons\/[^"?]+)(\?v=[0-9a-f]*)?"/g, (m, sp, rel) => {
+    const f = path.join(DIR, rel);
+    if (!fs.existsSync(f)) return m;
+    return '"src":' + sp + '"' + rel + '?v=' + crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex').slice(0, 8) + '"';
+  });
+  if (write && out !== src) fs.writeFileSync(MANIFEST, out);
+  return out === src;
+}
 function stamp() {
+  pics(true);
   const v = hash();
   const src = fs.readFileSync(SW, 'utf8');
   const out = src.replace(/^const VERSION = '[^']*';$/m, "const VERSION = '" + v + "';");
@@ -32,4 +47,4 @@ function stamp() {
 }
 
 if (require.main === module) console.log('crafts/sw.js VERSION = ' + stamp());
-module.exports = { files, hash, current, stamp };
+module.exports = { files, hash, current, stamp, pics };
