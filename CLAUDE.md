@@ -282,7 +282,10 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   shared with the file restore.
 - Tested offline end to end (Playwright + the real api/backup.js with a fake store): turn on, photo
   sent once, second backup, wrong code refused, restore on a fresh phone with the photo, and the
-  "waiting on Vercel" state. **Not yet tested against the real Vercel store** until Dave creates it.
+  "waiting on Vercel" state.
+- **Store created Oct 1, 2026** by Dave from his phone (project > Storage > Create Database > Blob):
+  `yumyumtumtum-blob`, **Private**, region SFO1 (San Francisco), default `BLOB` prefix, connected to
+  Production and Preview with OIDC (`BLOB_STORE_ID`; the read-write token box was left unchecked).
 
 ## Yums and categories: how it works (built Sept 29, 2026)
 - Collection ids: `_all`, `_fav`, `_try`, `_made`, `_top`, `_quick` (in `SMART`), `cat:<key>` and
