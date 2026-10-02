@@ -286,6 +286,9 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - **Store created Oct 1, 2026** by Dave from his phone (project > Storage > Create Database > Blob):
   `yumyumtumtum-blob`, **Private**, region SFO1 (San Francisco), default `BLOB` prefix, connected to
   Production and Preview with OIDC (`BLOB_STORE_ID`; the read-write token box was left unchecked).
+  **Confirmed working live the same day:** Dave's phone (YumYum, reinstalled) showed "Backed up today at 5:08 PM ·
+  8 recipes". Artistry uses the same store (`&app=artistry`); its first real backup is still to come (Steph turns it on
+  in Studio > Cloud backup).
 
 ## Yums and categories: how it works (built Sept 29, 2026)
 - Collection ids: `_all`, `_fav`, `_try`, `_made`, `_top`, `_quick` (in `SMART`), `cat:<key>` and
@@ -532,13 +535,13 @@ a speed trainer on the metronome (speeds up every few bars).
   `speech` is dropped if a backup passes 3.8 MB. Automatic backups stop if the phone has under half the ideas of the
   last one. Restore from cloud: code -> Latest or a day -> `restoreData` (shared with the file restore; adds, never
   deletes) -> photos -> the phone keeps backing up to the same code.
-- **Needs Dave's one-time setup** (same as YumYum's): Vercel > yumyumtumtum project > Storage > Create > Blob > Private,
-  connected to the project, then redeploy. Until then the app says "Waiting on Dave to set up the cloud storage" and
-  starts by itself afterwards. Shares the Hobby limits with YumYum (1 GB, 2,000 advanced operations a month; each photo
+- Storage: the store Dave created Oct 1, 2026 (see YumYum's Cloud backup section). Cloud backup is **off** on each phone
+  until the person taps Studio > Cloud backup > Turn on (shows the ART- code to save). Shares the Hobby limits with YumYum (1 GB, 2,000 advanced operations a month; each photo
   is one).
 - Tested offline end to end (Playwright + the real api/backup.js on a pretend store, scratchpad cloud_ui.py): waiting
   state, first backup with 3 photos + a Made-it photo, second backup sends no photos again, wrong code, restore on a
-  fresh phone with photos, practice log and supplies. **Not yet tested against the real Vercel store.**
+  fresh phone with photos, practice log and supplies. The store exists since Oct 1, 2026 and YumYum's backup worked
+  live through it; an Artistry backup hasn't run live yet.
 
 ## Changing Artistry (the routine) and how updates reach Steph's phone
 1. Edit files in `crafts/` (most changes are in `crafts/app.js` and the CSS in `crafts/index.html`; server parts in
