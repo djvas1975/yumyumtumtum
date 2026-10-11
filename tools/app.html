@@ -8,7 +8,7 @@
   --bg:#FAF7FB; --surface:#FFFFFF; --sunk:#F0EAF2; --line:#E4DBE8;
   --ink:#2A1B33; --ink-2:#5B4D66; --ink-3:#8A7D94;
   --chili:#E0431F; --chili-press:#C73816; --chili-soft:#FDE4DC;
-  --saffron:#F2A91E; --saffron-soft:#FFF0CC;
+  --saffron:#F2A91E; --saffron-soft:#FFF0CC; --guess:#946000;
   --basil:#23835A; --basil-soft:#DCF1E5;
   --berry:#C2386E; --berry-soft:#FBE1EC;
   --danger:#C22A1A;
@@ -25,7 +25,7 @@
     --bg:#140D19; --surface:#1F1627; --sunk:#2A1F33; --line:#382B42;
     --ink:#F5EFF7; --ink-2:#C9BDD1; --ink-3:#978BA1;
     --chili:#E8502C; --chili-press:#F2633F; --chili-soft:#3B1D18;
-    --saffron:#FFC24D; --saffron-soft:#35290F;
+    --saffron:#FFC24D; --saffron-soft:#35290F; --guess:#FFC24D;
     --basil:#55C58F; --basil-soft:#15301F;
     --berry:#F06C9B; --berry-soft:#3A1727;
     --danger:#FF6B5E;
@@ -39,7 +39,7 @@
   --bg:#140D19; --surface:#1F1627; --sunk:#2A1F33; --line:#382B42;
   --ink:#F5EFF7; --ink-2:#C9BDD1; --ink-3:#978BA1;
   --chili:#E8502C; --chili-press:#F2633F; --chili-soft:#3B1D18;
-  --saffron:#FFC24D; --saffron-soft:#35290F;
+  --saffron:#FFC24D; --saffron-soft:#35290F; --guess:#FFC24D;
   --basil:#55C58F; --basil-soft:#15301F;
   --berry:#F06C9B; --berry-soft:#3A1727;
   --danger:#FF6B5E;
@@ -317,6 +317,39 @@ body[data-route="recipe"] .tabbar{display:none}
 .onlist .ic{width:17px;height:17px;flex:none;color:var(--chili);margin-top:1px}
 .eqx{margin-bottom:12px}
 .tcard{padding:14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);margin-bottom:10px}
+.gsub{font:800 15px/1.3 var(--body);margin:2px 0 2px}
+.gear label{padding:10px 2px}
+.gwhy{display:block;font-size:12.5px;font-weight:700;color:var(--ink-3);margin-top:2px}
+.gwhy.guess{color:var(--guess)}
+.ing input:checked+span .gwhy{text-decoration:none}
+.gnote{margin:8px 0 14px}
+.nsl{color:var(--ink-2);line-height:1.45;margin:-2px 0 0}
+.fcard{padding:14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);margin-top:12px}
+.opt-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.opt-h b{font-size:16px}
+.obadge{display:inline-block;font:800 11px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:6px;background:var(--basil);color:#fff}
+.opt-d{font-size:14px;color:var(--ink-2);line-height:1.45;margin:8px 0 0}
+.opt-d b{color:var(--ink)}
+.opt-l{font:800 13.5px/1.3 var(--body);margin:14px 0 6px}
+.opt-n{font-size:13px;color:var(--ink-3);font-weight:600;line-height:1.45;margin:10px 0 0}
+.opt-b{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.fcard .readst{margin-top:10px}
+.caption.said{max-height:220px;margin-top:10px}
+.simrow{display:flex;gap:12px;align-items:center;margin-top:10px}
+.simimg{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:none;background:var(--sunk)}
+.simt{display:flex;flex-direction:column;min-width:0}
+.simt b{font-size:15.5px;line-height:1.3}
+.simt span{font-size:13px;color:var(--ink-3);font-weight:700;margin-top:3px}
+.simsteps{margin-top:10px}
+.simsteps summary{cursor:pointer;font-weight:800;color:var(--chili);font-size:14px}
+.simsteps ol{margin:8px 0 0;padding-left:22px;line-height:1.5;font-size:14.5px}
+.simsteps li{margin-bottom:6px}
+.simform{display:flex;gap:8px}
+.simform .inp{flex:1;min-width:0;height:38px}
+.nsadd{margin-top:12px}
+.fromnote{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--saffron-soft);margin-bottom:10px;font-size:14px;line-height:1.45}
+.fromnote span{flex:1}
+.fromnote a{font-weight:800;color:inherit}
 .tc-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .tc-h .ic{width:18px;height:18px;color:var(--chili);flex:none}
 .tc-h b{font-size:16px}
@@ -1164,8 +1197,8 @@ V.recipe = (rt) => {
   }
   h += '<div class="rate"><span class="lbl2">Your rating</span><div class="stars">' + stars + '</div></div>'
     + catLineHTML(r) + '<div class="duo"><button class="btn made" data-act="made">' + icon('pot') + (r.madeCount ? 'Made it again' : 'I made this') + '</button><button class="btn ghost" data-act="addto" data-id="' + esc(r.id) + '">' + icon('folder') + 'Collections</button></div>';
-  const KH = toolsFor(r);
-  const jumps = [['sec-ing', 'Ingredients', nIng], ['sec-steps', 'Directions', nSteps], ['sec-tips', 'Notes & tips', tips.length], ['sec-equip', 'Cookware', KH.tools.length + KH.extra.length + KH.temps.length], ['sec-nut', 'Nutrition', nut.length]].filter(x => x[2]);
+  const KH = toolsFor(r), GE = gearFor(r);
+  const jumps = [['sec-ing', 'Ingredients', nIng], ['sec-steps', 'Directions', nSteps], ['sec-tips', 'Notes & tips', tips.length], ['sec-equip', 'Cookware', GE.length + KH.tools.length + KH.extra.length + KH.temps.length], ['sec-nut', 'Nutrition', nut.length]].filter(x => x[2]);
   if (jumps.length > 1) h += '<div class="jumps scroll-x">' + jumps.map(x => '<button class="chip" data-jump="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
   // ingredients
   const SW = nIng ? ingSwaps(ing) : [];
@@ -1179,18 +1212,25 @@ V.recipe = (rt) => {
   // directions
   if (nSteps) {
     let n = 0;
-    h += '<div class="block" id="sec-steps"><h2>Directions <span class="muted">' + nSteps + ' steps</span></h2><ol class="steps">'
+    const sf = r.stepsFrom;
+    h += '<div class="block" id="sec-steps"><h2>Directions <span class="muted">' + nSteps + ' steps</span></h2>'
+      + (sf ? '<div class="fromnote"><span>These steps are from a similar recipe, <a href="' + esc(sf.url) + '" target="_blank" rel="noopener noreferrer">' + esc(sf.title) + '</a>' + (sf.sourceName ? ' on ' + esc(sf.sourceName) : '') + ', not ' + (isVideo(r) ? 'this video' : 'the original') + '.</span><button class="linkbtn sm" data-act="unsimilar" data-id="' + esc(r.id) + '">Take them out</button></div>' : '')
+      + '<ol class="steps">'
       + steps.map((x, i) => isHead(x) ? '<li class="shead">' + esc(x.slice(3)) + '</li>' : '<li class="step' + (checked['s' + i] ? ' done' : '') + '" data-step="' + i + '"><span class="num">' + (++n) + '</span><p>' + esc(x) + '</p></li>').join('')
       + '</ol><p class="hint" style="margin-top:8px">Tap a step to check it off.</p></div>';
-  } else if (r.caption && !nIng) {
-    h += '<div class="block" id="sec-steps"><h2>From the ' + (isVideo(r) ? 'video' : 'post') + '\'s caption</h2><p class="caption">' + esc(r.caption) + '</p>' + (r.captionCut ? cutNote(r) : '') + '</div>';
-  } else if (!wantsMore) {
-    h += '<div class="block" id="sec-steps"><h2>Directions</h2><button class="addrow" data-act="edit" data-id="' + esc(r.id) + '">' + icon('plus') + 'Add the directions' + (r.url ? ', or open the original below' : '') + '</button></div>';
+  } else {
+    if (r.caption && !nIng) h += '<div class="block"' + (wantsMore ? ' id="sec-steps"' : '') + '><h2>From the ' + (isVideo(r) ? 'video' : 'post') + '\'s caption</h2><p class="caption">' + esc(r.caption) + '</p>' + (r.captionCut ? cutNote(r) : '') + '</div>';
+    if (!wantsMore) {
+      h += noStepsHTML(r, nIng);
+      // look for a similar recipe on its own the first time (once per visit if it fails)
+      if (r.url && !r.sample && !r.similar && canRead() && !SIM.busy.has(r.id) && !SIM.tried.has(r.id)) setTimeout(() => findSimilar(r.id), 0);
+    }
   }
   if (r.caption && (nIng || nSteps)) h += '<details class="block capbox"><summary>Full caption<span class="more">Show</span><span class="less">Hide</span></summary><p class="caption">' + esc(r.caption) + '</p></details>';
+  if (r.speech && nSteps) h += '<details class="block capbox"><summary>What they said in the video<span class="more">Show</span><span class="less">Hide</span></summary><p class="caption">' + esc(r.speech) + '</p></details>';
   if (r.recipeUrl && r.platform !== 'web') h += '<div class="block"><a class="addrow" href="' + esc(r.recipeUrl.replace(/#.*$/, '') + (r.anchor ? '#' + encodeURIComponent(r.anchor) : '')) + '" target="_blank" rel="noopener noreferrer">' + icon('ext') + 'Full recipe on ' + esc(hostOf(r.recipeUrl)) + '</a></div>';
   if (tips.length) h += '<div class="block" id="sec-tips"><h2>Notes, tips &amp; substitutions</h2><ul class="tips">' + tips.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></div>';
-  h += cookwareHTML(KH);
+  h += cookwareHTML(KH, GE, checked);
   if (nut.length) h += '<div class="block" id="sec-nut"><h2>Nutrition</h2><div class="nut">' + nut.map(x => '<div><b>' + esc(x.value) + '</b><span>' + esc(x.label) + '</span></div>').join('') + '</div><p class="hint nutnote">Per serving, as listed by the recipe.</p></div>';
   h += r.notes
     ? '<div class="block"><h2>My notes</h2><p class="notes">' + esc(r.notes) + '</p></div>'
@@ -1227,7 +1267,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 1.6</p></div>';
+    + '<p class="ver">YumYum · version 1.7</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1285,7 +1325,7 @@ function refresh(){
     rq = 0;
     const r = cur();
     if (r.name === 'search' && $('#results')) renderResults();
-    else if (!(document.activeElement && ['myname', 'dq', 'pq', 'neverin', 'gq', 'hname'].indexOf(document.activeElement.id) >= 0)) {
+    else if (!(document.activeElement && ['myname', 'dq', 'pq', 'neverin', 'gq', 'hname', 'simq'].indexOf(document.activeElement.id) >= 0)) {
       const y = window.scrollY; const sx = {};
       $$('[data-sx]').forEach(el => { sx[el.dataset.sx] = el.scrollLeft; });
       $('#view').innerHTML = (V[r.name] || V.home)(r);
@@ -1502,7 +1542,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '10'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '11'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1558,6 +1598,9 @@ function importFields(r, j){
   setIf('yieldText', j.yieldText); setIf('cuisine', j.cuisine); setIf('meal', j.meals);
   ['description', 'author', 'siteName', 'anchor', 'caption', 'recipeUrl'].forEach(k => setIf(k, j[k]));
   if (j.caption && r.caption && j.caption.length > r.caption.length + 20) u.caption = j.caption;
+  // what's said in a TikTok video (TikTok's own captions of the talking)
+  if (j.speech && !r.speech) u.speech = String(j.speech).slice(0, 8000);
+  else if (!j.speech && !r.speech && r.platform === 'tiktok') u.speechChecked = true;
   if (j.title && looksGeneric(r)) u.title = j.title.slice(0, 140);
   // the lists came from an earlier read of the same caption (or a cut-off start of it) and weren't
   // changed since: use the new read, which may have the whole caption or read it better
@@ -1617,6 +1660,112 @@ async function getDetails(id){
     toast(parts.length ? 'Added ' + joinList(parts) : "Couldn't find a recipe on that page. You can paste the recipe text from Edit.");
   } catch (e) { toast(e.message || "Couldn't read that page."); }
   finally { READING.delete(id); refresh(); }
+}
+
+/* ---------- recipes with no written steps: what they said (TikTok) and steps from a similar recipe ---------- */
+const SIM = { busy: new Set(), err: new Map(), idx: new Map(), tried: new Set() };
+function simFoods(r){ const s = new Set(); (r.ingredients || []).forEach(l => { if (!isHead(l)) foodsIn(l).forEach(id => s.add(id)); }); return Array.from(s).slice(0, 30); }
+// the closest recipes on the recipe sites, saved with the recipe so it opens instantly (and offline) next time
+async function findSimilar(id, q){
+  const r = Store.recipes.get(id);
+  if (!r || SIM.busy.has(id) || !canRead()) return;
+  const dish = String(q || r.title || '').trim(); if (!dish) return;
+  SIM.busy.add(id); SIM.err.delete(id); SIM.tried.add(id); refresh();
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 40000);
+  try {
+    const skip = [r.url, r.recipeUrl].filter(Boolean).join('|');
+    const res = await fetch(READER + '/api/similar?q=' + encodeURIComponent(dish) + '&ing=' + encodeURIComponent(simFoods(r).join(',')) + (skip ? '&skip=' + encodeURIComponent(skip) : '') + '&v=' + READER_V, {signal:ctrl.signal});
+    const j = await res.json();
+    if (!j.ok) throw new Error(j.error || "Couldn't look for a similar recipe.");
+    const r2 = Store.recipes.get(id); if (!r2) return;
+    const items = (j.items || []).slice(0, 3);
+    SIM.idx.set(id, 0);
+    putRecipe(Object.assign({}, r2, {similar:{q:dish, at:now(), items:items}}));
+    if (q) toast(items.length ? 'Found ' + items.length + (items.length === 1 ? ' close match' : ' close matches') : 'No close match for that either');
+  } catch (e) {
+    SIM.err.set(id, e && e.name === 'AbortError' ? 'The recipe sites took too long to answer.' : e instanceof TypeError ? "Couldn't reach the recipe sites. Check your connection." : (e.message || "Couldn't look right now."));
+  } finally { clearTimeout(t); SIM.busy.delete(id); refresh(); }
+}
+function useSimilar(id){
+  const r = Store.recipes.get(id); if (!r || !r.similar) return;
+  const it = r.similar.items[Math.min(SIM.idx.get(id) || 0, r.similar.items.length - 1)]; if (!it) return;
+  const u = {steps:(it.steps || []).slice(0, 150), stepsFrom:{title:it.title, url:it.url, sourceName:it.sourceName || hostOf(it.url)}};
+  if (!countItems(r.ingredients) && countItems(it.ingredients)) { u.ingredients = it.ingredients.slice(0, 200); u.stepsFrom.ing = true; }
+  if (!(r.equipment || []).length && (it.equipment || []).length) { u.equipment = it.equipment.slice(0, 40); u.stepsFrom.eq = true; }
+  putRecipe(Object.assign({}, r, u));
+  toast('Added ' + plural(countItems(u.steps), 'step') + (u.stepsFrom.ing ? ' and the ingredients' : '') + ' from ' + u.stepsFrom.sourceName);
+}
+function unSimilar(id){
+  const r = Store.recipes.get(id); if (!r || !r.stepsFrom) return;
+  const f = r.stepsFrom, u = Object.assign({}, r, {steps:[]});
+  if (f.ing) u.ingredients = [];
+  if (f.eq) u.equipment = [];
+  delete u.stepsFrom;
+  putRecipe(u);
+  toast('Took out the steps from ' + (f.sourceName || 'the other recipe'));
+}
+// older TikToks saved before the reader listened: get what's said now
+async function listenVideo(id){
+  const r = Store.recipes.get(id);
+  if (!r || !r.url || READING.has(id)) return;
+  if (!canRead()) { toast('Open YumYum from your home screen to do this.'); return; }
+  READING.add(id); refresh();
+  try {
+    await enrichRecipe(id, await readLink(r.url));
+    const r2 = Store.recipes.get(id);
+    toast(r2 && r2.speech ? 'Got what they said in the video' : 'TikTok doesn\'t have captions of what\'s said in this video.');
+  } catch (e) { toast(e.message || "Couldn't reach TikTok."); }
+  finally { READING.delete(id); refresh(); }
+}
+function noStepsHTML(r, nIng){
+  const mine = r.platform === 'web' || r.platform === 'none' || r.platform === 'pinterest';
+  const what = mine ? 'This recipe doesn\'t have the steps written out.' : 'This ' + (isVideo(r) ? 'video' : 'post') + '\'s caption doesn\'t have the steps.';
+  return '<div class="block" id="sec-steps"><h2>Directions</h2><p class="nsl">' + what + (canRead() ? ' Here\'s what the app found:' : '') + '</p>'
+    + (r.platform === 'tiktok' ? saidCardHTML(r) : '') + simCardHTML(r, nIng)
+    + '<button class="addrow nsadd" data-act="edit" data-id="' + esc(r.id) + '">' + icon('plus') + 'Or add the directions yourself</button></div>';
+}
+function saidCardHTML(r){
+  const reading = READING.has(r.id);
+  let h = '<div class="fcard"><div class="opt-h"><b>What they said in the video</b><span class="obadge">Free</span></div>';
+  if (r.speech) {
+    const heard = gearHeard(r.speech);
+    h += '<p class="caption said">' + esc(r.speech) + '</p>'
+      + (heard.length ? '<p class="opt-l">Cookware heard</p><div class="wrapchips">' + heard.map(x => '<span class="tool">' + esc(x) + '</span>').join('') + '</div>' : '')
+      + '<p class="opt-n">TikTok\'s own captions of what\'s said. These are their exact words, not neat numbered steps.</p>';
+  } else if (r.speechChecked) {
+    h += '<p class="opt-n">TikTok doesn\'t have captions of what\'s said in this one. Some videos only have music.</p>';
+  } else if (canRead()) {
+    h += '<p class="opt-d">Gets TikTok\'s captions of what\'s said in the video and picks out the cookware they mention.</p><div class="opt-b"><button class="btn primary sm" data-act="listen" data-id="' + esc(r.id) + '"' + (reading ? ' disabled' : '') + '>' + (reading ? '<span class="spin sm"></span>Listening' : 'Listen to the video') + '</button></div>';
+  } else h += '<p class="opt-n">Open YumYum from your home screen to get this.</p>';
+  return h + '</div>';
+}
+function simCardHTML(r, nIng){
+  const id = r.id, s = r.similar, err = SIM.err.get(id);
+  const form = '<form class="simform" id="simform" autocomplete="off"><input class="inp" id="simq" maxlength="80" placeholder="Type the dish name" aria-label="Type the dish to look for"><button type="submit" class="btn ghost sm">Search</button></form>';
+  let h = '<div class="fcard"><div class="opt-h"><b>Steps from a similar recipe</b><span class="obadge">Free</span></div>';
+  if (SIM.busy.has(id)) h += '<p class="readst"><span class="spin sm"></span>Looking on the recipe sites…</p>';
+  else if (!canRead()) h += '<p class="opt-n">Open YumYum from your home screen to look for one.</p>';
+  else if (err) h += '<p class="opt-n">' + esc(err) + '</p><div class="opt-b"><button class="btn ghost sm" data-act="simretry" data-id="' + esc(id) + '">Try again</button></div>';
+  else if (s && s.items && s.items.length) {
+    const i = Math.min(SIM.idx.get(id) || 0, s.items.length - 1), it = s.items[i];
+    const ns = countItems(it.steps);
+    const gear = gearFor({steps:it.steps, equipment:it.equipment}).filter(g => g.kind === 'step' || g.kind === 'list').map(g => /^Oven, heated/.test(g.name) ? 'Oven' : g.name);
+    const mine = simFoods(r), theirs = new Set();
+    (it.ingredients || []).forEach(l => foodsIn(l).forEach(x => theirs.add(x)));
+    const shared = mine.filter(x => theirs.has(x)).length;
+    h += '<div class="simrow">' + (it.image ? '<img class="simimg" src="' + esc(READER + '/api/image?url=' + encodeURIComponent(it.image)) + '" alt="" loading="lazy">' : '')
+      + '<div class="simt"><b>' + esc(it.title) + '</b><span>' + esc([it.sourceName || hostOf(it.url), plural(ns, 'step'), it.totalTime ? timeShort(it.totalTime) : ''].filter(Boolean).join(' · ')) + '</span></div></div>'
+      + (gear.length ? '<p class="opt-d"><b>Cookware:</b> ' + esc(gear.slice(0, 6).join(', ')) + '</p>' : '')
+      + (mine.length >= 3 ? '<p class="opt-d">Uses ' + shared + ' of the ' + mine.length + ' foods in ' + (isVideo(r) ? 'the video' : 'yours') + '.</p>' : '')
+      + '<details class="simsteps"><summary>See the ' + plural(ns, 'step') + '</summary><ol>' + (it.steps || []).filter(x => !isHead(x)).map(x => '<li>' + esc(x) + '</li>').join('') + '</ol></details>'
+      + '<div class="opt-b"><button class="btn primary sm" data-act="usesimilar" data-id="' + esc(id) + '">' + (nIng ? 'Use these steps' : 'Use this recipe') + '</button>'
+      + '<a class="btn ghost sm" href="' + esc(it.url) + '" target="_blank" rel="noopener noreferrer">Open it</a>'
+      + (s.items.length > 1 ? '<button class="btn ghost sm" data-act="simnext" data-id="' + esc(id) + '">Another (' + (i + 1) + ' of ' + s.items.length + ')</button>' : '') + '</div>'
+      + '<p class="opt-n">A close match, not ' + (isVideo(r) ? 'this creator\'s' : 'the original\'s') + ' exact way.' + (nIng ? '' : ' Using it adds its ingredients too.') + '</p>'
+      + '<p class="opt-l">Not the right dish?</p>' + form;
+  } else if (s) h += '<p class="opt-n">No close match on the recipe sites for “' + esc(s.q) + '”. Try the dish another way:</p>' + form;
+  else h += '<p class="opt-d">Looks on the recipe sites for the same dish and shows its steps and cookware.</p><div class="opt-b"><button class="btn primary sm" data-act="simretry" data-id="' + esc(id) + '">Look for one</button></div>';
+  return h + '</div>';
 }
 
 /* ---------- taste: learns what you like from what you save, cook, rate, open, and skip ---------- */
@@ -2481,10 +2630,17 @@ function onListHTML(r){
   if (!n) return '';
   return '<p class="onlist">' + icon('cart') + '<span>' + plural(n, 'thing') + ' for this recipe ' + (n === 1 ? 'is' : 'are') + ' on your list. <button class="linkbtn sm" data-act="seelist" data-id="' + esc(r.id) + '">See ' + (n === 1 ? 'it' : 'them') + '</button></span></p>';
 }
-function cookwareHTML(K){
-  if (!K.tools.length && !K.extra.length && !K.temps.length) return '';
+// "What you'll need": every pan, appliance and tool, each with the step it came from (or why it's a good guess)
+function gearListHTML(G, checked){
+  return '<p class="gsub">What you\'ll need</p><ul class="ing gear">' + G.map(g => '<li><label><input type="checkbox" data-chk="g:' + esc(g.id) + '"' + (checked['g:' + g.id] ? ' checked' : '') + '><span>' + esc(g.name)
+    + '<small class="gwhy' + (g.kind === 'likely' || g.kind === 'suggested' ? ' guess' : '') + '">' + esc(g.why) + '</small></span></label></li>').join('') + '</ul>'
+    + '<p class="hint gnote">Tap to check off what you\'ve got out.</p>';
+}
+function cookwareHTML(K, G, checked){
+  G = G || []; checked = checked || {};
+  if (!G.length && !K.tools.length && !K.extra.length && !K.temps.length) return '';
   return '<div class="block" id="sec-equip"><h2>Cookware &amp; tips</h2>'
-    + (K.extra.length ? '<div class="wrapchips eqx">' + K.extra.map(x => '<span class="tool">' + esc(x) + '</span>').join('') + '</div>' : '')
+    + (G.length ? gearListHTML(G, checked) : K.extra.length ? '<div class="wrapchips eqx">' + K.extra.map(x => '<span class="tool">' + esc(x) + '</span>').join('') + '</div>' : '')
     + K.tools.map(t => '<div class="tcard"><div class="tc-h">' + icon('pot') + '<b>' + esc(t.name) + '</b></div><p>' + esc(t.tip) + '</p>' + (t.alt ? '<p class="tc-alt">' + esc(t.alt) + '</p>' : '') + '</div>').join('')
     + (K.temps.length ? '<div class="tcard temp"><div class="tc-h">' + icon('therm') + '<b>Is it done? Check with a meat thermometer</b></div><ul>' + K.temps.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul><p class="tc-alt">Safe temperatures from the USDA. Check the thickest part.</p></div>' : '')
     + '</div>';
@@ -3673,6 +3829,206 @@ function toolsFor(r) {
   if (/\b(casserole|bake)\b/i.test(r.title || '') && temps.length) temps.push('Casseroles and leftovers: 165°F');
   return { tools: out, extra, temps };
 }
+
+/* What you'll need: every pan, appliance and tool a recipe uses, read from its directions and its own cookware list.
+   [id, name, pattern, options] — pattern is checked against each step (lowercase, dashes as spaces, 9 x 13 -> 9x13).
+   s: a size word in front counts ("large skillet", "6 quart slow cooker"). p: show the recipe's own words
+   ("baking sheet" or "sheet pan", "9x13 pan"). */
+const GEAR = [
+  ['oven', 'Oven', '(?<!dutch |toaster )oven(?! safe| proof| mitts?)|bake[ds]?|baking (for|at|until|uncovered|covered|\\d)'],
+  ['broiler', 'Broiler', 'broil(er|ed|ing)?'],
+  ['microwave', 'Microwave', 'microwav(e|ed|ing)'],
+  ['slow', 'Slow cooker', 'slow cook(er)?|crock ?pot', {s:1}],
+  ['pressure', 'Instant Pot or pressure cooker', 'instant ?pot|pressure cook(er)?', {s:1}],
+  ['air', 'Air fryer', 'air fr(y|ied|yer|ying)'],
+  ['ricecooker', 'Rice cooker', 'rice cooker'],
+  ['fryer', 'Deep fryer', 'deep fryer'],
+  ['smoker', 'Smoker', 'smoker|pellet grill'],
+  ['griddle', 'Griddle', 'griddle'],
+  ['grillpan', 'Grill pan', 'grill pan'],
+  ['grill', 'Grill', '(pre)?heat (the |a |your )?grill|on the grill|grill (over|for|until|on|the|them|it)|grill grates|(gas|charcoal|outdoor) grill'],
+  ['dutch', 'Dutch oven', 'dutch oven', {s:1}],
+  ['wok', 'Wok', '(?<!non )wok'],
+  ['skillet', 'Skillet', 'skillet|frying pan|fry pan|saute pan|cast iron(?! (dutch|pot|griddle|grill|pan))', {s:1, p:1}],
+  ['saucepan', 'Saucepan', 'sauce ?pan', {s:1}],
+  ['pot', 'Pot', 'stock ?pot|soup pot|(?<!instant |crock |flower |sheet )pots?(?! roast| pie| sticker| holder| luck)', {s:1, p:1}],
+  ['pan', 'Pan', 'pan (over|on) (low|medium|high|the stove)|in a (large |big |medium |deep |nonstick |non stick )?pan(?! of)', {s:1}],
+  ['sheet', 'Sheet pan', 'sheet pans?|baking sheets?|cookie sheets?|sheet tray', {s:1, p:1}],
+  ['dish', 'Baking dish', '\\d+x\\d+( inch)?( baking| casserole| glass| metal)? (dish|pan)|(\\d+ inch )?square (baking |cake )?pan|baking dish|casserole dish|gratin dish|pyrex', {s:1, p:1}],
+  ['roasting', 'Roasting pan', 'roasting pan'],
+  ['pie', 'Pie dish', 'pie (dish|plate|pan|tin)', {s:1, p:1}],
+  ['springform', 'Springform pan', 'springform( pan)?', {s:1}],
+  ['bundt', 'Bundt pan', 'bundt pan'],
+  ['cake', 'Cake pan', 'cake pans?|\\d+ inch round (cake |baking )?pans?|round (cake )?pans?', {s:1, p:1}],
+  ['loaf', 'Loaf pan', 'loaf pan|bread pan', {s:1}],
+  ['muffin', 'Muffin tin', 'muffin (tin|pan|cups)|cupcake (tin|pan|liners)', {s:1, p:1}],
+  ['ramekin', 'Ramekins', 'ramekins?'],
+  ['rack', 'Wire rack', 'wire rack|cooling rack'],
+  ['bowl', 'Mixing bowl', '(large|medium|small|mixing|separate|another|second|big|clean|shallow|heatproof|heat proof|glass|microwave safe) bowls?|(in|into|to) a bowl', {s:1}],
+  ['whisk', 'Whisk', 'whisk(ed|ing)?'],
+  ['immersion', 'Immersion blender', 'immersion blender|stick blender|hand blender'],
+  ['blender', 'Blender', '(?<!immersion |stick |hand |pastry )blender'],
+  ['processor', 'Food processor', 'food processor|mini chopper'],
+  ['mixer', 'Mixer', 'stand mixer|hand mixer|electric mixer|mixer', {p:1}],
+  ['spatula', 'Spatula', '(rubber |silicone |offset )?spatula', {p:1}],
+  ['woodspoon', 'Wooden spoon', 'wooden spoon'],
+  ['slotted', 'Slotted spoon', 'slotted spoon'],
+  ['tongs', 'Tongs', 'tongs'],
+  ['ladle', 'Ladle', 'ladle'],
+  ['colander', 'Colander', 'colander|strainer|sieve|fine mesh', {p:1}],
+  ['grater', 'Grater', '(box )?grater|microplane|zester', {p:1}],
+  ['peeler', 'Vegetable peeler', 'peeler'],
+  ['masher', 'Potato masher', '(potato )?masher|ricer'],
+  ['forks', 'Two forks (for shredding)', '(two|2) forks'],
+  ['rollingpin', 'Rolling pin', 'rolling pin'],
+  ['brush', 'Pastry brush', 'pastry brush|basting brush'],
+  ['scoop', 'Cookie scoop', 'cookie (dough )?scoop|ice cream scoop'],
+  ['cutter', 'Cookie cutters', 'cookie cutters?|biscuit cutter', {p:1}],
+  ['piping', 'Piping bag', 'piping bag|pastry bag|piping tip'],
+  ['steamer', 'Steamer basket', 'steamer( basket)?'],
+  ['thermometer', 'Meat thermometer', 'thermometer|instant read', {p:1}],
+  ['mandoline', 'Mandoline', 'mandoline'],
+  ['scale', 'Kitchen scale', '(kitchen|food) scale'],
+  ['pizzastone', 'Pizza stone', 'pizza (stone|steel)|baking stone'],
+  ['waffle', 'Waffle iron', 'waffle (iron|maker)'],
+  ['icecream', 'Ice cream maker', 'ice cream maker'],
+  ['pitcher', 'Pitcher', 'pitcher|carafe'],
+  ['icetray', 'Ice cube tray', 'ice cube trays?'],
+  ['popsicle', 'Popsicle molds', 'popsicle molds?'],
+  ['container', 'Airtight container or jar', 'airtight (container|jar)s?|mason jars?|storage container'],
+  ['foil', 'Aluminum foil', 'aluminum foil|tin foil|foil'],
+  ['parchment', 'Parchment paper', 'parchment( paper)?'],
+  ['wrap', 'Plastic wrap', 'plastic wrap|cling (film|wrap)'],
+  ['papertowel', 'Paper towels', 'paper towels?'],
+  ['bag', 'Zip-top bag', 'zip ?lock|ziploc|zip top|resealable (plastic )?bag|gallon (size )?bag|freezer bag'],
+  ['toothpick', 'Toothpicks', 'toothpicks?'],
+  ['skewer', 'Skewers', 'skewers?'],
+  ['twine', 'Kitchen twine', '(kitchen |butchers? )?twine']
+];
+// Things the directions don't name but almost always mean: [id, name, pattern, unless one of these was named]
+const STOVE = ['skillet', 'saucepan', 'pot', 'pan', 'dutch', 'wok', 'slow', 'pressure', 'ricecooker', 'fryer', 'griddle', 'grillpan', 'microwave', 'air', 'steamer'];
+const GEAR_LIKELY = [
+  ['colander', 'Colander', 'drain(ed|ing)?(?! (the |any |off |most of the |some of the )?(excess )?(grease|fat|oil|drippings|bacon|liquid|juices?|marinade)| on (a )?paper)', ['colander'], 'draining'],
+  ['pot', 'Pot or saucepan', 'boil(ing)?|bring (\\w+ ){0,5}to a (rolling |low |gentle |full )?boil|simmer(ing)?', STOVE, m => /^simmer/.test(m) ? 'simmering' : 'boiling'],
+  ['grater', 'Grater', 'grate[ds]? (the |some |fresh |in )?(cheese|parmesan|cheddar|ginger|garlic|nutmeg|carrots?|zucchini|potatoes|chocolate|butter)|shred (the )?(cheese|carrots?|zucchini|cabbage|potatoes)', ['grater'], m => /^shred/.test(m) ? 'shredding' : 'grating'],
+  ['zester', 'Zester or fine grater', 'zest (the |of |\\d |a |one |half |both )|zested', ['grater'], 'zesting'],
+  ['masher', 'Potato masher or fork', 'mash(ed)? (the |up )?(potatoes|beans|bananas?|avocados?|sweet potatoes|cauliflower)|mash (until|with|well)', ['masher', 'mixer', 'processor', 'blender', 'immersion'], 'mashing'],
+  ['forks', 'Two forks (for shredding)', 'shred(ded)? (the )?(chicken|pork|beef|meat|turkey|roast)', ['forks', 'mixer'], 'shredding the meat'],
+  ['rollingpin', 'Rolling pin', 'roll (out )?(the )?(dough|crust|pastry)|roll (it |them |each )?out', ['rollingpin'], 'rolling out the dough'],
+  ['brush', 'Pastry brush', 'brush (the |each |with |it |them |tops?|both|lightly|generously)', ['brush'], 'brushing'],
+  ['mixer', 'Hand or stand mixer', 'beat (on|at|with|until) (low|medium|high|light|fluffy|smooth|stiff)|stiff peaks|soft peaks|light and fluffy|cream (together )?(the )?butter', ['mixer'], m => /cream/.test(m) ? 'creaming the butter' : 'beating'],
+  ['blender', 'Blender', 'puree(d|ing)?|blend (until|on|everything|it|them|the)', ['blender', 'immersion', 'processor'], 'blending'],
+  ['processor', 'Food processor', 'pulse (until|a few|several|to|in)', ['processor', 'blender'], 'pulsing'],
+  ['fryer', 'Deep pot or fryer', 'deep fr(y|ied|ying)|heat (\\w+ ){0,3}oil (to|until) \\d|oil (reaches|registers|is) \\d|\\d+ inch(es)? of oil|fry (in batches|until golden)', ['fryer', 'air'], 'frying']
+];
+const gWrap = m => new RegExp('(?<![a-z0-9])(?:' + m + ')(?![a-z])');
+const GEAR_RE = GEAR.map(g => [g, gWrap(g[2])]);
+const GEAR_LIKELY_RE = GEAR_LIKELY.map(g => [g, gWrap(g[2])]);
+const SIZE_W = '(?:large|big|medium|small|deep|heavy|wide|shallow|oven safe|oven proof|nonstick|non stick|cast iron|enameled|rimmed|glass|metal|ceramic|heatproof|heavy bottomed|\\d+(?:\\.\\d+)? (?:inch|quart|qt|liter))';
+const SIZE_RE = new RegExp('((?:' + SIZE_W + '\\s+)+)$');
+const SIZE_LEAD = new RegExp('^((?:' + SIZE_W + '\\s+)+)');
+const gNorm = s => normFood(s).replace(/[“”"]/g, ' ').replace(/(\d+)\s*(?:x|×|by)\s*(\d+)/g, '$1x$2')
+  .replace(/(\d)\s*(?:inches|inch|in\.?)(?![a-z])/g, '$1 inch').replace(/(\d)\s*(?:quarts?|qt\.?)(?![a-z])/g, '$1 quart').replace(/\s+/g, ' ');
+const gCap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function gSize(words) {
+  return words.trim().replace(/(\d) (inch|quart|liter)/g, '$1-$2').replace(/oven (safe|proof)/, 'oven-$1').replace(/non stick/, 'nonstick')
+    .replace(/heat proof/, 'heatproof').replace(/heavy bottomed/, 'heavy-bottomed');
+}
+// the name to show for one mention: the recipe's own words when they say more ("large skillet", "9x13 pan")
+function gName(g, text, m) {
+  const o = g[3] || {};
+  let base = g[1];
+  if (o.p && !/^cast iron$/.test(m[0])) base = m[0].replace(/(\d) inch/g, '$1-inch').replace(/^(in|into|to) a /, '');
+  if (g[0] === 'skillet' && /^cast iron/.test(m[0])) base = 'cast iron skillet';
+  if (g[0] === 'bowl') base = /(shallow|heatproof|glass|microwave)/.test(m[0]) ? m[0].replace(/bowls$/, 'bowl').replace(/heat proof/, 'heatproof').replace(/microwave safe/, 'microwave-safe') : 'mixing bowl';
+  base = base.replace(/(\d+x\d+)-inch/, '$1');
+  let size = '';
+  if (o.s && !/\d+x\d+|\d+-inch/.test(base)) {
+    const inner = m[0].replace(/^(in|into|to) a /, '').match(SIZE_LEAD);
+    const sm = inner || text.slice(Math.max(0, m.index - 48), m.index).match(SIZE_RE);
+    if (sm) size = gSize(sm[1]).replace(/^big\b/, 'large').split(' ').filter(w => base.toLowerCase().indexOf(w) < 0).join(' ');
+  }
+  if (o.p && base !== 'cast iron skillet') base = base.replace(SIZE_LEAD, '');
+  const b = /^Dutch/.test(base) || !size ? base : base.charAt(0).toLowerCase() + base.slice(1);
+  return gCap((size ? size + ' ' : '') + b.replace(/^dutch/, 'Dutch')).replace(/\binstant pot\b/i, 'Instant Pot');
+}
+// [{id, name, kind:'step'|'list'|'likely'|'suggested', step, why}] in step order, then the recipe's list, then guesses
+function gearFor(r) {
+  r = r || {};
+  const steps = [];
+  let n = 0;
+  (r.steps || []).forEach(s => { if (!/^##\s/.test(s)) steps.push({ n: ++n, t: ' ' + gNorm(s) + ' ', raw: String(s) }); });
+  const found = new Map(); // id -> item
+  const add = (id, name, kind, step, why) => {
+    const x = found.get(id);
+    if (!x) { found.set(id, { id, name, kind, step: step || 0, why: why || '' }); return; }
+    if (name.length > x.name.length && kind !== 'likely') x.name = name; // keep the most specific name
+  };
+  steps.forEach(s => GEAR_RE.forEach(([g, re]) => {
+    const m = s.t.match(re);
+    if (m) add(g[0], gName(g, s.t, m), 'step', s.n, 'Step ' + s.n);
+  }));
+  // the oven's heat, from the step that names it
+  const ov = found.get('oven');
+  if (ov) {
+    for (const s of steps) {
+      const t = s.raw.toLowerCase();
+      if (!/oven|preheat|bake|roast/.test(t)) continue;
+      const m = t.match(/(\d{3})\s*(?:°|º|degrees?|deg\.?)\s*(f|c)?(?![a-z])/) || t.match(/(\d{3})\s*(f|c)(?![a-z])/) || t.match(/(?:at|to)\s+(\d{3})(?![\d.])()/);
+      if (m && +m[1] >= 150 && +m[1] <= 550) { ov.name = 'Oven, heated to ' + m[1] + '°' + ((m[2] || 'f').toUpperCase()); break; }
+    }
+  }
+  // "bake" in an air fryer recipe means the air fryer; a generic pan is the skillet or wok it already named
+  if (ov && found.has('air') && !steps.some(s => /(?<!dutch )oven(?! safe)/.test(s.t))) found.delete('oven');
+  if (found.has('pan') && ['skillet', 'wok', 'saucepan', 'sheet', 'dish', 'grillpan', 'cake', 'loaf', 'springform', 'roasting'].some(id => found.has(id))) found.delete('pan');
+  if (found.has('pot') && found.has('dutch') && !steps.some(s => /(stock ?pot|soup pot|(?<!instant |crock )pot of)/.test(s.t))) found.delete('pot');
+  // the recipe's own cookware list
+  (r.equipment || []).map(String).forEach(line => {
+    const t = ' ' + gNorm(line) + ' ';
+    if (!t.trim() || t.length > 80) return;
+    const hit = GEAR_RE.find(([g, re]) => re.test(t));
+    const own = gCap(line.replace(/\s+/g, ' ').trim().replace(/[.:;]+$/, ''));
+    if (hit) {
+      const x = found.get(hit[0][0]);
+      if (x) { if (own.length <= 40 && own.length > x.name.length && !/^Oven, heated/.test(x.name)) x.name = own; }
+      else add(hit[0][0], own.length <= 40 ? own : hit[0][1], 'list', 0, 'On the recipe\'s cookware list');
+    } else add('x:' + t.trim(), own, 'list', 0, 'On the recipe\'s cookware list');
+  });
+  // cookware they mention in a video's talking
+  if (r.speech) heardIn(r.speech).forEach(h => { if (!found.has(h.id)) add(h.id, h.name, 'heard', 0, 'Said in the video'); });
+  // what the directions almost certainly mean
+  steps.forEach(s => GEAR_LIKELY_RE.forEach(([g, re]) => {
+    if (found.has(g[0]) || g[3].some(id => found.has(id))) return;
+    const m = s.t.match(re);
+    if (m) add(g[0], g[1], 'likely', s.n, 'Likely: for ' + (typeof g[4] === 'function' ? g[4](m[0].trim()) : g[4]) + ' in step ' + s.n);
+  }));
+  // canned foods in the ingredients
+  if (!found.has('canopener') && (r.ingredients || []).some(l => !/^##\s/.test(l) && /(\d|oz\.?\)?|ounce\)?)\s*cans?(?![a-z])|(?<![a-z])canned(?![a-z])|(?<![a-z])cans? of(?![a-z])/i.test(l)))
+    add('canopener', 'Can opener', 'likely', 0, 'Likely: some ingredients come in cans');
+  // a thermometer for meat, or for frying oil
+  if (!found.has('thermometer')) {
+    const ids = new Set();
+    (r.ingredients || []).forEach(l => { if (!/^##\s/.test(l)) foodsIn(l).forEach(id => ids.add(id)); });
+    const meat = TEMPS.find(x => x.ids.some(id => ids.has(id)));
+    if (found.has('fryer')) add('thermometer', 'Thermometer', 'suggested', 0, 'Suggested: to keep the oil at the right heat');
+    else if (meat) add('thermometer', 'Meat thermometer', 'suggested', 0, 'Suggested: to check the ' + meat.t.split(/[:,]/)[0].toLowerCase().replace(/ and .*$/, '').replace(/^steaks/, 'meat') + ' is done');
+  }
+  const rank = { step: 0, list: 1, heard: 2, likely: 3, suggested: 4 };
+  const order = new Map(GEAR.map((g, i) => [g[0], i]));
+  return Array.from(found.values()).sort((a, b) => (rank[a.kind] - rank[b.kind]) || ((a.step || 99) - (b.step || 99)) || ((order.get(a.id) ?? 99) - (order.get(b.id) ?? 99))).slice(0, 16);
+}
+// cookware someone mentions while talking (a video's speech); everyday words only count with "my", "the", "a"…
+function heardIn(text) {
+  const t = ' ' + gNorm(text) + ' ';
+  const out = [];
+  GEAR_RE.forEach(([g, re]) => {
+    if (['bowl', 'pan', 'whisk', 'oven', 'foil'].indexOf(g[0]) >= 0 && !new RegExp(re.source.replace('(?:', '(?:my |the |a |your |big |large )(?:')).test(t)) return;
+    const m = t.match(re);
+    if (m) out.push({ id: g[0], name: gName(g, t, m) });
+  });
+  return out.slice(0, 8);
+}
+const gearHeard = text => heardIn(text).map(h => h.name);
 /* ---- end kitchen help ---- */
 
 /* ---------- add / edit ---------- */
@@ -3906,7 +4262,9 @@ function saveEditor(){
   });
   // details that came with the link (byline, nutrition, jump spot) stay with that link
   const sameLink = base && base.url && d && normUrl(base.url) === normUrl(d.url);
-  if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'captionCut', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt', 'impSig'].forEach(k => { delete r[k]; });
+  if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'captionCut', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt', 'impSig', 'speech', 'speechChecked', 'similar'].forEach(k => { delete r[k]; });
+  // steps from a similar recipe that were changed by hand are the person's own now
+  if (base && base.stepsFrom && JSON.stringify(base.steps || []) !== JSON.stringify(r.steps)) delete r.stepsFrom;
   if (F.imp && d && normUrl(F.lastReadUrl || '') === normUrl(d.url)) {
     const j = F.imp;
     ['description', 'author', 'siteName', 'anchor', 'caption', 'recipeUrl', 'yieldText'].forEach(k => { if (j[k] && !r[k]) r[k] = j[k]; });
@@ -3915,6 +4273,8 @@ function saveEditor(){
     if ((j.nutrition || []).length && !(r.nutrition || []).length) r.nutrition = j.nutrition;
     if (j.prepTime && !r.prepTime) r.prepTime = j.prepTime;
     if (j.cookTime && !r.cookTime) r.cookTime = j.cookTime;
+    if (j.speech && !r.speech) r.speech = String(j.speech).slice(0, 8000);
+    else if (!j.speech && r.platform === 'tiktok') r.speechChecked = true;
     r.importedAt = now();
   }
   F.saved = true; F.savedId = r.id;
@@ -4188,6 +4548,7 @@ async function removeExamples(){
 }
 
 document.addEventListener('submit', e => {
+  if (e.target && e.target.id === 'simform') { e.preventDefault(); const el = $('#simq'); const v = el ? el.value.trim() : ''; if (!v) { if (el) el.focus(); return; } el.blur(); const r = cur(); if (r && r.id) findSimilar(r.id, v); return; }
   if (e.target && e.target.id === 'nameform') { e.preventDefault(); const v = ($('#hname') || {}).value || ''; if (!v.trim()) return; const el = $('#hname'); if (el) el.blur(); putSettings({name:v.trim().slice(0, 40)}); refresh(); toast('Nice to meet you, ' + v.trim().split(' ')[0] + '!'); }
 });
 /* ---------- events ---------- */
@@ -4212,6 +4573,11 @@ const A = {
   deletecol: t => deleteCol(t.dataset.id),
   rmphoto: () => { if (!F) return; F.photoId = null; F.photoKey = null; F.photoData = null; F.preview = null; F.photoUrl = (F.det && F.det.ytId) ? 'https://i.ytimg.com/vi/' + F.det.ytId + '/hqdefault.jpg' : null; renderPrev(); },
   install: () => installApp(),
+  listen: t => listenVideo(t.dataset.id || cur().id),
+  usesimilar: t => useSimilar(t.dataset.id || cur().id),
+  unsimilar: t => unSimilar(t.dataset.id || cur().id),
+  simnext: t => { const id = t.dataset.id || cur().id; const r = Store.recipes.get(id); const n = r && r.similar ? r.similar.items.length : 0; if (n) { SIM.idx.set(id, ((SIM.idx.get(id) || 0) + 1) % n); refresh(); } },
+  simretry: t => { const id = t.dataset.id || cur().id; SIM.tried.delete(id); SIM.err.delete(id); findSimilar(id); },
   getdetails: t => { closeSheet(); const id = t.dataset.id || cur().id; const r = Store.recipes.get(id); if (r && r.importedAt) { r.importedAt = null; } getDetails(id); },
   desc: t => t.classList.toggle('open'),
   'f-reread': () => { if (F && F.det) { F.lastReadUrl = ''; startRead(F.det.url); } },

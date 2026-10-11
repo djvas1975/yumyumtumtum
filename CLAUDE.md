@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.6**.
+Current version: **1.7**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -36,7 +36,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 
 ---
 
-## What the app does (v1.6)
+## What the app does (v1.7)
 - **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
   Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
@@ -61,6 +61,16 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   recipe are on your list · See them", and **Cookware & tips** (the recipe's own cookware, tips for
   the pans and appliances the directions use, what to use if you don't have one, and USDA safe
   temperatures for the meat in it).
+  v1.7 (Oct 10, 2026) adds, all free (no AI): a **What you'll need** checklist at the top of Cookware & tips
+  (every pan, appliance and tool, each with "Step 3", "On the recipe's cookware list", "Said in the video",
+  "Likely: for draining in step 2", or "Suggested: to check the chicken is done"), and for recipes with **no
+  written steps** a Directions section with **What they said in the video** (TikTok only: TikTok's own speech
+  captions, "Cookware heard" chips; older saves get a "Listen to the video" button) and **Steps from a similar
+  recipe** (the closest recipe on the Discover sites, looked up by itself the first time the page opens: photo,
+  site, steps, cookware, "Uses 5 of the 6 foods in the video", See the steps, **Use these steps** (or "Use this
+  recipe" when there are no ingredients), Open it, Another, and "Not the right dish?" search). Used steps carry
+  a note "These steps are from a similar recipe … not this video · Take them out". Dave picked the free version;
+  AI-written steps from a video were offered as a later add-on (needs his own Claude API key).
 - **Yums** (rebuilt in v1.3 to be Dave's recipe box): count of recipes and how many made, a search
   pill, six smart collections (All Yums, Favorites, Want to try, Made it, Top rated = 4+ stars,
   30 min or less), **Categories** (the same 10 as Home, as photo tiles with counts; tap for his
@@ -121,12 +131,13 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `api/backup.js` | Cloud backup to the private Vercel Blob store: `POST ?op=save&day=&daily=1`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). Artistry uses the same endpoint with `&app=artistry` (see the Artistry cloud backup section). |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
-| `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`) and cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`). Sources are listed at the top of the file. |
+| `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`), cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`), and the What you'll need list (`GEAR`, `GEAR_LIKELY`, `gearFor(recipe)`, `gearHeard(text)`). Sources are listed at the top of the file. |
+| `api/similar.js` | Steps from a similar recipe: `GET /api/similar?q=<dish>&ing=<food ids>&skip=<url|url>` (`debug=1` for each site and score). Searches the Discover sites, reads the closest 6 recipe cards (`readRecipe` from api/recipe.js), returns up to 3 with steps. |
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, archive fallback. |
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
-| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps and cookware tips, and cloud backup with a fake Blob store. |
+| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup with a fake Blob store, and similar-recipe matching with fake recipe sites. |
 | `package.json` | Only for Vercel: the `@vercel/blob` SDK used by api/backup.js. (npm's registry refused `@vercel/blob` inside Claude sessions on Sept 29, 2026, so tests fake it; Vercel installs it on deploy.) |
-| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s). |
+| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s, similar 30 s). |
 | `icons/` | App icons. `tools/make_photo_icons.py` makes the current ones from `tools/icon-art.jpg`. |
 
 Browsers can only call the reader from the app's own site (CORS allows https://djvas1975.github.io),
@@ -137,8 +148,8 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 1. Edit `tools/app.html` for the app, or `api/` and `lib/` for the reader or Discover.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
-4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.6`).
+4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js`
+5. App changes: bump the version text in `V.me` (`version 1.7`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -338,7 +349,10 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   token cache and test-area fallback) and the Deals tab in `tools/app.html`. Old settings
   (`stores`, `mydeals`, `kroger`) stay on the phone unused.
 
-## Video recipes from what's said (checked Sept 28, 2026, not built)
+## Video recipes from what's said (checked Sept 28, 2026; the free part built Oct 10, 2026 in v1.7)
+- **Built (v1.7):** the reader asks for TikTok's speech captions on every TikTok (`readTikTok(url, trace, {speech:true})`,
+  `speech` in the answer, `READER_V` 11); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
+  shows it as "What they said in the video" when there are no written steps (collapsed under the steps otherwise).
 - Probe: `/api/recipe?url=<video>&debug=1&subs=1` lists the video's own captions and shows the start
   of the caption file. Debug only; normal reads don't change.
 - **TikTok: works, free.** TikTok's page data lists its own speech-to-text captions
@@ -379,6 +393,31 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   apps"). Found Oct 1, 2026: Dave's phone still had the first bowl icon five days after the photo
   icon went live (the file names never changed), and the old name a day after the rename.
 
+## What you'll need and similar recipes: how they work (built Oct 10, 2026, v1.7)
+- `gearFor(r)` reads each real step (lowercase, dashes as spaces, "9 x 13" -> "9x13", "12-inch") against `GEAR`
+  (about 70 items: appliances, pans, bowls, tools, foil/parchment/wrap). Size words in front count ("Large skillet",
+  "6-quart slow cooker", "Cast iron skillet"); some use the recipe's own words ("Baking sheets", "9x13 pan"). The oven
+  gets its heat ("Oven, heated to 375°F", also "bake at 350"). Then the recipe's own cookware list (its words), then
+  cookware said in the video (`r.speech`), then `GEAR_LIKELY` guesses only when nothing named covers them (colander
+  for "drain" but not "drain the grease" or "drain on paper towels", pot for boil/simmer when no pot/pan/cooker is
+  named, grater, zester, masher, two forks for shredding meat, rolling pin, pastry brush, mixer for creaming butter,
+  blender, food processor, deep pot for frying), a can opener when ingredients have cans, and a thermometer for
+  meat or frying oil. False alarms tested: "pot roast", "Instant Pot", "grilled cheese", "baking powder", "bake" in
+  an air fryer recipe, serving bowls, "you can use". Checks are kept like ingredient checks (`CHECKS[id]['g:'+gearId]`).
+- `gearHeard(text)` (speech): named cookware only; bowl/pan/whisk/oven/foil need "my/the/a/your/big/large" in front.
+- Similar recipe (`api/similar.js`): `dishWords` drops emoji, hashtags, "Ep 20:", and filler ("easy", "best",
+  "viral"…); style words (slow cooker, air fryer, creamy, crispy…) are a bonus, not required ("fried", "baked",
+  "stuffed" stay main words). Searches the whole name and the main words alone on the core/wide sites plus matching
+  cuisine sites, keeps names scoring >= 0.34, reads the best 6 (2 per site), and keeps one when it covers 60%+ of
+  the main words (2 of 3, both of 2) or 34%+ plus 60% of the video's foods. Sorted by name x2 + food overlap.
+- Phone: `findSimilar(id, q)` runs on its own once per recipe when a saved link with no steps opens (`SIM.tried`
+  stops repeats after an error), and saves `r.similar = {q, at, items}` so it's instant and offline later. `useSimilar`
+  sets `r.steps` and `r.stepsFrom = {title, url, sourceName, ing?, eq?}` (adds ingredients/cookware only if the recipe
+  had none); `unSimilar` takes them back out; editing the steps by hand drops `stepsFrom`. Changing a recipe's link
+  drops `speech`, `speechChecked`, `similar`.
+- Tested offline Oct 10, 2026 (Playwright, light and dark, 390 px): checklist, TikTok with speech + similar, use and
+  take out, no match + typed search, Listen to the video.
+
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.
 - Troubleshooting: one step at a time, using his screenshots.
@@ -386,6 +425,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - For looks, show a picture and let him choose. He'll say plainly when something misses.
 
 ## Ideas not built yet
+- AI-written steps and cookware from a TikTok's speech (Claude Haiku, under a penny a video, needs Dave's own API key).
 - Store deals as a separate app that ties into the grocery list (see "Deals (removed)").
 - Fill in a video's recipe from what's said in it (see "Video recipes from what's said").
 - Meal planner (Yummly had one). The grocery list is ready for it.

@@ -37,7 +37,8 @@ module.exports = async (req, res) => {
 
 async function readRecipe(url, trace) {
   const host = new URL(url).hostname.replace(/^(www|m|mobile)\./, '');
-  if (/(^|\.)tiktok\.com$/.test(host)) return withLinkedRecipe(await readTikTok(url, trace), trace);
+  // TikTok: also what's said in the video (TikTok's own speech-to-text), for recipes whose caption has no steps
+  if (/(^|\.)tiktok\.com$/.test(host)) return withLinkedRecipe(await readTikTok(url, trace, { speech: true }), trace);
   if (host === 'youtu.be' || /(^|\.)youtube\.com$/.test(host)) return withLinkedRecipe(await readYouTube(url, trace), trace);
   if (/(^|\.)instagram\.com$/.test(host)) return withLinkedRecipe(await readInstagram(url, trace), trace);
   if (/(^|\.)facebook\.com$/.test(host) || host === 'fb.watch') return withLinkedRecipe(await readFacebook(url, trace), trace);
@@ -170,7 +171,8 @@ function wprmGroups(html) {
 }
 
 /* ---------------- TikTok ---------------- */
-// opts.speech: also get what's said in the video (TikTok's own speech-to-text captions), for Artistry's supply finder
+// opts.speech: also get what's said in the video (TikTok's own speech-to-text captions): YumYum's "What they said"
+// box and Artistry's supply finder
 async function readTikTok(url, trace, opts) {
   const target = await resolveTikTok(url, trace);
   // the post's own page has the whole caption with its line breaks (TikTok's quick lookup squashes it onto one line)
