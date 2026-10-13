@@ -430,6 +430,11 @@ button.tc-name .ic{width:15px;height:15px;color:var(--ink-3)}
 .vp-body iframe,.vp-body video{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}
 #vplayer.drag .vp-body iframe,#vplayer.drag .vp-body video{pointer-events:none}
 .vp-wait{position:absolute;inset:0;display:grid;place-items:center}
+.vp-touch{position:absolute;inset:0;z-index:2;touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+#vplayer.live .vp-touch{display:none}
+#vplayer.live{box-shadow:0 0 0 3px var(--saffron),0 12px 36px rgba(0,0,0,.35)}
+.vp-hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:3;pointer-events:none;background:rgba(23,17,27,.82);color:#fff;border-radius:12px;padding:7px 11px;font:700 12px/1.4 var(--body);text-align:center;white-space:nowrap;animation:vphint 4.5s forwards}
+@keyframes vphint{0%,78%{opacity:1}100%{opacity:0;visibility:hidden}}
 .ta-more button{height:64px;border-radius:18px;background:rgba(255,255,255,.18);color:#fff;font:800 19px/1 var(--body);display:grid;place-items:center}
 html.haspill #toast{bottom:calc(146px + env(safe-area-inset-bottom,0px))}
 .cpcard{margin-top:12px;padding:14px;border-radius:16px;background:var(--chili-soft);display:flex;flex-direction:column;gap:6px}
@@ -1371,7 +1376,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.0.1</p></div>';
+    + '<p class="ver">YumYum · version 2.1</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -2097,7 +2102,12 @@ function vidOf(r){
   return null;
 }
 function vpSaved(){ try { return JSON.parse(localStorage.getItem(VP_LS) || '{}') || {}; } catch (e) { return {}; } }
-function vpRemember(){ if (!VP) return; try { localStorage.setItem(VP_LS, JSON.stringify({x:VP.x, y:VP.y, big:VP.big})); } catch (e) {} }
+function vpRemember(){
+  if (!VP) return;
+  const o = Object.assign(vpSaved(), {x:VP.x, y:VP.y, big:VP.big});
+  o[VP.tall ? 'wt' : 'ww'] = VP.cw || null; // a size set by pinching, kept apart for tall and wide videos
+  try { localStorage.setItem(VP_LS, JSON.stringify(o)); } catch (e) {}
+}
 async function playVideo(id){
   const r = Store.recipes.get(id); if (!r) return;
   if (VP && VP.id === id) { closeVideo(); return; }
@@ -2137,9 +2147,12 @@ async function videoCheck(id){
 }
 function vpShow(r, v){
   const sv = vpSaved();
-  VP = {id:r.id, tall:!!v.tall, ig:!!v.ig, big:!!sv.big, x:sv.x, y:sv.y};
+  VP = {id:r.id, tall:!!v.tall, ig:!!v.ig, big:!!sv.big, x:sv.x, y:sv.y, cw:(v.tall ? sv.wt : sv.ww) || null};
   let el = document.getElementById('vplayer');
-  if (!el) { el = document.createElement('div'); el.id = 'vplayer'; el.setAttribute('role', 'dialog'); document.body.appendChild(el); vpDrag(el); }
+  if (!el) { el = document.createElement('div'); el.id = 'vplayer'; el.setAttribute('role', 'dialog'); document.body.appendChild(el); vpGestures(el); }
+  vpLive(false);
+  const hints = sv.hints || 0;
+  if (hints < 3 && !v.loading) { try { localStorage.setItem(VP_LS, JSON.stringify(Object.assign(sv, {hints:hints + 1}))); } catch (e) {} }
   const p = PLAT[r.platform] || PLAT.web;
   const media = v.loading ? '<div class="vp-wait"><span class="spin"></span></div>'
     : v.file ? '<video src="' + esc(v.file) + '"' + (v.poster ? ' poster="' + esc(v.poster) + '"' : '') + ' controls autoplay playsinline></video>'
@@ -2147,20 +2160,32 @@ function vpShow(r, v){
   el.setAttribute('aria-label', 'Video: ' + (r.title || ''));
   el.innerHTML = '<div class="vp-bar"><span class="vp-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="vp-t">' + esc(r.platform === 'web' ? 'Video' : p.name) + '</span>'
     + '<button class="vp-b" data-act="vsize" aria-label="' + (VP.big ? 'Make smaller' : 'Make bigger') + '">' + icon(VP.big ? 'shrink' : 'grow') + '</button>'
-    + '<button class="vp-b" data-act="vclose" aria-label="Close video">' + icon('x') + '</button></div><div class="vp-body">' + media + '</div>';
+    + '<button class="vp-b" data-act="vclose" aria-label="Close video">' + icon('x') + '</button></div><div class="vp-body">' + media
+    + '<div class="vp-touch" aria-hidden="true"></div>' + (hints < 3 && !v.loading ? '<div class="vp-hint" aria-hidden="true">Pinch to resize<br>Tap to use its buttons</div>' : '') + '</div>';
   el.hidden = false;
   vpPlace();
   refresh();
 }
-function closeVideo(){ const el = document.getElementById('vplayer'); if (el) { el.innerHTML = ''; el.hidden = true; } VP = null; refresh(); }
-// size: portrait videos (TikTok, Reels, Shorts) are tall and narrow; the rest are wide
-function vpSize(){
+function closeVideo(){ const el = document.getElementById('vplayer'); if (el) { el.innerHTML = ''; el.hidden = true; } vpLive(false); VP = null; refresh(); }
+// size: portrait videos (TikTok, Reels, Shorts) are tall and narrow; the rest are wide. The bigger/smaller button picks
+// one of two sizes; pinching sets any size in between the smallest and biggest that fit (VP.cw, a share of the width).
+function vpPreset(big){
   const W = window.innerWidth;
-  let w = VP.tall ? (VP.big ? 0.7 : 0.44) * W : (VP.big ? 0.94 : 0.62) * W;
-  if (VP.ig) w = Math.max(w, Math.min(W * 0.92, VP.big ? 400 : 300));
-  w = Math.round(Math.min(w, VP.tall ? 360 : 640));
-  const h = Math.round(w * (VP.ig ? 1.75 : VP.tall ? 16 / 9 : 9 / 16));
-  return {w:w, h:Math.min(h, window.innerHeight - 160)};
+  let w = VP.tall ? (big ? 0.7 : 0.44) * W : (big ? 0.94 : 0.62) * W;
+  if (VP.ig) w = Math.max(w, Math.min(W * 0.92, big ? 400 : 300));
+  return Math.min(w, VP.tall ? 360 : 640);
+}
+function vpLimits(){
+  const W = window.innerWidth, H = window.innerHeight, ratio = VP.ig ? 1.75 : VP.tall ? 16 / 9 : 9 / 16;
+  const max = Math.max(150, Math.min(W - 16, (H - 160) / ratio, VP.tall ? 520 : 1000));
+  let min = VP.tall ? Math.max(110, W * 0.28) : Math.max(170, W * 0.42);
+  if (VP.ig) min = Math.max(min, Math.min(300, W - 16)); // Instagram's player needs room for its own header
+  return {min:Math.min(min, max), max:max, ratio:ratio};
+}
+function vpSize(){
+  const L = vpLimits();
+  const w = Math.round(Math.max(L.min, Math.min(L.max, VP.cw ? VP.cw * window.innerWidth : vpPreset(VP.big))));
+  return {w:w, h:Math.round(w * L.ratio)};
 }
 function vpPlace(){
   const el = document.getElementById('vplayer'); if (!el || !VP) return;
@@ -2173,25 +2198,90 @@ function vpPlace(){
   x = Math.max(8, Math.min(maxX, x)); y = Math.max(8, Math.min(Math.max(8, maxY), y));
   el.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)';
   VP.px = x; VP.py = y;
+  // the bigger/smaller button follows the size, pinched or not
+  const big = s.w >= (vpPreset(false) + vpPreset(true)) / 2, b = el.querySelector('[data-act="vsize"]');
+  if (b && b.dataset.big !== String(big)) { b.dataset.big = String(big); b.innerHTML = icon(big ? 'shrink' : 'grow'); b.setAttribute('aria-label', big ? 'Make smaller' : 'Make bigger'); }
 }
-// drag by the bar on top (the video itself takes its own taps)
-function vpDrag(el){
-  let st = null;
+// Like Android's own picture-in-picture window: one finger moves it (on the bar or the video), two fingers pinch it
+// bigger or smaller. A web page can't pass a tap into another site's player, so a clean tap on the video steps the touch
+// layer aside for a few seconds and the video's own buttons (play, pause, sound) take the next taps.
+function vpGestures(el){
+  const pts = new Map();
+  let g = null, raf = 0, tapAt = 0, tapT = 0;
+  const rebase = () => {
+    const a = [...pts.values()];
+    if (!a.length || !VP) return;
+    const s = vpSize(), tot = s.h + 44;
+    if (a.length >= 2) {
+      const p = a[0], q = a[1], cx = (p.x + q.x) / 2, cy = (p.y + q.y) / 2;
+      Object.assign(g, {n:2, d0:Math.max(24, Math.hypot(p.x - q.x, p.y - q.y)), w0:s.w, fx:(cx - VP.px) / s.w, fy:(cy - VP.py) / tot, moved:true, pinched:true});
+    } else Object.assign(g, {n:1, sx:a[0].x, sy:a[0].y, x0:VP.px, y0:VP.py});
+  };
+  const apply = () => {
+    raf = 0;
+    const a = [...pts.values()];
+    if (!g || !VP || !a.length) return;
+    const W = window.innerWidth, H = window.innerHeight;
+    if (g.n === 2 && a.length >= 2) {
+      const p = a[0], q = a[1], L = vpLimits();
+      const w = Math.max(L.min, Math.min(L.max, g.w0 * Math.hypot(p.x - q.x, p.y - q.y) / g.d0));
+      VP.cw = w / W;
+      // keep the spot between the fingers under the fingers
+      VP.x = ((p.x + q.x) / 2 - g.fx * w) / W; VP.y = ((p.y + q.y) / 2 - g.fy * (Math.round(w * L.ratio) + 44)) / H;
+    } else if (g.n === 1 && g.moved) {
+      VP.x = (g.x0 + a[0].x - g.sx) / W; VP.y = (g.y0 + a[0].y - g.sy) / H;
+    }
+    vpPlace();
+  };
   el.addEventListener('pointerdown', e => {
-    if (!VP || !e.target.closest('.vp-bar') || e.target.closest('button')) return;
-    st = {id:e.pointerId, sx:e.clientX, sy:e.clientY, x:VP.px, y:VP.py};
+    if (!VP) return;
+    if (e.target.tagName === 'VIDEO' && el.classList.contains('live')) { vpLive(true, 8000); return; } // using a video file's own buttons
+    if (e.target.closest('button') || !e.target.closest('.vp-bar, .vp-touch')) return;
+    if (!pts.size) g = {t:Date.now(), moved:false, onVideo:!!e.target.closest('.vp-touch')};
+    if (!g || pts.size >= 2) return;
+    pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    rebase();
     el.classList.add('drag');
+    const h = el.querySelector('.vp-hint'); if (h) h.remove();
     try { el.setPointerCapture(e.pointerId); } catch (err) {}
     e.preventDefault();
   });
   el.addEventListener('pointermove', e => {
-    if (!st || e.pointerId !== st.id || !VP) return;
-    VP.x = (st.x + e.clientX - st.sx) / window.innerWidth; VP.y = (st.y + e.clientY - st.sy) / window.innerHeight;
-    vpPlace();
+    const p = pts.get(e.pointerId); if (!p || !g) return;
+    p.x = e.clientX; p.y = e.clientY;
+    if (g.n === 1 && !g.moved && Math.hypot(p.x - g.sx, p.y - g.sy) > 8) g.moved = true;
+    if (!raf) raf = requestAnimationFrame(apply);
   });
-  const end = e => { if (!st || e.pointerId !== st.id) return; st = null; el.classList.remove('drag'); if (VP) { VP.x = VP.px / window.innerWidth; VP.y = VP.py / window.innerHeight; vpRemember(); } };
+  const end = e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId);
+    if (pts.size) { rebase(); return; } // one finger still down: keep moving with it
+    const tap = g && !g.moved && g.onVideo && e.type === 'pointerup' && Date.now() - g.t < 450;
+    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    el.classList.remove('drag');
+    if (VP && g && g.moved) { VP.x = VP.px / window.innerWidth; VP.y = VP.py / window.innerHeight; vpRemember(); }
+    g = null;
+    // step aside on the tap's click, not before it, so that same tap doesn't land on the video's own buttons
+    if (tap) { tapAt = Date.now(); clearTimeout(tapT); tapT = setTimeout(() => vpLive(true, 5000), 500); }
+  };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  el.addEventListener('click', e => {
+    if (!e.target.closest('.vp-touch')) return;
+    e.preventDefault();
+    if (Date.now() - tapAt < 600) { clearTimeout(tapT); tapAt = 0; vpLive(true, 5000); }
+  });
 }
+// the video's own buttons take taps for a few seconds (longer once one was used), then moving and pinching are back
+let VP_LIVE = 0;
+function vpLive(on, ms){
+  clearTimeout(VP_LIVE);
+  const el = document.getElementById('vplayer'); if (!el) return;
+  el.classList.toggle('live', !!on);
+  if (on) VP_LIVE = setTimeout(() => vpLive(false), ms || 5000);
+}
+// a tap inside the player moves the phone's focus into it; a tap back on YumYum brings it back out
+window.addEventListener('blur', () => setTimeout(() => { const el = document.getElementById('vplayer'); if (el && el.classList.contains('live') && el.contains(document.activeElement)) vpLive(true, 8000); }, 0));
+window.addEventListener('focus', () => { const el = document.getElementById('vplayer'); if (el && el.classList.contains('live')) vpLive(false); });
 window.addEventListener('resize', () => { if (VP) vpPlace(); });
 
 /* ---------- copy it from the page: when a site won't let the reader in at all ---------- */
@@ -5236,7 +5326,7 @@ const A = {
   timers: () => openTimers(),
   vplay: t => playVideo(t.dataset.id || cur().id),
   vclose: () => closeVideo(),
-  vsize: () => { if (!VP) return; VP.big = !VP.big; vpRemember(); const r = Store.recipes.get(VP.id); const v = vidOf(r); const b = document.querySelector('#vplayer [data-act="vsize"]'); if (b) { b.innerHTML = icon(VP.big ? 'shrink' : 'grow'); b.setAttribute('aria-label', VP.big ? 'Make smaller' : 'Make bigger'); } vpPlace(); },
+  vsize: () => { if (!VP) return; VP.big = vpSize().w < (vpPreset(false) + vpPreset(true)) / 2; VP.cw = null; vpRemember(); vpPlace(); },
   tclose: () => closeTimers(),
   tpreset: t => { const r = cur().name === 'recipe' ? Store.recipes.get(cur().id) : null; tmStart(+t.dataset.min * 60000, '', r ? r.title : '', r ? r.id : ''); },
   tpad: () => { TM_PAD = {d:''}; tmRender(); },

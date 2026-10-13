@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.0.1**.
+Current version: **2.1**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -88,7 +88,9 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   while the panel is open. Finished timers stay as "Done at 6:11 PM" (Again, +1 min, Clear).
 - **Video on the recipe page (v2.0, Oct 12, 2026):** a play button beside the timer button (only when the recipe has a
   video) opens a floating player over the recipe: drag it by its dark top bar anywhere, make it bigger or smaller,
-  close it (or tap the play button again). It keeps playing while you scroll and remembers where you put it. Works for
+  close it (or tap the play button again). **v2.1:** like Android's own picture-in-picture window, one finger on the video
+  moves it, two fingers pinch it to any size, and one tap unlocks the video's own buttons (play, pause, sound) for a few
+  seconds (gold outline while unlocked). It keeps playing while you scroll and remembers where you put it. Works for
   TikTok, Instagram reels, YouTube (Shorts are tall), Facebook videos, and a website recipe card's own video.
 - **Yums** (rebuilt in v1.3 to be Dave's recipe box): count of recipes and how many made, a search
   pill, six smart collections (All Yums, Favorites, Want to try, Made it, Top rated = 4+ stars,
@@ -168,7 +170,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.0.1`).
+5. App changes: bump the version text in `V.me` (`version 2.1`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -518,6 +520,19 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   the iframe or `<video>`. Drag with pointer events on the bar only (the iframe gets `pointer-events:none` while
   dragging), kept on screen and above the bottom bar; position and size saved in localStorage `yyt-vplayer` as
   fractions of the screen. Tall videos: 44% of the width (70% big); wide: 62% (94% big); Instagram at least 300px.
+- **Pinch and move (v2.1, Oct 12, 2026; Dave asked to pinch the screen bigger or smaller):** a web page can't see touches
+  inside another site's player, so a clear layer `.vp-touch` covers the video. `vpGestures(el)` (pointer events on the
+  bar and the layer): one finger moves it after 8 px, two fingers set `VP.cw` (width as a share of the screen, between
+  `vpLimits()` min and max: tall 28% of the width (110px+) up to what fits the screen height; wide 42% (170px+) up to the
+  width minus 16px; Instagram 300px+) and keep the spot between the fingers under them; lifting one finger goes on as a
+  move. Saved in `yyt-vplayer` as `wt` (tall) / `ww` (wide). The bigger/smaller button goes back to the two presets
+  (`vpPreset`) and its icon follows the size. A clean tap (no move, under 450 ms) hides the layer on that tap's click
+  (not on pointerup, or the same tap lands on the video) for 5 s (`vpLive`, `#vplayer.live`, saffron outline); a tap
+  inside the player moves focus into it (window blur), which makes it 8 s; a tap back on YumYum (window focus) ends it.
+  A hint "Pinch to resize / Tap to use its buttons" shows the first 3 opens (`hints`). Tested offline with real touch
+  events (CDP `Input.dispatchTouchEvent`): pinch out to the biggest, pinch in to the smallest, one-finger move, tap ->
+  layer aside without the tap reaching the video, back after 5 s, size kept after reopening, buttons, TikTok biggest fits.
+  **Not checked yet on Dave's phone.**
 - Tested offline Oct 12, 2026 (Playwright, stand-in video pages): button only with a video, TikTok player address,
   drag from top right to bottom left and saved, bigger and back, close by the play button, TikTok share link resolved
   once and kept, website mp4, no button without a video. Not checked yet on Dave's phone: whether each site's player
