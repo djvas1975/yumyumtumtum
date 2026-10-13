@@ -74,7 +74,9 @@ def build_manifest():
             {"name": "What can I cook?", "short_name": "What can I cook", "url": (BASE or "./") + "?cook=1",
              "icons": [{"src": pic("icons/shortcut-cook.png"), "sizes": "96x96", "type": "image/png"}]},
             {"name": "Grocery list", "short_name": "Grocery list", "url": (BASE or "./") + "?go=list",
-             "icons": [{"src": pic("icons/shortcut-list.png"), "sizes": "96x96", "type": "image/png"}]}
+             "icons": [{"src": pic("icons/shortcut-list.png"), "sizes": "96x96", "type": "image/png"}]},
+            {"name": "Timers", "short_name": "Timers", "url": (BASE or "./") + "?go=timers",
+             "icons": [{"src": pic("icons/shortcut-timer.png"), "sizes": "96x96", "type": "image/png"}]}
         ],
         # Android sends shared links in "text" (sometimes "title"); the app reads all three
         "share_target": {
@@ -95,6 +97,19 @@ self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()
     .then(keys => Promise.all(keys.filter(k => k.startsWith('yyt-') && k !== VERSION).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
+});
+// a timer's notification: Stop, +1 min, or a tap on it (stops the alarm and opens the timers)
+self.addEventListener('notificationclick', e => {
+  const d = (e.notification && e.notification.data) || {};
+  e.notification.close();
+  if (!d.timer) return;
+  const msg = {timer: e.action || 'open', id: d.timer};
+  e.waitUntil(self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(list => {
+    list.forEach(c => c.postMessage(msg));
+    const c = list[0];
+    if (c) return msg.timer === 'open' && 'focus' in c ? c.focus() : undefined;
+    return self.clients.openWindow('./?go=timers');
+  }));
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
@@ -134,7 +149,7 @@ tap through to the original when it's time to cook.
 
 After it's installed, tap **Share** in TikTok, Instagram, YouTube, or Chrome and pick
 **YumYum** to save that link. Long-press the icon for quick **Save**,
-**What can I cook?**, and **Grocery list** shortcuts.
+**What can I cook?**, **Grocery list**, and **Timers** shortcuts.
 
 ## What can I cook?
 Tap **What can I cook?** on the Home tab and add what's in your kitchen. It shows your

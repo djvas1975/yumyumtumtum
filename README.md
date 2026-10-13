@@ -11,7 +11,7 @@ tap through to the original when it's time to cook.
 
 After it's installed, tap **Share** in TikTok, Instagram, YouTube, or Chrome and pick
 **YumYum** to save that link. Long-press the icon for quick **Save**,
-**What can I cook?**, and **Grocery list** shortcuts.
+**What can I cook?**, **Grocery list**, and **Timers** shortcuts.
 
 ## What can I cook?
 Tap **What can I cook?** on the Home tab and add what's in your kitchen. It shows your

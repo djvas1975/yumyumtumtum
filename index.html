@@ -360,6 +360,72 @@ body[data-route="recipe"] .tabbar{display:none}
 .fromnote{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--saffron-soft);margin-bottom:10px;font-size:14px;line-height:1.45}
 .fromnote span{flex:1}
 .fromnote a{font-weight:800;color:inherit}
+/* timers */
+.brandbar .tbtn{margin-left:auto;width:40px;height:40px;color:var(--ink-2)}
+.stxt{flex:1;min-width:0}
+.tchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tchip{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:999px;background:var(--saffron-soft);color:var(--ink);font-weight:800;font-size:14.5px;border:1px solid transparent}
+.tchip .ic{width:17px;height:17px;color:var(--chili)}
+.step.done .tchip{opacity:.6}
+html.tlock,html.tlock body{overflow:hidden}
+#tpill{position:fixed;right:14px;bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:45;display:flex;align-items:center;gap:7px;height:46px;padding:0 16px 0 13px;border-radius:999px;background:var(--ink);color:var(--bg);box-shadow:0 6px 20px rgba(0,0,0,.25);font:800 17px/1 var(--body);font-variant-numeric:tabular-nums;cursor:pointer}
+#tpill .ic{width:20px;height:20px;color:var(--saffron)}
+#tpill span{font-size:13px;opacity:.8}
+#tpill.ring{background:var(--chili);color:#fff;animation:tpulse 1s ease-in-out infinite}
+#tpill.ring .ic{color:#fff}
+@keyframes tpulse{50%{transform:scale(1.06)}}
+#tpanel{position:fixed;inset:0;z-index:66;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+#tpanel[hidden],#tpill[hidden],#talarm[hidden]{display:none}
+.tp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;max-width:640px;margin:0 auto 12px}
+.tp-head h2{font:700 28px/1.1 var(--display);letter-spacing:-.02em}
+.tp-head p{color:var(--ink-2);font-size:14px;margin-top:4px}
+.tp-x{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);flex:none}
+.tp-x .ic{width:26px;height:26px}
+.tp-list{display:flex;flex-direction:column;gap:12px;max-width:640px;margin:0 auto}
+.tcx{display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:20px;background:var(--surface);border:1px solid var(--line);text-align:left;width:100%}
+.tc-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}
+.tc-name{display:inline-flex;align-items:center;gap:6px;font:800 18px/1.2 var(--body);color:var(--ink)}
+button.tc-name .ic{width:15px;height:15px;color:var(--ink-3)}
+.tc-sub{font-size:13.5px;color:var(--ink-3);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.tc-time{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tc-time span{font:700 64px/1 var(--display);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.tc-time small{font-size:14px;color:var(--ink-3);font-weight:700}
+.tcx.pause .tc-time span{color:var(--ink-3)}
+.tc-bar{height:8px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.tc-bar i{display:block;height:100%;background:var(--chili);border-radius:99px;transition:width .25s linear}
+.tc-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tb{height:60px;border-radius:16px;font:800 17px/1 var(--body);background:var(--sunk);color:var(--ink);display:grid;place-items:center;text-align:center;padding:0 6px}
+.tb.go{background:var(--basil);color:#fff}
+.tb.stop{background:var(--chili-soft);color:var(--chili)}
+.tb.stop.armed{background:var(--chili);color:#fff}
+.tcx.ring{background:var(--chili);border-color:var(--chili);color:#fff;align-items:center;text-align:center;padding:24px 16px;animation:tflash 1s steps(2) infinite}
+.tcx.ring .tc-name,.tcx.ring .tc-sub{color:#fff}
+.tc-done{font:700 54px/1 var(--display)}
+.tc-hint{font-weight:700;opacity:.9}
+@keyframes tflash{50%{background:var(--chili-press)}}
+.tcx.done{background:var(--basil-soft);border-color:transparent}
+.tc-msg{font-weight:800;color:var(--basil)}
+.tc-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tp{height:58px;border-radius:16px;background:var(--sunk);font:800 17px/1 var(--body);color:var(--ink);display:grid;place-items:center;text-align:center;padding:0 4px}
+.tp.other{background:transparent;border:2px dashed var(--line);color:var(--ink-2)}
+.tc-hint2{font-size:13.5px;color:var(--ink-3);font-weight:600}
+.tpad-show{font:700 56px/1 var(--display);text-align:center;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tpad-show small{font:700 12.5px var(--body);color:var(--ink-3);letter-spacing:.03em}
+.tpad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tpad button{height:62px;border-radius:16px;background:var(--sunk);font:700 26px/1 var(--display);display:grid;place-items:center;color:var(--ink)}
+.tpad .ic{width:24px;height:24px}
+.tc-full{text-align:center;color:var(--ink-2);font-weight:700;padding:12px}
+.tp-note{max-width:640px;margin:16px auto 0;font-size:13px;color:var(--ink-3);font-weight:600;line-height:1.45}
+#talarm{position:fixed;inset:0;z-index:80;background:var(--chili);color:#fff;display:flex;flex-direction:column;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));animation:tflash 1s steps(2) infinite}
+.ta-stop{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;text-align:center;width:100%}
+.ta-ic .ic{width:64px;height:64px}
+.ta-stop b{font:700 32px/1.15 var(--display);max-width:16ch}
+.ta-sub{font-weight:700;opacity:.9}
+.ta-big{margin-top:16px;width:min(320px,80%);height:96px;border-radius:28px;background:#fff;color:var(--chili);display:grid;place-items:center;font:800 34px/1 var(--display)}
+.ta-hint{font-weight:700;opacity:.85}
+.ta-more{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ta-more button{height:64px;border-radius:18px;background:rgba(255,255,255,.18);color:#fff;font:800 19px/1 var(--body);display:grid;place-items:center}
+html.haspill #toast{bottom:calc(146px + env(safe-area-inset-bottom,0px))}
 .cpcard{margin-top:12px;padding:14px;border-radius:16px;background:var(--chili-soft);display:flex;flex-direction:column;gap:6px}
 .cpcard b{font-size:16px}
 .cpcard>span{font-size:14px;color:var(--ink-2);line-height:1.45}
@@ -650,6 +716,7 @@ const I = {
   ext:'<path d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   bolt:'<path d="M13 2.5 4.5 13.5H12l-1 8 8.5-11H12z"/>',
   clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  timer:'<circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.5M9.5 2.5h5M12 2.5V6M18.2 6.8l1.4-1.4"/>',
   check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   star:'<path fill="currentColor" stroke="none" d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/>',
   play:'<path fill="currentColor" stroke="none" d="M8 5.5v13a.8.8 0 0 0 1.2.7l10.3-6.5a.8.8 0 0 0 0-1.4L9.2 4.8A.8.8 0 0 0 8 5.5z"/>',
@@ -1107,7 +1174,7 @@ const backBar = (inner) => '<header class="topbar"><div class="wrap pagehead"><b
 const V = {};
 V.home = () => {
   const all = sorted(list(), 'new');
-  const head = '<header class="topbar"><div class="wrap brandbar">' + LOGO + '<span class="wordmark"><span class="y">Yum</span>Yum</span></div></header>';
+  const head = '<header class="topbar"><div class="wrap brandbar">' + LOGO + '<span class="wordmark"><span class="y">Yum</span>Yum</span><button class="iconbtn tbtn" data-act="timers" aria-label="Timers">' + icon('timer') + '</button></div></header>';
   const greet = '<h1 class="greet">' + esc(greeting()) + '</h1><p class="greet-sub">What are we cooking?</p>'
     + (!(Store.settings.name || '').trim() && !Store.settings.nameSkip ? '<div class="namecard"><b>Welcome to YumYum!</b><span>What should we call you?</span><form id="nameform" class="namerow" autocomplete="off"><input class="inp" id="hname" maxlength="40" placeholder="Your first name" autocomplete="given-name" aria-label="Your first name"><button type="submit" class="btn primary sm">Save</button></form><button class="linkbtn sm" data-act="noname">Skip</button></div>' : '');
   if (!all.length) return head + '<div class="wrap">' + greet + kitchenCardHTML() + '<div class="empty">' + LOGO + '<h3>Your recipe box is empty</h3><p>Tap the + button to save a recipe from TikTok, Instagram, YouTube, Pinterest, or any website.</p><button class="btn primary" data-act="add">' + icon('plus') + 'Save your first recipe</button>' + (canRead() ? '<button class="btn ghost" data-go="discover">' + icon('globe') + 'Find new recipes</button>' : '') + '</div></div>';
@@ -1204,6 +1271,7 @@ V.recipe = (rt) => {
   const times = [r.prepTime ? 'Prep ' + fmtTime(r.prepTime) : '', r.cookTime ? 'Cook ' + fmtTime(r.cookTime) : '', r.yieldText && !/^\d+$/.test(r.yieldText) ? 'Makes ' + r.yieldText.replace(/^(makes|yield[s]?:?)\s*/i, '') : ''].filter(Boolean).join(' · ');
   let h = '<div class="hero">' + media(r, 'hero-media')
     + '<div class="hero-bar"><button class="circ" data-act="back" aria-label="Back">' + icon('back') + '</button><span class="sp"></span>'
+    + '<button class="circ" data-act="timers" aria-label="Timers">' + icon('timer') + '</button>'
     + '<button class="circ' + (r.fav ? ' on' : '') + '" data-fav="' + esc(r.id) + '" aria-pressed="' + (!!r.fav) + '" aria-label="' + (r.fav ? 'Remove from Favorites' : 'Add to Favorites') + '">' + icon(r.fav ? 'heartf' : 'heart') + '</button>'
     + '<button class="circ" data-act="more" data-id="' + esc(r.id) + '" aria-label="More options">' + icon('more') + '</button></div></div>';
   h += '<div class="wrap dbody"><p class="eyebrow"><span class="pchip">' + icon(p.ic) + esc(p.name) + '</span>' + (src && src !== p.name ? '<span class="src">' + esc(src) + '</span>' : '') + '</p>'
@@ -1241,8 +1309,10 @@ V.recipe = (rt) => {
     h += '<div class="block" id="sec-steps"><h2>Directions <span class="muted">' + nSteps + ' steps</span></h2>'
       + (sf ? '<div class="fromnote"><span>These steps are from a similar recipe, <a href="' + esc(sf.url) + '" target="_blank" rel="noopener noreferrer">' + esc(sf.title) + '</a>' + (sf.sourceName ? ' on ' + esc(sf.sourceName) : '') + ', not ' + (isVideo(r) ? 'this video' : 'the original') + '.</span><button class="linkbtn sm" data-act="unsimilar" data-id="' + esc(r.id) + '">Take them out</button></div>' : '')
       + '<ol class="steps">'
-      + steps.map((x, i) => isHead(x) ? '<li class="shead">' + esc(x.slice(3)) + '</li>' : '<li class="step' + (checked['s' + i] ? ' done' : '') + '" data-step="' + i + '"><span class="num">' + (++n) + '</span><p>' + esc(x) + '</p></li>').join('')
-      + '</ol><p class="hint" style="margin-top:8px">Tap a step to check it off.</p></div>';
+      + steps.map((x, i) => { if (isHead(x)) return '<li class="shead">' + esc(x.slice(3)) + '</li>'; const k = ++n;
+        const tt = stepTimes(x).map(o => '<button class="tchip" data-tstart="' + o.ms + '" data-tname="Step ' + k + '" data-tsub="' + esc(r.title || '') + '" data-trid="' + esc(r.id) + '" aria-label="Start a ' + esc(o.label) + ' timer">' + icon('timer') + esc(o.label) + '</button>').join('');
+        return '<li class="step' + (checked['s' + i] ? ' done' : '') + '" data-step="' + i + '"><span class="num">' + k + '</span><div class="stxt"><p>' + esc(x) + '</p>' + (tt ? '<div class="tchips">' + tt + '</div>' : '') + '</div></li>'; }).join('')
+      + '</ol><p class="hint" style="margin-top:8px">Tap a step to check it off' + (steps.some(x => !isHead(x) && stepTimes(x).length) ? ', or tap a time to start a timer.' : '.') + '</p></div>';
   } else {
     if (r.caption && !nIng) h += '<div class="block"' + (wantsMore ? ' id="sec-steps"' : '') + '><h2>From the ' + (isVideo(r) ? 'video' : 'post') + '\'s caption</h2><p class="caption">' + esc(r.caption) + '</p>' + (r.captionCut ? cutNote(r) : '') + '</div>';
     if (!wantsMore) {
@@ -1292,7 +1362,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 1.8</p></div>';
+    + '<p class="ver">YumYum · version 1.9</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1318,7 +1388,7 @@ function back(){
   popRoute();
 }
 function popRoute(){ if (stack.length > 1) { stack.pop(); show(false); } }
-window.addEventListener('popstate', () => { if (pushed > 0) pushed--; if (!$('#modal').hidden) closeModal(false); if (!$('#sheet').hidden) closeSheet(); popRoute(); });
+window.addEventListener('popstate', () => { if (pushed > 0) pushed--; if (TM_OPEN) { closeTimers(true); return; } if (!$('#modal').hidden) closeModal(false); if (!$('#sheet').hidden) closeSheet(); popRoute(); });
 
 function show(forward){
   const r = cur();
@@ -1729,6 +1799,261 @@ async function getDetails(id){
     toast(parts.length ? 'Added ' + joinList(parts) : "Couldn't find a recipe on that page. You can paste the recipe text from Edit.");
   } catch (e) { if (e && e.canCopy) CP_FAIL.add(id); toast(e.message || "Couldn't read that page."); }
   finally { READING.delete(id); refresh(); }
+}
+
+/* ---------- timers: up to 4 at once; they keep going with the screen off and ring when done ---------- */
+// Web apps can't schedule an alarm with Android (Chrome dropped Notification Triggers), so while a timer runs the app
+// plays a very quiet sound that keeps it awake in the background (Chrome only keeps pages that make sound running
+// on time; a silent track doesn't count). The lock screen shows the timer through the media controls, and when one
+// finishes it rings, vibrates, and shows a notification with Stop and +1 min.
+const TM_LS = 'yyt-timers-v1', TM_MAX = 4;
+let TIMERS = [], TM_OPEN = false, TM_PAD = null, TM_ARM = null, TM_T = null, TM_I = null, TM_A = null, TM_MODE = '', TM_URLS = null, TM_WAKE = null;
+const TM_PRESETS = [[1, '1 min'], [2, '2 min'], [3, '3 min'], [5, '5 min'], [8, '8 min'], [10, '10 min'], [12, '12 min'], [15, '15 min'], [20, '20 min'], [25, '25 min'], [30, '30 min'], [45, '45 min'], [60, '1 hr']];
+function tmLoad(){
+  try { TIMERS = JSON.parse(localStorage.getItem(TM_LS) || '[]').filter(t => t && t.id && t.dur > 0).slice(0, TM_MAX); } catch (e) { TIMERS = []; }
+  // finished while the app was closed: a minute ago or less still rings, older ones just show as done
+  TIMERS.forEach(t => { if (t.st === 'run' && t.end <= Date.now()) { t.st = Date.now() - t.end < 60000 ? 'ring' : 'done'; t.doneAt = t.end; } });
+}
+function tmSave(){ try { localStorage.setItem(TM_LS, JSON.stringify(TIMERS)); } catch (e) {} }
+const tmLeft = t => t.st === 'run' ? Math.max(0, t.end - Date.now()) : t.st === 'pause' ? t.left : 0;
+const tmBusy = () => TIMERS.filter(t => t.st !== 'done');
+function tmFmt(ms){
+  const s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return h ? h + ':' + String(m).padStart(2, '0') + ':' + String(x).padStart(2, '0') : m + ':' + String(x).padStart(2, '0');
+}
+function tmLen(ms){ const m = Math.round(ms / 60000); return ms < 60000 ? Math.round(ms / 1000) + ' sec' : m < 60 ? m + ' min' : Math.floor(m / 60) + ' hr' + (m % 60 ? ' ' + m % 60 + ' min' : ''); }
+const clockTime = ms => new Date(ms).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+function tmName(){ for (let i = 1; i <= TM_MAX; i++) if (!TIMERS.some(t => t.name === 'Timer ' + i)) return 'Timer ' + i; return 'Timer'; }
+function tmStart(ms, name, sub, rid){
+  if (!(ms >= 1000)) return null;
+  while (TIMERS.length >= TM_MAX && TIMERS.some(t => t.st === 'done')) TIMERS.splice(TIMERS.findIndex(t => t.st === 'done'), 1);
+  if (TIMERS.length >= TM_MAX) { toast('All 4 timers are going. Stop one to start another.'); openTimers(); return null; }
+  const t = {id:'t' + uid(), name:name || tmName(), sub:sub || '', rid:rid || '', dur:ms, end:Date.now() + ms, left:0, st:'run', at:Date.now()};
+  TIMERS.push(t); tmSave();
+  tmAudioInit(); tmAskNotify(); tmSchedule(); tmRender();
+  return t;
+}
+function tmFind(id){ return TIMERS.find(t => t.id === id); }
+function tmRemove(id){ const i = TIMERS.findIndex(t => t.id === id); if (i >= 0) TIMERS.splice(i, 1); tmCloseNote(id); tmSave(); tmSchedule(); tmRender(); }
+function tmPause(id){ const t = tmFind(id); if (!t || t.st !== 'run') return; t.left = tmLeft(t); t.st = 'pause'; tmSave(); tmSchedule(); tmRender(); }
+function tmResume(id){ const t = tmFind(id); if (!t || t.st !== 'pause') return; t.end = Date.now() + t.left; t.st = 'run'; tmAudioInit(); tmSave(); tmSchedule(); tmRender(); }
+function tmAdd(id, ms){
+  const t = tmFind(id); if (!t) return;
+  if (t.st === 'run') { t.end += ms; t.dur += ms; }
+  else if (t.st === 'pause') { t.left += ms; t.dur += ms; }
+  else { t.st = 'run'; t.end = Date.now() + ms; t.dur = ms; tmCloseNote(id); }
+  tmAudioInit(); tmSave(); tmSchedule(); tmRender();
+}
+function tmAgain(id){ const t = tmFind(id); if (!t) return; t.st = 'run'; t.end = Date.now() + t.dur; tmAudioInit(); tmSave(); tmSchedule(); tmRender(); }
+// stop the ringing: the timers stay on the list as "Done" so you can see which finished, until cleared
+function tmQuiet(){
+  TIMERS.forEach(t => { if (t.st === 'ring') { t.st = 'done'; t.doneAt = t.doneAt || Date.now(); tmCloseNote(t.id); } });
+  tmSave(); tmSchedule(); tmRender();
+}
+function tmCheck(){
+  let rang = false;
+  TIMERS.forEach(t => { if (t.st === 'run' && t.end <= Date.now()) { t.st = 'ring'; t.doneAt = t.end; rang = true; tmNotify(t); } });
+  if (rang) { tmSave(); try { if (!document.hidden && navigator.vibrate) navigator.vibrate([500, 250, 500, 250, 500]); } catch (e) {} }
+  tmSchedule(); tmRender();
+}
+function tmSchedule(){
+  clearTimeout(TM_T); TM_T = null;
+  const next = TIMERS.filter(t => t.st === 'run').reduce((a, t) => Math.min(a, t.end), Infinity);
+  if (next < Infinity) TM_T = setTimeout(tmCheck, Math.max(30, next - Date.now() + 15));
+  const live = TIMERS.some(t => t.st === 'run' || t.st === 'ring');
+  if (live && !TM_I) TM_I = setInterval(tmTick, 250);
+  if (!live && TM_I) { clearInterval(TM_I); TM_I = null; }
+  tmAudio();
+}
+let TM_BUZZ = 0;
+function tmTick(){
+  if (TIMERS.some(t => t.st === 'run' && t.end <= Date.now())) { tmCheck(); return; }
+  if (document.hidden) return;
+  $$('[data-tleft]').forEach(el => { const t = tmFind(el.dataset.tleft); if (t) el.textContent = tmFmt(tmLeft(t)); });
+  $$('[data-tbar]').forEach(el => { const t = tmFind(el.dataset.tbar); if (t) el.style.width = (100 * (1 - tmLeft(t) / t.dur)).toFixed(1) + '%'; });
+  tmPill();
+  // keep buzzing while something rings and the screen is on
+  if (TIMERS.some(t => t.st === 'ring') && Date.now() - TM_BUZZ > 2500) { TM_BUZZ = Date.now(); try { if (navigator.vibrate) navigator.vibrate([500, 250, 500]); } catch (e) {} }
+}
+
+/* sound: a near-silent hum keeps the app awake; the alarm is a loud beep-beep-beep */
+function tmWav(secs, rate, f){
+  const n = Math.floor(secs * rate), buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true); w(36, 'data'); v.setUint32(40, n * 2, true);
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, f(i / rate))) * 32767, true);
+  return URL.createObjectURL(new Blob([buf], {type:'audio/wav'}));
+}
+function tmUrls(){
+  if (TM_URLS) return TM_URLS;
+  // about -50 dB: Chrome counts it as sound (its cutoff is near -72 dB), but a phone speaker can't really play a 50 Hz hum that quiet
+  const quiet = tmWav(6, 8000, t => 0.0035 * Math.sin(2 * Math.PI * 50 * t));
+  // three short beeps, then a pause
+  const alarm = tmWav(1.8, 16000, t => { const k = t % 1.8; const on = k < 0.9 && (k % 0.3) < 0.18; const env = on ? Math.min(1, ((k % 0.3)) * 60, (0.18 - (k % 0.3)) * 60) : 0; return env * 0.9 * (Math.sin(2 * Math.PI * 1046 * t) * 0.7 + Math.sin(2 * Math.PI * 2093 * t) * 0.3); });
+  return (TM_URLS = {quiet, alarm});
+}
+// the first start has to come from a tap (phones only let a tap start sound)
+function tmAudioInit(){ if (!TM_A) { TM_A = new Audio(); TM_A.loop = true; TM_A.preload = 'auto'; } tmAudio(true); }
+function tmAudio(force){
+  if (!TM_A) return;
+  const want = TIMERS.some(t => t.st === 'ring') ? 'alarm' : TIMERS.some(t => t.st === 'run') ? 'quiet' : '';
+  if (want !== TM_MODE) {
+    TM_MODE = want;
+    if (!want) { TM_A.pause(); try { TM_A.removeAttribute('src'); TM_A.load(); navigator.mediaSession.playbackState = 'none'; navigator.mediaSession.metadata = null; } catch (e) {} return; }
+    TM_A.src = tmUrls()[want]; TM_A.volume = 1;
+    TM_A.play().catch(() => {});
+  } else if (want && (TM_A.paused || force)) TM_A.play().catch(() => {});
+  tmMedia();
+}
+// the lock screen and notification shade show the next timer (the bar moves by itself)
+function tmMedia(){
+  if (!('mediaSession' in navigator) || !TM_MODE) return;
+  const ring = TIMERS.filter(t => t.st === 'ring'), run = TIMERS.filter(t => t.st === 'run').sort((a, b) => a.end - b.end);
+  const t = ring[0] || run[0]; if (!t) return;
+  const n = ring.length + run.length;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: ring.length ? '⏰ ' + t.name + ' is done!' : '⏱ ' + t.name + ' · done at ' + clockTime(t.end),
+      artist: 'YumYum timer' + (n > 1 ? 's · ' + n + ' going' : ''), album: t.sub || 'YumYum',
+      artwork: [{src:'icons/icon-192.png', sizes:'192x192', type:'image/png'}, {src:'icons/icon-512.png', sizes:'512x512', type:'image/png'}]});
+    navigator.mediaSession.playbackState = 'playing';
+    if (!ring.length && navigator.mediaSession.setPositionState) navigator.mediaSession.setPositionState({duration:t.dur / 1000, position:Math.max(0, Math.min(t.dur, t.dur - tmLeft(t))) / 1000, playbackRate:1});
+    const stopOrKeep = () => { if (TIMERS.some(x => x.st === 'ring')) tmQuiet(); else if (TM_A) TM_A.play().catch(() => {}); };
+    navigator.mediaSession.setActionHandler('pause', stopOrKeep);
+    try { navigator.mediaSession.setActionHandler('stop', stopOrKeep); } catch (e) {}
+    navigator.mediaSession.setActionHandler('play', () => { if (TM_A) TM_A.play().catch(() => {}); });
+  } catch (e) {}
+}
+// after the app reloads, the first tap anywhere starts the background sound again
+document.addEventListener('pointerdown', () => { if (TIMERS.some(t => t.st === 'run' || t.st === 'ring')) tmAudioInit(); }, true);
+
+/* notifications */
+function tmAskNotify(){ try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {}); } catch (e) {} }
+async function tmNotify(t){
+  try {
+    if (!('Notification' in window) || Notification.permission !== 'granted' || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification('⏰ ' + t.name + ' is done!', {body:(t.sub ? t.sub + ' · ' : '') + tmLen(t.dur) + ' timer. Tap to stop the alarm.', tag:'yt-' + t.id, renotify:true,
+      requireInteraction:true, vibrate:[600, 300, 600, 300, 600], icon:'icons/icon-192.png', badge:'icons/icon-192.png', data:{timer:t.id},
+      actions:[{action:'stop', title:'Stop'}, {action:'add1', title:'+1 min'}]});
+  } catch (e) {}
+}
+async function tmCloseNote(id){
+  try { if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return; const reg = await navigator.serviceWorker.ready; (await reg.getNotifications({tag:'yt-' + id})).forEach(n => n.close()); } catch (e) {}
+}
+// the notification's buttons, passed on by the service worker
+if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', e => {
+  const m = e.data || {}; if (!m.timer) return;
+  if (m.timer === 'stop') tmQuiet();
+  else if (m.timer === 'add1' && m.id) tmAdd(m.id, 60000);
+  else { tmQuiet(); openTimers(); }
+});
+
+/* what you see: a small pill while timers run, the timer panel, and a full-screen alarm */
+function tmEl(id){ let el = document.getElementById(id); if (!el) { el = document.createElement('div'); el.id = id; el.hidden = true; document.body.appendChild(el); } return el; }
+function tmPill(){
+  const el = tmEl('tpill');
+  const ring = TIMERS.filter(t => t.st === 'ring'), live = TIMERS.filter(t => t.st === 'run' || t.st === 'pause').sort((a, b) => tmLeft(a) - tmLeft(b));
+  const off = TM_OPEN || (!ring.length && !live.length);
+  document.documentElement.classList.toggle('haspill', !off);
+  if (off) { el.hidden = true; return; }
+  const t = live[0];
+  const html = ring.length ? icon('timer') + '<b>Done!</b>' : icon('timer') + '<b>' + tmFmt(tmLeft(t)) + '</b>' + (live.length > 1 ? '<span>+' + (live.length - 1) + '</span>' : '');
+  if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html; }
+  el.className = ring.length ? 'ring' : '';
+  el.setAttribute('role', 'button'); el.setAttribute('aria-label', ring.length ? 'A timer is done. Open timers' : 'Timers: ' + tmFmt(tmLeft(t)) + ' left. Open timers');
+  el.dataset.act = 'timers';
+  el.hidden = false;
+}
+function tmCardHTML(t){
+  const a = ' data-id="' + t.id + '"';
+  const name = '<button class="tc-name" data-act="trename"' + a + '>' + esc(t.name) + icon('edit') + '</button>' + (t.sub ? '<span class="tc-sub">' + esc(t.sub) + '</span>' : '');
+  if (t.st === 'ring') return '<button class="tcx ring" data-act="tquiet"' + a + '><span class="tc-top"><b class="tc-name">' + esc(t.name) + '</b>' + (t.sub ? '<span class="tc-sub">' + esc(t.sub) + '</span>' : '') + '</span><span class="tc-done">Done!</span><span class="tc-hint">Tap anywhere here to stop</span></button>';
+  if (t.st === 'done') return '<div class="tcx done"><div class="tc-top">' + name + '</div><div class="tc-msg">Done at ' + esc(clockTime(t.doneAt || Date.now())) + ' · ' + esc(tmLen(t.dur)) + '</div>'
+    + '<div class="tc-btns"><button class="tb" data-act="tagain"' + a + '>Again</button><button class="tb" data-act="tadd" data-ms="60000"' + a + '>+1 min</button><button class="tb" data-act="tclear"' + a + '>Clear</button></div></div>';
+  const armed = TM_ARM && TM_ARM.id === t.id && TM_ARM.until > Date.now();
+  return '<div class="tcx ' + t.st + '"><div class="tc-top">' + name + '</div>'
+    + '<div class="tc-time"><span data-tleft="' + t.id + '">' + tmFmt(tmLeft(t)) + '</span>' + (t.st === 'pause' ? '<small>Paused</small>' : '<small>Done at ' + esc(clockTime(t.end)) + '</small>') + '</div>'
+    + '<div class="tc-bar"><i data-tbar="' + t.id + '" style="width:' + (100 * (1 - tmLeft(t) / t.dur)).toFixed(1) + '%"></i></div>'
+    + '<div class="tc-btns"><button class="tb" data-act="tadd" data-ms="60000"' + a + '>+1 min</button>'
+    + (t.st === 'pause' ? '<button class="tb go" data-act="tresume"' + a + '>Resume</button>' : '<button class="tb" data-act="tpause"' + a + '>Pause</button>')
+    + '<button class="tb stop' + (armed ? ' armed' : '') + '" data-act="tstop"' + a + '>' + (armed ? 'Tap again' : 'Stop') + '</button></div></div>';
+}
+function tmNewHTML(){
+  const r = cur().name === 'recipe' ? Store.recipes.get(cur().id) : null;
+  if (TM_PAD) {
+    const d = TM_PAD.d.replace(/^0+/, '').slice(-6), p = d.padStart(6, '0');
+    const show = (+p.slice(0, 2) ? +p.slice(0, 2) + ':' + p.slice(2, 4) : +p.slice(2, 4)) + ':' + p.slice(4);
+    return '<div class="tcx new"><div class="tc-top"><b class="tc-name">Set a time</b>' + (r ? '<span class="tc-sub">' + esc(r.title) + '</span>' : '') + '</div>'
+      + '<div class="tpad-show">' + esc(show) + '<small>' + (+p.slice(0, 2) ? 'hours : min : sec' : 'min : sec') + '</small></div><div class="tpad">'
+      + ['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(k => '<button data-act="tkey" data-k="' + k + '">' + k + '</button>').join('')
+      + '<button data-act="tkey" data-k="x" aria-label="Cancel">' + icon('x') + '</button><button data-act="tkey" data-k="0">0</button><button data-act="tkey" data-k="b" aria-label="Back">' + icon('back') + '</button></div>'
+      + '<button class="btn primary big wide" data-act="tpadgo"' + (+d ? '' : ' disabled') + '>Start</button></div>';
+  }
+  return '<div class="tcx new"><div class="tc-top"><b class="tc-name">Start a timer</b>' + (r ? '<span class="tc-sub">' + esc(r.title) + '</span>' : '') + '</div>'
+    + '<div class="tc-presets">' + TM_PRESETS.map(x => '<button class="tp" data-act="tpreset" data-min="' + x[0] + '">' + x[1] + '</button>').join('') + '<button class="tp other" data-act="tpad">Other</button></div>'
+    + '<p class="tc-hint2">One tap starts it.</p></div>';
+}
+function tmRender(){
+  tmPill();
+  // full-screen alarm when something rings and the screen is on
+  const al = tmEl('talarm'), ring = TIMERS.filter(t => t.st === 'ring');
+  if (ring.length && !document.hidden) {
+    al.innerHTML = '<button class="ta-stop" data-act="tquiet"><span class="ta-ic">' + icon('timer') + '</span><b>' + esc(ring.map(t => t.name).join(', ')) + (ring.length > 1 ? ' are' : ' is') + ' done!</b>'
+      + (ring[0].sub ? '<span class="ta-sub">' + esc(ring[0].sub) + '</span>' : '') + '<span class="ta-big">Stop</span><span class="ta-hint">Tap anywhere</span></button>'
+      + '<div class="ta-more"><button data-act="tadd" data-ms="60000" data-id="' + ring[0].id + '">+1 min</button><button data-act="tadd" data-ms="300000" data-id="' + ring[0].id + '">+5 min</button></div>';
+    al.hidden = false;
+  } else al.hidden = true;
+  const el = tmEl('tpanel');
+  if (!TM_OPEN) { el.hidden = true; return; }
+  const busy = tmBusy();
+  const order = {ring:0, run:1, pause:2, done:3};
+  const list = TIMERS.slice().sort((a, b) => (order[a.st] - order[b.st]) || (tmLeft(a) - tmLeft(b)));
+  el.innerHTML = '<div class="tp-head"><div><h2>Timers</h2><p>Up to 4 at once. They keep going with the screen off.</p></div><button class="tp-x" data-act="tclose" aria-label="Close timers">' + icon('x') + '</button></div>'
+    + '<div class="tp-list">' + list.map(tmCardHTML).join('') + (busy.length < TM_MAX ? tmNewHTML() : '<p class="tc-full">All 4 timers are going. Stop one to start another.</p>') + '</div>'
+    + '<p class="tp-note">Leave YumYum open in the background while timers run. If you swipe it away from your recent apps, the alarm can\'t ring.</p>';
+  el.hidden = false;
+}
+async function tmWakeOn(){ try { if ('wakeLock' in navigator && !TM_WAKE && TM_OPEN && !document.hidden) { TM_WAKE = await navigator.wakeLock.request('screen'); TM_WAKE.addEventListener('release', () => { TM_WAKE = null; }); } } catch (e) {} }
+let TM_PUSHED = false;
+function openTimers(){
+  if (!TM_OPEN) { try { history.pushState({yyt:'timers'}, ''); pushed++; TM_PUSHED = true; } catch (e) {} }
+  TM_OPEN = true; TM_PAD = null; document.documentElement.classList.add('tlock'); tmRender(); tmWakeOn();
+}
+// the phone's back gesture closes the panel too (see the popstate listener)
+function closeTimers(fromBack){
+  if (!fromBack && TM_PUSHED) { try { history.back(); return; } catch (e) {} }
+  TM_PUSHED = false; TM_OPEN = false; TM_PAD = null; document.documentElement.classList.remove('tlock'); tmRender();
+  try { if (TM_WAKE) TM_WAKE.release(); } catch (e) {} TM_WAKE = null;
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { tmCheck(); tmWakeOn(); } });
+function tmRename(id){
+  const t = tmFind(id); if (!t) return;
+  const v = window.prompt('Name this timer', t.name);
+  if (v != null && v.trim()) { t.name = v.trim().slice(0, 30); tmSave(); tmRender(); tmMedia(); }
+}
+// times written in a step: "simmer 20 minutes", "bake 10-12 min", "1 hour and 15 minutes", "1 1/2 hours"
+const TM_WORDS = {a:1, an:1, one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9, ten:10, fifteen:15, twenty:20, thirty:30, forty:40, 'forty five':45, sixty:60};
+function stepTimes(s){
+  const text = String(s || '').replace(/½/g, ' 1/2').replace(/¼/g, ' 1/4').replace(/¾/g, ' 3/4').replace(/[–—]/g, '-');
+  const out = [], used = [];
+  const num = x => { x = String(x).trim().toLowerCase(); if (TM_WORDS[x] != null) return TM_WORDS[x]; const f = x.match(/^(\d+)?\s*(\d+)\/(\d+)$/); if (f) return (+(f[1] || 0)) + f[2] / f[3]; return parseFloat(x); };
+  const N = '(\\d+(?:\\.\\d+)?(?:\\s+\\d\\/\\d)?|\\d\\/\\d|an?|one|two|three|four|five|six|seven|eight|nine|ten|fifteen|twenty|thirty|forty(?:[ -]five)?|sixty)';
+  const both = new RegExp('(?<![\\w/])' + N + '\\s*(?:hours?|hrs?)\\s*(?:and\\s*)?' + N + '\\s*(?:minutes?|mins?)\\b', 'gi');
+  let m;
+  while ((m = both.exec(text)) && out.length < 2) { const ms = (num(m[1]) * 60 + num(m[2])) * 60000; out.push({ms, label:tmLen(ms)}); used.push([m.index, m.index + m[0].length]); }
+  const one = new RegExp('(?<![\\w/])' + N + '(?:\\s*(?:-|to)\\s*(\\d+(?:\\.\\d+)?))?\\s*(hours?|hrs?|minutes?|mins?|seconds?|secs?)\\b', 'gi');
+  while ((m = one.exec(text)) && out.length < 2) {
+    if (used.some(u => m.index >= u[0] && m.index < u[1])) continue;
+    const a = num(m[1].replace('-', ' ')), b = m[2] ? parseFloat(m[2]) : 0, u = m[3].toLowerCase();
+    const mult = /^h/.test(u) ? 3600000 : /^m/.test(u) ? 60000 : 1000;
+    const ms = Math.round(a * mult);
+    if (!(ms >= 10000) || ms > 12 * 3600000) continue;
+    const unit = mult === 3600000 ? 'hr' : mult === 60000 ? 'min' : 'sec';
+    out.push({ms, label:b ? (Math.round(a * 100) / 100) + '–' + b + ' ' + unit : tmLen(ms)});
+  }
+  return out.filter((x, i) => out.findIndex(y => y.ms === x.ms) === i);
 }
 
 /* ---------- copy it from the page: when a site won't let the reader in at all ---------- */
@@ -4767,6 +5092,20 @@ const A = {
   rmphoto: () => { if (!F) return; F.photoId = null; F.photoKey = null; F.photoData = null; F.preview = null; F.photoUrl = (F.det && F.det.ytId) ? 'https://i.ytimg.com/vi/' + F.det.ytId + '/hqdefault.jpg' : null; renderPrev(); },
   install: () => installApp(),
   listen: t => listenVideo(t.dataset.id || cur().id),
+  timers: () => openTimers(),
+  tclose: () => closeTimers(),
+  tpreset: t => { const r = cur().name === 'recipe' ? Store.recipes.get(cur().id) : null; tmStart(+t.dataset.min * 60000, '', r ? r.title : '', r ? r.id : ''); },
+  tpad: () => { TM_PAD = {d:''}; tmRender(); },
+  tkey: t => { const k = t.dataset.k; if (!TM_PAD) return; if (k === 'x') TM_PAD = null; else if (k === 'b') TM_PAD.d = TM_PAD.d.slice(0, -1); else if (TM_PAD.d.replace(/^0+/, '').length < 6) TM_PAD.d += k; tmRender(); },
+  tpadgo: () => { if (!TM_PAD) return; const p = TM_PAD.d.replace(/^0+/, '').slice(-6).padStart(6, '0'); const ms = ((+p.slice(0, 2)) * 3600 + (+p.slice(2, 4)) * 60 + (+p.slice(4))) * 1000; const r = cur().name === 'recipe' ? Store.recipes.get(cur().id) : null; TM_PAD = null; if (!tmStart(ms, '', r ? r.title : '', r ? r.id : '')) tmRender(); },
+  tadd: t => tmAdd(t.dataset.id, +t.dataset.ms || 60000),
+  tpause: t => tmPause(t.dataset.id),
+  tresume: t => tmResume(t.dataset.id),
+  tstop: t => { const id = t.dataset.id; if (TM_ARM && TM_ARM.id === id && TM_ARM.until > Date.now()) { TM_ARM = null; tmRemove(id); return; } TM_ARM = {id:id, until:Date.now() + 3000}; tmRender(); setTimeout(() => { if (TM_ARM && TM_ARM.id === id && TM_ARM.until <= Date.now()) { TM_ARM = null; tmRender(); } }, 3100); },
+  tquiet: () => tmQuiet(),
+  tagain: t => tmAgain(t.dataset.id),
+  tclear: t => tmRemove(t.dataset.id),
+  trename: t => tmRename(t.dataset.id),
   cpopen: t => cpOpen(t.dataset.k, t.dataset.id),
   cppaste: t => cpPaste(t.dataset.k, t.dataset.id),
   cpuse: () => { const b = document.getElementById('cpbox'); const v = b ? b.value : ''; if (!v.trim()) { if (b) b.focus(); return; } applyCopied(v); },
@@ -4837,9 +5176,10 @@ const A = {
 };
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.id === 'neverin') { e.preventDefault(); A.nvadd(); } });
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump],[data-swap],[data-lview],[data-csort],[data-rcat],[data-crpick]');
+  const t = e.target.closest('[data-dsave],[data-dnope],[data-dopen],[data-dk],[data-dfind],[data-fav],[data-open],[data-go],[data-col],[data-act],[data-f],[data-ff],[data-hf],[data-rate],[data-tab],[data-fm],[data-fc],[data-rmtag],[data-tc],[data-sort],[data-tagq],[data-step],[data-jump],[data-swap],[data-lview],[data-csort],[data-rcat],[data-crpick],[data-tstart]');
   if (!t) return;
   const d = t.dataset;
+  if (d.tstart) { const tm = tmStart(+d.tstart, d.tname, d.tsub, d.trid); if (tm) toast('Timer started: ' + tm.name + ' · ' + tmFmt(tm.dur)); return; }
   if (d.crpick) { if (CR) { CR.pick = d.crpick; crRedraw(); } return; }
   if (d.csort) { const r = cur(); r.sort = d.csort; refresh(); return; }
   if (d.rcat) { catToggle(d.rcat); return; }
@@ -4900,8 +5240,8 @@ function readShare(){
   if (window.top !== window) return null;
   let p; try { p = new URLSearchParams(location.search); } catch (e) { return null; }
   const go0 = p.get('go');
-  const out = {add:p.has('add'), cook:p.has('cook') || go0 === 'cook', go:go0 === 'list' ? go0 : '', title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
-  if (!out.add && !out.cook && !out.go && !out.title && !out.text && !out.url) return null;
+  const out = {add:p.has('add'), cook:p.has('cook') || go0 === 'cook', go:go0 === 'list' ? go0 : '', timers:go0 === 'timers', title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
+  if (!out.add && !out.cook && !out.go && !out.timers && !out.title && !out.text && !out.url) return null;
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   return out;
 }
@@ -4956,9 +5296,11 @@ async function boot(){
   }
   await startLocal();
   show(true);
-  if (share && share.go && !share.add) go({name:share.go});
+  tmLoad(); tmSchedule(); tmRender();
+  if (share && share.timers) openTimers();
+  else if (share && share.go && !share.add) go({name:share.go});
   else if (share && share.cook && !share.add) go({name:'cook'});
-  else if (share) openEditor(null, (share.title || share.text || share.url) ? share : null);
+  else if (share && !share.timers) openEditor(null, (share.title || share.text || share.url) ? share : null);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 $('#tabs').innerHTML = navHTML();

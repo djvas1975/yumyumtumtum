@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.8**.
+Current version: **1.9**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -36,7 +36,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 
 ---
 
-## What the app does (v1.8)
+## What the app does (v1.9)
 - **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
   Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
@@ -77,6 +77,15 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   long-press, Select all, Copy → come back → a prompt "Got the recipe copied?" with one button, **Paste the
   recipe**. YumYum finds the recipe card inside the whole page (ingredients, steps, cookware, notes, time, servings).
   If Android won't share the clipboard, the prompt turns into a box: long-press, Paste, Use it.
+  Confirmed on Dave's phone Oct 12, 2026: Eating on a Dime's Deviled Egg Macaroni Salad came in through the phone.
+- **Timers (v1.9, Oct 12, 2026):** up to 4 at once. Opened from a small stopwatch button at the top right of Home, the
+  stopwatch beside the heart on every recipe page, a time chip in a recipe step ("⏱ 20 min", one tap starts it, named
+  "Step 4" with the recipe under it), or long-press the app icon > Timers. While timers run, a small dark pill above
+  the bottom bar shows the next one ("9:58 +1"); tap it for the panel. Panel: one-tap presets (1 to 45 min, 1 hr) and
+  Other (a big keypad, microwave style); each timer has big +1 min / Pause / Stop (Stop asks for a second tap); tap a
+  name to rename. When one finishes: full-screen "Pasta is done! Stop" (tap anywhere), +1 / +5 min, beeping, buzzing,
+  and a notification with Stop and +1 min; the lock screen shows the timer in the media controls. The screen stays on
+  while the panel is open. Finished timers stay as "Done at 6:11 PM" (Again, +1 min, Clear).
 - **Yums** (rebuilt in v1.3 to be Dave's recipe box): count of recipes and how many made, a search
   pill, six smart collections (All Yums, Favorites, Want to try, Made it, Top rated = 4+ stars,
   30 min or less), **Categories** (the same 10 as Home, as photo tiles with counts; tap for his
@@ -123,7 +132,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   Not tested on an iPhone yet.
 - **Me:** name, stats, **What it's learned you like** (taste chips, **Foods you don't eat**
   list, Start over), backup and restore, remove examples, storage info.
-- Works offline once installed (service worker). Long-press the icon for Save, What can I cook, and Grocery list shortcuts.
+- Works offline once installed (service worker). Long-press the icon for Save, What can I cook, Grocery list, and Timers shortcuts.
 
 ## How it's built
 | File | Purpose |
@@ -141,7 +150,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `api/similar.js` | Steps from a similar recipe: `GET /api/similar?q=<dish>&ing=<food ids>&skip=<url|url>` (`debug=1` for each site and score). Searches the Discover sites, reads the closest 6 recipe cards (`readRecipe` from api/recipe.js), returns up to 3 with steps. |
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, `recipeFromPage` (a whole copied page -> its recipe card), archive fallback. |
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
-| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup with a fake Blob store, and similar-recipe matching with fake recipe sites. |
+| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js`, `tests/timers.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup with a fake Blob store, and similar-recipe matching with fake recipe sites. |
 | `package.json` | Only for Vercel: the `@vercel/blob` SDK used by api/backup.js. (npm's registry refused `@vercel/blob` inside Claude sessions on Sept 29, 2026, so tests fake it; Vercel installs it on deploy.) |
 | `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s, similar 30 s). |
 | `icons/` | App icons. `tools/make_photo_icons.py` makes the current ones from `tools/icon-art.jpg`. |
@@ -154,8 +163,8 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 1. Edit `tools/app.html` for the app, or `api/` and `lib/` for the reader or Discover.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
-4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.8`).
+4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js`
+5. App changes: bump the version text in `V.me` (`version 1.9`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -448,6 +457,34 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   feed blocked -> copy card, open page, come back, prompt, one tap; clipboard refused -> paste box; saved recipe too.
 - Idea: the same phone-side WordPress search could unlock some Discover sites that block the server (Budget Bytes,
   Natasha's Kitchen…), since their wp-json search answers browsers.
+
+## Timers: how they work (built Oct 12, 2026, v1.9)
+- Dave asked: 4 timers at once, keep running if the phone sleeps and notify when done, don't let the timer icon take
+  over the look ("tuck it away yet make it super easy to access"), easy to use while cooking with messy hands.
+- **Why a quiet sound:** a web app can't hand an alarm to Android. Chrome's Notification Triggers were dropped
+  ("The development of Notification Triggers API... has ended", developer.chrome.com). Chrome freezes or heavily
+  throttles hidden pages, except pages that made sound in the last 30 seconds ("a silent audio track doesn't count",
+  developer.chrome.com "Heavy throttling of chained JS timers"). So while a timer runs, `TM_A` (one `<audio>`, loop)
+  plays a 50 Hz hum at about -50 dB (`tmWav`, made in the app: counts as sound, can't really be heard), started from the
+  tap that starts the timer; a tap anywhere after a reload restarts it. At the end it switches to a beep-beep-beep
+  alarm (same element, so it plays in the background). Media Session shows "⏱ Pasta · done at 6:42 PM" with a moving
+  progress bar on the lock screen; its pause button stops a ringing alarm.
+- **Not yet confirmed on Dave's phone:** that the hum keeps YumYum awake with the screen off for long timers, and that
+  the notification shows. If Android still kills it, the dependable fix is a push message from the server at the end
+  time, which needs a scheduler (e.g. Upstash QStash, a separate free account) and Web Push keys.
+- State: `TIMERS` in localStorage `yyt-timers-v1` = [{id, name, sub, rid, dur, end, left, st:'run'|'pause'|'ring'|'done',
+  at, doneAt}] (end times, so they stay right after the app reloads; one that ended over a minute ago shows as done
+  without ringing). `tmCheck` rings, `tmQuiet` stops ringing (timers become 'done'), `tmRemove`, `tmAdd`, `tmPause`,
+  `tmResume`, `tmAgain`. Notifications: `reg.showNotification` with tag `yt-<id>`, `requireInteraction`, actions
+  stop/add1; sw.js (tools/build.py) `notificationclick` posts `{timer:'stop'|'add1'|'open', id}` to the page or opens
+  `./?go=timers`. Asks for notification permission on the first timer.
+- Screen: `#tpill` (z 45), `#tpanel` (z 66, above sheets, pushes a history entry so the back gesture closes it, Wake
+  Lock while open), `#talarm` (z 80, only while ringing and the screen is on). They live outside `#app`, so `refresh()`
+  doesn't redraw them. `stepTimes(text)` finds "20 minutes", "10-12 min" (uses the low end), "1 hour and 15 minutes",
+  "1 1/2 hours", "½ hour", "forty-five minutes", seconds; skips under 10 s and over 12 h; up to 2 chips a step.
+- Tested offline Oct 12, 2026 (Playwright with a controlled clock, localhost): presets, keypad 1:30, two at once,
+  lock-screen text, back gesture, step chip, alarm screen, sound switching to the alarm and back to the hum, double-tap
+  Stop, timers kept after a reload, light and dark.
 
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.
