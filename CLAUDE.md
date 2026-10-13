@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.9**.
+Current version: **2.0**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -36,7 +36,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 
 ---
 
-## What the app does (v1.9)
+## What the app does (v2.0)
 - **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
   Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
@@ -86,6 +86,10 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   name to rename. When one finishes: full-screen "Pasta is done! Stop" (tap anywhere), +1 / +5 min, beeping, buzzing,
   and a notification with Stop and +1 min; the lock screen shows the timer in the media controls. The screen stays on
   while the panel is open. Finished timers stay as "Done at 6:11 PM" (Again, +1 min, Clear).
+- **Video on the recipe page (v2.0, Oct 12, 2026):** a play button beside the timer button (only when the recipe has a
+  video) opens a floating player over the recipe: drag it by its dark top bar anywhere, make it bigger or smaller,
+  close it (or tap the play button again). It keeps playing while you scroll and remembers where you put it. Works for
+  TikTok, Instagram reels, YouTube (Shorts are tall), Facebook videos, and a website recipe card's own video.
 - **Yums** (rebuilt in v1.3 to be Dave's recipe box): count of recipes and how many made, a search
   pill, six smart collections (All Yums, Favorites, Want to try, Made it, Top rated = 4+ stars,
   30 min or less), **Categories** (the same 10 as Home, as photo tiles with counts; tap for his
@@ -164,7 +168,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.9`).
+5. App changes: bump the version text in `V.me` (`version 2.0`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -366,7 +370,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 ## Video recipes from what's said (checked Sept 28, 2026; the free part built Oct 10, 2026 in v1.7)
 - **Built (v1.7):** the reader asks for TikTok's speech captions on every TikTok (`readTikTok(url, trace, {speech:true})`,
-  `speech` in the answer, `READER_V` 11; 12 since v1.8); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
+  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
   shows it as "What they said in the video" when there are no written steps (collapsed under the steps otherwise).
 - Probe: `/api/recipe?url=<video>&debug=1&subs=1` lists the video's own captions and shows the start
   of the caption file. Debug only; normal reads don't change.
@@ -485,6 +489,28 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - Tested offline Oct 12, 2026 (Playwright with a controlled clock, localhost): presets, keypad 1:30, two at once,
   lock-screen text, back gesture, step chip, alarm screen, sound switching to the alarm and back to the hum, double-tap
   Stop, timers kept after a reload, light and dark.
+
+## Floating video player: how it works (built Oct 12, 2026, v2.0)
+- Dave asked: a video icon next to the timer icon when the recipe has a video, opening a floating media player that
+  starts the video and can be moved around so it doesn't cover the written recipe.
+- `vidOf(r)` picks the player (`r.mediaUrl` first, else `r.url`): TikTok's official embed player
+  `https://www.tiktok.com/player/v1/<id>?autoplay=1&rel=0&description=0&music_info=0` (developers.tiktok.com/doc/embed-player;
+  photo posts get none; a share link with no video number returns `{resolve:true}`, and `playVideo` asks the reader once
+  for `finalUrl` and saves it as `r.mediaUrl`), Instagram `/reel|tv/<code>/embed/` (not `/p/` posts, which may be photos),
+  YouTube `/embed/<id>?autoplay=1&playsinline=1&rel=0`, Facebook `plugins/video.php?href=` for /videos/, /reel/, /watch,
+  fb.watch, share/v, share/r, then `r.video` from a website's recipe card.
+- Reader: `videoOf(recipe.video)` in api/recipe.js -> `{kind:'youtube'|'vimeo', id}` or `{kind:'file', src, poster}` (an
+  .mp4/.m4v/.webm contentUrl, which Mediavine/Raptive players list); script players give none. `READER_V` 13. The phone
+  keeps `r.video` and, for social posts, `r.mediaUrl = j.finalUrl`. Website recipes saved before v2.0 get the button
+  after ⋯ > Fill in missing details. Changing a recipe's link drops `video` and `mediaUrl`.
+- Player `#vplayer` (z 44, outside `#app`): 44px dark bar (6-dot grip, name when wide enough, bigger/smaller, close) and
+  the iframe or `<video>`. Drag with pointer events on the bar only (the iframe gets `pointer-events:none` while
+  dragging), kept on screen and above the bottom bar; position and size saved in localStorage `yyt-vplayer` as
+  fractions of the screen. Tall videos: 44% of the width (70% big); wide: 62% (94% big); Instagram at least 300px.
+- Tested offline Oct 12, 2026 (Playwright, stand-in video pages): button only with a video, TikTok player address,
+  drag from top right to bottom left and saved, bigger and back, close by the play button, TikTok share link resolved
+  once and kept, website mp4, no button without a video. Not checked yet on Dave's phone: whether each site's player
+  starts by itself with sound (TikTok lists an autoplay error when the browser blocks it; then tap play once).
 
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.

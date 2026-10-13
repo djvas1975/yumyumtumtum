@@ -424,6 +424,22 @@ button.tc-name .ic{width:15px;height:15px;color:var(--ink-3)}
 .ta-big{margin-top:16px;width:min(320px,80%);height:96px;border-radius:28px;background:#fff;color:var(--chili);display:grid;place-items:center;font:800 34px/1 var(--display)}
 .ta-hint{font-weight:700;opacity:.85}
 .ta-more{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.circ.on{background:var(--chili);color:#fff}
+#vplayer{position:fixed;left:0;top:0;z-index:44;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 12px 36px rgba(0,0,0,.35),0 0 0 1px rgba(255,255,255,.08);will-change:transform}
+#vplayer[hidden]{display:none}
+.vp-bar{height:44px;display:flex;align-items:center;gap:6px;padding:0 4px 0 10px;background:#17111b;color:#fff;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#vplayer.drag .vp-bar{cursor:grabbing}
+.vp-grip{display:grid;grid-template-columns:repeat(2,4px);gap:3px;padding:6px 2px}
+.vp-grip i{width:4px;height:4px;border-radius:50%;background:rgba(255,255,255,.55)}
+.vp-grip{padding:6px 4px}
+#vplayer.narrow .vp-t{visibility:hidden}
+.vp-t{flex:1;min-width:0;font:800 13.5px/1 var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9}
+.vp-b{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:none}
+.vp-b .ic{width:20px;height:20px}
+.vp-body{position:relative;background:#000}
+.vp-body iframe,.vp-body video{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#000}
+#vplayer.drag .vp-body iframe,#vplayer.drag .vp-body video{pointer-events:none}
+.vp-wait{position:absolute;inset:0;display:grid;place-items:center}
 .ta-more button{height:64px;border-radius:18px;background:rgba(255,255,255,.18);color:#fff;font:800 19px/1 var(--body);display:grid;place-items:center}
 html.haspill #toast{bottom:calc(146px + env(safe-area-inset-bottom,0px))}
 .cpcard{margin-top:12px;padding:14px;border-radius:16px;background:var(--chili-soft);display:flex;flex-direction:column;gap:6px}
@@ -716,6 +732,8 @@ const I = {
   ext:'<path d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
   bolt:'<path d="M13 2.5 4.5 13.5H12l-1 8 8.5-11H12z"/>',
   clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  grow:'<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>',
+  shrink:'<path d="M20 10h-6V4M4 14h6v6M14 10l7-7M10 14l-7 7"/>',
   timer:'<circle cx="12" cy="13.5" r="7.5"/><path d="M12 9.5v4l2.5 1.5M9.5 2.5h5M12 2.5V6M18.2 6.8l1.4-1.4"/>',
   check:'<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   star:'<path fill="currentColor" stroke="none" d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/>',
@@ -1271,6 +1289,7 @@ V.recipe = (rt) => {
   const times = [r.prepTime ? 'Prep ' + fmtTime(r.prepTime) : '', r.cookTime ? 'Cook ' + fmtTime(r.cookTime) : '', r.yieldText && !/^\d+$/.test(r.yieldText) ? 'Makes ' + r.yieldText.replace(/^(makes|yield[s]?:?)\s*/i, '') : ''].filter(Boolean).join(' · ');
   let h = '<div class="hero">' + media(r, 'hero-media')
     + '<div class="hero-bar"><button class="circ" data-act="back" aria-label="Back">' + icon('back') + '</button><span class="sp"></span>'
+    + (vidOf(r) ? '<button class="circ' + (VP && VP.id === r.id ? ' on' : '') + '" data-act="vplay" data-id="' + esc(r.id) + '" aria-pressed="' + !!(VP && VP.id === r.id) + '" aria-label="' + (VP && VP.id === r.id ? 'Close the video' : 'Play the video') + '">' + icon('play') + '</button>' : '')
     + '<button class="circ" data-act="timers" aria-label="Timers">' + icon('timer') + '</button>'
     + '<button class="circ' + (r.fav ? ' on' : '') + '" data-fav="' + esc(r.id) + '" aria-pressed="' + (!!r.fav) + '" aria-label="' + (r.fav ? 'Remove from Favorites' : 'Add to Favorites') + '">' + icon(r.fav ? 'heartf' : 'heart') + '</button>'
     + '<button class="circ" data-act="more" data-id="' + esc(r.id) + '" aria-label="More options">' + icon('more') + '</button></div></div>';
@@ -1362,7 +1381,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 1.9</p></div>';
+    + '<p class="ver">YumYum · version 2.0</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1637,7 +1656,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '12'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '13'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1737,6 +1756,9 @@ function importFields(r, j){
   setIf('yieldText', j.yieldText); setIf('cuisine', j.cuisine); setIf('meal', j.meals);
   ['description', 'author', 'siteName', 'anchor', 'caption', 'recipeUrl'].forEach(k => setIf(k, j[k]));
   if (j.caption && r.caption && j.caption.length > r.caption.length + 20) u.caption = j.caption;
+  // the video: a website recipe card's own, and the full address of a social post (a TikTok share link has no video number)
+  if (j.video && !r.video) u.video = j.video;
+  if (j.finalUrl && r.platform && r.platform !== 'web' && j.finalUrl !== r.url && !r.mediaUrl && /^https:\/\//.test(j.finalUrl)) u.mediaUrl = j.finalUrl;
   // what's said in a TikTok video (TikTok's own captions of the talking)
   if (j.speech && !r.speech) u.speech = String(j.speech).slice(0, 8000);
   else if (!j.speech && !r.speech && r.platform === 'tiktok') u.speechChecked = true;
@@ -2055,6 +2077,113 @@ function stepTimes(s){
   }
   return out.filter((x, i) => out.findIndex(y => y.ms === x.ms) === i);
 }
+
+/* ---------- the recipe's video in a floating player you can drag out of the way ---------- */
+// TikTok (its official embed player), Instagram reels, YouTube, Facebook videos, and a website recipe card's own video.
+let VP = null; // {id, tall, big, x, y}
+const VP_LS = 'yyt-vplayer';
+function vidOf(r){
+  if (!r) return null;
+  const u = r.mediaUrl || r.url || '';
+  if (r.platform === 'youtube') {
+    const id = (u.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([\w-]{6,})/) || [])[1];
+    if (id) return {src:'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0', tall:/shorts\//.test(u)};
+  }
+  if (r.platform === 'tiktok') {
+    if (/\/photo\//.test(u)) return null;
+    const id = (u.match(/\/video\/(\d{8,})/) || [])[1];
+    return id ? {src:'https://www.tiktok.com/player/v1/' + id + '?autoplay=1&rel=0&description=0&music_info=0', tall:true} : {resolve:true, tall:true};
+  }
+  if (r.platform === 'instagram') {
+    const m = u.match(/instagram\.com\/(?:[\w.]+\/)?(reels?|tv)\/([\w-]{5,})/i);
+    if (m) return {src:'https://www.instagram.com/' + (/^reel/i.test(m[1]) ? 'reel' : 'tv') + '/' + m[2] + '/embed/', tall:true, ig:true};
+  }
+  if (r.platform === 'facebook' && /\/(videos?|reel|watch)\b|fb\.watch|\/share\/(v|r)\//.test(u)) return {src:'https://www.facebook.com/plugins/video.php?href=' + encodeURIComponent(u) + '&show_text=false&autoplay=true', tall:/\/reel|\/share\/r\//.test(u)};
+  const v = r.video;
+  if (v && v.kind === 'youtube' && v.id) return {src:'https://www.youtube.com/embed/' + encodeURIComponent(v.id) + '?autoplay=1&playsinline=1&rel=0', tall:false};
+  if (v && v.kind === 'vimeo' && v.id) return {src:'https://player.vimeo.com/video/' + encodeURIComponent(v.id) + '?autoplay=1&playsinline=1', tall:false};
+  if (v && v.kind === 'file' && /^https:\/\//.test(v.src || '')) return {file:v.src, poster:v.poster || '', tall:false};
+  return null;
+}
+function vpSaved(){ try { return JSON.parse(localStorage.getItem(VP_LS) || '{}') || {}; } catch (e) { return {}; } }
+function vpRemember(){ if (!VP) return; try { localStorage.setItem(VP_LS, JSON.stringify({x:VP.x, y:VP.y, big:VP.big})); } catch (e) {} }
+async function playVideo(id){
+  const r = Store.recipes.get(id); if (!r) return;
+  if (VP && VP.id === id) { closeVideo(); return; }
+  let v = vidOf(r); if (!v) return;
+  if (v.resolve) {
+    // a TikTok share link: the reader finds the full video address once, and the recipe keeps it
+    if (!canRead()) { window.open(r.url, '_blank', 'noopener'); return; }
+    vpShow(r, {loading:true, tall:true});
+    try {
+      const j = await readLink(r.url);
+      const r2 = Store.recipes.get(id);
+      if (r2 && j.finalUrl && /\/video\/\d{8,}/.test(j.finalUrl)) putRecipe(Object.assign({}, r2, {mediaUrl:j.finalUrl}));
+    } catch (e) {}
+    if (!VP || VP.id !== id) return;
+    v = vidOf(Store.recipes.get(id));
+    if (!v || v.resolve) { closeVideo(); toast("Couldn't load that video here. Opening TikTok."); window.open(r.url, '_blank', 'noopener'); return; }
+  }
+  vpShow(r, v);
+}
+function vpShow(r, v){
+  const sv = vpSaved();
+  VP = {id:r.id, tall:!!v.tall, ig:!!v.ig, big:!!sv.big, x:sv.x, y:sv.y};
+  let el = document.getElementById('vplayer');
+  if (!el) { el = document.createElement('div'); el.id = 'vplayer'; el.setAttribute('role', 'dialog'); document.body.appendChild(el); vpDrag(el); }
+  const p = PLAT[r.platform] || PLAT.web;
+  const media = v.loading ? '<div class="vp-wait"><span class="spin"></span></div>'
+    : v.file ? '<video src="' + esc(v.file) + '"' + (v.poster ? ' poster="' + esc(v.poster) + '"' : '') + ' controls autoplay playsinline></video>'
+    : '<iframe src="' + esc(v.src) + '" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="' + esc(r.title || 'Video') + '"></iframe>';
+  el.setAttribute('aria-label', 'Video: ' + (r.title || ''));
+  el.innerHTML = '<div class="vp-bar"><span class="vp-grip" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="vp-t">' + esc(r.platform === 'web' ? 'Video' : p.name) + '</span>'
+    + '<button class="vp-b" data-act="vsize" aria-label="' + (VP.big ? 'Make smaller' : 'Make bigger') + '">' + icon(VP.big ? 'shrink' : 'grow') + '</button>'
+    + '<button class="vp-b" data-act="vclose" aria-label="Close video">' + icon('x') + '</button></div><div class="vp-body">' + media + '</div>';
+  el.hidden = false;
+  vpPlace();
+  refresh();
+}
+function closeVideo(){ const el = document.getElementById('vplayer'); if (el) { el.innerHTML = ''; el.hidden = true; } VP = null; refresh(); }
+// size: portrait videos (TikTok, Reels, Shorts) are tall and narrow; the rest are wide
+function vpSize(){
+  const W = window.innerWidth;
+  let w = VP.tall ? (VP.big ? 0.7 : 0.44) * W : (VP.big ? 0.94 : 0.62) * W;
+  if (VP.ig) w = Math.max(w, Math.min(W * 0.92, VP.big ? 400 : 300));
+  w = Math.round(Math.min(w, VP.tall ? 360 : 640));
+  const h = Math.round(w * (VP.ig ? 1.75 : VP.tall ? 16 / 9 : 9 / 16));
+  return {w:w, h:Math.min(h, window.innerHeight - 160)};
+}
+function vpPlace(){
+  const el = document.getElementById('vplayer'); if (!el || !VP) return;
+  const s = vpSize(), bar = 44, W = window.innerWidth, H = window.innerHeight;
+  el.style.width = s.w + 'px';
+  el.classList.toggle('narrow', s.w < 240);
+  el.querySelector('.vp-body').style.height = s.h + 'px';
+  const maxX = W - s.w - 8, maxY = H - s.h - bar - 80;
+  let x = VP.x == null ? maxX : VP.x * W, y = VP.y == null ? 72 : VP.y * H;
+  x = Math.max(8, Math.min(maxX, x)); y = Math.max(8, Math.min(Math.max(8, maxY), y));
+  el.style.transform = 'translate(' + Math.round(x) + 'px,' + Math.round(y) + 'px)';
+  VP.px = x; VP.py = y;
+}
+// drag by the bar on top (the video itself takes its own taps)
+function vpDrag(el){
+  let st = null;
+  el.addEventListener('pointerdown', e => {
+    if (!VP || !e.target.closest('.vp-bar') || e.target.closest('button')) return;
+    st = {id:e.pointerId, sx:e.clientX, sy:e.clientY, x:VP.px, y:VP.py};
+    el.classList.add('drag');
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault();
+  });
+  el.addEventListener('pointermove', e => {
+    if (!st || e.pointerId !== st.id || !VP) return;
+    VP.x = (st.x + e.clientX - st.sx) / window.innerWidth; VP.y = (st.y + e.clientY - st.sy) / window.innerHeight;
+    vpPlace();
+  });
+  const end = e => { if (!st || e.pointerId !== st.id) return; st = null; el.classList.remove('drag'); if (VP) { VP.x = VP.px / window.innerWidth; VP.y = VP.py / window.innerHeight; vpRemember(); } };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
+window.addEventListener('resize', () => { if (VP) vpPlace(); });
 
 /* ---------- copy it from the page: when a site won't let the reader in at all ---------- */
 // Open the page, long-press, Select all, Copy, come back: a prompt with one button pastes it, and
@@ -4780,7 +4909,7 @@ function saveEditor(){
   });
   // details that came with the link (byline, nutrition, jump spot) stay with that link
   const sameLink = base && base.url && d && normUrl(base.url) === normUrl(d.url);
-  if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'captionCut', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt', 'impSig', 'speech', 'speechChecked', 'similar'].forEach(k => { delete r[k]; });
+  if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'captionCut', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt', 'impSig', 'speech', 'speechChecked', 'similar', 'video', 'mediaUrl'].forEach(k => { delete r[k]; });
   // steps from a similar recipe that were changed by hand are the person's own now
   if (base && base.stepsFrom && JSON.stringify(base.steps || []) !== JSON.stringify(r.steps)) delete r.stepsFrom;
   if (F.imp && d && normUrl(F.lastReadUrl || '') === normUrl(d.url)) {
@@ -4793,6 +4922,8 @@ function saveEditor(){
     if (j.cookTime && !r.cookTime) r.cookTime = j.cookTime;
     if (j.speech && !r.speech) r.speech = String(j.speech).slice(0, 8000);
     else if (!j.speech && r.platform === 'tiktok') r.speechChecked = true;
+    if (j.video && !r.video) r.video = j.video;
+    if (j.finalUrl && r.platform !== 'web' && r.platform !== 'none' && j.finalUrl !== r.url && /^https:\/\//.test(j.finalUrl)) r.mediaUrl = j.finalUrl;
     r.importedAt = now();
   }
   F.saved = true; F.savedId = r.id;
@@ -5093,6 +5224,9 @@ const A = {
   install: () => installApp(),
   listen: t => listenVideo(t.dataset.id || cur().id),
   timers: () => openTimers(),
+  vplay: t => playVideo(t.dataset.id || cur().id),
+  vclose: () => closeVideo(),
+  vsize: () => { if (!VP) return; VP.big = !VP.big; vpRemember(); const r = Store.recipes.get(VP.id); const v = vidOf(r); const b = document.querySelector('#vplayer [data-act="vsize"]'); if (b) { b.innerHTML = icon(VP.big ? 'shrink' : 'grow'); b.setAttribute('aria-label', VP.big ? 'Make smaller' : 'Make bigger'); } vpPlace(); },
   tclose: () => closeTimers(),
   tpreset: t => { const r = cur().name === 'recipe' ? Store.recipes.get(cur().id) : null; tmStart(+t.dataset.min * 60000, '', r ? r.title : '', r ? r.id : ''); },
   tpad: () => { TM_PAD = {d:''}; tmRender(); },

@@ -113,6 +113,7 @@ function parsePage(html, finalUrl, via) {
     out.equipment = asArray(recipe.tool).concat(asArray(recipe.supply))
       .map(t => clean(decode(typeof t === 'string' ? t : (t && (t.name || t.text)) || ''))).filter(Boolean);
     out.nutrition = nutrition(recipe.nutrition);
+    out.video = videoOf(recipe.video);
   }
 
   // recipe-card plugins: notes, cookware, ingredient groups, and the card's position on the page
@@ -183,6 +184,25 @@ const NUT = [
 function nutrition(n) {
   if (!n || typeof n !== 'object') return [];
   return NUT.filter(([k]) => n[k]).map(([k, label]) => ({ label, value: clean(decode(String(n[k]))) }));
+}
+
+// The recipe card's own video (schema.org VideoObject): a YouTube or Vimeo player, or a plain video file (the players
+// Mediavine and Raptive put on food blogs list one in contentUrl)
+function videoOf(v) {
+  for (const x of asArray(v).slice(0, 5)) {
+    if (!x || typeof x !== 'object') continue;
+    const name = clean(decode(x.name || ''));
+    const urls = [x.embedUrl, x.contentUrl, x.url].map(u => typeof u === 'string' ? decode(u).trim() : '').filter(u => /^https:\/\//.test(u));
+    for (const u of urls) {
+      const yt = u.match(/(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?v=|shorts\/|live\/)|youtu\.be\/)([\w-]{6,})/);
+      if (yt) return { kind: 'youtube', id: yt[1], name };
+      const vm = u.match(/vimeo\.com\/(?:video\/)?(\d{5,})/);
+      if (vm) return { kind: 'vimeo', id: vm[1], name };
+    }
+    const file = urls.find(u => /\.(mp4|m4v|webm)(\?|#|$)/i.test(u));
+    if (file) return { kind: 'file', src: file, poster: pickImage(x.thumbnailUrl) || '', name };
+  }
+  return null;
 }
 
 // Ingredients and steps straight from a recipe card's own markup
@@ -734,7 +754,7 @@ function blank(finalUrl) {
     finalUrl, kind: 'page', title: '', description: '', image: '', author: '', siteName: '',
     ingredients: [], steps: [], notes: [], equipment: [], nutrition: [],
     prepTime: 0, cookTime: 0, totalTime: 0, yieldText: '', servings: 0, cuisine: '', meals: [],
-    anchor: '', caption: '', captionCut: false, recipeUrl: ''
+    anchor: '', caption: '', captionCut: false, recipeUrl: '', video: null
   };
 }
 const dedupe = a => a.filter((x, i) => a.indexOf(x) === i);
@@ -754,6 +774,7 @@ function findObj(node, test, depth) {
 
 module.exports.readRecipe = readRecipe;
 module.exports.parsePage = parsePage;
+module.exports.videoOf = videoOf;
 module.exports.parseSent = parseSent;
 // Artistry (the crafts app in crafts/, api/idea.js) reuses the social readers.
 module.exports.readers = { readTikTok, readYouTube, readInstagram, readFacebook };

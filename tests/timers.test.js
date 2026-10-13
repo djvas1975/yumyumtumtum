@@ -2,8 +2,9 @@
 const fs = require('fs');
 const path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '..', 'tools', 'app.html'), 'utf8');
-const part = (a, b) => src.slice(src.indexOf(a), src.indexOf(b));
-eval(part('function tmFmt(', 'const clockTime') + part('const TM_WORDS', '/* ---------- copy it from the page') + ';global.T={stepTimes,tmFmt,tmLen};');
+const part = (a, b) => { const i = src.indexOf(a); return src.slice(i, src.indexOf(b, i)); };
+// from the step-time reader to the next section of the app
+eval(part('function tmFmt(', 'const clockTime') + part('const TM_WORDS', '\n/* ---------- ') + ';global.T={stepTimes,tmFmt,tmLen};');
 let fails = 0;
 const ok = (cond, msg) => { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!cond) fails++; };
 const st = s => T.stepTimes(s).map(x => x.label + '=' + x.ms / 1000).join(' | ');

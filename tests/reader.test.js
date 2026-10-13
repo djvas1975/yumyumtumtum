@@ -131,6 +131,14 @@ const ok = (cond, msg) => { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!
   const pre = await new Promise(resolve => { const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, json() {}, end() { resolve({ code: this.code, headers: this.headers }); } }; RR({ method: 'OPTIONS', headers: { origin: 'https://djvas1975.github.io' }, query: {} }, res); });
   ok(pre.code === 204 && /content-type/.test(pre.headers['Access-Control-Allow-Headers']), 'the browser\'s pre-check for the POST is answered');
 
+  // ---------- the recipe card's own video ----------
+  ok(J(RR.videoOf({ '@type': 'VideoObject', name: 'How to', embedUrl: 'https://www.youtube.com/embed/abc123XYZ_-?feature=oembed' })) === J({ kind: 'youtube', id: 'abc123XYZ_-', name: 'How to' }), 'recipe video: a YouTube player');
+  ok(RR.videoOf([{ '@type': 'VideoObject', contentUrl: 'https://mediavine-res.cloudinary.com/video/upload/t_original/v1/abc.mp4', thumbnailUrl: ['https://x/thumb.jpg'] }]).kind === 'file', 'recipe video: a plain video file (Mediavine)');
+  ok(RR.videoOf({ embedUrl: 'https://player.vimeo.com/video/123456789' }).id === '123456789', 'recipe video: Vimeo');
+  ok(RR.videoOf({ embedUrl: 'https://video.mediavine.com/videos/abc.js' }) === null && RR.videoOf(null) === null, 'recipe video: a script player or nothing gives none');
+  const wv = RR.parseSent({ url: 'https://example.com/v/', html: '<p>x</p>', ld: [{ '@type': 'Recipe', name: 'V', recipeIngredient: ['1 egg', '1 cup milk'], recipeInstructions: ['Mix.', 'Cook.'], video: { '@type': 'VideoObject', embedUrl: 'https://www.youtube.com/embed/zzzzzzzz' } }] });
+  ok(wv.video && wv.video.id === 'zzzzzzzz', 'the reader passes the video along');
+
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);
 })();
