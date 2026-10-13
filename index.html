@@ -1388,7 +1388,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.1</p></div>';
+    + '<p class="ver">YumYum · version 2.1.1</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1663,7 +1663,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '14'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '15'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -3592,7 +3592,7 @@ const QTY = /^([\d½¼¾⅓⅔⅛⅜⅝⅞]|a (cup|pinch|dash|handful|few|couple
 const UNIT = /\b(cups?|tbsps?|tablespoons?|tsps?|teaspoons?|oz|ounces?|lbs?|pounds?|grams?|g|kg|ml|liters?|cloves?|cans?|sticks?|slices?|pinch|dash|bunch)\b/i;
 // where a new ingredient starts inside a run-together list: "…butter 1 onion 3 carrots…"
 // (not after "cut into", "about", etc., and not "1 in pieces" / "2 inch cubes")
-const AMOUNT_AT = /(?<!\b(?:at|for|to|into|about|around|or|and|by|x|in|of|over|under|than|until|with|per|approx|approximately|plus|cut|makes|serves|feeds|yields?))(?<![,(\/:-])\s+(?=(?:\d+\s\d\/\d|\d+\/\d+|\d+(?:\.\d+)?|[½¼¾⅓⅔⅛⅜⅝⅞])\s*(?:[-–]\s*\d+\s*)?(?!(?:hrs?|hours?|mins?|minutes?|secs?|seconds?|degrees?|days?|weeks?|servings?|people|times?|x|in|inch|inches|cm|mm)\b)[A-Za-z(])/gi;
+const AMOUNT_AT = /(?<!(?:^|\s)[\d½¼¾⅓⅔⅛⅜⅝⅞]+(?:[.\/]\d+)?)(?<!\b(?:at|for|to|into|about|around|or|and|by|x|in|of|over|under|than|until|with|per|approx|approximately|plus|cut|makes|serves|feeds|yields?))(?<![,(\/:-])\s+(?=(?:\d+\s+\d+(?:\.\d+)?\s*[-–]?\s*(?:oz|ounces?|lbs?|pounds?|g|grams?|ml)\b|\d+\s\d\/\d|\d+\/\d+|\d+(?:\.\d+)?|[½¼¾⅓⅔⅛⅜⅝⅞])\s*(?:[-–]\s*\d+\s*)?(?!(?:hrs?|hours?|mins?|minutes?|secs?|seconds?|degrees?|days?|weeks?|servings?|people|times?|x|in|inch|inches|cm|mm)\b)[A-Za-z(])/gi;
 const STEP_VERB = /^(melt|add|cook|bake|mix|stir|combine|heat|preheat|bring|pour|place|season|whisk|roast|simmer|boil|drop|cover|serve|let|in a|in the|once|then|after|while|remove|transfer|toss|fry|air fry|sear|brown|saut[eé]|blend|chop|dice|mince|slice|cut|marinate|layer|spread|fold|roll|knead|shape|finish|start|first|next|finally|reduce|return|set|spoon|sprinkle|drizzle|squeeze|shred|dump|throw|put|grab|make|enjoy)\b/i;
 const NOT_A_LABEL = /^(bake|cook|fry|air fry|grill|boil|simmer|mix|stir|add|combine|heat|preheat|roast|toss|season|marinate|blend|whisk|chill|let|then|next|finally|first|step|pour|place|put|transfer|remove|cover|reduce|bring|serve|enjoy|note|ps|p\.s|edit|update|follow|comment|save|share|link|shop|music|song|sound|song credit|credit|me|you|us)\b/i;
 
@@ -3651,7 +3651,7 @@ function splitIng(l) {
       const withAmt = c.filter(x => QTY.test(x)).length, prep = c.some(x => PREP_WORD.test(x));
       if (c.length >= 2 && (withAmt === c.length || (c.length >= 3 && !prep && (withAmt >= c.length * 2 / 3 || c.every(x => x.length < 30))))) { out.push(...c); continue; }
       const byAmount = seg.split(AMOUNT_AT).map(x => x.trim()).filter(Boolean);
-      if (byAmount.length >= 2 && byAmount.slice(1).every(x => QTY.test(x) && /\p{L}/u.test(x))) out.push(...byAmount);
+      if (byAmount.length >= 2 && byAmount.every(x => /\p{L}/u.test(x)) && byAmount.slice(1).every(x => QTY.test(x))) out.push(...byAmount);
       else out.push(seg.trim());
     }
   }
@@ -3740,7 +3740,8 @@ function parseCaption(text) {
     const rest = pre.filter((l, i) => !used.has(i));
     pre.splice(0, pre.length, ...rest);
   }
-  const firstLine = pre[0] || body.find(l => !header(l, false)) || '';
+  const startsWithHead = body.length > 0 && !!header(body[0], false);
+  const firstLine = pre[0] || (startsWithHead ? '' : body.find(l => !header(l, false))) || '';
   const beforeEmoji = firstLine.split(/\p{Extended_Pictographic}/u)[0].trim();
   const titleLine = (beforeEmoji.length >= 3 ? beforeEmoji : firstLine).replace(/[\p{Extended_Pictographic}\u200d\ufe0f]/gu, '').replace(/^replying to @[\w.]+\s*/i, '').replace(/\s+/g, ' ').trim();
   const sentences = titleLine.split(/(?<=[.!?])\s+/);
@@ -4835,6 +4836,11 @@ function openEditor(r, pre){
   tag.addEventListener('blur', addTag);
   $('#f-newcol').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); fAddCol(); } });
   $('#edform').addEventListener('submit', e => { e.preventDefault(); saveEditor(); });
+  // sort right after a paste (a long-press Paste fires 'paste'; the keyboard's clipboard chip types it in all at once)
+  const pb = $('#f-paste'); let pbLen = 0;
+  const pbSort = () => setTimeout(() => { if (F && pb.isConnected && pb.value.trim()) fSortPasted(false); }, 60);
+  pb.addEventListener('paste', pbSort);
+  pb.addEventListener('input', e => { const n = pb.value.length; if (e.inputType === 'insertFromPaste' || (n - pbLen > 40 && /\n/.test(pb.value))) pbSort(); pbLen = n; });
   if (pre) applyShare(pre);
   else if (!r) setTimeout(() => { const u = $('#f-url'); if (u) u.focus(); }, 320);
 }
@@ -4982,9 +4988,37 @@ async function handlePhoto(file){
     f.busy = false; if (F === f) renderPrev();
   }
 }
+// what's in the Paste recipe text box goes into the right boxes (also on its own right after a paste, and on Save, so
+// pasted text is never thrown away). Text with no clear ingredients or steps goes in as it is.
+function fSortPasted(quiet){
+  const box = $('#f-paste'); if (!box) return false;
+  const txt = box.value.trim();
+  if (!txt) { if (!quiet) box.focus(); return false; }
+  // a pasted list that starts right in with an ingredient has no name line: don't let the first ingredient become the name
+  const first = stripDecor(txt.split('\n')[0] || '');
+  const p = parseCaption(looksLikeIng(first) || header(first, false) ? 'Pasted recipe\n' + txt : txt);
+  if (p.title === 'Pasted recipe') p.title = '';
+  if (!p.ingredients.length && !p.steps.length) {
+    const lines = txt.split('\n').map(x => x.trim()).filter(Boolean);
+    const into = !$('#f-ing').value.trim() ? '#f-ing' : !$('#f-srcnotes').value.trim() ? '#f-srcnotes' : '#f-notes';
+    $(into).value = ($(into).value.trim() ? $(into).value.trim() + '\n' : '') + lines.join('\n');
+    $('#f-pastebox').hidden = true; box.value = '';
+    if (!quiet) toast(into === '#f-ing' ? 'Put it in the Ingredients box. Check it over.' : 'Put it in the notes. Check it over.');
+    return true;
+  }
+  if (p.ingredients.length) $('#f-ing').value = p.ingredients.join('\n');
+  if (p.steps.length) $('#f-steps').value = p.steps.join('\n');
+  if (p.notes.length && !$('#f-srcnotes').value.trim()) $('#f-srcnotes').value = p.notes.join('\n');
+  if ((p.equipment || []).length && !$('#f-equip').value.trim()) $('#f-equip').value = p.equipment.join('\n');
+  if (p.title && !$('#f-title').value.trim()) { $('#f-title').value = p.title; F.titleAuto = false; }
+  $('#f-pastebox').hidden = true; box.value = '';
+  if (!quiet) toast('Filled in ' + joinList([countItems(p.ingredients) ? plural(countItems(p.ingredients), 'ingredient') : '', countItems(p.steps) ? plural(countItems(p.steps), 'step') : ''].filter(Boolean)) + '. Check it over, then save.');
+  return true;
+}
 function saveEditor(){
   if (!F) return;
   if (F.busy) { toast('One sec, the photo is still uploading.'); return; }
+  fSortPasted(true); // pasted but not sorted yet: sort it now instead of losing it
   clearTimeout(F.readT);
   if (canRead() && F.det && F.readState !== 'reading' && normUrl(F.det.url) !== normUrl(F.lastReadUrl || '')) startRead(F.det.url);
   addTag();
@@ -5364,19 +5398,7 @@ const A = {
   desc: t => t.classList.toggle('open'),
   'f-reread': () => { if (F && F.det) { F.lastReadUrl = ''; startRead(F.det.url); } },
   'f-pastetext': () => { const b = $('#f-pastebox'); if (!b) return; b.hidden = !b.hidden; if (!b.hidden) setTimeout(() => $('#f-paste').focus(), 30); },
-  'f-parsetext': () => {
-    const box = $('#f-paste'); const txt = box.value.trim();
-    if (!txt) { box.focus(); return; }
-    const p = parseCaption(txt);
-    if (!p.ingredients.length && !p.steps.length) { toast("Couldn't spot ingredients or steps. Include headings like Ingredients and Directions."); return; }
-    if (p.ingredients.length) $('#f-ing').value = p.ingredients.join('\n');
-    if (p.steps.length) $('#f-steps').value = p.steps.join('\n');
-    if (p.notes.length && !$('#f-srcnotes').value.trim()) $('#f-srcnotes').value = p.notes.join('\n');
-    if ((p.equipment || []).length && !$('#f-equip').value.trim()) $('#f-equip').value = p.equipment.join('\n');
-    if (p.title && !$('#f-title').value.trim()) { $('#f-title').value = p.title; F.titleAuto = false; }
-    $('#f-pastebox').hidden = true; box.value = '';
-    toast('Filled in ' + joinList([countItems(p.ingredients) ? plural(countItems(p.ingredients), 'ingredient') : '', countItems(p.steps) ? plural(countItems(p.steps), 'step') : ''].filter(Boolean)));
-  },
+  'f-parsetext': () => fSortPasted(false),
   'f-newcol': () => { if (!F) return; F.showNew = !F.showNew; renderFCols(); if (F.showNew) setTimeout(() => $('#f-newcol').focus(), 30); },
   'f-addcol': () => fAddCol(),
   export: () => exportBackup(),

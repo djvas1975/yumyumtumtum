@@ -242,6 +242,12 @@ Add the butter and garlic and toss for 1 minute more.`;
   ok(noHeads && noHeads.ingredients.length === 2 && !noHeads.card, 'no headings: read like pasted recipe text');
   ok(P.recipeFromPage('Home\nAbout\nContact us\nPrivacy policy') === null, 'a page with no recipe gives nothing');
 
+  // pasted into Paste recipe text: a can size isn't its own ingredient, and a list that starts with "Ingredients" has no name line
+  const cg = P.parseCaption('Ingredients\n3 lbs beef chuck roast, cut into cubes\n2 tbsp oil\n1 onion, chopped\n1 8 oz can tomato sauce\n2 14.5 oz cans diced tomatoes\n1 1/2 cups beef broth\n\nInstructions\nBrown the beef in the oil.\nAdd the onion and cook 5 minutes.');
+  ok(J(real(cg.ingredients)) === J(['3 lbs beef chuck roast, cut into cubes', '2 tbsp oil', '1 onion, chopped', '1 8 oz can tomato sauce', '2 14.5 oz cans diced tomatoes', '1 1/2 cups beef broth']), 'can sizes and 1 1/2 stay whole -> ' + J(cg.ingredients));
+  ok(cg.title === '' && cg.steps.length === 2, 'text that starts with Ingredients has no name (not the first ingredient) -> ' + J(cg.title));
+  ok(J(real(P.parseCaption('Taco soup\nIngredients\n1 lb ground beef 1 15 oz can black beans 1 packet taco seasoning').ingredients)) === J(['1 lb ground beef', '1 15 oz can black beans', '1 packet taco seasoning']), 'run-together list still splits, but not inside "1 15 oz can"');
+
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);
 })();

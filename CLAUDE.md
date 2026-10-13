@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.1**.
+Current version: **2.1.1**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -51,6 +51,12 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   Chrome, etc. (Android share target). The link is read automatically: photo, ingredients (with
   groups like "For the sauce"), directions, notes and substitutions, cookware, nutrition,
   times, servings, cuisine, meal type. **Paste recipe text** sorts pasted text into the boxes.
+  v2.1.1 (Oct 13, 2026; Dave: "when I hit save it clears out what I filled in"): text left in the Paste recipe text box
+  used to be thrown away on Save unless "Sort it into the recipe" was tapped. Now `fSortPasted` runs on its own right
+  after a paste (the `paste` event, `insertFromPaste`, or 40+ characters with a line break typed in at once, like the
+  keyboard's clipboard chip) and again on Save. Text it can't sort goes in as it is (Ingredients box if empty, else
+  notes). A pasted list that starts with an ingredient or a heading is read as `'Pasted recipe\n' + text`, so the
+  first ingredient isn't taken as the name and dropped.
 - **Recipe page:** hero photo, stats, "Get the full recipe" card, rating, I made this,
   collections, jump chips, checkable ingredients and steps, notes, cookware, nutrition, full
   caption (for videos), "Full recipe on [site]" link, and a button that jumps to the recipe
@@ -170,7 +176,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.1`).
+5. App changes: bump the version text in `V.me` (`version 2.1.1`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -209,7 +215,9 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   sauce", captions squashed onto one line (two spaces count as a line break), emoji bullets,
   arrow steps, "Step 1", directions written as sentences, trailing hashtags, calorie lines, and
   "Follow for more" chatter, dash bullets on one line, "cut into 1 in pieces" kept whole, and a
-  series name before the dish ("Ep 20: Korean Popcorn Chicken" becomes the title).
+  series name before the dish ("Ep 20: Korean Popcorn Chicken" becomes the title). Since v2.1.1: a can size stays with
+  its count ("1 8 oz can tomato sauce", "2 14.5 oz cans", "1 1/2 cups" are one line each; "…beef 1 15 oz can beans"
+  splits before the 1), and text that starts with a heading ("Ingredients") has no title instead of the first ingredient.
 - **Fill in missing details** replaces the ingredients and steps (and an automatic title) when they
   still match what an earlier read gave (`impSig`) and the new read covers the same caption or more.
 
@@ -372,7 +380,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 ## Video recipes from what's said (checked Sept 28, 2026; the free part built Oct 10, 2026 in v1.7)
 - **Built (v1.7):** the reader asks for TikTok's speech captions on every TikTok (`readTikTok(url, trace, {speech:true})`,
-  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0, 14 since v2.0.1); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
+  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0, 14 since v2.0.1, 15 since v2.1.1); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
   shows it as "What they said in the video" when there are no written steps (collapsed under the steps otherwise).
 - Probe: `/api/recipe?url=<video>&debug=1&subs=1` lists the video's own captions and shows the start
   of the caption file. Debug only; normal reads don't change.
