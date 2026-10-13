@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.0**.
+Current version: **2.0.1**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -168,7 +168,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.0`).
+5. App changes: bump the version text in `V.me` (`version 2.0.1`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -370,7 +370,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 ## Video recipes from what's said (checked Sept 28, 2026; the free part built Oct 10, 2026 in v1.7)
 - **Built (v1.7):** the reader asks for TikTok's speech captions on every TikTok (`readTikTok(url, trace, {speech:true})`,
-  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
+  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0, 14 since v2.0.1); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
   shows it as "What they said in the video" when there are no written steps (collapsed under the steps otherwise).
 - Probe: `/api/recipe?url=<video>&debug=1&subs=1` lists the video's own captions and shows the start
   of the caption file. Debug only; normal reads don't change.
@@ -500,9 +500,20 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   YouTube `/embed/<id>?autoplay=1&playsinline=1&rel=0`, Facebook `plugins/video.php?href=` for /videos/, /reel/, /watch,
   fb.watch, share/v, share/r, then `r.video` from a website's recipe card.
 - Reader: `videoOf(recipe.video)` in api/recipe.js -> `{kind:'youtube'|'vimeo', id}` or `{kind:'file', src, poster}` (an
-  .mp4/.m4v/.webm contentUrl, which Mediavine/Raptive players list); script players give none. `READER_V` 13. The phone
-  keeps `r.video` and, for social posts, `r.mediaUrl = j.finalUrl`. Website recipes saved before v2.0 get the button
-  after ⋯ > Fill in missing details. Changing a recipe's link drops `video` and `mediaUrl`.
+  .mp4/.m4v/.webm contentUrl, which Mediavine/Raptive players list); script players give none. The phone
+  keeps `r.video` and, for social posts, `r.mediaUrl = j.finalUrl`. Changing a recipe's link drops `video`, `mediaUrl`
+  and `videoCk`.
+- **v2.0.1 (Oct 12, 2026), after Dave's fried rice showed no button** though its page has a YouTube video: many blogs put
+  the video in the post, not in the recipe card's data. `parsePage` now tries, in order: the recipe's `video` (an `@id`
+  reference is looked up in Yoast's graph via `ldVideos`), any other VideoObject in the structured data, og:video /
+  twitter:player, then `pageVideo(html)`: a YouTube/Vimeo player inside the recipe card (WPRM, Tasty, Create), then the
+  post (`entry-content`, `post-content`…), and the whole page only when the theme names no post area (so a sidebar
+  video isn't picked). `embedIn` counts iframes and `data-src`, WP Rocket / Perfmatters lazy players, `<lite-youtube>`,
+  and inside the card/post also watch and youtu.be links (Lazy Load for Videos); playlists (`videoseries`) and
+  `live_stream` are skipped. The phone's WordPress read (`via:'wordpress'`) searches the whole post. `READER_V` 14.
+  Phone: a website/Pinterest recipe with no `r.video` and `r.videoCk !== READER_V` is read again quietly the first time
+  its page opens (`needsVideoCheck`, `videoCheck`, once per reader version; offline doesn't count), and every link read
+  sets `videoCk`. **Not confirmed yet** on Dave's fried rice (which site it is isn't known).
 - Player `#vplayer` (z 44, outside `#app`): 44px dark bar (6-dot grip, name when wide enough, bigger/smaller, close) and
   the iframe or `<video>`. Drag with pointer events on the bar only (the iframe gets `pointer-events:none` while
   dragging), kept on screen and above the bottom bar; position and size saved in localStorage `yyt-vplayer` as

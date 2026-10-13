@@ -91,7 +91,9 @@ function parsePage(html, finalUrl, via) {
   out.description = decode(meta(html, 'og:description') || meta(html, 'description'));
   out.image = meta(html, 'og:image') || meta(html, 'twitter:image');
 
-  const recipe = findRecipe(jsonLdBlocks(html));
+  const blocks = jsonLdBlocks(html);
+  const vids = ldVideos(blocks);
+  const recipe = findRecipe(blocks);
   if (recipe) {
     out.kind = 'recipe';
     out.title = clean(decode(recipe.name)) || out.title;
@@ -113,8 +115,13 @@ function parsePage(html, finalUrl, via) {
     out.equipment = asArray(recipe.tool).concat(asArray(recipe.supply))
       .map(t => clean(decode(typeof t === 'string' ? t : (t && (t.name || t.text)) || ''))).filter(Boolean);
     out.nutrition = nutrition(recipe.nutrition);
-    out.video = videoOf(recipe.video);
+    // Yoast's schema graph links the recipe to its video by @id
+    out.video = videoOf(asArray(recipe.video).map(x => x && x['@id'] && !x.embedUrl && !x.contentUrl ? (vids.find(v => v['@id'] === x['@id']) || x) : x));
   }
+  // no video in the recipe's own details: one elsewhere in the structured data, the page's og:video, or a
+  // YouTube/Vimeo player in the article (many blogs put the video in the post, not in the recipe card's data)
+  if (!out.video) out.video = videoOf(vids) || videoOf(['og:video:secure_url', 'og:video:url', 'og:video', 'twitter:player'].map(k => ({ embedUrl: decode(meta(html, k)) })))
+    || pageVideo(html, via === 'wordpress');
 
   // recipe-card plugins: notes, cookware, ingredient groups, and the card's position on the page
   const cards = [
@@ -203,6 +210,53 @@ function videoOf(v) {
     if (file) return { kind: 'file', src: file, poster: pickImage(x.thumbnailUrl) || '', name };
   }
   return null;
+}
+
+// Every VideoObject in the page's structured data (Yoast's graph, Yoast Video SEO, a recipe card's video)
+function ldVideos(blocks) {
+  const out = [], seen = new Set();
+  const walk = (n, d) => {
+    if (!n || typeof n !== 'object' || seen.has(n) || d > 8 || out.length > 9) return;
+    seen.add(n);
+    if (Array.isArray(n)) { n.forEach(x => walk(x, d + 1)); return; }
+    if (asArray(n['@type']).some(t => /(^|\/)VideoObject$/i.test(String(t)))) out.push(n);
+    for (const k of Object.keys(n)) if (n[k] && typeof n[k] === 'object') walk(n[k], d + 1);
+  };
+  walk(blocks, 0);
+  return out;
+}
+
+// A YouTube or Vimeo player in the article itself. The recipe card first, then the post's content; the whole page only
+// when the theme names neither (so a sidebar's "my latest video" isn't picked). Lazy-loading players (WP Rocket,
+// Perfmatters, lite-youtube, Lazy Load for Videos) count too.
+const NOT_VIDEO = new Set(['videoseries', 'live_stream']); // /embed/videoseries?list= is a playlist
+function embedIn(h, loose) {
+  const tries = [
+    /youtube(?:-nocookie)?\.com\/embed\/([\w-]{11})(?![\w-])/g,
+    /<lite-youtube\b[^>]*\bvideoid=["']?([\w-]{11})(?![\w-])/gi,
+    /\bclass=["'][^"']*\b(?:rll-youtube-player|perfmatters-lazy-youtube)\b[^>]*\bdata-id=["']([\w-]{11})["']/gi
+  ];
+  if (loose) tries.push(/(?:youtube\.com\/(?:watch\?(?:[^"'\s<>]*?&(?:amp;)?)?v=|shorts\/)|youtu\.be\/)([\w-]{11})(?![\w-])/g);
+  let best = null;
+  for (const re of tries) {
+    let m;
+    while ((m = re.exec(h))) {
+      if (NOT_VIDEO.has(m[1])) continue;
+      if (!best || m.index < best.at) best = { at: m.index, v: { kind: 'youtube', id: m[1], name: '' } };
+      break;
+    }
+  }
+  const vm = h.match(/player\.vimeo\.com\/video\/(\d{5,})/);
+  if (vm && (!best || h.indexOf(vm[0]) < best.at)) return { kind: 'vimeo', id: vm[1], name: '' };
+  return best ? best.v : null;
+}
+function pageVideo(html, contentOnly) {
+  const zones = cls => cls.flatMap(c => findByClass(html, c));
+  for (const z of zones(['wprm-recipe-container', 'tasty-recipes', 'mv-create-card'])) { const v = embedIn(z, true); if (v) return v; }
+  if (contentOnly) return embedIn(html, true); // the phone's WordPress read: all of it is the post
+  const body = zones(['entry-content', 'post-content', 'article-content', 'single-post-content', 'td-post-content', 'post-body']);
+  for (const z of body) { const v = embedIn(z, true); if (v) return v; }
+  return body.length ? null : embedIn(html, false);
 }
 
 // Ingredients and steps straight from a recipe card's own markup
@@ -775,6 +829,7 @@ function findObj(node, test, depth) {
 module.exports.readRecipe = readRecipe;
 module.exports.parsePage = parsePage;
 module.exports.videoOf = videoOf;
+module.exports.pageVideo = pageVideo;
 module.exports.parseSent = parseSent;
 // Artistry (the crafts app in crafts/, api/idea.js) reuses the social readers.
 module.exports.readers = { readTikTok, readYouTube, readInstagram, readFacebook };

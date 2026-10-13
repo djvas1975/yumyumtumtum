@@ -1340,6 +1340,8 @@ V.recipe = (rt) => {
       if (r.url && !r.sample && !r.similar && canRead() && !SIM.busy.has(r.id) && !SIM.tried.has(r.id)) setTimeout(() => findSimilar(r.id), 0);
     }
   }
+  // website recipes saved before the reader looked for videos in the article: check once, quietly
+  if (!wantsMore && !reading && needsVideoCheck(r)) setTimeout(() => videoCheck(r.id), 0);
   if (r.caption && (nIng || nSteps)) h += '<details class="block capbox"><summary>Full caption<span class="more">Show</span><span class="less">Hide</span></summary><p class="caption">' + esc(r.caption) + '</p></details>';
   if (r.speech && nSteps) h += '<details class="block capbox"><summary>What they said in the video<span class="more">Show</span><span class="less">Hide</span></summary><p class="caption">' + esc(r.speech) + '</p></details>';
   if (r.recipeUrl && r.platform !== 'web') h += '<div class="block"><a class="addrow" href="' + esc(r.recipeUrl.replace(/#.*$/, '') + (r.anchor ? '#' + encodeURIComponent(r.anchor) : '')) + '" target="_blank" rel="noopener noreferrer">' + icon('ext') + 'Full recipe on ' + esc(hostOf(r.recipeUrl)) + '</a></div>';
@@ -1381,7 +1383,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.0</p></div>';
+    + '<p class="ver">YumYum · version 2.0.1</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1656,7 +1658,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '13'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '14'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1758,6 +1760,7 @@ function importFields(r, j){
   if (j.caption && r.caption && j.caption.length > r.caption.length + 20) u.caption = j.caption;
   // the video: a website recipe card's own, and the full address of a social post (a TikTok share link has no video number)
   if (j.video && !r.video) u.video = j.video;
+  if (r.platform === 'web' || r.platform === 'pinterest') u.videoCk = READER_V; // looked for one with this reader
   if (j.finalUrl && r.platform && r.platform !== 'web' && j.finalUrl !== r.url && !r.mediaUrl && /^https:\/\//.test(j.finalUrl)) u.mediaUrl = j.finalUrl;
   // what's said in a TikTok video (TikTok's own captions of the talking)
   if (j.speech && !r.speech) u.speech = String(j.speech).slice(0, 8000);
@@ -2125,6 +2128,24 @@ async function playVideo(id){
     if (!v || v.resolve) { closeVideo(); toast("Couldn't load that video here. Opening TikTok."); window.open(r.url, '_blank', 'noopener'); return; }
   }
   vpShow(r, v);
+}
+// A website recipe saved before v2.0.1 has no video yet (the reader only looked in the recipe card's data, and many blogs
+// put the YouTube video in the post). The first time it's opened, read the link again in the background for the video
+// only; once per reader version, so it doesn't ask every time.
+const VCK = new Set();
+const needsVideoCheck = r => !!r && (r.platform === 'web' || r.platform === 'pinterest') && !!r.url && !r.sample && !r.video
+  && r.videoCk !== READER_V && canRead() && !VCK.has(r.id) && !READING.has(r.id);
+async function videoCheck(id){
+  const r = Store.recipes.get(id);
+  if (!needsVideoCheck(r)) return;
+  VCK.add(id);
+  let j = null;
+  try { j = await readLink(r.url); }
+  catch (e) { if (navigator.onLine === false || /Couldn't reach/.test(e && e.message || '')) return; } // offline: try again next time
+  const r2 = Store.recipes.get(id); if (!r2 || r2.video) return;
+  const u = {videoCk:READER_V};
+  if (j && j.video) u.video = j.video;
+  putRecipe(Object.assign({}, r2, u));
 }
 function vpShow(r, v){
   const sv = vpSaved();
@@ -4909,7 +4930,7 @@ function saveEditor(){
   });
   // details that came with the link (byline, nutrition, jump spot) stay with that link
   const sameLink = base && base.url && d && normUrl(base.url) === normUrl(d.url);
-  if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'captionCut', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt', 'impSig', 'speech', 'speechChecked', 'similar', 'video', 'mediaUrl'].forEach(k => { delete r[k]; });
+  if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'captionCut', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt', 'impSig', 'speech', 'speechChecked', 'similar', 'video', 'mediaUrl', 'videoCk'].forEach(k => { delete r[k]; });
   // steps from a similar recipe that were changed by hand are the person's own now
   if (base && base.stepsFrom && JSON.stringify(base.steps || []) !== JSON.stringify(r.steps)) delete r.stepsFrom;
   if (F.imp && d && normUrl(F.lastReadUrl || '') === normUrl(d.url)) {
@@ -4923,6 +4944,7 @@ function saveEditor(){
     if (j.speech && !r.speech) r.speech = String(j.speech).slice(0, 8000);
     else if (!j.speech && r.platform === 'tiktok') r.speechChecked = true;
     if (j.video && !r.video) r.video = j.video;
+    if (r.platform === 'web' || r.platform === 'pinterest') r.videoCk = READER_V;
     if (j.finalUrl && r.platform !== 'web' && r.platform !== 'none' && j.finalUrl !== r.url && /^https:\/\//.test(j.finalUrl)) r.mediaUrl = j.finalUrl;
     r.importedAt = now();
   }

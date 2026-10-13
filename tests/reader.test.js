@@ -139,6 +139,25 @@ const ok = (cond, msg) => { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!
   const wv = RR.parseSent({ url: 'https://example.com/v/', html: '<p>x</p>', ld: [{ '@type': 'Recipe', name: 'V', recipeIngredient: ['1 egg', '1 cup milk'], recipeInstructions: ['Mix.', 'Cook.'], video: { '@type': 'VideoObject', embedUrl: 'https://www.youtube.com/embed/zzzzzzzz' } }] });
   ok(wv.video && wv.video.id === 'zzzzzzzz', 'the reader passes the video along');
 
+  // ---------- a video in the article (not in the recipe card's data) ----------
+  const ldR = '<script type="application/ld+json">' + JSON.stringify({ '@type': 'Recipe', name: 'Fried Rice', recipeIngredient: ['3 cups rice', '2 eggs'], recipeInstructions: ['Fry.', 'Serve.'] }) + '</script>';
+  const pg = (body, head) => '<html><head>' + (head || '') + ldR + '</head><body>' + body + '</body></html>';
+  const pv = (body, head) => (RR.parsePage(pg(body, head), 'https://example.com/fried-rice/', 'site').video || {});
+  const sidebar = '<aside class="sidebar"><iframe src="https://www.youtube.com/embed/SIDEBARxxxx"></iframe></aside>';
+  ok(pv('<div class="entry-content"><p>Hi</p><figure class="wp-block-embed is-provider-youtube"><div class="wp-block-embed__wrapper"><iframe src="https://www.youtube.com/embed/FRIEDrice01?feature=oembed"></iframe></div></figure></div>' + sidebar).id === 'FRIEDrice01', 'article video: a YouTube block in the post, not the sidebar\'s');
+  ok(pv(sidebar + '<div class="entry-content"><div class="rll-youtube-player" data-src="https://www.youtube.com/embed/LAZYrocket1" data-id="LAZYrocket1" data-query="feature=oembed"></div></div>').id === 'LAZYrocket1', 'article video: WP Rocket\'s lazy player');
+  ok(pv('<div class="post-content"><lite-youtube videoid="LITEyoutube" playlabel="Play"></lite-youtube></div>').id === 'LITEyoutube', 'article video: lite-youtube');
+  ok(pv('<div class="entry-content"><a class="lazy-load-youtube preview-youtube" href="https://youtu.be/LAZYlink001">Fried rice</a></div>').id === 'LAZYlink001', 'article video: a lazy-load link in the post');
+  ok(pv('<div class="entry-content"><iframe src="https://www.youtube.com/embed/videoseries?list=PL123"></iframe><p>x</p><iframe data-src="https://www.youtube-nocookie.com/embed/REALvideo01"></iframe></div>').id === 'REALvideo01', 'article video: a playlist is skipped');
+  ok(pv('<div class="entry-content"><iframe src="https://www.youtube.com/embed/FIRSTinPost"></iframe><div id="wprm-recipe-container-9" class="wprm-recipe-container"><div class="wprm-recipe-video"><iframe src="https://www.youtube.com/embed/CARDvideo01"></iframe></div></div></div>').id === 'CARDvideo01', 'article video: the recipe card\'s own video wins over others in the post');
+  ok(pv('<div class="entry-content"><p>No video here, but <a href="https://www.youtube.com/@mychannel">my channel</a></p></div>' + sidebar).id === undefined, 'article video: a channel link or a sidebar video is not the recipe\'s');
+  ok(pv('<p>x</p>', '<meta property="og:video:secure_url" content="https://www.youtube.com/embed/OGvideo0001">').id === 'OGvideo0001', 'article video: og:video');
+  ok(pv('<div class="entry-content"><iframe src="https://player.vimeo.com/video/987654321?h=abc"></iframe></div>').id === '987654321', 'article video: Vimeo');
+  const yo = { '@context': 'https://schema.org', '@graph': [{ '@type': 'Recipe', name: 'Fried Rice', recipeIngredient: ['3 cups rice'], recipeInstructions: ['Fry.'], video: { '@id': 'https://example.com/fried-rice/#video' } }, { '@type': 'VideoObject', '@id': 'https://example.com/fried-rice/#video', name: 'Fried Rice', embedUrl: 'https://www.youtube.com/embed/YOASTgraph1' }] };
+  ok((RR.parsePage('<html><head><script type="application/ld+json">' + JSON.stringify(yo) + '</script></head><body></body></html>', 'https://example.com/fried-rice/', 'site').video || {}).id === 'YOASTgraph1', 'the recipe\'s video linked by @id in Yoast\'s graph');
+  const wv2 = RR.parseSent({ url: 'https://example.com/fried-rice/', html: '<p>Watch:</p><figure class="wp-block-embed"><iframe src="https://www.youtube.com/embed/WPfeed00001?feature=oembed"></iframe></figure><div class="wprm-recipe-container"><ul><li class="wprm-recipe-ingredient">3 cups rice</li><li class="wprm-recipe-ingredient">2 eggs</li></ul><div class="wprm-recipe-instruction-text">Fry.</div></div>' });
+  ok(wv2.video && wv2.video.id === 'WPfeed00001', 'the phone\'s WordPress read finds the video in the post too');
+
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);
 })();
