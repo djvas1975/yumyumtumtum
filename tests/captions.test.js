@@ -209,6 +209,39 @@ Add the butter and garlic and toss for 1 minute more.`;
   const cut1 = P.parseCaption('Easy dinner\n1 lb chicken, cut into 1 in pieces\n2 cups rice');
   ok(J(cut1.ingredients) === J(['1 lb chicken, cut into 1 in pieces', '2 cups rice']), '"cut into 1 in pieces" stays one line -> ' + J(cut1.ingredients));
 
+  // ---------- a whole recipe page copied in Chrome (long-press, Select all, Copy) ----------
+  const pageCopy = [
+    'Skip to content', 'Eating on a Dime', 'Recipes', 'Meal Plans', 'Home » Salads',
+    'Deviled Egg Macaroni Salad', 'By Carrie Barnard', 'Jump to Recipe', 'Print Recipe',
+    'This easy salad tastes just like deviled eggs. It is perfect for potlucks and cookouts all summer.',
+    'Ingredients', 'You only need a few simple things for this salad. Most of them are already in your pantry.',
+    'Elbow macaroni - any small pasta works.', 'Hard boiled eggs - make them ahead.',
+    'How to Make Deviled Egg Macaroni Salad', 'Step 1. Cook the pasta.', 'Step 2. Mix the dressing.',
+    'Deviled Egg Macaroni Salad', '5 from 3 votes', 'Print Recipe', 'Pin Recipe',
+    'Deviled Egg Macaroni Salad is creamy and tangy.', 'Prep Time 15 minutes', 'Cook Time 10 minutes', 'Chill Time 1 hour',
+    'Total Time 1 hour 25 minutes', 'Servings 12', 'Calories 296kcal', 'Author Carrie Barnard',
+    'Equipment', '▢ Large pot', '▢ Mixing bowl',
+    'Ingredients', '1x 2x 3x', 'US Customary - Metric',
+    '▢ 12 oz elbow macaroni', '▢ 8 large hard-boiled eggs chopped', '▢ ½ tsp salt', '▢ ½ tsp pepper', '▢ 1 cup mayonnaise',
+    '▢ 2 Tbsp Dijon mustard', '▢ ½ small red onion finely chopped', '▢ 3 celery ribs diced', '▢ 1 tsp paprika',
+    'Instructions', 'Cook the macaroni according to package directions. Drain and rinse with cold water.',
+    'Place the macaroni and eggs in a large bowl. Season with salt and pepper.', 'Stir in the mayonnaise and mustard until combined.',
+    'Add the onion and celery and stir.', 'Sprinkle with paprika. Cover and refrigerate at least 1 hour.',
+    'Notes', 'Keeps in the fridge for 3 days.',
+    'Nutrition', 'Calories: 296kcal | Carbohydrates: 25g | Protein: 8g', 'Course Side Dish', 'Cuisine American',
+    'Tried this recipe? Let us know how it was!', '12 Comments', 'Sue says: I made this for the Fourth and everyone loved it. Instructions were easy!'
+  ].join('\n');
+  const pg = P.recipeFromPage(pageCopy);
+  ok(pg && pg.card && pg.ingredients.length === 9 && pg.ingredients[0] === '12 oz elbow macaroni' && pg.ingredients[8] === '1 tsp paprika', 'whole page: finds the recipe card\'s 9 ingredients, not the article\'s -> ' + J(pg && pg.ingredients));
+  ok(pg && pg.steps.length === 5 && /^Cook the macaroni/.test(pg.steps[0]) && /refrigerate/.test(pg.steps[4]), 'whole page: the card\'s 5 steps, not the article\'s or the comments -> ' + J(pg && pg.steps));
+  ok(pg && J(pg.equipment) === J(['Large pot', 'Mixing bowl']) && J(pg.notes) === J(['Keeps in the fridge for 3 days.']), 'whole page: the card\'s cookware and notes -> ' + J(pg && [pg.equipment, pg.notes]));
+  ok(pg && pg.totalTime === 85 && pg.prepTime === 15 && pg.cookTime === 10 && pg.servings === 12, 'whole page: times and servings from the card -> ' + J(pg && [pg.totalTime, pg.prepTime, pg.cookTime, pg.servings]));
+  const justCard = P.recipeFromPage('Ingredients\n2 cups flour\n1 cup milk\nInstructions\nMix it.\nBake 20 minutes.');
+  ok(justCard && justCard.ingredients.length === 2 && justCard.steps.length === 2, 'just the card copied works too');
+  const noHeads = P.recipeFromPage('2 cups flour\n1 cup milk\nMix it all together and bake for 20 minutes.');
+  ok(noHeads && noHeads.ingredients.length === 2 && !noHeads.card, 'no headings: read like pasted recipe text');
+  ok(P.recipeFromPage('Home\nAbout\nContact us\nPrivacy policy') === null, 'a page with no recipe gives nothing');
+
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);
 })();

@@ -350,6 +350,18 @@ body[data-route="recipe"] .tabbar{display:none}
 .fromnote{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:var(--saffron-soft);margin-bottom:10px;font-size:14px;line-height:1.45}
 .fromnote span{flex:1}
 .fromnote a{font-weight:800;color:inherit}
+.cpcard{margin-top:12px;padding:14px;border-radius:16px;background:var(--chili-soft);display:flex;flex-direction:column;gap:6px}
+.cpcard b{font-size:16px}
+.cpcard>span{font-size:14px;color:var(--ink-2);line-height:1.45}
+.cpsteps{margin:4px 0 0;padding-left:20px;font-size:14px;line-height:1.55;color:var(--ink-2)}
+.cpsteps b{color:var(--ink)}
+.cpcard .opt-b{margin-top:6px}
+#cpprompt{position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:65;max-width:520px;margin:0 auto;padding:16px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 12px 40px rgba(0,0,0,.28);display:flex;flex-direction:column;gap:6px}
+#cpprompt[hidden]{display:none}
+#cpprompt b{font:800 17px/1.3 var(--body)}
+#cpprompt>span{font-size:14px;color:var(--ink-2);line-height:1.45}
+#cpprompt textarea{margin-top:6px}
+#cpprompt .opt-b{margin-top:8px}
 .tc-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .tc-h .ic{width:18px;height:18px;color:var(--chili);flex:none}
 .tc-h b{font-size:16px}
@@ -1194,6 +1206,7 @@ V.recipe = (rt) => {
     h += '<div class="getcard"><div><b>' + (vid ? 'Get the recipe from the video' : 'Get the full recipe') + '</b><span>'
       + (vid ? 'Pulls in the cover photo and the whole caption, including any recipe written in it or linked from it.' : 'Pulls in the photo, ingredients, directions, and notes from ' + esc(site || 'the site') + '.')
       + '</span></div><button class="btn primary sm" data-act="getdetails" data-id="' + esc(r.id) + '"' + (reading ? ' disabled' : '') + '>' + (reading ? '<span class="spin sm"></span>Reading' : 'Get it') + '</button></div>';
+    if (CP_FAIL.has(r.id) && !reading) h += copyCardHTML('recipe', r.id);
   }
   h += '<div class="rate"><span class="lbl2">Your rating</span><div class="stars">' + stars + '</div></div>'
     + catLineHTML(r) + '<div class="duo"><button class="btn made" data-act="made">' + icon('pot') + (r.madeCount ? 'Made it again' : 'I made this') + '</button><button class="btn ghost" data-act="addto" data-id="' + esc(r.id) + '">' + icon('folder') + 'Collections</button></div>';
@@ -1267,7 +1280,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 1.7</p></div>';
+    + '<p class="ver">YumYum · version 1.8</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1542,7 +1555,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '11'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '12'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1551,16 +1564,60 @@ const hasOwnPhoto = r => !!(r.photoKey || r.photoId || r.photoData || (r.photoUr
 function jumpUrl(r){ return (r.platform === 'web' && r.anchor) ? r.url.replace(/#.*$/, '') + '#' + encodeURIComponent(r.anchor) : r.url; }
 async function readLink(url){
   const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 45000);
+  let j = null, err = null;
   try {
     const res = await fetch(READER + '/api/recipe?url=' + encodeURIComponent(url) + '&v=' + READER_V, {signal:ctrl.signal});
-    const j = await res.json();
+    j = await res.json();
     if (!j.ok) throw new Error((j.error || "Couldn't read that page.").replace(/\.?$/, '.'));
-    return j;
   } catch (e) {
-    if (e && e.name === 'AbortError') throw new Error('That site took too long to answer.');
-    if (e instanceof TypeError) throw new Error("Couldn't reach the recipe reader. Check your connection.");
-    throw e;
+    err = e && e.name === 'AbortError' ? new Error('That site took too long to answer.') : e instanceof TypeError ? new Error("Couldn't reach the recipe reader. Check your connection.") : e;
   } finally { clearTimeout(t); }
+  // a website that turned the reader away (or showed it no recipe): ask the site itself, from this phone
+  const web = (detect(url) || {}).platform === 'web';
+  if (web && (err || j.kind !== 'recipe' || !countItems(j.ingredients))) {
+    let w = null;
+    try { w = await wpRead(url); } catch (e) { w = null; }
+    if (w) return w;
+  }
+  if (err) { if (web) err.canCopy = true; throw err; }
+  return j;
+}
+// Most food blogs run WordPress, and WordPress shares its posts with other sites on purpose (its REST API sends the
+// "other sites may read this" header). So when a site turns the recipe reader's server away, the phone asks the site
+// for the post the same way it opens the page, and the reader sorts out the recipe card in what comes back.
+const decodeHTML = s => { const d = document.createElement('textarea'); d.innerHTML = String(s || ''); return d.value; };
+async function wpRead(url){
+  let u; try { u = new URL(url); } catch (e) { return null; }
+  const pid = /^\d+$/.test(u.searchParams.get('p') || '') ? u.searchParams.get('p') : '';
+  const slug = pid ? '' : decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || '').replace(/\.html?$/, '');
+  if (!pid && !/^[\w%-]{3,200}$/.test(slug)) return null;
+  const f = '_fields=id,link,title,content,yoast_head_json,jetpack_featured_media_url';
+  const q = pid ? '/' + pid : '';
+  const tries = [u.origin + '/wp-json/wp/v2/posts' + q + '?' + (pid ? '' : 'slug=' + encodeURIComponent(slug) + '&') + f];
+  if (!pid) tries.push(u.origin + '/wp-json/wp/v2/pages?slug=' + encodeURIComponent(slug) + '&' + f);
+  tries.push(u.origin + '/?rest_route=/wp/v2/posts' + q + '&' + (pid ? '' : 'slug=' + encodeURIComponent(slug) + '&') + f);
+  for (const api of tries) {
+    let post = null;
+    const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 12000);
+    try {
+      const res = await fetch(api, {signal:ctrl.signal, credentials:'omit', headers:{Accept:'application/json'}});
+      if (!res.ok) continue;
+      const j = await res.json();
+      post = Array.isArray(j) ? j[0] : j;
+    } catch (e) {
+      if (e instanceof TypeError) break; // the site said no to the phone too
+      continue;
+    } finally { clearTimeout(t); }
+    if (!post || !post.content || !post.content.rendered) continue;
+    const y = post.yoast_head_json || {};
+    const graph = y.schema ? [].concat(y.schema['@graph'] || y.schema) : [];
+    const body = {url:post.link || url, html:post.content.rendered, ld:graph, title:decodeHTML(post.title && post.title.rendered) || y.og_title || '',
+      image:post.jetpack_featured_media_url || ((y.og_image || [])[0] || {}).url || '', site:y.og_site_name || ''};
+    const res2 = await fetch(READER + '/api/recipe', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body)});
+    const j2 = await res2.json();
+    return j2 && j2.ok ? j2 : null;
+  }
+  return null;
 }
 async function savePhotoFromUrl(imgUrl){
   const res = await fetch(READER + '/api/image?url=' + encodeURIComponent(imgUrl));
@@ -1658,8 +1715,84 @@ async function getDetails(id){
     const res = await enrichRecipe(id, j);
     const parts = res ? foundList(res.u, res.photo) : [];
     toast(parts.length ? 'Added ' + joinList(parts) : "Couldn't find a recipe on that page. You can paste the recipe text from Edit.");
-  } catch (e) { toast(e.message || "Couldn't read that page."); }
+  } catch (e) { if (e && e.canCopy) CP_FAIL.add(id); toast(e.message || "Couldn't read that page."); }
   finally { READING.delete(id); refresh(); }
+}
+
+/* ---------- copy it from the page: when a site won't let the reader in at all ---------- */
+// Open the page, long-press, Select all, Copy, come back: a prompt with one button pastes it, and
+// recipeFromPage() picks the recipe card out of the whole page.
+let CP = null; // {kind:'form'|'recipe', id, url, at}
+const CP_FAIL = new Set();
+function copyCardHTML(kind, id){
+  const a = ' data-k="' + kind + '" data-id="' + esc(id || '') + '"';
+  return '<div class="cpcard"><b>Copy it from the page instead</b><span>The site won\'t let the recipe reader in, but you can copy the page and YumYum picks out the recipe.</span>'
+    + '<ol class="cpsteps"><li>Tap <b>Open the page</b>.</li><li>Long-press any word, tap <b>Select all</b>, then <b>Copy</b>.</li><li>Come back. YumYum asks to paste it. Tap <b>Paste the recipe</b>.</li></ol>'
+    + '<div class="opt-b"><button type="button" class="btn primary sm" data-act="cpopen"' + a + '>Open the page</button><button type="button" class="btn ghost sm" data-act="cppaste"' + a + '>Paste the recipe</button></div></div>';
+}
+function cpUrl(kind, id){
+  if (kind === 'form') return F && F.det ? F.det.url : '';
+  const r = Store.recipes.get(id); return r ? r.url : '';
+}
+function cpOpen(kind, id){
+  const url = cpUrl(kind, id); if (!url) return;
+  CP = {kind:kind, id:id, url:url, at:Date.now()};
+  hideCpPrompt();
+  window.open(url, '_blank', 'noopener');
+}
+// back from the page: one prompt, one button
+function showCpPrompt(box){
+  let el = document.getElementById('cpprompt');
+  if (!el) { el = document.createElement('div'); el.id = 'cpprompt'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Paste the recipe'); document.body.appendChild(el); }
+  el.innerHTML = box
+    ? '<b>Long-press in the box and tap Paste</b><span>Your phone didn\'t let YumYum see what you copied, so paste it here.</span><textarea class="inp" id="cpbox" rows="4" placeholder="Paste here"></textarea><div class="opt-b"><button type="button" class="btn primary" data-act="cpuse">Use it</button><button type="button" class="btn ghost" data-act="cpclose">Not now</button></div>'
+    : '<b>Got the recipe copied?</b><span>YumYum will pick out the ingredients, steps and cookware.</span><div class="opt-b"><button type="button" class="btn primary" data-act="cppaste">Paste the recipe</button><button type="button" class="btn ghost" data-act="cpclose">Not now</button></div>';
+  el.hidden = false;
+  if (box) setTimeout(() => { const b = document.getElementById('cpbox'); if (b) b.focus(); }, 60);
+}
+function hideCpPrompt(){ const el = document.getElementById('cpprompt'); if (el) el.hidden = true; }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && CP && Date.now() - CP.at < 20 * 60000 && !CP.asked) { CP.asked = true; setTimeout(() => showCpPrompt(false), 250); }
+});
+async function cpPaste(kind, id){
+  if (kind) CP = Object.assign(CP || {}, {kind:kind, id:id, url:cpUrl(kind, id), at:(CP && CP.at) || Date.now()});
+  if (!CP) return;
+  let txt = '';
+  try { if (navigator.clipboard && navigator.clipboard.readText) txt = await navigator.clipboard.readText(); } catch (e) { txt = ''; }
+  if (!txt || txt.trim().length < 15) { showCpPrompt(true); return; }
+  applyCopied(txt);
+}
+function applyCopied(txt){
+  if (!CP) return;
+  const p = recipeFromPage(txt);
+  if (!p || (!countItems(p.ingredients) && !countItems(p.steps))) { toast("Couldn't find a recipe in what you copied. On the page, long-press, tap Select all, then Copy."); return; }
+  const parts = [];
+  if (countItems(p.ingredients)) parts.push(plural(countItems(p.ingredients), 'ingredient'));
+  if (countItems(p.steps)) parts.push(plural(countItems(p.steps), 'step'));
+  if ((p.equipment || []).length) parts.push('cookware');
+  if (CP.kind === 'form') {
+    if (!F) { CP = null; hideCpPrompt(); return; }
+    const put = (sel, v, force) => { const el = $(sel); if (el && v && (force || !el.value.trim())) el.value = v; };
+    put('#f-ing', p.ingredients.join('\n'), true); put('#f-steps', p.steps.join('\n'), true);
+    put('#f-srcnotes', (p.notes || []).join('\n')); put('#f-equip', (p.equipment || []).join('\n'));
+    put('#f-time', p.totalTime || ''); put('#f-serv', p.servings || '');
+    F.readState = 'pasted'; F.pastedParts = parts; renderDet(); renderPrev();
+  } else {
+    const r = Store.recipes.get(CP.id);
+    if (r) {
+      const u = {importedAt:now()};
+      if (!countItems(r.ingredients) && countItems(p.ingredients)) u.ingredients = p.ingredients.slice(0, 200);
+      if (!countItems(r.steps) && countItems(p.steps)) u.steps = p.steps.slice(0, 150);
+      if (!(r.srcNotes || []).length && (p.notes || []).length) u.srcNotes = p.notes.slice(0, 60);
+      if (!(r.equipment || []).length && (p.equipment || []).length) u.equipment = p.equipment.slice(0, 40);
+      if (!r.time && p.totalTime) u.time = p.totalTime;
+      if (!r.servings && p.servings) u.servings = p.servings;
+      CP_FAIL.delete(r.id);
+      putRecipe(Object.assign({}, r, u));
+    }
+  }
+  CP = null; hideCpPrompt();
+  toast('Got ' + joinList(parts) + ' from the page');
 }
 
 /* ---------- recipes with no written steps: what they said (TikTok) and steps from a similar recipe ---------- */
@@ -3079,6 +3212,51 @@ function parseCaption(text) {
   return { title, ingredients: ingOut, steps: stepsOut, equipment: equip.map(tidy).filter(Boolean), notes: notes.map(tidy).filter(Boolean).concat(leftover.length && (ingOut.length || stepsOut.length) ? leftover : []) };
 }
 
+// Text copied from a whole recipe page (long-press, Select all, Copy): find the recipe card in it and read only that.
+// The card is the last "Ingredients" heading that has an "Instructions" heading after it (articles often have
+// their own ingredient talk higher up), from its Equipment list (just above, on WP Recipe Maker cards) down to the
+// nutrition, course/cuisine lines, or comments. Without those headings, the whole text is read like a caption.
+function recipeFromPage(text) {
+  const lines = String(text || '').replace(/\r/g, '').replace(/ /g, ' ').split('\n')
+    .map(l => l.replace(/^[\s▢☐□◻■•▪◦●✓✔️]+/u, '').replace(/\s+/g, ' ').trim());
+  const ING = /^(ingredients?|ingredient list|what you(’|')?ll need)\s*:?(\s+(us customary|metric|imperial|1x|scale).*)?$/i;
+  const STEPS = /^(instructions?|directions?|method|steps|preparation)\s*:?$/i;
+  const EQUIP = /^(equipment|cookware|tools)\s*:?$/i;
+  const END = /^(nutrition( information| facts| info)?|did you make this|tried this recipe|rate this recipe|leave a (comment|review)|comments?|\d+ comments?|reader interactions|share this|you may also like|more recipes|related recipes?|reader favorites|course|cuisine|keywords?)\b/i;
+  const NOISE = /^(1x|2x|3x|1x 2x 3x|us customary|metric|us customary\s*-?\s*metric|print( recipe)?|pin( recipe)?|save( recipe)?|cook mode|prevent your screen from going dark|jump to recipe|jump to video|rate( this)?|video|play|servings?:?|♡|★+|\d+(\.\d+)? from \d+ votes?)$/i;
+  let at = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (!ING.test(lines[i])) continue;
+    for (let k = i + 1; k < Math.min(lines.length, i + 150); k++) {
+      if (STEPS.test(lines[k])) { at = i; break; }
+      if (ING.test(lines[k])) break;
+    }
+  }
+  if (at < 0) {
+    const t = lines.filter(l => l && !NOISE.test(l)).join('\n');
+    let p = parseCaption(t);
+    // the caption reader takes the first line as the name; copied text often starts right with an ingredient
+    if (!p.ingredients.length && !p.steps.length) { p = parseCaption('Copied recipe\n' + t); p.title = ''; }
+    return p.ingredients.length || p.steps.length ? Object.assign(p, { totalTime: 0, prepTime: 0, cookTime: 0, servings: 0, card: false }) : null;
+  }
+  let from = at;
+  for (let k = at - 1; k >= Math.max(0, at - 25); k--) { if (EQUIP.test(lines[k])) { from = k; break; } }
+  let end = lines.length, steps = false;
+  for (let k = at + 1; k < lines.length; k++) {
+    if (STEPS.test(lines[k])) steps = true;
+    else if (steps && END.test(lines[k])) { end = k; break; }
+  }
+  const p = parseCaption(lines.slice(from, end).filter(l => l && !NOISE.test(l)).join('\n'));
+  // the card's times and servings, a few lines above the ingredients
+  const top = ' ' + lines.slice(Math.max(0, from - 30), from).join(' ') + ' ';
+  const mins = label => {
+    const m = top.match(new RegExp(label + '\\s*:?\\s*(?:(\\d+)\\s*(?:hours?|hrs?|h)\\b)?\\s*(?:(\\d+)\\s*(?:minutes?|mins?|m)\\b)?', 'i'));
+    return m ? (+(m[1] || 0)) * 60 + (+(m[2] || 0)) : 0;
+  };
+  const sv = top.match(/\b(?:servings|serves|yield)\s*:?\s*(\d{1,3})\b/i);
+  return Object.assign(p, { totalTime: mins('total time'), prepTime: mins('prep time'), cookTime: mins('cook time'), servings: sv ? +sv[1] : 0, card: true });
+}
+
 /* the same ingredient reader the tests use, for "What can I cook?" */
 /* ---- pantry: what can I cook ---- */
 // [id, label, kind, pattern, family]
@@ -4125,7 +4303,7 @@ async function startRead(url){
   let j;
   try { j = await readLink(url); }
   catch (e) {
-    if (F === f && normUrl(f.lastReadUrl) === normUrl(url)) { f.readState = 'failed'; f.readMsg = e.message; renderDet(); }
+    if (F === f && normUrl(f.lastReadUrl) === normUrl(url)) { f.readState = 'failed'; f.readMsg = e.message; f.readCopy = !!e.canCopy; renderDet(); }
     return;
   }
   if (normUrl(f.lastReadUrl) !== normUrl(url)) return;
@@ -4169,11 +4347,14 @@ function renderDet(){
   if (F.readState === 'reading') st = '<p class="readst"><span class="spin sm"></span>Reading the recipe from ' + esc(extra || p.name) + '…</p>';
   else if (F.readState === 'done' && F.imp) {
     const parts = foundList({ingredients:F.imp.ingredients, steps:F.imp.steps, srcNotes:F.imp.notes, equipment:F.imp.equipment}, !!F.photoKey && F.uploadedLocal.indexOf(F.photoKey) >= 0);
-    st = parts.length ? '<p class="readst ok">' + icon('check') + 'Got ' + esc(joinList(parts)) + (F.imp.via === 'archive' ? ' (from a saved copy of the page)' : '') + '</p>'
+    st = parts.length ? '<p class="readst ok">' + icon('check') + 'Got ' + esc(joinList(parts)) + (F.imp.via === 'archive' ? ' (from a saved copy of the page)' : F.imp.via === 'wordpress' ? ' (your phone read it from the site)' : '') + '</p>'
       : (F.imp.caption ? '<p class="readst">Got the caption, but no ingredient list in it. The full caption is saved with the recipe so you can read it.</p>' : '<p class="readst">No recipe card on that page. Add the details below, or use Paste recipe text.</p>');
   }
   if (F.readState === 'done' && F.imp && F.imp.captionCut) st += '<p class="readst">' + esc(p.name) + ' only shared the start of the caption, so some of the recipe may be missing.</p>';
-  if (F.readState === 'failed') st = '<p class="readst bad">' + esc(F.readMsg) + ' You can still save it, or use Paste recipe text. <button type="button" class="linkbtn sm" data-act="f-reread">Try again</button></p>';
+  if (F.readState === 'failed') st = F.readCopy
+    ? '<p class="readst bad">' + esc(F.readMsg) + ' <button type="button" class="linkbtn sm" data-act="f-reread">Try again</button></p>' + copyCardHTML('form', '')
+    : '<p class="readst bad">' + esc(F.readMsg) + ' You can still save it, or use Paste recipe text. <button type="button" class="linkbtn sm" data-act="f-reread">Try again</button></p>';
+  if (F.readState === 'pasted') st = '<p class="readst ok">' + icon('check') + 'Got ' + esc(joinList(F.pastedParts || [])) + ' from what you copied</p>';
   box.innerHTML = '<p class="detect">' + icon(p.ic) + '<span>' + esc(p.name) + (extra ? ' · ' + esc(extra) : '') + '</span></p>' + st
     + (dup ? '<div class="warn">You already saved this one: <button type="button" class="linkbtn" data-open="' + esc(dup.id) + '">' + esc(dup.title) + '</button></div>' : '');
 }
@@ -4574,6 +4755,10 @@ const A = {
   rmphoto: () => { if (!F) return; F.photoId = null; F.photoKey = null; F.photoData = null; F.preview = null; F.photoUrl = (F.det && F.det.ytId) ? 'https://i.ytimg.com/vi/' + F.det.ytId + '/hqdefault.jpg' : null; renderPrev(); },
   install: () => installApp(),
   listen: t => listenVideo(t.dataset.id || cur().id),
+  cpopen: t => cpOpen(t.dataset.k, t.dataset.id),
+  cppaste: t => cpPaste(t.dataset.k, t.dataset.id),
+  cpuse: () => { const b = document.getElementById('cpbox'); const v = b ? b.value : ''; if (!v.trim()) { if (b) b.focus(); return; } applyCopied(v); },
+  cpclose: () => hideCpPrompt(),
   usesimilar: t => useSimilar(t.dataset.id || cur().id),
   unsimilar: t => unSimilar(t.dataset.id || cur().id),
   simnext: t => { const id = t.dataset.id || cur().id; const r = Store.recipes.get(id); const n = r && r.similar ? r.similar.items.length : 0; if (n) { SIM.idx.set(id, ((SIM.idx.get(id) || 0) + 1) % n); refresh(); } },

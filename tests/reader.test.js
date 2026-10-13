@@ -98,6 +98,39 @@ const ok = (cond, msg) => { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!
   ok(P.badUrl('http://169.254.169.254/latest') && P.badUrl('http://localhost:3000') && !P.badUrl('https://www.seriouseats.com/x'), 'safety: private addresses refused');
   ok(P.isoMinutes('PT1H15M') === 75 && P.isoMinutes('1 hr 20 mins') === 80, 'durations');
 
+  // ---------- a WordPress post the phone read itself (POST /api/recipe) ----------
+  const RR = require(path.join(R, 'api/recipe.js'));
+  const J = x => JSON.stringify(x);
+  const wprmCard = '<p>Article text about the salad.</p><div id="wprm-recipe-container-115242" class="wprm-recipe-container"><div class="wprm-recipe">'
+    + '<h2 class="wprm-recipe-name">Deviled Egg Macaroni Salad</h2>'
+    + '<div class="wprm-recipe-equipment-container"><div class="wprm-recipe-equipment-item"><div class="wprm-recipe-equipment-name">Large pot</div></div></div>'
+    + '<ul class="wprm-recipe-ingredients"><li class="wprm-recipe-ingredient"><span class="wprm-checkbox-container">▢</span><span class="wprm-recipe-ingredient-amount">12</span> <span class="wprm-recipe-ingredient-unit">oz</span> <span class="wprm-recipe-ingredient-name">elbow macaroni</span></li>'
+    + '<li class="wprm-recipe-ingredient"><span class="wprm-recipe-ingredient-amount">8</span> <span class="wprm-recipe-ingredient-unit">large</span> <span class="wprm-recipe-ingredient-name">hard-boiled eggs</span> <span class="wprm-recipe-ingredient-notes">chopped</span></li>'
+    + '<li class="wprm-recipe-ingredient"><span class="wprm-recipe-ingredient-amount">1</span> <span class="wprm-recipe-ingredient-unit">cup</span> <span class="wprm-recipe-ingredient-name">mayonnaise</span></li></ul>'
+    + '<ul class="wprm-recipe-instructions"><li class="wprm-recipe-instruction"><div class="wprm-recipe-instruction-text">Cook the macaroni and drain.</div></li>'
+    + '<li class="wprm-recipe-instruction"><div class="wprm-recipe-instruction-text">Stir everything together in a large bowl.</div></li></ul>'
+    + '<div class="wprm-recipe-notes">Keeps 3 days.</div></div></div>';
+  const ws = RR.parseSent({ url: 'https://www.eatingonadime.com/deviled-egg-macaroni-salad/', html: wprmCard, title: 'Deviled Egg Macaroni Salad &#8211; Eating on a Dime', image: 'https://www.eatingonadime.com/photo.jpg', site: 'Eating on a Dime' });
+  ok(ws.kind === 'recipe' && J(ws.ingredients) === J(['12 oz elbow macaroni', '8 large hard-boiled eggs chopped', '1 cup mayonnaise']) && J(ws.steps) === J(['Cook the macaroni and drain.', 'Stir everything together in a large bowl.']), 'WordPress post with only the card\'s markup: ingredients and steps -> ' + J([ws.ingredients, ws.steps]));
+  ok(J(ws.equipment) === J(['Large pot']) && J(ws.notes) === J(['Keeps 3 days.']) && ws.anchor === 'wprm-recipe-container-115242' && ws.via === 'wordpress' && ws.siteName === 'Eating on a Dime' && ws.image === 'https://www.eatingonadime.com/photo.jpg', 'and its cookware, notes, jump spot, site name and photo');
+  const ld = [{ '@type': 'WebPage', name: 'x' }, { '@type': 'Recipe', name: 'Deviled Egg Macaroni Salad', recipeIngredient: ['12 oz elbow macaroni', '1 cup mayonnaise'], recipeInstructions: [{ '@type': 'HowToStep', text: 'Cook.' }, { '@type': 'HowToStep', text: 'Stir.' }], totalTime: 'PT1H25M', recipeYield: ['12'] }];
+  const wl = RR.parseSent({ url: 'https://www.eatingonadime.com/deviled-egg-macaroni-salad/', html: '<p>no card here</p>', ld });
+  ok(wl.ingredients.length === 2 && wl.steps.length === 2 && wl.totalTime === 85 && wl.servings === 12, 'WordPress post with its structured data (Yoast): the full recipe -> ' + J([wl.ingredients.length, wl.steps.length, wl.totalTime, wl.servings]));
+  const tasty = RR.parseSent({ url: 'https://example.com/tasty/', html: '<div class="tasty-recipes"><div class="tasty-recipes-ingredients"><h4>Ingredients</h4><ul><li>2 cups flour</li><li>1 cup milk</li></ul></div><div class="tasty-recipes-instructions"><h4>Instructions</h4><ol><li>Mix.</li><li>Bake.</li></ol></div></div>' });
+  ok(J(tasty.ingredients) === J(['2 cups flour', '1 cup milk']) && J(tasty.steps) === J(['Mix.', 'Bake.']), 'Tasty Recipes card markup -> ' + J([tasty.ingredients, tasty.steps]));
+  let threw = ''; try { RR.parseSent({ url: 'https://example.com/a/', html: '<p>Just a blog post.</p>' }); } catch (e) { threw = e.message; }
+  ok(/No recipe card/.test(threw), 'a post with no recipe says so');
+  threw = ''; try { RR.parseSent({ url: 'http://127.0.0.1/x', html: wprmCard }); } catch (e) { threw = e.message; }
+  ok(/doesn.t look right/.test(threw), 'refuses private addresses');
+  const post = body => new Promise(resolve => {
+    const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, json(o) { resolve({ code: this.code, body: o, headers: this.headers }); }, end() { resolve({ code: this.code, headers: this.headers }); } };
+    RR({ method: 'POST', headers: { origin: 'https://djvas1975.github.io' }, query: {}, body }, res);
+  });
+  const pr = await post(JSON.stringify({ url: 'https://www.eatingonadime.com/deviled-egg-macaroni-salad/', html: wprmCard }));
+  ok(pr.body.ok && pr.body.ingredients.length === 3 && /POST/.test(pr.headers['Access-Control-Allow-Methods']) && pr.headers['Access-Control-Allow-Origin'] === 'https://djvas1975.github.io', 'POST from the app works and is allowed from the app\'s site');
+  const pre = await new Promise(resolve => { const res = { headers: {}, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.code = c; return this; }, json() {}, end() { resolve({ code: this.code, headers: this.headers }); } }; RR({ method: 'OPTIONS', headers: { origin: 'https://djvas1975.github.io' }, query: {} }, res); });
+  ok(pre.code === 204 && /content-type/.test(pre.headers['Access-Control-Allow-Headers']), 'the browser\'s pre-check for the POST is answered');
+
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);
 })();

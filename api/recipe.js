@@ -19,7 +19,23 @@ const {
 
 module.exports = async (req, res) => {
   if (!cors(req, res)) return;
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'content-type');
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
+  // POST: a recipe page the phone read itself (a WordPress site's own recipe feed, when the site turns this server away)
+  if (req.method === 'POST') {
+    try {
+      let b = req.body;
+      if (Buffer.isBuffer(b)) b = b.toString('utf8');
+      if (typeof b === 'string') b = JSON.parse(b || '{}');
+      const out = parseSent(b || {});
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json(Object.assign({ ok: true }, out));
+    } catch (e) {
+      res.status(200).json({ ok: false, error: (e && e.message) || 'Could not read that recipe.' });
+    }
+    return;
+  }
   const url = String((req.query && req.query.url) || '').trim();
   const bad = badUrl(url);
   if (bad) { res.status(400).json({ ok: false, error: bad }); return; }
@@ -62,6 +78,11 @@ async function readWebsite(url) {
     } catch (e) { /* keep what we have */ }
   }
   if (!html) throw new Error(problem || 'Couldn’t read that page.');
+  return parsePage(html, finalUrl, via);
+}
+
+// A recipe page (or a WordPress post's content plus its structured data) -> the recipe
+function parsePage(html, finalUrl, via) {
   const out = blank(finalUrl);
   out.via = via;
   out.kind = 'page';
@@ -111,6 +132,15 @@ async function readWebsite(url) {
     const m = html.match(c.anchor);
     if (m && !out.anchor) out.anchor = m[1];
   }
+  // no structured data: read the recipe card itself (WP Recipe Maker, Tasty Recipes, Mediavine Create)
+  if (!out.ingredients.length || !out.steps.length) {
+    const c = cardLists(html);
+    if (c.ingredients.length || c.steps.length) {
+      if (!out.ingredients.length) out.ingredients = c.ingredients;
+      if (!out.steps.length) out.steps = c.steps;
+      if (out.ingredients.length || out.steps.length) out.kind = 'recipe';
+    }
+  }
   const groups = wprmGroups(html);
   if (groups) out.ingredients = groups;
   if (!out.anchor) {
@@ -153,6 +183,40 @@ const NUT = [
 function nutrition(n) {
   if (!n || typeof n !== 'object') return [];
   return NUT.filter(([k]) => n[k]).map(([k, label]) => ({ label, value: clean(decode(String(n[k]))) }));
+}
+
+// Ingredients and steps straight from a recipe card's own markup
+function cardLists(html) {
+  const one = h => htmlToLines(h).join(' ').replace(/^[▢☐□\s]+/, '').replace(/\s+/g, ' ').trim();
+  const items = (cls, sub) => findByClass(html, cls).flatMap(b => sub ? findByClass(b, sub).map(one) : htmlToLines(b).filter(l => !/^(ingredients|instructions|directions|method)$/i.test(l)));
+  const tries = [
+    () => ({ ingredients: findByClass(html, 'wprm-recipe-ingredient').map(one), steps: findByClass(html, 'wprm-recipe-instruction-text').map(one) }),
+    () => ({ ingredients: items('tasty-recipes-ingredients-body') .length ? items('tasty-recipes-ingredients-body') : items('tasty-recipes-ingredients'), steps: items('tasty-recipes-instructions-body').length ? items('tasty-recipes-instructions-body') : items('tasty-recipes-instructions') }),
+    () => ({ ingredients: items('mv-create-ingredients'), steps: items('mv-create-instructions') })
+  ];
+  for (const t of tries) {
+    const r = t();
+    r.ingredients = dedupe(r.ingredients.filter(Boolean));
+    r.steps = r.steps.filter(Boolean).map(x => x.replace(/^(step\s*)?\d+[.)]\s+/i, ''));
+    if (r.ingredients.length >= 2 || r.steps.length >= 2) return r;
+  }
+  return { ingredients: [], steps: [] };
+}
+
+// What the phone sends: { url, html (the post's content), ld (its structured data), title, image, site }
+function parseSent(b) {
+  const url = String(b.url || '').trim();
+  if (badUrl(url)) throw new Error('That link doesn’t look right.');
+  const html = String(b.html || '').slice(0, 3000000);
+  const ld = [].concat(b.ld || []).slice(0, 20).map(x => { try { return JSON.stringify(x).replace(/</g, '\\u003c'); } catch (e) { return ''; } }).filter(Boolean);
+  const esc = v => String(v || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const page = '<html><head>' + (b.title ? '<meta property="og:title" content="' + esc(b.title) + '">' : '')
+    + (b.image ? '<meta property="og:image" content="' + esc(b.image) + '">' : '') + (b.site ? '<meta property="og:site_name" content="' + esc(b.site) + '">' : '')
+    + ld.map(j => '<script type="application/ld+json">' + j + '</script>').join('') + '</head><body>' + html + '</body></html>';
+  const out = parsePage(page, url, 'wordpress');
+  if (!out.siteName || out.siteName === new URL(url).hostname.replace(/^www\./, '')) out.siteName = clean(decode(b.site || '')) || out.siteName;
+  if (out.kind !== 'recipe') throw new Error('No recipe card in what the site shared.');
+  return out;
 }
 
 // WP Recipe Maker ingredient groups ("For the sauce", "For the dough") that the structured data flattens
@@ -689,6 +753,8 @@ function findObj(node, test, depth) {
 }
 
 module.exports.readRecipe = readRecipe;
+module.exports.parsePage = parsePage;
+module.exports.parseSent = parseSent;
 // Artistry (the crafts app in crafts/, api/idea.js) reuses the social readers.
 module.exports.readers = { readTikTok, readYouTube, readInstagram, readFacebook };
 module.exports.vttText = vttText;

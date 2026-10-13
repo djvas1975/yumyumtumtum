@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **1.7**.
+Current version: **1.8**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -36,7 +36,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 
 ---
 
-## What the app does (v1.7)
+## What the app does (v1.8)
 - **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
   Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
@@ -71,6 +71,12 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   recipe" when there are no ingredients), Open it, Another, and "Not the right dish?" search). Used steps carry
   a note "These steps are from a similar recipe … not this video · Take them out". Dave picked the free version;
   AI-written steps from a video were offered as a later add-on (needs his own Claude API key).
+- **When a site blocks the reader (v1.8, Oct 12, 2026):** first the phone asks the site's own WordPress feed
+  (automatic; "Got 11 ingredients and 7 steps (your phone read it from the site)"). If the site says no to the phone
+  too, the Save sheet (and the recipe page after "Get it") shows **Copy it from the page instead**: Open the page →
+  long-press, Select all, Copy → come back → a prompt "Got the recipe copied?" with one button, **Paste the
+  recipe**. YumYum finds the recipe card inside the whole page (ingredients, steps, cookware, notes, time, servings).
+  If Android won't share the clipboard, the prompt turns into a box: long-press, Paste, Use it.
 - **Yums** (rebuilt in v1.3 to be Dave's recipe box): count of recipes and how many made, a search
   pill, six smart collections (All Yums, Favorites, Want to try, Made it, Top rated = 4+ stars,
   30 min or less), **Categories** (the same 10 as Home, as photo tiles with counts; tap for his
@@ -125,7 +131,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `tools/app.html` | **The whole app, the one file to edit** (vanilla JS, CSS, views, storage, Discover, taste profile). |
 | `tools/build.py` | Wraps app.html into `index.html` and writes `manifest.webmanifest`, `sw.js` (new cache version each build), `README.md`, `.nojekyll`. |
 | `index.html`, `manifest.webmanifest`, `sw.js` | Built output. Don't edit by hand. |
-| `api/recipe.js` | Recipe reader: `GET /api/recipe?url=...` (add `&debug=1` for a trace). |
+| `api/recipe.js` | Recipe reader: `GET /api/recipe?url=...` (add `&debug=1` for a trace). `POST /api/recipe` with `{url, html, ld, title, image, site}` sorts a WordPress post the phone read itself (`parseSent` -> `parsePage`, the same parser as websites, plus `cardLists` for cards with no structured data). |
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
 | `api/backup.js` | Cloud backup to the private Vercel Blob store: `POST ?op=save&day=&daily=1`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). Artistry uses the same endpoint with `&app=artistry` (see the Artistry cloud backup section). |
@@ -133,7 +139,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
 | `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`), cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`), and the What you'll need list (`GEAR`, `GEAR_LIKELY`, `gearFor(recipe)`, `gearHeard(text)`). Sources are listed at the top of the file. |
 | `api/similar.js` | Steps from a similar recipe: `GET /api/similar?q=<dish>&ing=<food ids>&skip=<url|url>` (`debug=1` for each site and score). Searches the Discover sites, reads the closest 6 recipe cards (`readRecipe` from api/recipe.js), returns up to 3 with steps. |
-| `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, archive fallback. |
+| `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, `recipeFromPage` (a whole copied page -> its recipe card), archive fallback. |
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
 | `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup with a fake Blob store, and similar-recipe matching with fake recipe sites. |
 | `package.json` | Only for Vercel: the `@vercel/blob` SDK used by api/backup.js. (npm's registry refused `@vercel/blob` inside Claude sessions on Sept 29, 2026, so tests fake it; Vercel installs it on deploy.) |
@@ -149,7 +155,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js`
-5. App changes: bump the version text in `V.me` (`version 1.7`).
+5. App changes: bump the version text in `V.me` (`version 1.8`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -351,7 +357,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 ## Video recipes from what's said (checked Sept 28, 2026; the free part built Oct 10, 2026 in v1.7)
 - **Built (v1.7):** the reader asks for TikTok's speech captions on every TikTok (`readTikTok(url, trace, {speech:true})`,
-  `speech` in the answer, `READER_V` 11); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
+  `speech` in the answer, `READER_V` 11; 12 since v1.8); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
   shows it as "What they said in the video" when there are no written steps (collapsed under the steps otherwise).
 - Probe: `/api/recipe?url=<video>&debug=1&subs=1` lists the video's own captions and shows the start
   of the caption file. Debug only; normal reads don't change.
@@ -417,6 +423,31 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   drops `speech`, `speechChecked`, `similar`.
 - Tested offline Oct 10, 2026 (Playwright, light and dark, 390 px): checklist, TikTok with speech + similar, use and
   take out, no match + typed search, Listen to the video.
+
+## When a site blocks the reader: how it works (built Oct 12, 2026, v1.8)
+- Dave asked: "is there a way the app can copy and paste by itself when recipe reader is blocked?", then "can it be a
+  prompt and one click of a button?" A web app can't read another site's pages (browsers block it), so:
+- **WordPress feed, from the phone** (`wpRead(url)` in app.html, called by `readLink` when a website's read fails or
+  has no recipe): asks `<site>/wp-json/wp/v2/posts?slug=<last part of the address>&_fields=id,link,title,content,
+  yoast_head_json,jetpack_featured_media_url` (then `pages`, then `/?rest_route=`), `credentials:'omit'`, 12 s each;
+  a network/CORS error stops it. WordPress core sends `Access-Control-Allow-Origin` for any origin on purpose
+  (`rest_send_cors_headers`; core.trac #45477 closed wontfix: "a design decision to expose data from the REST API to
+  all origins"). The post's `content.rendered` (the recipe card's markup) and Yoast's schema graph go to `POST
+  /api/recipe`, which answers like a normal read with `via:'wordpress'`. Checked Oct 12: Eating on a Dime is WordPress +
+  WP Recipe Maker (card id 115242). **Not yet confirmed on Dave's phone** whether that site's feed answers.
+- **Copy from the page** (`copyCardHTML`, `cpOpen`, `showCpPrompt`, `cpPaste`, `applyCopied`): shown when `readLink` throws
+  with `canCopy` (websites only). `CP = {kind:'form'|'recipe', id, url, at}`; coming back to the app (visibilitychange)
+  within 20 minutes shows the `#cpprompt` card once; Paste the recipe reads `navigator.clipboard.readText()` (Android may
+  ask once); no text or no permission -> the same card becomes a paste box. Form: fills ingredients and steps (replacing),
+  notes/cookware/time/servings when empty. Saved recipe: fills only empty fields, sets `importedAt`.
+- `recipeFromPage(text)` (lib/parse.js, synced into the app): the last "Ingredients" heading with an "Instructions"
+  heading after it (articles often have their own "Ingredients" talk higher up), from an "Equipment" heading up to 25
+  lines above, down to Nutrition / Course / Cuisine / comments; drops WPRM noise (▢, 1x 2x 3x, US Customary - Metric,
+  Print/Pin, Cook Mode); time and servings from the 30 lines above. No headings: read like pasted recipe text.
+- Tested offline Oct 12, 2026 (Playwright, localhost with real clipboard permissions): feed answers -> boxes filled;
+  feed blocked -> copy card, open page, come back, prompt, one tap; clipboard refused -> paste box; saved recipe too.
+- Idea: the same phone-side WordPress search could unlock some Discover sites that block the server (Budget Bytes,
+  Natasha's Kitchen…), since their wp-json search answers browsers.
 
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.
