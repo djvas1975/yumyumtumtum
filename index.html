@@ -1214,7 +1214,6 @@ V.home = () => {
   const tryIt = all.filter(r => !r.madeCount).slice(0, 10);
   const again = all.filter(r => r.madeCount && (r.rating || 0) >= 4).slice(0, 10);
   const hq = [['meal:Dinner','Dinner'],['meal:Breakfast','Breakfast'],['meal:Dessert','Dessert'],['time:30','Under 30 min'],['kind:video','Videos'],['status:try','Want to try']];
-  const cols = customCols();
   return head + '<div class="wrap">' + greet
     + (installEvt ? '<div class="installcard"><div><b>Get the app</b><span>Home screen icon, plus save straight from TikTok\'s Share button.</span></div><button class="btn primary sm" data-act="install">Install</button></div>' : '')
     + '<button class="searchpill" data-go="search" data-focus="1">' + icon('search') + '<span>Search ' + plural(all.length, 'recipe') + '</span></button>'
@@ -1224,7 +1223,6 @@ V.home = () => {
     + sec('Recently saved', rowHTML(all.slice(0, 8), true, 'recent'), {col:'_all'})
     + sec('Browse by category', catRowHTML(all))
     + sec('Browse by cuisine', cuisineRowHTML(all))
-    + sec('Your collections', '<div class="row scroll-x" data-sx="cols">' + cols.map(colTile).join('') + newColTile() + '</div>', {tab:'yums'})
     + (vids.length ? sec('Saved videos', rowHTML(vids, false, 'vids'), {hf:'kind:video'}) : '')
     + (quick.length ? sec('Quick fixes', rowHTML(quick, false, 'quick'), {hf:'time:30'}) : '')
     + (tryIt.length ? sec('Still want to try', rowHTML(tryIt, false, 'try'), {col:'_try'}) : '')
@@ -1396,7 +1394,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.2</p></div>';
+    + '<p class="ver">YumYum · version 2.2.1</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
