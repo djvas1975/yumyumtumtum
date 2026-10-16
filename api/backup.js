@@ -16,6 +16,13 @@
 // GET  /api/backup?op=get&day=latest|<day>   -> the backup JSON
 // GET  /api/backup?op=photo&id=p-abc         -> the picture
 //
+// Sync between a person's phone and tablet (same code on both): latest.json is the shared copy.
+// GET  /api/backup?op=pull&have=<etag>       -> { ok, same:true, etag } when nothing changed since that etag,
+//                                               { ok, etag, backup } when it did, { ok, none:true } when there's none
+// POST /api/backup?op=save&if=<etag>|none     -> saves only if the cloud copy is still that one (or there's none yet);
+//                                               otherwise { ok:false, conflict:true, etag } and nothing is written,
+//                                               so the device pulls, merges, and tries again. Every save answers its etag.
+//
 // Setup: in Vercel, the project's Storage tab > Create > Blob > Private, connected to this project.
 // Until then every call answers { ok:false, needsSetup:true }.
 
@@ -70,16 +77,46 @@ module.exports = async (req, res) => {
       if (text.length > MAX_BACKUP) { res.status(413).json({ ok: false, error: 'The backup is too big to send in one piece.' }); return; }
       let o; try { o = JSON.parse(text); } catch (e) { o = null; }
       if (!o || !A.check(o)) { res.status(400).json({ ok: false, error: 'That isn’t a' + (A.name === 'Artistry' ? 'n ' : ' ') + A.name + ' backup.' }); return; }
-      await blob().put(home + 'latest.json', text, put(opts, 'application/json'));
-      // the phone asks for a daily copy with its first backup of the day (keeps Vercel's free operations low)
+      // sync: write only over the copy this device last saw, so the phone and tablet never wipe out each other's changes
+      const want = qp.if == null ? null : bare(qp.if);
+      const conflict = etag => { res.status(200).json({ ok: false, conflict: true, etag: etag || '', error: 'Your other device just changed something. Getting it first.' }); };
+      if (want !== null) {
+        const cur = await etagOf(home + 'latest.json', opts);
+        if (cur !== null && cur !== (want === 'none' ? '' : want)) { conflict(cur); return; }
+      }
+      let saved;
+      try { saved = await blob().put(home + 'latest.json', text, Object.assign(put(opts, 'application/json'), want && want !== 'none' ? { ifMatch: quoted(want) } : {})); }
+      catch (e) { if (/precondition/i.test((e && (e.name + ' ' + e.message)) || '')) { conflict(await etagOf(home + 'latest.json', opts)); return; } throw e; }
+      const etag = bare(saved && saved.etag) || await etagOf(home + 'latest.json', opts) || '';
+      // a daily copy with the first save of the day (from any of the person's devices; keeps Vercel's free operations low)
       const day = /^\d{4}-\d{2}-\d{2}$/.test(String(qp.day || '')) ? String(qp.day) : new Date().toISOString().slice(0, 10);
-      const daily = String(qp.daily || '') === '1';
+      let daily = String(qp.daily || '') === '1';
+      if (daily && await etagOf(home + 'days/' + day + '.json', opts)) daily = false;
       if (daily) {
         await blob().put(home + 'days/' + day + '.json', text, put(opts, 'application/json'));
         const old = (await listAll(home + 'days/', opts)).map(b => b.pathname).sort().reverse().slice(KEEP_DAYS);
         if (old.length) await blob().del(old, opts);
       }
-      res.status(200).json(Object.assign({ ok: true, at: new Date().toISOString(), size: text.length }, A.counts(o), { daily }));
+      res.status(200).json(Object.assign({ ok: true, at: new Date().toISOString(), size: text.length, etag }, A.counts(o), { daily }));
+      return;
+    }
+    if (op === 'pull') {
+      // has the shared copy changed since this device last saw it? (a 304 from Blob downloads nothing)
+      const have = bare(qp.have);
+      let r = null;
+      try { r = await blob().get(home + 'latest.json', Object.assign({ useCache: false }, have ? { ifNoneMatch: quoted(have) } : {}, opts)); }
+      catch (e) { if (!notFound(e)) throw e; }
+      if (!r) { res.status(200).json({ ok: true, none: true, etag: '' }); return; }
+      const etag = bare(r.blob && r.blob.etag);
+      if (r.statusCode === 304 || (have && etag === have)) {
+        try { if (r.stream && r.stream.cancel) await r.stream.cancel(); } catch (e) {}
+        res.status(200).json({ ok: true, same: true, etag: etag || have });
+        return;
+      }
+      if (r.statusCode !== 200 || !r.stream) { res.status(404).json({ ok: false, error: 'That backup wasn’t found.' }); return; }
+      let o = null; try { o = JSON.parse(await new Response(r.stream).text()); } catch (e) { o = null; }
+      if (!o || !A.check(o)) { res.status(200).json({ ok: false, error: 'The cloud copy couldn’t be read.' }); return; }
+      res.status(200).json({ ok: true, etag, backup: o });
       return;
     }
     if (op === 'photo' && req.method === 'POST') {
@@ -127,6 +164,15 @@ module.exports = async (req, res) => {
   }
 };
 
+const bare = e => String(e || '').replace(/^W\//, '').replace(/"/g, '');
+const quoted = e => '"' + bare(e) + '"';
+const notFound = e => /not.?found/i.test((e && (e.name + ' ' + e.message)) || '');
+// a file's etag, or '' when there's no such file
+// a file's etag (bare, no quotes), '' when there's no such file, null when Blob couldn't say
+async function etagOf(path, opts) {
+  try { const h = await blob().head(path, opts); return h ? bare(h.etag) || null : ''; }
+  catch (e) { return notFound(e) ? '' : null; }
+}
 function setUp() { return !!(process.env.BLOB_STORE_ID || process.env.BLOB_READ_WRITE_TOKEN); }
 // "yum-7kq2 9ztm…" -> "7KQ29ZTM…" (Artistry: "art-…")
 function normKey(k, A) { return String(k || '').toUpperCase().replace(A.prefix, '').replace(/[^0-9A-Z]/g, '').slice(0, 64); }

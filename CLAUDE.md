@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.1.1**.
+Current version: **2.2**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -130,6 +130,11 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   ⋯ menu: share the list as text, clear checked, clear all.
 - **Deals were removed in v1.2** (Dave's call, Sept 28, 2026). He may build store deals as a
   separate app that ties into this one later. What was learned is under "Deals (removed)" below.
+- **Sync & backup (v2.2, Oct 16, 2026; was Cloud backup):** Dave asked for his phone and tablet to "save and use on both
+  devices using same account". The same code on both keeps recipes, photos, collections, kitchen, grocery list, name and
+  taste the same; changes show up on the other within a few minutes, and right away when it's opened. A second device:
+  Me > Sync & backup > **I have a code** > type the code > Connect (both devices' recipes end up on both; nothing is
+  deleted). More: See my code, Bring back an older copy, Turn off sync on this device. See "Sync between devices" below.
 - **Cloud backup (v1.4, Me tab):** Turn on shows a recovery code (YUM-XXXX-XXXX-XXXX-XXXX) to save,
   then it backs up by itself; Back up now; More (see my code, restore, turn off); Restore from cloud
   on a new phone (type the code, pick Latest or a day's copy). Dave chose Vercel only (no OneDrive:
@@ -155,14 +160,15 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `api/recipe.js` | Recipe reader: `GET /api/recipe?url=...` (add `&debug=1` for a trace). `POST /api/recipe` with `{url, html, ld, title, image, site}` sorts a WordPress post the phone read itself (`parseSent` -> `parsePage`, the same parser as websites, plus `cardLists` for cards with no structured data). |
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
-| `api/backup.js` | Cloud backup to the private Vercel Blob store: `POST ?op=save&day=&daily=1`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). Artistry uses the same endpoint with `&app=artistry` (see the Artistry cloud backup section). |
+| `api/backup.js` | Cloud backup and sync to the private Vercel Blob store: `POST ?op=save&day=&daily=1[&if=<etag>|none]`, `GET ?op=pull&have=<etag>`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). Artistry uses the same endpoint with `&app=artistry` (see the Artistry cloud backup section). |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
 | `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`), cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`), and the What you'll need list (`GEAR`, `GEAR_LIKELY`, `gearFor(recipe)`, `gearHeard(text)`). Sources are listed at the top of the file. |
 | `api/similar.js` | Steps from a similar recipe: `GET /api/similar?q=<dish>&ing=<food ids>&skip=<url|url>` (`debug=1` for each site and score). Searches the Discover sites, reads the closest 6 recipe cards (`readRecipe` from api/recipe.js), returns up to 3 with steps. |
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, `recipeFromPage` (a whole copied page -> its recipe card), archive fallback. |
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
-| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js`, `tests/timers.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup with a fake Blob store, and similar-recipe matching with fake recipe sites. |
+| `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js`, `tests/timers.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup and sync with a fake Blob store, and similar-recipe matching with fake recipe sites. |
+| `tests/sync.playwright.js` | A phone and a tablet syncing through the real api/backup.js on a pretend Blob store (Playwright, about a minute; not in the quick list). Run after building when sync changes. |
 | `package.json` | Only for Vercel: the `@vercel/blob` SDK used by api/backup.js. (npm's registry refused `@vercel/blob` inside Claude sessions on Sept 29, 2026, so tests fake it; Vercel installs it on deploy.) |
 | `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s, similar 30 s). |
 | `icons/` | App icons. `tools/make_photo_icons.py` makes the current ones from `tools/icon-art.jpg`. |
@@ -176,7 +182,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.1.1`).
+5. App changes: bump the version text in `V.me` (`version 2.2`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -329,6 +335,42 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   **Confirmed working live the same day:** Dave's phone (YumYum, reinstalled) showed "Backed up today at 5:08 PM ·
   8 recipes". Artistry uses the same store (`&app=artistry`); its first real backup is still to come (Steph turns it on
   in Studio > Cloud backup).
+
+## Sync between devices: how it works (built Oct 16, 2026, v2.2)
+- The shared copy is the person's `latest.json` (the same file the backup always wrote, now `version: 2` with
+  `sync: {gone, keyT}`), so old backups, day copies and restores keep working.
+- **Server** (api/backup.js): `op=pull&have=<etag>` uses Blob `get(..., {ifNoneMatch})`: nothing changed = a 304, nothing
+  downloaded (`{same:true}`); otherwise `{etag, backup}`; no copy = `{none:true}`. `op=save&if=<etag>|none` first checks
+  the current etag (`head`) and then writes with `put(..., {ifMatch})` (docs: "Throws `BlobPreconditionFailedError` if
+  the ETag doesn't match"), answering `{conflict:true, etag}` without writing when the other device saved first. Etags go
+  to the app bare (no quotes) and back to Blob quoted. A save without `if` (an app that hasn't updated) still writes as
+  before. The day copy is written once a day, by whichever device saves first that day (checked with `head`).
+- **Phone** (tools/app.html, "sync" block; localStorage `yyt-sync-v1` = {etag, sig, gone, keyT, miss, pendMajor,
+  pendMinorAt, lastPull, lastPush}): `cloudBackup(how)` (old name kept for the buttons; `true` = Sync now, `'bg'` = going
+  to the background) pulls, merges (`syncApply`), and sends only when this device's copy differs from the cloud's
+  (`syncSig`, a hash of the sorted data), with `if=` the etag it pulled; a conflict pulls and merges again (up to 4 rounds;
+  if the cloud keeps naming the etag the device already has, the next try goes without the check).
+- **Merging:** recipes and collections keep the newer `updatedAt` (`putCol` now stamps `updatedAt`; a tie with different
+  content takes the cloud's, so both settle on one). Deletes are tombstones in `SYNC.gone` (`r:`/`c:` ids, kept 120 days,
+  set by `delRecipe`/`delCol`), so a deleted recipe doesn't come back. Settings: each key's time in `SYNC.keyT` (stamped by
+  `putSettings`); newer wins; a blank never beats a filled-in value; two never-stamped values (set before 2.2) go to the
+  fuller one. The grocery list and the kitchen merge item by item (`syncMergeItems`: each item's `u`, stamped by
+  `syncStampItems` when an item is added or changed; removed items get `g:`/`p:` tombstones), so milk added on the phone
+  and eggs checked off on the tablet both stay. Examples (`sample:true`) never sync. `kroger`, `stores`, `mydeals` stay out.
+- **Photos:** go up once each (`CLOUD.sent`); a recipe from the other device keeps `photoRef` until `syncPhotos` brings the
+  photo down (25 per round; one missing from the cloud waits a day, `SYNC.miss`).
+- **When:** 2.5 s after opening, on coming back to the app, every 3 minutes while it's on screen, when back online. A real
+  change (recipes, collections, grocery, kitchen, name) goes out 15 s later, at most every 30 s; taste learning, list view
+  and nameSkip (`SYNC_MINOR`) ride along, or go out on their own after 30 minutes (15 when leaving the app).
+- **Vercel free limits** (Hobby, checked Oct 16, 2026, vercel.com/docs/vercel-blob/usage-and-pricing): simple operations
+  (a get or head that misses the cache) 10,000 a month, advanced (put, list) 2,000, shared with the family and Artistry.
+  A check is one simple op; a send is one put plus about two heads. About 20 checks an hour per device on screen.
+- Tested Oct 16, 2026 (`tests/sync.playwright.js`, 21 checks): phone turns on; tablet connects and gets the recipes,
+  photo, collection, name, merged grocery list, keeps its own examples and sends its own recipe up; deletes and edits
+  travel; changes on both at once all land on both (conflict round); taste alone doesn't send; a real change goes out by
+  itself; checking with nothing new downloads nothing; an old app's backup over the shared copy loses nothing.
+  **Not confirmed yet on Dave's phone and tablet.** A recipe deleted on one device before 2.2 (no tombstone then) can come
+  back once from the other; deleting it again sticks.
 
 ## Yums and categories: how it works (built Sept 29, 2026)
 - Collection ids: `_all`, `_fav`, `_try`, `_made`, `_top`, `_quick` (in `SMART`), `cat:<key>` and

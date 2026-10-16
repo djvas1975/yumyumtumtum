@@ -8,9 +8,16 @@ const ok = (cond, msg) => { console.log((cond ? 'PASS ' : 'FAIL ') + msg); if (!
 // a pretend private Blob store: pathname -> {body, contentType, uploadedAt}
 const files = new Map(); const ops = [];
 const stream = buf => new Response(buf).body;
+let etagN = 0;
 const fake = {
-  async put(p, body, o) { ops.push('put ' + p); if (o.access !== 'private') throw new Error('not private'); if (files.has(p) && o.allowOverwrite === false) throw new Error('exists'); files.set(p, { body: Buffer.isBuffer(body) ? body : Buffer.from(String(body)), contentType: o.contentType, uploadedAt: new Date() }); return { pathname: p }; },
-  async get(p, o) { ops.push('get ' + p); const f = files.get(p); if (!f) return null; return { statusCode: 200, stream: stream(f.body), blob: { contentType: f.contentType, size: f.body.length } }; },
+  async put(p, body, o) {
+    ops.push('put ' + p); if (o.access !== 'private') throw new Error('not private'); if (files.has(p) && o.allowOverwrite === false) throw new Error('exists');
+    if (o.ifMatch && (!files.has(p) || files.get(p).etag !== o.ifMatch)) throw Object.assign(new Error('Precondition failed: ETag mismatch.'), { name: 'BlobPreconditionFailedError' });
+    const etag = '"e' + (++etagN) + '"';
+    files.set(p, { body: Buffer.isBuffer(body) ? body : Buffer.from(String(body)), contentType: o.contentType, uploadedAt: new Date(), etag }); return { pathname: p, etag };
+  },
+  async get(p, o) { ops.push('get ' + p); const f = files.get(p); if (!f) return null; if (o.ifNoneMatch && o.ifNoneMatch === f.etag) return { statusCode: 304, stream: null, blob: { etag: f.etag, size: null } }; return { statusCode: 200, stream: stream(f.body), blob: { contentType: f.contentType, size: f.body.length, etag: f.etag } }; },
+  async head(p) { ops.push('head ' + p); const f = files.get(p); if (!f) throw Object.assign(new Error('Vercel Blob: The requested blob does not exist'), { name: 'BlobNotFoundError' }); return { pathname: p, size: f.body.length, uploadedAt: f.uploadedAt, etag: f.etag }; },
   async list(o) { ops.push('list ' + o.prefix); return { blobs: Array.from(files.keys()).filter(k => k.indexOf(o.prefix) === 0).map(k => ({ pathname: k, size: files.get(k).body.length, uploadedAt: files.get(k).uploadedAt })), hasMore: false }; },
   async del(list) { [].concat(list).forEach(k => { ops.push('del ' + k); files.delete(k); }); }
 };
@@ -106,6 +113,32 @@ const backup = n => ({ app: 'yumyumtumtum', version: 1, recipes: Array.from({ le
   ok(JSON.parse(cross.raw).recipes && cross2.body.empty === true, 'the same letters in a YumYum code and an Artistry code are two different backups');
   const ai = await call('GET', { op: 'info', app: 'artistry' }, ART);
   ok(ai.body.ok && ai.body.days.length === 1 && ai.body.days[0].day === '2026-10-01', 'artistry: info lists its day');
+
+  // ---------- sync: the phone and the tablet share one copy and never wipe out each other's changes ----------
+  const SY = { 'x-backup-key': 'YUM-SYNC-2222-3333-4444' };
+  const syHome = 'backup/u/' + require('crypto').createHash('sha256').update('yyt:SYNC222233334444').digest('hex').slice(0, 32) + '/';
+  for (const k of Array.from(files.keys())) if (k === 'backup/_people.json') { const pl = JSON.parse(files.get(k).body); pl.people = pl.people.slice(0, 9); files.get(k).body = Buffer.from(JSON.stringify(pl)); }
+  api._setBlob(fake); // forget the cached people list
+  const none = await call('POST', { op: 'save', if: 'none', day: '2026-10-16', daily: '1' }, SY, backup(2));
+  ok(none.body.ok && /^e\d+$/.test(none.body.etag) && none.body.daily, 'first save with if=none works when there is no copy yet, and answers its etag');
+  const phoneTag = none.body.etag;
+  const same = await call('GET', { op: 'pull', have: phoneTag }, SY);
+  ok(same.body.ok && same.body.same && !same.body.backup, 'pull with the etag it already has: nothing changed, nothing downloaded');
+  const tab = await call('GET', { op: 'pull' }, SY);
+  ok(tab.body.ok && tab.body.backup && tab.body.backup.recipes.length === 2 && tab.body.etag === phoneTag, 'a new device pulls the whole copy and its etag');
+  const t1 = await call('POST', { op: 'save', if: tab.body.etag, day: '2026-10-16', daily: '1' }, SY, backup(3));
+  ok(t1.body.ok && t1.body.etag !== phoneTag && t1.body.daily === false, 'the tablet saves over the copy it saw; the day\'s copy isn\'t written twice');
+  const late = await call('POST', { op: 'save', if: phoneTag }, SY, backup(1));
+  ok(late.body.ok === false && late.body.conflict && late.body.etag === t1.body.etag && JSON.parse(files.get(syHome + 'latest.json').body).recipes.length === 3,
+    'the phone saving over an old copy is turned away (nothing written) and told the new etag');
+  const again = await call('POST', { op: 'save', if: 'none' }, SY, backup(1));
+  ok(again.body.conflict, 'if=none is turned away once a copy exists');
+  const changed = await call('GET', { op: 'pull', have: phoneTag }, SY);
+  ok(changed.body.ok && changed.body.backup.recipes.length === 3 && changed.body.etag === t1.body.etag, 'pull with an old etag gets the new copy');
+  const old = await call('POST', { op: 'save' }, SY, backup(3));
+  ok(old.body.ok, 'saves without if (the older app version) still work');
+  const nope = await call('GET', { op: 'pull' }, { 'x-backup-key': 'YUM-NOPE-NOPE-NOPE-NOPE' });
+  ok(nope.body.ok === false && nope.body.empty, 'pull with a code that has no backup says so');
 
   console.log(fails ? `\n${fails} FAILED` : '\nall passed');
   process.exit(fails ? 1 : 0);

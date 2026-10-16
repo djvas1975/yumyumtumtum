@@ -953,7 +953,7 @@ const queue = new Map();
 function persist(coll, id, body){
   if (Store.mode === 'starting') { bootP.then(() => persist(coll, id, body)); return; }
   if (Store.mode === 'local') {
-    try { cloudChanged(); } catch (e) {}
+    try { cloudChanged(coll === 'meta' && CHG_MINOR); } catch (e) {}
     if (Store.local !== 'idb') { saveSoon(LOCAL_KEY); return; }
     const p = body ? (coll === 'meta' ? IDB.put('meta', clone(body), id) : IDB.put(coll, clone(body))) : IDB.del(coll, id);
     p.catch(() => toast("Couldn't save that change on this phone. Try again."));
@@ -985,14 +985,22 @@ function writeErr(e){
   else toast("Couldn't save that change. Check your connection and try again.");
 }
 function putRecipe(r){ r = Object.assign({}, r, {updatedAt:now()}); Store.recipes.set(r.id, r); refresh(); persist('recipes', r.id, r); return r; }
-function delRecipe(id){ const r = Store.recipes.get(id); Store.recipes.delete(id); refresh(); persist('recipes', id, null); if (r && r.photoId) maybeDeleteAsset(r.photoId, id); if (r && r.photoKey) maybeDeletePhotoKey(r.photoKey, id); }
-function putCol(c){ Store.cols.set(c.id, c); refresh(); persist('collections', c.id, c); }
+function delRecipe(id){ const r = Store.recipes.get(id); if (r && !r.sample) { try { syncGone('r:' + id); } catch (e) {} } Store.recipes.delete(id); refresh(); persist('recipes', id, null); if (r && r.photoId) maybeDeleteAsset(r.photoId, id); if (r && r.photoKey) maybeDeletePhotoKey(r.photoKey, id); }
+function putCol(c){ c = Object.assign({}, c, {updatedAt:now()}); Store.cols.set(c.id, c); refresh(); persist('collections', c.id, c); }
 function delCol(id){
+  const c0 = Store.cols.get(id); if (c0 && !c0.sample) { try { syncGone('c:' + id); } catch (e) {} }
   Store.cols.delete(id);
   list().forEach(r => { if ((r.collections || []).indexOf(id) >= 0) putRecipe(Object.assign({}, r, {collections:r.collections.filter(x => x !== id)})); });
   persist('collections', id, null); refresh();
 }
-function putSettings(s){ Store.settings = Object.assign({}, Store.settings, s); refresh(); persist('meta', 'settings', Store.settings); }
+let CHG_MINOR = false;
+function putSettings(s){
+  try { s = syncStampSettings(s); } catch (e) {} // when each setting changed, and each grocery and kitchen item (for the phone/tablet sync)
+  Store.settings = Object.assign({}, Store.settings, s); refresh();
+  CHG_MINOR = Object.keys(s).every(k => SYNC_MINOR.has(k));
+  persist('meta', 'settings', Store.settings);
+  CHG_MINOR = false;
+}
 function newCol(name){
   const hit = customCols().find(c => (c.name || '').toLowerCase() === name.toLowerCase());
   if (hit) return hit;
@@ -1372,7 +1380,7 @@ V.me = () => {
   const mode = Store.mode === 'cloud'
     ? ['Synced to your recipe box', 'Your recipes and photos are stored with this app in your claude.ai account, so they show up on your phone and your computer.']
     : Store.mode === 'local'
-      ? (onPhone() ? ['Saved on this phone', 'Your recipes and photos are stored right on this phone and work without internet. ' + (CLOUD.on ? 'Cloud backup keeps a copy in your private storage too.' : 'Turn on Cloud backup (or download a backup now and then) so nothing gets lost if the phone does.')] : ['Saved on this device only', 'Recipes live in this browser. Download a backup now and then so nothing gets lost.'])
+      ? (onPhone() ? ['Saved on this phone', 'Your recipes and photos are stored right on this phone and work without internet. ' + (CLOUD.on ? 'Sync & backup keeps a copy in your private storage too, and the same recipes on your other devices.' : 'Turn on Sync & backup (or download a backup now and then) so nothing gets lost if the phone does.')] : ['Saved on this device only', 'Recipes live in this browser. Download a backup now and then so nothing gets lost.'])
       : ['Connecting', 'Loading your recipe box.'];
   const mini = (n, l) => '<div><b>' + n + '</b><span>' + l + '</span></div>';
   return '<header class="topbar"><div class="wrap headrow"><h1 class="title">Me</h1></div></header><div class="wrap">'
@@ -1388,7 +1396,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.1.1</p></div>';
+    + '<p class="ver">YumYum · version 2.2</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -5161,10 +5169,252 @@ let CLOUD_BUSY = false, cloudTimer = 0, CLOUD_PENDING = '';
 const saveCloud = () => writeLS(CLOUD_LS, CLOUD);
 const CLOUD_SENT_ADD = ref => { CLOUD.sent[ref] = 1; };
 const localRev = () => +(readLS(REV_LS) || 0);
-function cloudChanged(){
+/* ---------- sync: the same code on the phone and the tablet keeps them the same ----------
+   latest.json in the cloud is the shared copy. Each device pulls it (only when it changed: a 304 costs nothing to
+   download), merges it with what it has, and sends the result back only over the copy it saw (if=<etag>), so two
+   devices never wipe out each other's changes. Merging, per item: recipes and collections keep the newer one
+   (updatedAt); deletes travel as tombstones (SYNC.gone, 'r:<id>' / 'c:<id>' / 'g:<id>' grocery / 'p:<id>' kitchen),
+   so a deleted recipe doesn't come back from the other device; each setting keeps the newer one (SYNC.keyT); the
+   grocery list and the kitchen merge item by item (each item's `u`). Examples (sample:true) stay on their own device.
+   Photos go up once each and come down once each. Real changes go out about 15 seconds later; taste learning and
+   other small things ride along (at most every 30 minutes). Each device checks for news when it opens, when you come
+   back to it, and every 3 minutes while it's on screen. */
+const SYNC_LS = 'yyt-sync-v1';
+const SYNC_MINOR = new Set(['taste', 'listView', 'nameSkip']);
+const SYNC_SKIP = new Set(['kroger', 'stores', 'mydeals']);
+const SYNC_SOON = 15e3, SYNC_GAP = 30e3, SYNC_POLL = 3 * 60e3, SYNC_LAZY = 30 * 60e3, SYNC_KEEP = 120 * 864e5;
+const SYNC = Object.assign({etag:'', sig:'', gone:{}, keyT:{}, miss:{}, pendMajor:false, pendMinorAt:0, lastPull:0, lastPush:0, again:false}, readLS(SYNC_LS) || {});
+let SYNC_APPLY = false;
+const tms = v => typeof v === 'number' ? v : (Date.parse(v || '') || 0);
+function saveSync(){
+  const cut = Date.now() - SYNC_KEEP;
+  Object.keys(SYNC.gone).forEach(k => { if (!(SYNC.gone[k] > cut)) delete SYNC.gone[k]; });
+  Object.keys(SYNC.miss).forEach(k => { if (!(SYNC.miss[k] > Date.now() - 864e5)) delete SYNC.miss[k]; });
+  writeLS(SYNC_LS, {etag:SYNC.etag, sig:SYNC.sig, gone:SYNC.gone, keyT:SYNC.keyT, miss:SYNC.miss, pendMajor:SYNC.pendMajor, pendMinorAt:SYNC.pendMinorAt, lastPull:SYNC.lastPull, lastPush:SYNC.lastPush});
+}
+function syncGone(k){ if (SYNC_APPLY) return; SYNC.gone[k] = Date.now(); saveSync(); }
+// a grocery or kitchen list changed here: stamp the items that are new or changed, and remember the ones taken off
+function syncStampItems(oldArr, newArr, pre){
+  if (!Array.isArray(newArr)) return newArr;
+  const t = Date.now(), om = new Map((oldArr || []).filter(x => x && x.id).map(x => [String(x.id), x])), keep = new Set();
+  const plain = x => JSON.stringify(Object.assign({}, x, {u:0}));
+  const out = newArr.map(x => {
+    if (!x || !x.id) return x;
+    const id = String(x.id), o = om.get(id); keep.add(id);
+    if (o && plain(o) === plain(x)) return x.u === o.u ? x : Object.assign({}, x, {u:o.u || 0});
+    return Object.assign({}, x, {u:t});
+  });
+  om.forEach((o, id) => { if (!keep.has(id)) SYNC.gone[pre + id] = t; });
+  return out;
+}
+function syncStampSettings(s){
+  if (SYNC_APPLY || !s) return s;
+  const t = Date.now(); s = Object.assign({}, s);
+  Object.keys(s).forEach(k => { if (!SYNC_SKIP.has(k)) SYNC.keyT[k] = t; });
+  if (s.grocery) s.grocery = syncStampItems(Store.settings.grocery, s.grocery, 'g:');
+  if (s.pantry && Array.isArray(s.pantry.items)) s.pantry = Object.assign({}, s.pantry, {items:syncStampItems((Store.settings.pantry || {}).items, s.pantry.items, 'p:')});
+  saveSync();
+  return s;
+}
+function cloudChanged(minor){
   writeLS(REV_LS, localRev() + 1);
-  if (!CLOUD.on) return;
-  clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudBackup(false), 90e3);
+  if (SYNC_APPLY || !CLOUD.on) return;
+  if (minor) { if (!SYNC.pendMinorAt) { SYNC.pendMinorAt = Date.now(); saveSync(); } return; }
+  SYNC.pendMajor = true; saveSync();
+  syncSoon(SYNC_SOON);
+}
+function syncSoon(ms){ clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudBackup(false), Math.max(500, ms)); }
+// the same data in the same order, so two devices with the same recipes get the same fingerprint
+function canon(v){
+  if (Array.isArray(v)) return v.map(canon);
+  if (v && typeof v === 'object') { const o = {}; Object.keys(v).sort().forEach(k => { if (v[k] !== undefined) o[k] = canon(v[k]); }); return o; }
+  return v;
+}
+const byId = a => (Array.isArray(a) ? a.slice() : []).filter(x => x && x.id != null).sort((x, y) => String(x.id) < String(y.id) ? -1 : String(x.id) > String(y.id) ? 1 : 0);
+function syncSig(o){
+  const st = Object.assign({}, o.settings || {}); SYNC_SKIP.forEach(k => { delete st[k]; });
+  if (st.grocery) st.grocery = byId(st.grocery);
+  if (st.pantry && st.pantry.items) st.pantry = Object.assign({}, st.pantry, {items:byId(st.pantry.items)});
+  const t = JSON.stringify(canon({s:st, c:byId((o.collections || []).filter(c => !c.sample)), r:byId((o.recipes || []).filter(r => !r.sample)), g:(o.sync || {}).gone || {}, k:(o.sync || {}).keyT || {}}));
+  let h = 5381; for (let i = 0; i < t.length; i++) h = ((h * 33) ^ t.charCodeAt(i)) >>> 0;
+  return h.toString(36) + '.' + t.length;
+}
+function syncPayload(){
+  const recs = [], send = [];
+  for (const r of list()) {
+    if (r.sample) continue;
+    const o = Object.assign({}, r); delete o.photoKey; delete o.photoId;
+    if (r.photoKey) { o.photoRef = r.photoKey; delete o.photoData; if (!CLOUD.sent[r.photoKey]) send.push(r.photoKey); }
+    recs.push(o); // a photo not downloaded yet keeps its photoRef
+  }
+  const settings = Object.assign({}, Store.settings); SYNC_SKIP.forEach(k => { delete settings[k]; });
+  return {o:{app:'yumyumtumtum', version:2, exportedAt:now(), settings:settings, collections:Array.from(Store.cols.values()).filter(c => !c.sample), recipes:recs, sync:{gone:Object.assign({}, SYNC.gone), keyT:Object.assign({}, SYNC.keyT)}}, send:send};
+}
+// one list (grocery or kitchen) from both devices: each item's newer copy; taken off on either one stays off
+function syncMergeItems(L, R, pre){
+  L = Array.isArray(L) ? L : []; R = Array.isArray(R) ? R : [];
+  const lm = new Map(L.filter(x => x && x.id).map(x => [String(x.id), x])), rm = new Map(R.filter(x => x && x.id).map(x => [String(x.id), x]));
+  const u = x => +x.u || tms(x.t) || 0, out = [], seen = new Set();
+  const pick = id => {
+    const a = lm.get(id), b = rm.get(id);
+    const w = !a ? b : !b ? a : u(b) >= u(a) && JSON.stringify(a) !== JSON.stringify(b) ? b : a;
+    const g = SYNC.gone[pre + id] || 0;
+    return w && (!g || g < u(w)) ? w : null;
+  };
+  L.concat(R).forEach(x => { if (!x || !x.id) return; const id = String(x.id); if (seen.has(id)) return; seen.add(id); const w = pick(id); if (w) out.push(w); });
+  return out;
+}
+const isBlank = v => v == null || v === '' || (Array.isArray(v) && !v.length) || (typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length);
+const hasPhotoKey = async k => { try { const b = await IDB.get('photos', k); return !!(b && b.size); } catch (e) { return false; } };
+// put the cloud copy together with what's on this device (nothing here is marked as a new change)
+async function syncApply(o){
+  SYNC_APPLY = true;
+  let n = 0;
+  try {
+    const rs = o.sync || {};
+    Object.keys(rs.gone || {}).forEach(k => { const t = +rs.gone[k] || 0; if (t > (SYNC.gone[k] || 0)) SYNC.gone[k] = t; });
+    // recipes
+    const remote = new Map();
+    (o.recipes || []).forEach(r => { if (r && r.id && r.title && !r.sample) remote.set(String(r.id), r); });
+    for (const L of list()) {
+      if (L.sample) continue;
+      const g = SYNC.gone['r:' + L.id], R = remote.get(L.id);
+      if (g && g >= tms(L.updatedAt || L.createdAt) && (!R || g >= tms(R.updatedAt || R.createdAt))) {
+        Store.recipes.delete(L.id); persist('recipes', L.id, null); if (L.photoKey) maybeDeletePhotoKey(L.photoKey, L.id); n++;
+      }
+    }
+    for (const [id, R] of remote) {
+      const rt = tms(R.updatedAt || R.createdAt), g = SYNC.gone['r:' + id];
+      if (g && g >= rt) continue;
+      const L = Store.recipes.get(id);
+      if (L && L.sample) continue;
+      if (L) {
+        const lt = tms(L.updatedAt || L.createdAt);
+        if (lt > rt) continue;
+        if (lt === rt) { const a = Object.assign({}, L); if (a.photoKey) { a.photoRef = a.photoKey; delete a.photoKey; } delete a.photoId; if (JSON.stringify(canon(a)) === JSON.stringify(canon(Object.assign({}, R, {photoId:undefined})))) continue; }
+      }
+      const r = Object.assign({}, R); delete r.photoId; delete r.photoKey;
+      if (r.photoRef) {
+        const ref = String(r.photoRef).replace(/[^\w-]/g, '');
+        if (L && L.photoKey === ref) { r.photoKey = ref; delete r.photoRef; }
+        else if (await hasPhotoKey(ref)) { r.photoKey = ref; delete r.photoRef; CLOUD.sent[ref] = 1; }
+        else r.photoRef = ref; // comes down after this (syncPhotos)
+      }
+      Store.recipes.set(id, r); persist('recipes', id, r); n++;
+      if (L && L.photoKey && L.photoKey !== r.photoKey) maybeDeletePhotoKey(L.photoKey, id);
+    }
+    // collections
+    const rc = new Map((o.collections || []).filter(c => c && c.id && c.name && !c.sample).map(c => [String(c.id), c]));
+    for (const L of Array.from(Store.cols.values())) {
+      if (L.sample) continue;
+      const g = SYNC.gone['c:' + L.id], R = rc.get(L.id);
+      if (g && g >= tms(L.updatedAt || L.createdAt) && (!R || g >= tms(R.updatedAt || R.createdAt))) { Store.cols.delete(L.id); persist('collections', L.id, null); n++; }
+    }
+    for (const [id, R] of rc) {
+      const rt = tms(R.updatedAt || R.createdAt), g = SYNC.gone['c:' + id];
+      if (g && g >= rt) continue;
+      const L = Store.cols.get(id);
+      if (L && (L.sample || tms(L.updatedAt || L.createdAt) > rt || JSON.stringify(canon(L)) === JSON.stringify(canon(R)))) continue;
+      Store.cols.set(id, Object.assign({}, R)); persist('collections', id, R); n++;
+    }
+    // settings: the newer one of each (a tie takes the cloud's, so both devices settle on one), lists item by item
+    const ls = Store.settings, rset = o.settings || {}, rk = rs.keyT || {}, next = Object.assign({}, ls);
+    // two values that were never stamped (set before sync existed): the fuller one, then the one that sorts last
+    const tieWins = (a, b) => { const x = JSON.stringify(a === undefined ? null : a), y = JSON.stringify(b === undefined ? null : b); return x.length !== y.length ? x.length > y.length : x > y; };
+    let sc = false;
+    new Set(Object.keys(rset).concat(Object.keys(rk))).forEach(k => {
+      if (SYNC_SKIP.has(k)) return;
+      const rt = +rk[k] || 0, lt = SYNC.keyT[k] || 0;
+      const takes = (rv, lv) => rv !== undefined && (rt > lt || isBlank(lv) || (rt === lt && !isBlank(rv) && tieWins(rv, lv)));
+      let v;
+      if (k === 'grocery') v = syncMergeItems(ls.grocery, rset.grocery, 'g:');
+      else if (k === 'pantry') {
+        const lp = ls.pantry || {}, rp = rset.pantry || {};
+        const strip = x => { const o2 = Object.assign({}, x); delete o2.items; return o2; };
+        v = Object.assign({}, takes(strip(rp), strip(lp)) ? Object.assign({}, lp, rp) : Object.assign({}, rp, lp), {items:syncMergeItems(lp.items, rp.items, 'p:')});
+      } else v = takes(rset[k], ls[k]) ? rset[k] : ls[k];
+      if (v !== undefined && JSON.stringify(v) !== JSON.stringify(ls[k])) { next[k] = v; sc = true; }
+      if (rt > lt) SYNC.keyT[k] = rt;
+    });
+    if (sc) { Store.settings = next; persist('meta', 'settings', next); n++; }
+  } finally { SYNC_APPLY = false; saveSync(); }
+  if (n) refresh();
+  return n;
+}
+// photos the other device added: bring each one down once
+async function syncPhotos(){
+  const want = list().filter(r => r.photoRef && !r.photoKey && !SYNC.miss[String(r.photoRef)]).slice(0, 25);
+  for (const r0 of want) {
+    const ref = String(r0.photoRef).replace(/[^\w-]/g, '');
+    let b = null;
+    try { const res = await cloudFetch('op=photo&id=' + encodeURIComponent(ref)); if (res.ok) b = await res.blob(); } catch (e) { return; }
+    if (!b || !b.size) { SYNC.miss[String(r0.photoRef)] = Date.now(); saveSync(); continue; } // not in the cloud: try again tomorrow
+    try { await IDB.put('photos', b, ref); } catch (e) { continue; }
+    CLOUD.sent[ref] = 1; saveCloud();
+    const r = Store.recipes.get(r0.id); if (!r || r.photoRef !== r0.photoRef) continue;
+    const u = Object.assign({}, r, {photoKey:ref}); delete u.photoRef;
+    SYNC_APPLY = true; try { Store.recipes.set(u.id, u); persist('recipes', u.id, u); } finally { SYNC_APPLY = false; }
+    refresh();
+  }
+}
+// one round: get the other device's changes, then send this one's (cloudBackup keeps its old name for the buttons)
+async function cloudBackup(how){
+  const manual = how === true, bg = how === 'bg';
+  if (!CLOUD.on || !CLOUD.key || !canRead() || !onPhone()) return false;
+  if (CLOUD_BUSY) { SYNC.again = true; return false; }
+  if (!manual && navigator.onLine === false) return false;
+  CLOUD_BUSY = true; redrawCloud();
+  let noIf = false;
+  try {
+    for (let round = 0; round < 4; round++) {
+      let p;
+      try { p = await cloudJSON('op=pull&have=' + encodeURIComponent(SYNC.etag || '')); }
+      catch (e) { if (!e.empty) throw e; p = {ok:true, none:true}; } // a brand-new code: nothing in the cloud yet
+      SYNC.lastPull = Date.now();
+      if (p.none) { SYNC.etag = ''; SYNC.sig = ''; }
+      else if (p.backup) { await syncApply(p.backup); SYNC.etag = p.etag || ''; SYNC.sig = syncSig(p.backup); }
+      else if (p.etag) SYNC.etag = p.etag;
+      saveSync();
+      const P = syncPayload(), sig = syncSig(P.o);
+      if (sig === SYNC.sig) { SYNC.pendMajor = false; SYNC.pendMinorAt = 0; saveSync(); break; }
+      const lazyDue = SYNC.pendMinorAt && Date.now() - SYNC.pendMinorAt > (bg ? 15 * 60e3 : SYNC_LAZY);
+      // only small things (taste) waiting: let them ride along later
+      if (!manual && SYNC.lastPush && !SYNC.pendMajor && SYNC.pendMinorAt && !lazyDue) break;
+      if (!manual && !bg && SYNC.lastPush && Date.now() - SYNC.lastPush < SYNC_GAP) { syncSoon(SYNC_GAP - (Date.now() - SYNC.lastPush) + 500); break; }
+      for (const k of P.send) {
+        let b = null; try { b = await IDB.get('photos', k); } catch (e) {}
+        if (!b || !b.size) continue;
+        await cloudJSON('op=photo&id=' + encodeURIComponent(k), {method:'POST', body:b, headers:{'content-type':'application/octet-stream', 'x-photo-type':b.type || 'image/jpeg'}});
+        CLOUD.sent[k] = 1; saveCloud();
+      }
+      const data = JSON.stringify(P.o);
+      if (data.length > 3900000) throw new Error('Your recipes got too big to send in one piece. Tell Claude so it can be split up.');
+      const day = localDay();
+      let r;
+      try {
+        r = await cloudJSON('op=save' + (noIf ? '' : '&if=' + encodeURIComponent(SYNC.etag || 'none')) + '&day=' + day + (CLOUD.lastDay !== day ? '&daily=1' : ''), {method:'POST', body:data, headers:{'content-type':'application/json'}});
+      } catch (e) {
+        if (!e.conflict) throw e;
+        // the other device saved first: get its copy, merge, and try again (if the cloud keeps naming the copy we
+        // already have, its labels can't be trusted, so the next try goes without the check)
+        if (e.etag && e.etag === SYNC.etag) noIf = true;
+        continue;
+      }
+      SYNC.etag = r.etag || ''; SYNC.sig = sig; SYNC.pendMajor = false; SYNC.pendMinorAt = 0; SYNC.lastPush = Date.now(); saveSync();
+      Object.assign(CLOUD, {lastDay:day, lastRev:localRev()}); 
+      break;
+    }
+    await syncPhotos();
+    Object.assign(CLOUD, {last:now(), lastCount:list().filter(r => !r.sample).length, err:''}); saveCloud();
+    return true;
+  } catch (e) {
+    CLOUD.err = e.needsSetup ? 'setup' : (e.message || 'The sync didn\'t go through.');
+    saveCloud();
+    return false;
+  } finally {
+    CLOUD_BUSY = false; redrawCloud();
+    if (SYNC.again) { SYNC.again = false; syncSoon(1500); }
+  }
 }
 function newRecoveryCode(){
   const A = '23456789ABCDEFGHJKMNPQRSTUVWXYZ'; let s = '';
@@ -5187,46 +5437,8 @@ async function cloudJSON(query, init, key){
   const res = await cloudFetch(query, init, key);
   let j = null; try { j = await res.json(); } catch (e) {}
   if (!j) throw new Error('The backup service didn\'t answer right. It\'ll try again later.');
-  if (!j.ok && j.app !== 'yumyumtumtum') throw Object.assign(new Error(j.error || 'The backup didn\'t go through.'), {needsSetup:!!j.needsSetup, wrongKey:!!j.wrongKey, empty:!!j.empty});
+  if (!j.ok && j.app !== 'yumyumtumtum') throw Object.assign(new Error(j.error || 'The backup didn\'t go through.'), {needsSetup:!!j.needsSetup, wrongKey:!!j.wrongKey, empty:!!j.empty, conflict:!!j.conflict, etag:j.etag || ''});
   return j;
-}
-async function cloudBackup(manual){
-  if (!CLOUD.on || !CLOUD.key || CLOUD_BUSY || !canRead() || !onPhone()) return false;
-  const rev = localRev();
-  if (!manual) {
-    if (rev === CLOUD.lastRev) return false;
-    const since = CLOUD.last ? Date.now() - Date.parse(CLOUD.last) : 1e12;
-    if (since < 10 * 60e3) { clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudBackup(false), 10 * 60e3 - since + 1000); return false; }
-    if (navigator.onLine === false) return false;
-  }
-  CLOUD_BUSY = true; redrawCloud();
-  try {
-    const recs = [], send = [];
-    for (const r of list()) {
-      const o = Object.assign({}, r); delete o.photoKey; delete o.photoId;
-      if (r.photoKey) { o.photoRef = r.photoKey; delete o.photoData; if (!CLOUD.sent[r.photoKey]) send.push(r.photoKey); }
-      recs.push(o);
-    }
-    // don't let a phone that lost its recipes write over a good backup on its own
-    if (!manual && CLOUD.lastCount >= 5 && recs.length < CLOUD.lastCount / 2) throw new Error('This phone has a lot fewer recipes than your last backup (' + recs.length + ' vs ' + CLOUD.lastCount + '), so the automatic backup stopped to keep the old one safe. Tap Back up now if that\'s right, or Restore to get them back.');
-    for (const k of send) {
-      let b = null; try { b = await IDB.get('photos', k); } catch (e) {}
-      if (!b || !b.size) continue;
-      await cloudJSON('op=photo&id=' + encodeURIComponent(k), {method:'POST', body:b, headers:{'content-type':'application/octet-stream', 'x-photo-type':b.type || 'image/jpeg'}});
-      CLOUD.sent[k] = 1; saveCloud();
-    }
-    const settings = Object.assign({}, Store.settings); ['kroger', 'stores', 'mydeals'].forEach(k => { delete settings[k]; });
-    const data = JSON.stringify({app:'yumyumtumtum', version:1, exportedAt:now(), settings:settings, collections:Array.from(Store.cols.values()), recipes:recs});
-    if (data.length > 3900000) throw new Error('Your backup got too big to send in one piece. Tell Claude so it can be split up.');
-    const day = localDay();
-    await cloudJSON('op=save&day=' + day + (CLOUD.lastDay !== day ? '&daily=1' : ''), {method:'POST', body:data, headers:{'content-type':'application/json'}});
-    Object.assign(CLOUD, {last:now(), lastDay:day, lastRev:rev, lastCount:recs.length, err:''}); saveCloud();
-    return true;
-  } catch (e) {
-    CLOUD.err = e.needsSetup ? 'setup' : (e.message || 'The backup didn\'t go through.');
-    saveCloud();
-    return false;
-  } finally { CLOUD_BUSY = false; redrawCloud(); }
 }
 function whenText(iso){
   const d = new Date(iso); if (isNaN(d)) return '';
@@ -5247,15 +5459,16 @@ async function shareApp(){
 function cloudPanel(){
   if (!onPhone()) return '';
   let st;
-  if (!CLOUD.on) st = '<p>Backs up your recipes, photos, collections, kitchen, and grocery list to private cloud storage, all by itself. Get everything back on any phone with your recovery code.</p>';
-  else if (CLOUD_BUSY) st = '<p class="cstat"><span class="spin sm"></span>Backing up…</p>';
-  else if (CLOUD.err === 'setup') st = '<p class="cstat warn">Waiting on the storage to be set up in Vercel. Backups start as soon as it is.</p>';
-  else if (CLOUD.err) st = '<p class="cstat bad">' + esc(CLOUD.err) + '</p>';
-  else if (CLOUD.last) st = '<p class="cstat ok">' + icon('check') + '<span>Backed up ' + esc(whenText(CLOUD.last)) + ' · ' + plural(CLOUD.lastCount, 'recipe') + '</span></p><p class="hint">It backs up by itself a minute or two after you change something.</p>';
-  else st = '<p class="cstat">On. The first backup is coming up.</p>';
-  return '<section class="panel" id="cloudp"><h2>Cloud backup</h2>' + st + '<div class="acts">'
-    + (CLOUD.on ? '<button class="btn primary" data-act="cloudnow"' + (CLOUD_BUSY ? ' disabled' : '') + '>' + icon('upload') + 'Back up now</button><button class="btn ghost" data-act="cloudmenu">' + icon('more') + 'More</button>'
-      : '<button class="btn primary" data-act="cloudon">Turn on</button><button class="btn ghost" data-act="cloudrestore">' + icon('download') + 'Restore from cloud</button>')
+  const how = '<p class="hint">To use YumYum on your tablet too (or a new phone): on that one, go to Me > Sync &amp; backup > <b>I have a code</b> and type this same code. Changes show up on the other one within a few minutes, and right away when you open it.</p>';
+  if (!CLOUD.on) st = '<p>Keeps your recipes, photos, collections, kitchen, and grocery list the same on your phone and tablet, and backs them up to private cloud storage, all by itself.</p>';
+  else if (CLOUD_BUSY) st = '<p class="cstat"><span class="spin sm"></span>Syncing…</p>';
+  else if (CLOUD.err === 'setup') st = '<p class="cstat warn">Waiting on the storage to be set up in Vercel. Syncing starts as soon as it is.</p>';
+  else if (CLOUD.err) st = '<p class="cstat bad">' + esc(CLOUD.err) + '</p>' + how;
+  else if (CLOUD.last) st = '<p class="cstat ok">' + icon('check') + '<span>Synced ' + esc(whenText(CLOUD.last)) + ' · ' + plural(CLOUD.lastCount, 'recipe') + '</span></p>' + how;
+  else st = '<p class="cstat">On. The first sync is coming up.</p>';
+  return '<section class="panel" id="cloudp"><h2>Sync &amp; backup</h2>' + st + '<div class="acts">'
+    + (CLOUD.on ? '<button class="btn primary" data-act="cloudnow"' + (CLOUD_BUSY ? ' disabled' : '') + '>' + icon('upload') + 'Sync now</button><button class="btn ghost" data-act="cloudmenu">' + icon('more') + 'More</button>'
+      : '<button class="btn primary" data-act="cloudon">Turn on</button><button class="btn ghost" data-act="cloudjoin">' + icon('download') + 'I have a code</button>')
     + '</div></section>';
 }
 function redrawCloud(){ const p = $('#cloudp'); if (p) p.outerHTML = cloudPanel(); }
@@ -5266,30 +5479,35 @@ function codeSheet(title, intro, code, foot){
 }
 function openCloudOn(){
   CLOUD_PENDING = CLOUD.key || newRecoveryCode();
-  codeSheet('Turn on cloud backup', 'This is your <b>recovery code</b>. You\'ll need it to get your recipes back on a new phone, so save it somewhere safe, like a note or an email to yourself.', CLOUD_PENDING,
+  codeSheet('Turn on sync & backup', 'This is your <b>code</b>. Type the same code on your tablet to keep the two in sync, and use it to get your recipes back on a new phone. Save it somewhere safe, like a note or an email to yourself.', CLOUD_PENDING,
     '<div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="cloudstart">I saved it. Turn on</button></div>');
 }
 async function cloudStart(){
+  if (normCode(CLOUD.key) !== normCode(CLOUD_PENDING)) { SYNC.etag = ''; SYNC.sig = ''; saveSync(); }
   Object.assign(CLOUD, {on:true, key:CLOUD_PENDING, err:'', lastRev:-1}); saveCloud();
   closeSheet(); redrawCloud();
   const ok = await cloudBackup(true);
-  toast(ok ? 'Cloud backup is on. Backed up ' + plural(CLOUD.lastCount, 'recipe') + '.' : 'Cloud backup is on');
+  toast(ok ? 'Sync is on. ' + plural(CLOUD.lastCount, 'recipe') + ' saved in the cloud.' : 'Sync is on');
 }
 function cloudMenu(){
-  menuSheet([mi('cloudcode', 'edit', 'See my recovery code'), mi('cloudrestore', 'download', 'Restore from cloud'), mi('cloudoff', 'x', 'Turn off cloud backup', '', 'danger')], 'Cloud backup');
+  menuSheet([mi('cloudcode', 'edit', 'See my code'), mi('cloudrestore', 'download', 'Bring back an older copy'), mi('cloudoff', 'x', 'Turn off sync on this device', '', 'danger')], 'Sync & backup');
 }
 async function cloudOff(){
   closeSheet();
-  const ok = await confirmBox({title:'Turn off cloud backup?', msg:'Your backups stay in the cloud. This phone just stops sending new ones. You can turn it back on with the same code.', ok:'Turn off'});
+  const ok = await confirmBox({title:'Turn off sync on this device?', msg:'Your recipes stay here and in the cloud. This device just stops syncing and backing up. You can turn it back on with the same code.', ok:'Turn off'});
   if (!ok) return;
-  CLOUD.on = false; saveCloud(); redrawCloud(); toast('Cloud backup is off');
+  CLOUD.on = false; saveCloud(); redrawCloud(); toast('Sync is off on this device');
 }
 // restore on a new phone: code -> pick a backup -> bring it all back
 let CR = null;
-function openCloudRestore(){ closeSheet(); setTimeout(() => { CR = {step:'code', code:CLOUD.key ? fmtCode(CLOUD.key) : '', err:'', busy:false}; openSheet(crHTML(), {label:'Restore from cloud'}); }, 60); }
+function openCloudRestore(){ closeSheet(); setTimeout(() => { CR = {step:'code', code:CLOUD.key ? fmtCode(CLOUD.key) : '', err:'', busy:false}; openSheet(crHTML(), {label:'Bring back an older copy'}); }, 60); }
+function openCloudJoin(){ closeSheet(); setTimeout(() => { CR = {step:'join', code:'', err:'', busy:false}; openSheet(crHTML(), {label:'I have a code'}); }, 60); }
 function crHTML(){
-  const head = sheetHead('Restore from cloud');
+  const head = sheetHead(CR.step === 'join' ? 'I have a code' : 'Bring back an older copy');
   const status = (CR.err ? '<p class="readst bad">' + esc(CR.err) + '</p>' : '') + (CR.busy ? '<p class="readst"><span class="spin sm"></span>' + esc(CR.busy) + '</p>' : '');
+  if (CR.step === 'join') return head + '<div class="sh-body"><p class="dhint">Type the code from your other device. It\'s under Me > Sync &amp; backup > More > See my code there, and starts with YUM.</p><div class="field"><label class="lbl" for="cr-code">Code</label><input class="inp" id="cr-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="YUM-XXXX-XXXX-XXXX-XXXX" value="' + esc(CR.code) + '"></div>'
+    + '<p class="hint">Your recipes from both devices end up on both. Nothing on this device gets deleted.</p>' + status + '</div>'
+    + '<div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="crjoin"' + (CR.busy ? ' disabled' : '') + '>Connect</button></div>';
   if (CR.step === 'code') return head + '<div class="sh-body"><p class="dhint">Type your recovery code. It starts with YUM.</p><div class="field"><label class="lbl" for="cr-code">Recovery code</label><input class="inp" id="cr-code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="YUM-XXXX-XXXX-XXXX-XXXX" value="' + esc(CR.code) + '"></div>' + status + '</div>'
     + '<div class="sh-foot"><button class="btn ghost" data-act="closesheet">Cancel</button><button class="btn primary" data-act="crfind"' + (CR.busy ? ' disabled' : '') + '>Find my backup</button></div>';
   const rows = [];
@@ -5313,6 +5531,22 @@ async function crFind(){
   }
   crRedraw();
 }
+async function crJoin(){
+  const i = $('#cr-code'); CR.code = i ? i.value : CR.code;
+  if (normCode(CR.code).length < 12) { CR.err = 'That code looks too short. It\'s YUM plus 16 letters and numbers.'; crRedraw(); return; }
+  const key = fmtCode(CR.code);
+  CR.err = ''; CR.busy = 'Connecting…'; crRedraw();
+  try {
+    const p = await cloudJSON('op=pull', {}, key);
+    if (p.none || !p.backup) throw Object.assign(new Error(''), {empty:true});
+    CR.busy = 'Bringing in ' + plural(p.backup.recipes.filter(r => r && !r.sample).length, 'recipe') + '…'; crRedraw();
+    Object.assign(CLOUD, {on:true, key:key, err:''}); saveCloud();
+    await syncApply(p.backup); SYNC.etag = p.etag || ''; SYNC.sig = syncSig(p.backup); SYNC.lastPull = Date.now(); saveSync();
+    closeSheet(); CR = null; redrawCloud();
+    await cloudBackup(true); // this device's own recipes go up, and the photos come down
+    toast('Connected. ' + plural(list().filter(r => !r.sample).length, 'recipe') + ' on this device now.');
+  } catch (e) { CR.busy = ''; CR.err = e.wrongKey || e.empty ? 'No recipes found for that code. Check it and try again.' : e.needsSetup ? 'Sync isn\'t set up in Vercel yet.' : e.message; crRedraw(); }
+}
 async function crGo(){
   if (!CR || !CR.pick) return;
   const key = fmtCode(CR.code);
@@ -5322,15 +5556,23 @@ async function crGo(){
     if (!o || o.app !== 'yumyumtumtum' || !Array.isArray(o.recipes)) throw new Error('That backup couldn\'t be read.');
     CR.busy = 'Putting ' + plural(o.recipes.length, 'recipe') + ' back…'; crRedraw();
     await restoreData(o, async ref => { const r = await cloudFetch('op=photo&id=' + encodeURIComponent(ref), {}, key); return r.ok ? await r.blob() : null; });
-    Object.assign(CLOUD, {on:true, key:key, err:'', last:now(), lastDay:localDay(), lastRev:localRev(), lastCount:Math.max(o.recipes.length, list().length)}); saveCloud();
+    if (normCode(CLOUD.key) !== normCode(key)) { SYNC.etag = ''; SYNC.sig = ''; }
+    SYNC.pendMajor = true; saveSync();
+    Object.assign(CLOUD, {on:true, key:key, err:'', lastCount:Math.max(o.recipes.length, list().length)}); saveCloud();
     closeSheet(); CR = null; redrawCloud();
-    toast('Restored ' + plural(o.recipes.length, 'recipe') + '. Cloud backup is on.');
+    toast('Brought back ' + plural(o.recipes.length, 'recipe') + '. Sync is on.');
+    cloudBackup(true);
   } catch (e) { CR.busy = ''; CR.err = e.wrongKey ? 'That code doesn\'t match your backup.' : e.message; crRedraw(); }
 }
 bootP.then(() => {
-  if (CLOUD.on) setTimeout(() => cloudBackup(false), 20000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && CLOUD.on && localRev() !== CLOUD.lastRev) cloudBackup(false); });
-  window.addEventListener('online', () => { if (CLOUD.on) setTimeout(() => cloudBackup(false), 5000); });
+  if (CLOUD.on) setTimeout(() => cloudBackup(false), 2500);
+  document.addEventListener('visibilitychange', () => {
+    if (!CLOUD.on) return;
+    if (document.visibilityState === 'visible') { if (Date.now() - SYNC.lastPull > 15e3) setTimeout(() => cloudBackup(false), 600); }
+    else if (SYNC.pendMajor || (SYNC.pendMinorAt && Date.now() - SYNC.pendMinorAt > 15 * 60e3)) cloudBackup('bg');
+  });
+  window.addEventListener('online', () => { if (CLOUD.on) setTimeout(() => cloudBackup(false), 3000); });
+  setInterval(() => { if (CLOUD.on && document.visibilityState === 'visible' && Date.now() - SYNC.lastPull > SYNC_POLL) cloudBackup(false); }, 30e3);
 });
 
 async function removeExamples(){
@@ -5415,14 +5657,16 @@ const A = {
   catretry: () => loadFeed('k:' + cur().key, true),
   cloudon: () => openCloudOn(),
   cloudstart: () => cloudStart(),
-  cloudnow: async () => { const ok = await cloudBackup(true); toast(ok ? 'Backed up ' + plural(CLOUD.lastCount, 'recipe') : CLOUD.err === 'setup' ? 'Waiting on the storage in Vercel' : 'The backup didn\'t go through'); },
+  cloudnow: async () => { const ok = await cloudBackup(true); toast(ok ? 'Synced · ' + plural(CLOUD.lastCount, 'recipe') : CLOUD.err === 'setup' ? 'Waiting on the storage in Vercel' : 'The sync didn\'t go through'); },
   cloudmenu: () => cloudMenu(),
-  cloudcode: () => { closeSheet(); setTimeout(() => codeSheet('Your recovery code', 'Use this code to get your recipes back on a new phone (Me > Cloud backup > Restore from cloud).', fmtCode(CLOUD.key), '<div class="sh-foot"><button class="btn primary big" data-act="closesheet">Done</button></div>'), 60); },
+  cloudcode: () => { closeSheet(); setTimeout(() => codeSheet('Your code', 'Type this code on your tablet or a new phone (Me > Sync &amp; backup > I have a code) to use the same recipes there.', fmtCode(CLOUD.key), '<div class="sh-foot"><button class="btn primary big" data-act="closesheet">Done</button></div>'), 60); },
   cloudcopy: t => copyText(t.dataset.code),
   cloudshare: t => { try { navigator.share({title:'YumYum recovery code', text:'My YumYum recovery code: ' + t.dataset.code}).catch(() => {}); } catch (e) {} },
   cloudrestore: () => openCloudRestore(),
   cloudoff: () => cloudOff(),
   crfind: () => crFind(),
+  crjoin: () => crJoin(),
+  cloudjoin: () => openCloudJoin(),
   crgo: () => crGo(),
   setcat: t => openCatSheet(t.dataset.id || cur().id),
   catsave: () => catSave(false),
