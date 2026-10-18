@@ -23,6 +23,9 @@
     },
     "api/similar.js": {
       "maxDuration": 30
+    },
+    "api/video.js": {
+      "maxDuration": 180
     }
   },
   "rewrites": [
