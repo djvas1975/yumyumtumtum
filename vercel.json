@@ -40,6 +40,10 @@
     {
       "source": "/api/music/:tag",
       "destination": "/api/music"
+    },
+    {
+      "source": "/api/video/:tag",
+      "destination": "/api/video"
     }
   ],
   "redirects": [

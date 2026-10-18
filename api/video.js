@@ -1,15 +1,14 @@
 // Fill in a recipe from a video, with Google's Gemini (free tier). Dave's key lives in Vercel only
 // (Settings > Environment Variables > GEMINI_API_KEY, a Secret), never in this repo.
 //
-// A video from the phone goes to Gemini in pieces through this function (Vercel takes at most 4.5 MB per request,
-// and reels are bigger), so it's never stored in Vercel. Gemini keeps it until the recipe is written, then it's deleted.
-// A YouTube link goes straight to Gemini (public videos only), nothing to upload.
+// A video from the phone goes straight from the phone to Gemini's upload address, which this function asks Gemini for
+// with the key (so the key never leaves Vercel). Vercel can't pass it along itself: it takes at most 4.5 MB per request,
+// and Gemini wants pieces of 8 MB or more (found live Oct 17, 2026). The video is never stored in Vercel; Gemini keeps it
+// until the recipe is written, then it's deleted. A YouTube link goes straight to Gemini (public videos only).
 //
-// POST /api/video?op=start            {size, type}            -> {ok, up, chunk}   up = Gemini's upload address
-// POST /api/video?op=chunk&off=N[&last=1]  header x-up: <up>, body: the bytes (application/octet-stream)
-//                                                               -> {ok, status} or, after the last piece, {ok, file}
-//                                     a piece that didn't land -> {ok:false, got: bytes Gemini has, error}
-// POST /api/video?op=query            header x-up              -> {ok, got, status}  (to pick up after a dropped piece)
+// POST /api/video?op=start            {size, type}            -> {ok, up}   up = Gemini's one-time upload address. The
+//                                     phone sends the whole file there: POST, X-Goog-Upload-Command: upload, finalize,
+//                                     X-Goog-Upload-Offset: 0 -> {file:{name, state}}
 // POST /api/video?op=state            {name}                   -> {ok, state:'PROCESSING'|'ACTIVE'|'FAILED'}
 // POST /api/video?op=make             {name} or {youtube:<id>}, plus {dur, title, caption}
 //                                     -> {ok, recipe:{isRecipe,title,ingredients,steps,notes,equipment,totalTime,
@@ -28,7 +27,6 @@ const API = 'https://generativelanguage.googleapis.com';
 const MODELS = String(process.env.GEMINI_MODEL || 'gemini-3.8-flash,gemini-3.6-flash,gemini-3-flash-preview')
   .split(',').map(s => s.trim()).filter(Boolean);
 const MAX_VIDEO = 400 * 1024 * 1024;
-const PIECE = 4 * 1024 * 1024; // bytes the phone sends per request (Vercel's limit is 4.5 MB)
 const SAMPLE = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 const SAMPLE_YT = 'LrCEvNIyX-I';
 
@@ -42,7 +40,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 module.exports = async (req, res) => {
   if (!cors(req, res)) return;
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'content-type, x-up');
+  res.setHeader('Access-Control-Allow-Headers', 'content-type');
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
   const qp = req.query || {};
   const op = String(qp.op || '');
@@ -55,21 +53,7 @@ module.exports = async (req, res) => {
   try {
     if (op === 'start') {
       const b = await bodyJson(req);
-      res.status(200).json(Object.assign({ ok: true }, await startUpload(key, b.size, b.type)));
-      return;
-    }
-    if (op === 'chunk') {
-      const up = String((req.headers || {})['x-up'] || '');
-      if (!goodUp(up)) { res.status(400).json({ ok: false, error: 'Missing the upload address.' }); return; }
-      const buf = await bodyBuffer(req);
-      if (!buf.length) { res.status(400).json({ ok: false, error: 'That piece was empty.' }); return; }
-      res.status(200).json(await sendPiece(up, buf, Math.max(0, parseInt(qp.off, 10) || 0), String(qp.last || '') === '1'));
-      return;
-    }
-    if (op === 'query') {
-      const up = String((req.headers || {})['x-up'] || '');
-      if (!goodUp(up)) { res.status(400).json({ ok: false, error: 'Missing the upload address.' }); return; }
-      res.status(200).json(Object.assign({ ok: true }, await queryUpload(up)));
+      res.status(200).json(Object.assign({ ok: true }, await startUpload(key, b.size, b.type, req.headers.origin)));
       return;
     }
     if (op === 'state') {
@@ -95,8 +79,8 @@ module.exports = async (req, res) => {
   }
 };
 
-/* ---------- upload: start, pieces, query ---------- */
-async function startUpload(key, size, type) {
+/* ---------- upload ---------- */
+async function startUpload(key, size, type, origin) {
   size = Math.floor(Number(size) || 0);
   if (!(size > 0)) throw usr('That video file looks empty.');
   if (size > MAX_VIDEO) throw usr('That video is over 400 MB. Try a shorter one.');
@@ -109,42 +93,33 @@ async function startUpload(key, size, type) {
       'X-Goog-Upload-Command': 'start',
       'X-Goog-Upload-Header-Content-Length': String(size),
       'X-Goog-Upload-Header-Content-Type': type,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      // the browser that will send the bytes: Google's upload servers answer cross-site requests for the origin the
+      // session was started for (Cloud Storage documents this for resumable uploads)
+      ...(origin ? { Origin: String(origin) } : {})
     },
     body: JSON.stringify({ file: { display_name: 'yumyum-' + Date.now() } })
   });
   if (!r.ok) throw gErr(r.status, await r.text());
   const up = r.headers.get('x-goog-upload-url');
   if (!goodUp(up)) throw usr('Gemini didn’t give an upload address.');
-  // every piece but the last has to be a multiple of Google's "granularity" (usually 256 KB)
-  const gran = parseInt(r.headers.get('x-goog-upload-chunk-granularity'), 10) || 262144;
-  const chunk = Math.floor(PIECE / gran) * gran;
-  if (chunk < 1) throw usr('Gemini wants bigger pieces than Vercel can pass along.');
-  return { up, chunk, gran };
+  // (pieces before the last would have to be multiples of this; the phone sends the whole file at once)
+  const gran = parseInt(r.headers.get('x-goog-upload-chunk-granularity'), 10) || 0;
+  return { up, gran };
 }
-async function sendPiece(up, buf, off, last) {
-  let r;
-  try {
-    r = await go(up, { method: 'POST', headers: { 'X-Goog-Upload-Command': last ? 'upload, finalize' : 'upload', 'X-Goog-Upload-Offset': String(off) }, body: buf });
-  } catch (e) { r = null; }
-  if (!r || !r.ok) {
-    // ask Gemini how much it has, so the phone picks up from there
-    let q = {};
-    try { q = await queryUpload(up); } catch (e) {}
-    const msg = r ? gErr(r.status, await r.text().catch(() => '')).message : 'network';
-    return { ok: false, got: q.got, status: q.status, error: 'A piece of the video didn’t go through.', detail: String(msg).slice(0, 200) };
-  }
-  const status = r.headers.get('x-goog-upload-status') || '';
-  if (!last) return { ok: true, status: status || 'active' };
-  const j = await r.json().catch(() => ({}));
-  const f = j.file || j;
-  if (!f || !goodName(f.name)) return { ok: false, error: 'Gemini didn’t confirm the video.', status };
-  return { ok: true, status: status || 'final', file: { name: f.name, uri: f.uri || '', mimeType: f.mimeType || f.mime_type || '', state: f.state || 'PROCESSING' } };
+// what the phone does with the upload address, done from here for the health check (with the app's Origin, so the
+// answer shows whether Google lets the phone read it)
+async function sendLikePhone(up, buf, origin) {
+  const r = await go(up, { method: 'POST', headers: { 'X-Goog-Upload-Command': 'upload, finalize', 'X-Goog-Upload-Offset': '0', 'Content-Type': 'video/mp4', Origin: origin }, body: buf });
+  const text = await r.text();
+  let j = {}; try { j = JSON.parse(text); } catch (e) {}
+  const f = j.file || {};
+  return { status: r.status, allowOrigin: r.headers.get('access-control-allow-origin'), file: goodName(f.name) ? { name: f.name, state: f.state } : null, detail: r.ok ? undefined : text.slice(0, 200) };
 }
-async function queryUpload(up) {
-  const r = await go(up, { method: 'POST', headers: { 'X-Goog-Upload-Command': 'query' } });
-  const got = r.headers.get('x-goog-upload-size-received');
-  return { got: got != null && got !== '' ? Number(got) : null, status: r.headers.get('x-goog-upload-status') || '' };
+// the check a browser makes before sending the video to another site
+async function preflight(up, origin) {
+  const r = await go(up, { method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type,x-goog-upload-command,x-goog-upload-offset' } });
+  return { status: r.status, allowOrigin: r.headers.get('access-control-allow-origin'), allowMethods: r.headers.get('access-control-allow-methods'), allowHeaders: r.headers.get('access-control-allow-headers') };
 }
 function goodUp(u) {
   let x; try { x = new URL(String(u || '')); } catch (e) { return false; }
@@ -319,23 +294,18 @@ async function selftest(req, res, key, qp) {
       const sr = await go(String(qp.sample || SAMPLE));
       const buf = Buffer.from(await sr.arrayBuffer());
       note('sample video', { ok: sr.ok && buf.length > 1000, bytes: buf.length, ms: Date.now() - t0 });
-      const s = await startUpload(key, buf.length, 'video/mp4');
-      note('start upload', { ok: true, granularity: s.gran, piece: s.chunk });
-      // small pieces on purpose, so the multi-piece path the phone uses gets tested even on a small sample
-      const piece = Math.max(s.gran, Math.min(s.chunk, parseInt(qp.piece, 10) || s.gran));
-      let off = 0, n = 0, last = null;
-      while (off < buf.length) {
-        const end = Math.min(off + piece, buf.length);
-        last = await sendPiece(s.up, buf.subarray(off, end), off, end >= buf.length);
-        n++;
-        if (!last.ok) break;
-        off = end;
-      }
-      note('send pieces', { ok: !!(last && last.ok && last.file), pieces: n, piece, status: last && last.status, error: last && !last.ok ? last.error + ' ' + (last.detail || '') : undefined });
-      if (!(last && last.ok && last.file)) throw new Error('upload did not finish');
+      const origin = 'https://djvas1975.github.io';
+      const s = await startUpload(key, buf.length, 'video/mp4', origin);
+      note('start upload', { ok: true, granularity: s.gran });
+      const pf = await preflight(s.up, origin);
+      const pfOk = pf.status < 300 && (pf.allowOrigin === origin || pf.allowOrigin === '*') && /x-goog-upload-command/i.test(pf.allowHeaders || '') ;
+      note('phone may send it (preflight)', Object.assign({ ok: pfOk }, pf));
+      const last = await sendLikePhone(s.up, buf, origin);
+      note('send it like the phone', Object.assign({ ok: last.status === 200 && !!last.file && (last.allowOrigin === origin || last.allowOrigin === '*') }, last));
+      if (!last.file) throw new Error('upload did not finish');
       name = last.file.name;
       const t1 = Date.now();
-      let st = last.file.state;
+      let st = last.file.state || 'PROCESSING';
       while (st !== 'ACTIVE' && st !== 'FAILED' && Date.now() - t1 < 60000) { await wait(2000); st = (await getFile(key, name)).state; }
       note('Gemini got it ready', { ok: st === 'ACTIVE', state: st, ms: Date.now() - t1 });
       const t2 = Date.now();

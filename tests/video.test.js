@@ -10,7 +10,7 @@ delete process.env.GEMINI_MODEL;
 const api = require(path.join(R, 'api/video.js'));
 
 // ---- a pretend Gemini ----
-const G = { gran: 262144, files: new Map(), uploads: new Map(), calls: [], gen: [], deleted: [], polls: 0, nextFile: 1 };
+const G = { nextUp: 1, gran: 262144, files: new Map(), uploads: new Map(), calls: [], gen: [], deleted: [], polls: 0, nextFile: 1 };
 const UP = 'https://generativelanguage.googleapis.com/upload/v1beta/files?upload_id=';
 const json = (o, status, headers) => new Response(JSON.stringify(o), { status: status || 200, headers: Object.assign({ 'content-type': 'application/json' }, headers || {}) });
 let genPlan = []; // per call: {status, body} or a function(model, body)
@@ -22,12 +22,14 @@ async function fakeFetch(url, o) {
   if (/flower\.mp4$/.test(u.pathname)) return new Response(Buffer.alloc(700000, 7));
   if (u.pathname === '/upload/v1beta/files' && !u.searchParams.get('upload_id')) {
     if (h['x-goog-api-key'] !== 'test-key-123') return json({ error: { code: 400, message: 'API key not valid. Please pass a valid API key.', status: 'INVALID_ARGUMENT' } }, 400);
-    const id = 'up' + G.nextFile;
-    G.uploads.set(id, { size: Number(h['x-goog-upload-header-content-length']), type: h['x-goog-upload-header-content-type'], got: 0, parts: [] });
+    const id = 'up' + (G.nextUp++);
+    G.uploads.set(id, { size: Number(h['x-goog-upload-header-content-length']), type: h['x-goog-upload-header-content-type'], got: 0, parts: [], origin: h.origin });
     return new Response('', { headers: { 'x-goog-upload-url': UP + id + '&upload_protocol=resumable', 'x-goog-upload-chunk-granularity': String(G.gran), 'x-goog-upload-status': 'active' } });
   }
   if (u.pathname === '/upload/v1beta/files') {
     const up = G.uploads.get(u.searchParams.get('upload_id'));
+    const ac = up.origin && h.origin === up.origin ? { 'access-control-allow-origin': up.origin } : {};
+    if (o.method === 'OPTIONS') return new Response(null, { status: 200, headers: Object.assign({ 'access-control-allow-methods': 'POST,PUT', 'access-control-allow-headers': 'content-type,x-goog-upload-command,x-goog-upload-offset' }, ac) });
     if (h['x-goog-api-key']) G.keyOnUpload = true;
     const cmd = h['x-goog-upload-command'];
     if (cmd === 'query') return new Response('', { headers: { 'x-goog-upload-status': 'active', 'x-goog-upload-size-received': String(up.got) } });
@@ -41,7 +43,7 @@ async function fakeFetch(url, o) {
       if (up.got !== up.size) return json({ error: { message: 'size mismatch' } }, 400);
       const name = 'files/vid' + (G.nextFile++);
       G.files.set(name, { name, uri: 'https://generativelanguage.googleapis.com/v1beta/' + name, mimeType: up.type, state: 'PROCESSING' });
-      return json({ file: G.files.get(name) }, 200, { 'x-goog-upload-status': 'final' });
+      return json({ file: G.files.get(name) }, 200, Object.assign({ 'x-goog-upload-status': 'final' }, ac));
     }
   }
   const fm = u.pathname.match(/^\/v1beta\/(files\/[\w-]+)$/);
@@ -82,36 +84,26 @@ const call = (method, query, headers, body) => new Promise(resolve => {
 (async () => {
   // ---- who can use it ----
   const pre = await call('OPTIONS', {}, {});
-  ok(pre.code === 204 && /POST/.test(pre.headers['Access-Control-Allow-Methods']) && /x-up/.test(pre.headers['Access-Control-Allow-Headers']), 'CORS lets the app post pieces with the upload address');
+  ok(pre.code === 204 && /POST/.test(pre.headers['Access-Control-Allow-Methods']) && /content-type/.test(pre.headers['Access-Control-Allow-Headers']), 'CORS lets the app post JSON');
   ok((await call('POST', { op: 'start' }, { origin: 'https://evil.example' }, { size: 10 })).code === 403, 'other websites are turned away');
   ok((await call('POST', { op: 'start' }, { origin: undefined }, { size: 10 })).code === 403, 'calls without a browser origin are turned away');
   delete process.env.GEMINI_API_KEY;
   ok((await call('POST', { op: 'start' }, {}, { size: 10 })).body.needsKey === true, 'says when the Gemini key isn’t in Vercel');
   process.env.GEMINI_API_KEY = 'test-key-123';
 
-  // ---- upload a 9.5 MB video in 4 MB pieces, like the phone does ----
+  // ---- start: the phone gets Gemini's upload address (the key stays in Vercel) and sends the video itself ----
   const size = 9.5 * 1024 * 1024;
-  const video = Buffer.alloc(size, 3);
   const st = await call('POST', { op: 'start' }, {}, { size, type: 'video/mp4' });
-  ok(st.body.ok && st.body.chunk === 4 * 1024 * 1024 && /^https:\/\/generativelanguage\.googleapis\.com\/upload\//.test(st.body.up), 'start: gives the upload address and 4 MB pieces (a multiple of Google’s 256 KB)');
-  ok(st.body.chunk < 4.5e6, 'each piece fits under Vercel’s 4.5 MB limit');
+  ok(st.body.ok && /^https:\/\/generativelanguage\.googleapis\.com\/upload\//.test(st.body.up) && !/test-key-123/.test(st.body.up), 'start: gives Gemini’s upload address, without the key');
+  ok(G.uploads.get('up1').origin === 'https://djvas1975.github.io' && G.uploads.get('up1').size === size && G.uploads.get('up1').type === 'video/mp4', 'the upload is started for the app’s own site, with the size and type');
   const tooBig = await call('POST', { op: 'start' }, {}, { size: 500 * 1024 * 1024, type: 'video/mp4' });
   ok(!tooBig.body.ok && /400 MB/.test(tooBig.body.error), 'a video over 400 MB is refused with a plain message');
-  const evil = await call('POST', { op: 'chunk', off: 0 }, { 'x-up': 'https://evil.example/upload/x' }, Buffer.alloc(10));
-  ok(evil.code === 400, 'pieces only go to Google’s upload address (no forwarding anywhere else)');
-  let off = 0, last = null, n = 0;
-  const up = st.body.up, piece = st.body.chunk;
-  G.dropNext = true; // the first try of the first piece fails, like a dropped connection
-  while (off < size) {
-    const end = Math.min(off + piece, size);
-    last = await call('POST', { op: 'chunk', off, last: end >= size ? '1' : '' }, { 'x-up': up, 'content-type': 'application/octet-stream' }, video.subarray(off, end));
-    n++;
-    if (!last.body.ok) { ok(last.body.got === 0, 'a dropped piece reports how much Gemini has (0), so the phone resends from there'); off = last.body.got; continue; }
-    off = end;
-  }
-  ok(last.body.ok && last.body.file && last.body.file.name === 'files/vid1' && n === 4, 'the last piece finishes the upload and returns the file (3 pieces + 1 resend)');
-  ok(!G.keyOnUpload, 'the key isn’t sent with the pieces (the upload address is enough)');
-  ok(G.uploads.get('up1').parts.join(',') === [4194304, 4194304, 1572864].join(','), 'Gemini got 4 MB, 4 MB, then the rest');
+  const odd = await call('POST', { op: 'start' }, {}, { size: 1000, type: 'text/html' });
+  ok(odd.body.ok && G.uploads.get('up2').type === 'video/mp4', 'a file type that isn’t video is sent as video/mp4');
+  // the phone's own upload (in the app this is an XMLHttpRequest from the phone to Google)
+  const upRes = await fakeFetch(st.body.up, { method: 'POST', headers: { 'X-Goog-Upload-Command': 'upload, finalize', 'X-Goog-Upload-Offset': '0', Origin: 'https://djvas1975.github.io' }, body: Buffer.alloc(size, 3) });
+  const sj = await upRes.json();
+  ok(upRes.ok && sj.file.name === 'files/vid1' && upRes.headers.get('access-control-allow-origin') === 'https://djvas1975.github.io', '(pretend Gemini) the whole file in one request comes back as files/vid1, readable by the app');
 
   // ---- wait for Gemini to get it ready ----
   const s1 = await call('POST', { op: 'state' }, {}, { name: 'files/vid1' });
@@ -174,8 +166,8 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   genPlan = [];
   const self = await call('GET', { op: 'selftest' }, { origin: undefined });
   const names = (self.body.checks || []).map(c => c.step + (c.ok ? '' : ' (failed)'));
-  ok(self.body.ok && names.join(' | ') === 'sample video | start upload | send pieces | Gemini got it ready | write recipe (uploaded video) | write recipe (YouTube)', 'selftest: ' + names.join(' | '));
-  ok(self.body.checks[2].pieces === 3, 'selftest sends the sample in several small pieces, like the phone');
+  ok(self.body.ok && names.join(' | ') === 'sample video | start upload | phone may send it (preflight) | send it like the phone | Gemini got it ready | write recipe (uploaded video) | write recipe (YouTube)', 'selftest: ' + names.join(' | '));
+  ok(self.body.checks[2].allowOrigin === 'https://djvas1975.github.io' && self.body.checks[3].allowOrigin === 'https://djvas1975.github.io', 'selftest reports whether Google lets the app’s site send and read the upload');
   ok(/set \(12 characters\)/.test(self.body.key) && !/test-key-123/.test(JSON.stringify(self.body)), 'selftest says the key is set without showing it');
 
   // ---- tidy on its own ----
