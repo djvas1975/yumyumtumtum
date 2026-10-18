@@ -491,6 +491,29 @@ html.haspill #toast{bottom:calc(146px + env(safe-area-inset-bottom,0px))}
 .lblrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .linkbtn.sm{font-size:13px;text-decoration:none}
 .pastebox{display:flex;flex-direction:column;gap:8px}
+.vfrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:10px}
+.vfrow:empty{display:none}
+.vfbtn{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px 0 11px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:800 13.5px/1 var(--body);cursor:pointer}
+.vfbtn .ic{width:14px;height:14px;color:var(--chili)}
+.vfcard{margin-top:10px;padding:14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
+.vfcard.ok{border-color:var(--basil)}
+.vfcard.bad .vf-h{color:var(--danger)}
+.vf-h{display:flex;align-items:center;gap:8px}
+.vf-h b{font-size:15px;line-height:1.3;flex:1}
+.vf-h .ic{width:17px;height:17px;flex:none}
+.vfcard.ok .vf-h .ic{color:var(--basil)}
+.vf-pct{font-weight:800;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.vfbar{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.vfbar i{display:block;height:100%;background:var(--chili);border-radius:3px;transition:width .25s}
+.vf-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.vf-fine{font-size:12.5px;color:var(--ink-3);font-weight:600}
+.vf-title{font:800 17px/1.3 var(--display)}
+.vf-list{margin:0;padding-left:20px;color:var(--ink-2)}
+.vf-list li{margin:2px 0}
+ul.vf-list .vf-more,ol.vf-list .vf-more{list-style:none;margin-left:-20px;font-size:12.5px;color:var(--ink-3);font-weight:700}
+.vf-guess{font-size:13px;color:var(--ink-2)}
+.vf-warn{font-size:13px;font-weight:700;color:var(--chili)}
+.fromnote.ai .ic{width:15px;height:15px;flex:none;margin-top:3px;color:var(--chili)}
 
 /* discover */
 .dcard .dnope{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(20,12,26,.52);color:#fff;z-index:2;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
@@ -1325,7 +1348,7 @@ V.recipe = (rt) => {
   if (jumps.length > 1) h += '<div class="jumps scroll-x">' + jumps.map(x => '<button class="chip" data-jump="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
   // ingredients
   const SW = nIng ? ingSwaps(ing) : [];
-  if (nIng) h += '<div class="block" id="sec-ing"><h2>Ingredients <span class="muted">' + nIng + '</span></h2>' + (hasKitchen() ? khaveHTML(kitchenMatch(r)) + swapNowHTML(SW) : '') + '<ul class="ing">'
+  if (nIng) h += '<div class="block" id="sec-ing"><h2>Ingredients <span class="muted">' + nIng + '</span></h2>' + aiNoteHTML(r) + (hasKitchen() ? khaveHTML(kitchenMatch(r)) + swapNowHTML(SW) : '') + '<ul class="ing">'
     + ing.map((x, i) => isHead(x) ? '<li class="ihead">' + esc(x.slice(3)) + '</li>' : '<li><label><input type="checkbox" data-chk="' + i + '"' + (checked[i] ? ' checked' : '') + '><span>' + esc(x) + '</span></label>'
       + (SW[i] ? '<button class="swapbtn' + (SW[i].now ? ' now' : '') + '" data-swap="' + i + '" aria-label="Swaps for ' + esc(SW[i].sw.name) + '">' + icon('swap') + 'Swap</button>' : '') + '</li>').join('') + '</ul>'
     + '<button class="btn ghost wide tolist" data-act="tolist" data-id="' + esc(r.id) + '">' + icon('cart') + 'Add to grocery list</button>'
@@ -1337,6 +1360,7 @@ V.recipe = (rt) => {
     let n = 0;
     const sf = r.stepsFrom;
     h += '<div class="block" id="sec-steps"><h2>Directions <span class="muted">' + nSteps + ' steps</span></h2>'
+      + (!nIng ? aiNoteHTML(r) : '')
       + (sf ? '<div class="fromnote"><span>These steps are from a similar recipe, <a href="' + esc(sf.url) + '" target="_blank" rel="noopener noreferrer">' + esc(sf.title) + '</a>' + (sf.sourceName ? ' on ' + esc(sf.sourceName) : '') + ', not ' + (isVideo(r) ? 'this video' : 'the original') + '.</span><button class="linkbtn sm" data-act="unsimilar" data-id="' + esc(r.id) + '">Take them out</button></div>' : '')
       + '<ol class="steps">'
       + steps.map((x, i) => { if (isHead(x)) return '<li class="shead">' + esc(x.slice(3)) + '</li>'; const k = ++n;
@@ -1394,7 +1418,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.2.1</p></div>';
+    + '<p class="ver">YumYum · version 2.3</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -4806,7 +4830,7 @@ function openEditor(r, pre){
   const title = r ? 'Edit recipe' : 'Save a recipe';
   openSheet(sheetHead(title)
     + '<form class="sh-body" id="edform" novalidate autocomplete="off">'
-    + '<div class="field"><label class="lbl" for="f-url">Link</label><div class="inwrap">' + icon('link') + '<input class="inp withic" id="f-url" type="url" inputmode="url" placeholder="Paste a TikTok, YouTube, or website link"></div><div id="f-det"></div></div>'
+    + '<div class="field"><label class="lbl" for="f-url">Link</label><div class="inwrap">' + icon('link') + '<input class="inp withic" id="f-url" type="url" inputmode="url" placeholder="Paste a TikTok, YouTube, or website link"></div><div id="f-det"></div><div class="vfrow" id="f-vfrow"></div><input type="file" id="f-vfile" accept="video/*" class="vh"><div id="f-vf"></div></div>'
     + '<div class="field"><label class="lbl" for="f-title">Recipe name</label><input class="inp" id="f-title" maxlength="140" placeholder="What is it?"></div>'
     + '<div class="field"><span class="lbl">Photo</span><div class="photo-pick"><div id="f-prev"></div><div class="pp-side"><label class="btn ghost sm" for="f-photo" id="f-photo-lbl">' + icon('image') + '<span>Add photo</span></label><input type="file" id="f-photo" accept="image/*" class="vh"><button type="button" class="btn plain sm" data-act="rmphoto" id="f-rm" hidden>Remove photo</button><p class="hint">A screenshot of the video works great.</p></div></div></div>'
     + '<div class="field"><span class="lbl">Meal</span><div class="wrapchips" id="f-meals"></div></div>'
@@ -4837,6 +4861,7 @@ function openEditor(r, pre){
   $('#f-url').addEventListener('input', onUrlInput);
   $('#f-title').addEventListener('input', () => { F.titleAuto = !$('#f-title').value.trim(); F.fromShare = false; $('#f-title').classList.remove('err'); });
   $('#f-photo').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) handlePhoto(f); });
+  $('#f-vfile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) vfStart({file:f}); });
   const tag = $('#f-tag');
   tag.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(); } else if (e.key === 'Backspace' && !tag.value && F.tags.length) { F.tags.pop(); renderTags(); } });
   tag.addEventListener('blur', addTag);
@@ -4847,20 +4872,21 @@ function openEditor(r, pre){
   const pbSort = () => setTimeout(() => { if (F && pb.isConnected && pb.value.trim()) fSortPasted(false); }, 60);
   pb.addEventListener('paste', pbSort);
   pb.addEventListener('input', e => { const n = pb.value.length; if (e.inputType === 'insertFromPaste' || (n - pbLen > 40 && /\n/.test(pb.value))) pbSort(); pbLen = n; });
-  if (pre) applyShare(pre);
-  else if (!r) setTimeout(() => { const u = $('#f-url'); if (u) u.focus(); }, 320);
+  if (pre && (pre.title || pre.text || pre.url)) applyShare(pre);
+  else if (!r && !(pre && pre.video)) setTimeout(() => { const u = $('#f-url'); if (u) u.focus(); }, 320);
+  if (pre && pre.video) vfShared();
 }
 /* a link shared from another app (Android puts it in the text, sometimes the title) */
 function applyShare(pre){
   const all = [pre.url, pre.text, pre.title].filter(Boolean).join(' ');
   const m = all.match(/https?:\/\/[^\s]+/i);
-  if (!m) { if (all.trim()) { $('#f-title').value = all.trim().slice(0, 120); F.titleAuto = false; } return; }
+  if (!m) { if (all.trim() && !pre.video) { $('#f-title').value = all.trim().slice(0, 120); F.titleAuto = false; } return; }
   $('#f-url').value = m[0];
   onUrlInput();
   const tidy = s => String(s || '').replace(m[0], ' ').replace(/https?:\/\/[^\s]+/gi, ' ').replace(/#[\p{L}\p{N}_]+/gu, ' ').replace(/\s+/g, ' ').replace(/^[\s\-|:·•]+|[\s\-|:·•]+$/g, '').trim();
   const t = tidy(pre.title).length > 3 ? tidy(pre.title) : tidy(pre.text);
   if (t.length > 3) { $('#f-title').value = t.slice(0, 120); F.fromShare = true; }
-  if (!$('#f-title').value.trim()) setTimeout(() => { const el = $('#f-title'); if (el) el.focus(); }, 320);
+  if (!$('#f-title').value.trim() && !pre.video) setTimeout(() => { const el = $('#f-title'); if (el) el.focus(); }, 320);
 }
 function onUrlInput(){
   const el = $('#f-url'); let v = el.value;
@@ -4925,6 +4951,7 @@ function fillFormFromImport(j){
   if (!F.meal.size && (j.meals || []).length) { j.meals.forEach(m => F.meal.add(m)); renderFMeals(); renderPrev(); }
 }
 function renderDet(){
+  renderVFRow();
   const box = $('#f-det'); if (!box || !F) return;
   const d = F.det;
   if (!F.url) { box.innerHTML = '<p class="hint">Works with TikTok, Instagram, YouTube, Facebook, Pinterest, and any recipe website. No link? Just fill in the name.</p>'; return; }
@@ -4937,7 +4964,7 @@ function renderDet(){
   else if (F.readState === 'done' && F.imp) {
     const parts = foundList({ingredients:F.imp.ingredients, steps:F.imp.steps, srcNotes:F.imp.notes, equipment:F.imp.equipment}, !!F.photoKey && F.uploadedLocal.indexOf(F.photoKey) >= 0);
     st = parts.length ? '<p class="readst ok">' + icon('check') + 'Got ' + esc(joinList(parts)) + (F.imp.via === 'archive' ? ' (from a saved copy of the page)' : F.imp.via === 'wordpress' ? ' (your phone read it from the site)' : '') + '</p>'
-      : (F.imp.caption ? '<p class="readst">Got the caption, but no ingredient list in it. The full caption is saved with the recipe so you can read it.</p>' : '<p class="readst">No recipe card on that page. Add the details below, or use Paste recipe text.</p>');
+      : (F.imp.caption ? '<p class="readst">Got the caption, but no ingredient list in it. The full caption is saved with the recipe so you can read it. Saved the video? Use Fill in from a video.</p>' : '<p class="readst">No recipe card on that page. Add the details below, or use Paste recipe text.</p>');
   }
   if (F.readState === 'done' && F.imp && F.imp.captionCut) st += '<p class="readst">' + esc(p.name) + ' only shared the start of the caption, so some of the recipe may be missing.</p>';
   if (F.readState === 'failed') st = F.readCopy
@@ -5063,6 +5090,10 @@ function saveEditor(){
   if (!sameLink) ['description', 'author', 'siteName', 'anchor', 'caption', 'captionCut', 'recipeUrl', 'nutrition', 'prepTime', 'cookTime', 'yieldText', 'importedAt', 'impSig', 'speech', 'speechChecked', 'similar', 'video', 'mediaUrl', 'videoCk'].forEach(k => { delete r[k]; });
   // steps from a similar recipe that were changed by hand are the person's own now
   if (base && base.stepsFrom && JSON.stringify(base.steps || []) !== JSON.stringify(r.steps)) delete r.stepsFrom;
+  // Gemini wrote it from a video: the recipe page says so, until both the ingredients and the steps are changed by hand
+  const same = (a, b) => JSON.stringify(a || []) === JSON.stringify(b || []);
+  if (F.ai && (same(r.steps, F.ai.steps) || same(r.ingredients, F.ai.ingredients))) r.aiFill = {at:F.ai.at, src:F.ai.src, guesses:F.ai.guesses};
+  else if (r.aiFill && base && !same(base.steps, r.steps) && !same(base.ingredients, r.ingredients)) delete r.aiFill;
   if (F.imp && d && normUrl(F.lastReadUrl || '') === normUrl(d.url)) {
     const j = F.imp;
     ['description', 'author', 'siteName', 'anchor', 'caption', 'recipeUrl', 'yieldText'].forEach(k => { if (j[k] && !r[k]) r[k] = j[k]; });
@@ -5089,7 +5120,198 @@ function saveEditor(){
   if (!base) { go({name:'recipe', id:r.id}); toast('Saved to your Yums'); }
   else toast('Changes saved');
 }
-function editorCleanup(){ if (!F) return; F.closed = true; if (!F.saved) { F.uploaded.forEach(deleteAsset); F.uploadedLocal.forEach(delPhotoKey); } F = null; }
+function editorCleanup(){ if (!F) return; vfCancel(); F.closed = true; if (!F.saved) { F.uploaded.forEach(deleteAsset); F.uploadedLocal.forEach(delPhotoKey); } F = null; }
+
+// on the recipe page of a recipe Gemini wrote from a video
+const aiNoteHTML = r => r.aiFill ? '<div class="fromnote ai">' + icon('play') + '<span>Gemini wrote this from the video. Check the amounts before you cook.'
+  + ((r.aiFill.guesses || []).length ? ' It guessed: ' + esc(r.aiFill.guesses.slice(0, 3).join('; ').replace(/\.$/, '')) + '.' : '') + '</span></div>' : '';
+/* ---------- fill in from a video (Gemini, free tier; v2.3) ----------
+   Vercel (api/video.js) holds Dave's Gemini key. It starts an upload and gives the phone a one-time upload address;
+   the phone sends the video straight to Gemini (Vercel can't pass on pieces as big as Gemini wants). Gemini gets it
+   ready, writes the recipe as JSON, and the video is deleted. A YouTube link goes straight to Gemini. Nothing is
+   filled in until Dave taps Use it on the preview. */
+const VAPI = READER + '/api/video';
+const formHasPhoto = () => !!(F && (F.photoId || F.photoKey || F.photoData || (F.photoUrl && !/i\.ytimg\.com/.test(F.photoUrl))));
+const vfYt = () => F && F.det && F.det.platform === 'youtube' && /^[\w-]{11}$/.test(F.det.ytId || '') ? F.det.ytId : '';
+async function vPost(op, body, signal){
+  const res = await fetch(VAPI + '?op=' + op, {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(body || {}), signal:signal});
+  let j = null; try { j = await res.json(); } catch (e) { j = null; }
+  if (!j) throw new Error('Gemini didn’t answer. Try again in a minute.');
+  if (!j.ok) throw new Error(j.error || 'Something went wrong. Try again.');
+  return j;
+}
+function renderVFRow(){
+  const box = $('#f-vfrow'); if (!box || !F) return;
+  const yt = vfYt();
+  box.innerHTML = F.vf ? '' : yt
+    ? '<button type="button" class="vfbtn" data-act="vf-yt">' + icon('play') + 'Fill in from this video</button><button type="button" class="linkbtn sm" data-act="vf-pick">or pick a saved video</button>'
+    : '<button type="button" class="vfbtn" data-act="vf-pick">' + icon('play') + 'Fill in from a video</button>';
+}
+function vfStart(src){
+  if (!F) return;
+  if (!canRead()) { toast('Fill in from a video works in the installed app.'); return; }
+  if (navigator.onLine === false) { toast("You're offline. Connect and try again."); return; }
+  if (src.file && src.file.size > 400 * 1024 * 1024) { toast('That video is over 400 MB. Try a shorter one.'); return; }
+  if (src.file && src.file.type && !/^video\//.test(src.file.type)) { toast("That file isn't a video."); return; }
+  vfCancel();
+  F.vf = {f:F, src:src.file ? 'file' : 'youtube', file:src.file || null, yt:src.youtube || '', stage:src.file ? 'upload' : 'write', pct:0, name:'', ctrl:new AbortController(), tries:0};
+  renderVF(); renderVFRow();
+  vfRun(F.vf);
+}
+function vfCancel(){
+  const j = F && F.vf; if (!j) return;
+  j.dead = true;
+  try { j.ctrl.abort(); } catch (e) {}
+  try { if (j.xhr) j.xhr.abort(); } catch (e) {}
+  if (j.name) vPost('drop', {name:j.name}).catch(() => {});
+  j.name = '';
+  F.vf = null;
+}
+async function vfRun(job){
+  const live = () => !job.dead && F === job.f && F.vf === job;
+  try {
+    let dur = 0;
+    if (job.file) {
+      // how long it is (long videos use Gemini's lighter setting), and a picture from it for a recipe with no photo yet
+      const meta = await videoMeta(job.file, !formHasPhoto());
+      dur = meta.dur || 0; job.frame = meta.frame || null;
+      if (!live()) return;
+      let file = null;
+      while (!file) {
+        const s = await vPost('start', {size:job.file.size, type:job.file.type || 'video/mp4'}, job.ctrl.signal);
+        if (!live()) return;
+        try { file = await vfSend(s.up, job); }
+        catch (e) { if (job.dead || ++job.tries > 1) throw e; job.pct = 0; renderVF(); await sleep(1500); if (!live()) return; } // one fresh try after a dropped upload
+      }
+      job.name = file.name; job.stage = 'wait'; renderVF();
+      let st = file.state || 'PROCESSING';
+      const t0 = Date.now();
+      while (st !== 'ACTIVE') {
+        if (st === 'FAILED') throw new Error('Gemini couldn’t open that video. Try a different file.');
+        if (Date.now() - t0 > 180000) throw new Error('Gemini is taking too long to get the video ready. Try again.');
+        await sleep(2500);
+        if (!live()) return;
+        st = (await vPost('state', {name:job.name}, job.ctrl.signal)).state;
+      }
+    }
+    job.stage = 'write'; renderVF();
+    const base = F.id ? Store.recipes.get(F.id) : null;
+    const body = {dur:Math.round(dur), title:($('#f-title') || {}).value || '', caption:(F.imp && F.imp.caption) || (base && base.caption) || ''};
+    if (job.yt) body.youtube = job.yt; else body.name = job.name;
+    const j = await vPost('make', body, job.ctrl.signal);
+    job.name = ''; // the server deleted it
+    if (!live()) return;
+    job.res = j.recipe; job.stage = j.recipe && j.recipe.isRecipe ? 'done' : 'none';
+    renderVF();
+  } catch (e) {
+    if (job.dead || (e && e.name === 'AbortError')) return;
+    if (job.name) { vPost('drop', {name:job.name}).catch(() => {}); job.name = ''; }
+    if (!live()) return;
+    job.stage = 'error';
+    job.msg = e instanceof TypeError ? "Couldn't reach Gemini. Check your connection and try again." : (e.message || 'Something went wrong. Try again.');
+    renderVF();
+  }
+}
+// the phone sends the whole video to Gemini's one-time upload address (an XMLHttpRequest, so there's a progress bar)
+function vfSend(url, job){
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest(); job.xhr = x;
+    x.open('POST', url);
+    x.setRequestHeader('X-Goog-Upload-Command', 'upload, finalize');
+    x.setRequestHeader('X-Goog-Upload-Offset', '0');
+    let last = 0;
+    x.upload.onprogress = e => { if (e.lengthComputable && !job.dead) { job.pct = e.loaded / e.total; const t = Date.now(); if (t - last > 250 || job.pct >= 1) { last = t; renderVF(); } } };
+    x.onload = () => {
+      let j = null; try { j = JSON.parse(x.responseText); } catch (e) { j = null; }
+      const f = j && (j.file || j);
+      if (x.status >= 200 && x.status < 300 && f && /^files\//.test(f.name || '')) resolve(f);
+      else reject(new Error('The video didn’t finish sending. Try again.'));
+    };
+    x.onerror = () => reject(new Error("The video didn't send. Check your connection and try again."));
+    x.onabort = () => reject(Object.assign(new Error('Stopped'), {name:'AbortError'}));
+    x.send(job.file);
+  });
+}
+// length in seconds, and (when asked) a picture from about 40% in, for the recipe photo
+function videoMeta(file, wantFrame){
+  return new Promise(resolve => {
+    const v = document.createElement('video'), u = URL.createObjectURL(file);
+    let done = false;
+    const fin = o => { if (done) return; done = true; clearTimeout(t); try { v.removeAttribute('src'); v.load(); } catch (e) {} URL.revokeObjectURL(u); resolve(o); };
+    const t = setTimeout(() => fin({dur:isFinite(v.duration) ? v.duration : 0}), 8000);
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.onloadedmetadata = () => { const d = isFinite(v.duration) ? v.duration : 0; if (!wantFrame || !d) { fin({dur:d}); return; } v.currentTime = Math.min(d * 0.4, Math.max(0.5, d - 0.5)); };
+    v.onseeked = () => {
+      try {
+        const w = v.videoWidth, h = v.videoHeight; if (!w || !h) { fin({dur:v.duration}); return; }
+        const k = Math.min(1, 1400 / Math.max(w, h)), c = document.createElement('canvas');
+        c.width = Math.round(w * k); c.height = Math.round(h * k);
+        c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+        c.toBlob(b => fin({dur:v.duration, frame:b}), 'image/jpeg', 0.85);
+      } catch (e) { fin({dur:v.duration}); }
+    };
+    v.onerror = () => fin({dur:0});
+    v.src = u;
+  });
+}
+function renderVF(){
+  const box = $('#f-vf'); if (!box || !F) return;
+  const j = F.vf;
+  if (!j) { box.innerHTML = ''; return; }
+  const cancel = '<button type="button" class="linkbtn sm" data-act="vf-cancel">Cancel</button>';
+  if (j.stage === 'upload') { const p = Math.round(j.pct * 100); box.innerHTML = '<div class="vfcard"><div class="vf-h"><span class="spin sm"></span><b>Sending the video to Gemini</b><span class="vf-pct">' + p + '%</span></div><div class="vfbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p + '"><i style="width:' + p + '%"></i></div><div class="vf-row">' + (j.tries ? '<span class="vf-fine">Trying again…</span>' : '<span class="vf-fine">Keep YumYum open until it’s done.</span>') + cancel + '</div></div>'; return; }
+  if (j.stage === 'wait' || j.stage === 'write') { box.innerHTML = '<div class="vfcard"><div class="vf-h"><span class="spin sm"></span><b>' + (j.stage === 'wait' ? 'Gemini is getting the video ready' : 'Gemini is watching it and writing the recipe') + '</b></div><div class="vf-row"><span class="vf-fine">' + (j.stage === 'wait' ? 'A few seconds.' : 'Usually under a minute.') + '</span>' + cancel + '</div></div>'; return; }
+  if (j.stage === 'error') { box.innerHTML = '<div class="vfcard bad"><div class="vf-h">' + icon('x') + '<b>' + esc(j.msg) + '</b></div><div class="opt-b"><button type="button" class="btn primary sm" data-act="vf-retry">Try again</button><button type="button" class="btn ghost sm" data-act="vf-close">Close</button></div></div>'; return; }
+  if (j.stage === 'none') { box.innerHTML = '<div class="vfcard"><div class="vf-h"><b>Gemini didn’t find a recipe in this video.</b></div><div class="opt-b"><button type="button" class="btn ghost sm" data-act="vf-pick">Pick another video</button><button type="button" class="btn ghost sm" data-act="vf-close">Close</button></div></div>'; return; }
+  const r = j.res;
+  const ni = countItems(r.ingredients), ns = countItems(r.steps);
+  const facts = [ni ? plural(ni, 'ingredient') : '', ns ? plural(ns, 'step') : '', r.notes.length ? plural(r.notes.length, 'tip') : '', r.equipment.length ? 'cookware' : '', r.totalTime ? r.totalTime + ' min' : '', r.servings ? 'serves ' + r.servings : ''].filter(Boolean);
+  const showI = r.ingredients.filter(x => !isHead(x)).slice(0, 4), showS = r.steps.filter(x => !isHead(x)).slice(0, 2);
+  const hasIng = $('#f-ing').value.trim(), hasSteps = $('#f-steps').value.trim();
+  const repl = [hasIng && ni ? 'Ingredients' : '', hasSteps && ns ? 'Directions' : ''].filter(Boolean);
+  box.innerHTML = '<div class="vfcard ok"><div class="vf-h">' + icon('check') + '<b>Gemini wrote the recipe</b></div>'
+    + (r.title ? '<p class="vf-title">' + esc(r.title) + '</p>' : '')
+    + '<p class="vf-fine">' + esc(facts.join(' · ')) + '</p>'
+    + (showI.length ? '<ul class="vf-list">' + showI.map(x => '<li>' + esc(x) + '</li>').join('') + (ni > showI.length ? '<li class="vf-more">and ' + (ni - showI.length) + ' more</li>' : '') + '</ul>' : '')
+    + (showS.length ? '<ol class="vf-list">' + showS.map(x => '<li>' + esc(x) + '</li>').join('') + (ns > showS.length ? '<li class="vf-more">and ' + plural(ns - showS.length, 'more step') + '</li>' : '') + '</ol>' : '')
+    + (r.guesses.length ? '<p class="vf-guess"><b>It guessed:</b> ' + esc(r.guesses.slice(0, 3).join('; ')) + '</p>' : '')
+    + (repl.length ? '<p class="vf-warn">This replaces what’s in ' + esc(joinList(repl)) + ' now.</p>' : '')
+    + (j.frame && !formHasPhoto() ? '<p class="vf-fine">Adds a picture from the video as the photo.</p>' : '')
+    + '<div class="opt-b"><button type="button" class="btn primary sm" data-act="vf-use">Use it</button><button type="button" class="btn ghost sm" data-act="vf-close">Not now</button></div>'
+    + '<p class="vf-fine">Written by Gemini from the video. Check the amounts before you cook.</p></div>';
+}
+function vfUse(){
+  const j = F && F.vf; if (!j || !j.res) return;
+  const r = j.res, t = $('#f-title');
+  if (r.title && (!t.value.trim() || F.titleAuto || F.fromShare)) { t.value = r.title.slice(0, 140); F.titleAuto = false; F.fromShare = false; t.classList.remove('err'); }
+  if (r.ingredients.length) $('#f-ing').value = r.ingredients.join('\n');
+  if (r.steps.length) $('#f-steps').value = r.steps.join('\n');
+  const fill = (sel, v) => { const el = $(sel); if (el && !el.value.trim() && v) el.value = v; };
+  fill('#f-srcnotes', r.notes.join('\n')); fill('#f-equip', r.equipment.join('\n'));
+  fill('#f-time', r.totalTime || ''); fill('#f-serv', r.servings || ''); fill('#f-cuisine', r.cuisine || '');
+  if (!F.meal.size && r.meals.length) { r.meals.forEach(m => F.meal.add(m)); renderFMeals(); }
+  if (j.frame && !formHasPhoto()) handlePhoto(new File([j.frame], 'from-the-video.jpg', {type:'image/jpeg'}));
+  F.ai = {at:now(), src:j.src, ingredients:r.ingredients.slice(0, 200), steps:r.steps.slice(0, 150), guesses:r.guesses.slice(0, 10)};
+  F.vf = null; renderVF(); renderVFRow(); renderPrev();
+  toast('Filled in. Check it over, then save.');
+  const el = $('#f-ing'); if (el) el.scrollIntoView({block:'center', behavior:'smooth'});
+}
+// a video shared to YumYum from the gallery: the service worker kept it for the app (see tools/build.py)
+async function vfShared(){
+  let f = null;
+  try {
+    const c = await caches.open('share-in'), key = new URL('./shared-video', location.href).href;
+    const res = await c.match(key);
+    if (res) {
+      const b = await res.blob();
+      f = new File([b], decodeURIComponent(res.headers.get('x-name') || 'video.mp4'), {type:b.type || res.headers.get('content-type') || 'video/mp4'});
+      await c.delete(key);
+    }
+  } catch (e) { f = null; }
+  if (!F) return;
+  if (!f) { toast("Couldn't open the shared video. Tap Fill in from a video and pick it."); return; }
+  vfStart({file:f});
+}
 
 /* ---------- backup ---------- */
 async function exportBackup(){
@@ -5639,6 +5861,12 @@ const A = {
   'f-reread': () => { if (F && F.det) { F.lastReadUrl = ''; startRead(F.det.url); } },
   'f-pastetext': () => { const b = $('#f-pastebox'); if (!b) return; b.hidden = !b.hidden; if (!b.hidden) setTimeout(() => $('#f-paste').focus(), 30); },
   'f-parsetext': () => fSortPasted(false),
+  'vf-pick': () => { const i = $('#f-vfile'); if (i) i.click(); },
+  'vf-yt': () => { const id = vfYt(); if (id) vfStart({youtube:id}); },
+  'vf-cancel': () => { vfCancel(); renderVF(); renderVFRow(); toast('Stopped.'); },
+  'vf-close': () => { vfCancel(); renderVF(); renderVFRow(); },
+  'vf-retry': () => { const j = F && F.vf; if (!j) return; const src = j.file ? {file:j.file} : {youtube:j.yt}; vfStart(src); },
+  'vf-use': () => vfUse(),
   'f-newcol': () => { if (!F) return; F.showNew = !F.showNew; renderFCols(); if (F.showNew) setTimeout(() => $('#f-newcol').focus(), 30); },
   'f-addcol': () => fAddCol(),
   export: () => exportBackup(),
@@ -5750,8 +5978,8 @@ function readShare(){
   if (window.top !== window) return null;
   let p; try { p = new URLSearchParams(location.search); } catch (e) { return null; }
   const go0 = p.get('go');
-  const out = {add:p.has('add'), cook:p.has('cook') || go0 === 'cook', go:go0 === 'list' ? go0 : '', timers:go0 === 'timers', title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim()};
-  if (!out.add && !out.cook && !out.go && !out.timers && !out.title && !out.text && !out.url) return null;
+  const out = {add:p.has('add'), cook:p.has('cook') || go0 === 'cook', go:go0 === 'list' ? go0 : '', timers:go0 === 'timers', title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim(), video:p.get('video') === '1'};
+  if (!out.add && !out.cook && !out.go && !out.timers && !out.title && !out.text && !out.url && !out.video) return null;
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   return out;
 }
@@ -5810,7 +6038,7 @@ async function boot(){
   if (share && share.timers) openTimers();
   else if (share && share.go && !share.add) go({name:share.go});
   else if (share && share.cook && !share.add) go({name:'cook'});
-  else if (share && !share.timers) openEditor(null, (share.title || share.text || share.url) ? share : null);
+  else if (share && !share.timers) openEditor(null, (share.title || share.text || share.url || share.video) ? share : null);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 $('#tabs').innerHTML = navHTML();

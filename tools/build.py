@@ -78,11 +78,15 @@ def build_manifest():
             {"name": "Timers", "short_name": "Timers", "url": (BASE or "./") + "?go=timers",
              "icons": [{"src": pic("icons/shortcut-timer.png"), "sizes": "96x96", "type": "image/png"}]}
         ],
-        # Android sends shared links in "text" (sometimes "title"); the app reads all three
+        # Android sends shared links in "text" (sometimes "title"); the app reads all three. Since v2.3 a video file can
+        # be shared too, which needs a form post: the service worker (sw.js, "share-in") keeps the video for the app and
+        # sends links on to ./?title=&text=&url= exactly like before.
         "share_target": {
-            "action": BASE or "./",
-            "method": "GET",
-            "params": {"title": "title", "text": "text", "url": "url"},
+            "action": (BASE or "./") + "share-in",
+            "method": "POST",
+            "enctype": "multipart/form-data",
+            "params": {"title": "title", "text": "text", "url": "url",
+                       "files": [{"name": "video", "accept": ["video/*", ".mp4", ".mov", ".m4v", ".webm", ".3gp", ".mkv"]}]},
         },
     }
 
@@ -111,8 +115,27 @@ self.addEventListener('notificationclick', e => {
     return self.clients.openWindow('./?go=timers');
   }));
 });
+// Share > YumYum (a link, or since v2.3 a video from the gallery) arrives as a form post to ./share-in. GitHub Pages
+// can't take a post, so it's answered here: a video is kept in the "share-in" cache for the app to pick up, and the
+// app opens at ./?title=&text=&url=(&video=1), the same address a shared link always used.
+async function shareIn(req) {
+  const q = new URLSearchParams();
+  try {
+    const fd = await req.formData();
+    ['title', 'text', 'url'].forEach(k => { const v = fd.get(k); if (typeof v === 'string' && v.trim()) q.set(k, v.trim().slice(0, 2000)); });
+    const f = fd.getAll('video').find(x => x && typeof x !== 'string' && x.size);
+    if (f) {
+      const c = await caches.open('share-in');
+      await c.put(new URL('./shared-video', self.registration.scope).href, new Response(f, {headers: {'content-type': f.type || 'video/mp4', 'x-name': encodeURIComponent(f.name || 'video.mp4')}}));
+      q.set('video', '1');
+    }
+  } catch (err) {}
+  const qs = q.toString();
+  return Response.redirect(new URL('./' + (qs ? '?' + qs : ''), self.registration.scope).href, 303);
+}
 self.addEventListener('fetch', e => {
   const req = e.request;
+  if (req.method === 'POST' && new URL(req.url).pathname.endsWith('/share-in')) { e.respondWith(shareIn(req)); return; }
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   // the app page: try the network first so updates show up, fall back to the saved copy offline

@@ -1,5 +1,5 @@
 // yumyumtumtum offline support. VERSION changes on every build so phones pick up updates.
-const VERSION = 'yyt-20261016-145159';
+const VERSION = 'yyt-20261017-233943';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -22,8 +22,27 @@ self.addEventListener('notificationclick', e => {
     return self.clients.openWindow('./?go=timers');
   }));
 });
+// Share > YumYum (a link, or since v2.3 a video from the gallery) arrives as a form post to ./share-in. GitHub Pages
+// can't take a post, so it's answered here: a video is kept in the "share-in" cache for the app to pick up, and the
+// app opens at ./?title=&text=&url=(&video=1), the same address a shared link always used.
+async function shareIn(req) {
+  const q = new URLSearchParams();
+  try {
+    const fd = await req.formData();
+    ['title', 'text', 'url'].forEach(k => { const v = fd.get(k); if (typeof v === 'string' && v.trim()) q.set(k, v.trim().slice(0, 2000)); });
+    const f = fd.getAll('video').find(x => x && typeof x !== 'string' && x.size);
+    if (f) {
+      const c = await caches.open('share-in');
+      await c.put(new URL('./shared-video', self.registration.scope).href, new Response(f, {headers: {'content-type': f.type || 'video/mp4', 'x-name': encodeURIComponent(f.name || 'video.mp4')}}));
+      q.set('video', '1');
+    }
+  } catch (err) {}
+  const qs = q.toString();
+  return Response.redirect(new URL('./' + (qs ? '?' + qs : ''), self.registration.scope).href, 303);
+}
 self.addEventListener('fetch', e => {
   const req = e.request;
+  if (req.method === 'POST' && new URL(req.url).pathname.endsWith('/share-in')) { e.respondWith(shareIn(req)); return; }
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   // the app page: try the network first so updates show up, fall back to the saved copy offline

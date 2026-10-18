@@ -90,12 +90,27 @@
     }
   ],
   "share_target": {
-    "action": "https://djvas1975.github.io/yumyumtumtum/",
-    "method": "GET",
+    "action": "https://djvas1975.github.io/yumyumtumtum/share-in",
+    "method": "POST",
+    "enctype": "multipart/form-data",
     "params": {
       "title": "title",
       "text": "text",
-      "url": "url"
+      "url": "url",
+      "files": [
+        {
+          "name": "video",
+          "accept": [
+            "video/*",
+            ".mp4",
+            ".mov",
+            ".m4v",
+            ".webm",
+            ".3gp",
+            ".mkv"
+          ]
+        }
+      ]
     }
   }
 }

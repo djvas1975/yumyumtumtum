@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.2.1**.
+Current version: **2.3**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -132,6 +132,13 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   ⋯ menu: share the list as text, clear checked, clear all.
 - **Deals were removed in v1.2** (Dave's call, Sept 28, 2026). He may build store deals as a
   separate app that ties into this one later. What was learned is under "Deals (removed)" below.
+- **Fill in from a video (v2.3, Oct 17, 2026):** a "Fill in from a video" button under the Link box on Save a recipe and
+  Edit recipe. Pick a video saved on the phone (a TikTok or reel saved to the gallery), or with a YouTube link "Fill in from
+  this video". Google's **Gemini** (free tier, Dave's own key in Vercel) watches and listens and writes the name,
+  ingredients (with ## headings), steps, tips, cookware, time, servings, cuisine and meal. A preview card shows it first
+  ("It guessed: …", "This replaces what's in Ingredients now", "Adds a picture from the video as the photo"); nothing is
+  filled in until **Use it**. Share a video from the gallery to YumYum and it starts by itself. The recipe page then says
+  "Gemini wrote this from the video. Check the amounts before you cook." See "Fill in from a video: how it works" below.
 - **Sync & backup (v2.2, Oct 16, 2026; was Cloud backup):** Dave asked for his phone and tablet to "save and use on both
   devices using same account". The same code on both keeps recipes, photos, collections, kitchen, grocery list, name and
   taste the same; changes show up on the other within a few minutes, and right away when it's opened. A second device:
@@ -163,6 +170,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
 | `api/backup.js` | Cloud backup and sync to the private Vercel Blob store: `POST ?op=save&day=&daily=1[&if=<etag>|none]`, `GET ?op=pull&have=<etag>`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). Artistry uses the same endpoint with `&app=artistry` (see the Artistry cloud backup section). |
+| `api/video.js` | Fill in from a video with Gemini (free tier). `POST ?op=start` {size,type} -> Gemini's one-time upload address (the phone sends the file there itself); `op=state` {name}; `op=make` {name or youtube, dur, title, caption} -> the recipe as JSON (the video is deleted after); `op=drop` {name}. `GET /api/video/<anything>?op=selftest[&only=upload|youtube][&yt=<id>]` runs it all with the real key on a sample clip and a YouTube Short. Key: `GEMINI_API_KEY` (Vercel Secret). Models: `GEMINI_MODEL` or gemini-3.8-flash, gemini-3.6-flash, gemini-3-flash-preview (next one on a 429/404). |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
 | `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`), cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`), and the What you'll need list (`GEAR`, `GEAR_LIKELY`, `gearFor(recipe)`, `gearHeard(text)`). Sources are listed at the top of the file. |
@@ -170,9 +178,11 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, `recipeFromPage` (a whole copied page -> its recipe card), archive fallback. |
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
 | `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js`, `tests/timers.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup and sync with a fake Blob store, and similar-recipe matching with fake recipe sites. |
+| `tests/video.test.js` | Fill in from a video: the real api/video.js with a pretend Gemini (start, model fallback on a used-up free limit, tidying Gemini's answer, quote-blocked retry, YouTube, delete after, health check). |
+| `tests/video.playwright.js` | The button, sending, preview, Use it, the recipe-page note, YouTube, errors, Cancel, a dropped upload, dark mode, and Share > YumYum (a video and a plain link) through the real service worker (Playwright + ffmpeg, about a minute; not in the quick list). Run after building when this feature changes. |
 | `tests/sync.playwright.js` | A phone and a tablet syncing through the real api/backup.js on a pretend Blob store (Playwright, about a minute; not in the quick list). Run after building when sync changes. |
 | `package.json` | Only for Vercel: the `@vercel/blob` SDK used by api/backup.js. (npm's registry refused `@vercel/blob` inside Claude sessions on Sept 29, 2026, so tests fake it; Vercel installs it on deploy.) |
-| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s, similar 30 s). |
+| `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s, similar 30 s, video 180 s; Hobby with Fluid compute allows up to 300 s), and `/api/video/:tag` -> `/api/video` for live checks. |
 | `icons/` | App icons. `tools/make_photo_icons.py` makes the current ones from `tools/icon-art.jpg`. |
 
 Browsers can only call the reader from the app's own site (CORS allows https://djvas1975.github.io),
@@ -183,8 +193,8 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 1. Edit `tools/app.html` for the app, or `api/` and `lib/` for the reader or Discover.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
-4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.2.1`).
+4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js && node tests/video.test.js`
+5. App changes: bump the version text in `V.me` (`version 2.3`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -436,9 +446,10 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   the page Vercel gets.
 - **Instagram and Facebook:** they don't share captions of what's said; it would mean downloading
   the video, which their terms don't allow and which they usually block. Not planned.
-- Turning a spoken transcript into ingredients and steps well needs an AI model. Estimate with Claude
-  Haiku 4.5 ($1 in / $5 out per million tokens): under a penny per video. Needs Dave's own API key
-  with billing. Without AI: show "What they said" on the recipe page and pick out the foods mentioned.
+- Turning a spoken transcript into ingredients and steps well needs an AI model. **Built in v2.3 with Gemini's free
+  tier instead** (Dave already pays for ChatGPT and Claude and didn't want another bill; ChatGPT Plus and Claude plans
+  don't include API use). See "Fill in from a video" below. Gemini watches the video itself, so Instagram and Facebook
+  work too once the video is saved to the phone.
 
 ## App icon status
 - **In use (v0.7, Sept 26, 2026):** Dave's own pick, a 3D-cartoon "pigging out" picture of him
@@ -590,6 +601,43 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   once and kept, website mp4, no button without a video. Not checked yet on Dave's phone: whether each site's player
   starts by itself with sound (TikTok lists an autoplay error when the browser blocks it; then tap play once).
 
+## Fill in from a video: how it works (built Oct 17, 2026, v2.3)
+- Dave asked: "scan video, listen to video so it can be written and used to add to description boxes" in YumYum. He chose
+  Gemini's free API tier (got a key in Google AI Studio, saved it in Vercel as `GEMINI_API_KEY`, a Secret, Production and
+  Preview, Oct 17, 2026). Free-tier inputs may be used by Google to improve its products and read by reviewers
+  (ai.google.dev pricing page), fine for public recipe videos. The free tier has no bill, so a stranger calling the API
+  can at most use up the day's free limit; if billing is ever added to that Google project, add real protection first.
+- **Why the phone uploads straight to Gemini:** Vercel takes at most 4.5 MB per request, and Gemini's resumable upload
+  wants every piece but the last in multiples of its granularity, which is **8 MB** (live, Oct 17, 2026:
+  `x-goog-upload-chunk-granularity: 8388608`). So `op=start` (Vercel, with the key) opens the upload with the app's
+  Origin, and the phone sends the whole file in one XMLHttpRequest (`X-Goog-Upload-Command: upload, finalize`, offset 0) to
+  the address it got back; the key never reaches the phone. **Confirmed live** (selftest Oct 17, 2026): Google answers the
+  preflight and the upload for `https://djvas1975.github.io` (Access-Control-Allow-Origin set, headers allowed), the file
+  was ACTIVE in about 2 s, and gemini-3.8-flash wrote an answer in about 5 s (the sample is flowers, so `isRecipe:false`,
+  as it should be). A YouTube Short (LrCEvNIyX-I) came back as "Shortcut Chicken and Dumplings", 6 ingredients, 6 steps,
+  Southern. **Not confirmed yet from Dave's phone.**
+- Phone (tools/app.html, "fill in from a video" block): `F.vf` = {stage 'upload'|'wait'|'write'|'done'|'none'|'error', pct,
+  file, yt, name, frame, res}. `videoMeta` reads the length (over 3 minutes and YouTube use Gemini's low media resolution)
+  and, when the recipe has no photo yet, a picture from about 40% in (a format Chromium can't play just gets no picture).
+  A dropped upload gets one fresh try. `op=state` every 2.5 s (up to 3 minutes), then `op=make` with the name typed so far
+  and the caption the reader got. `vfUse` fills the name (when empty or automatic), replaces ingredients and steps, fills
+  tips, cookware, time, servings, cuisine and meal only when empty, and sets `F.ai`; Save then stores `r.aiFill =
+  {at, src:'file'|'youtube', guesses}` (dropped when both ingredients and steps are changed by hand), shown by `aiNoteHTML`.
+  Closing the form or Cancel aborts and deletes the upload (`vfCancel`).
+- Server tidying (`tidy` in api/video.js): "Sauce:" / "For the topping:" / "# x" become `## ` headings, bullets and "1." /
+  "Step 2:" are taken off, cuisine and meals are matched to the app's own lists, hashtags leave the name. The prompt asks
+  for amounts only when shown or said ("about" when estimated), steps in its own words, and a `guesses` list; a
+  RECITATION (quoting) block gets one more try asking for its own words.
+- **Share a video to YumYum** (manifest `share_target` is now POST multipart to `./share-in` with `files: video/*`): sw.js
+  answers that post (GitHub Pages can't), keeps a video in the `share-in` cache (not a `yyt-` cache, so updates don't
+  delete it) and redirects to `./?title=&text=&url=` plus `&video=1` when there was a video. Shared links work exactly as
+  before. Tested with the real service worker in Playwright. On Dave's phone the share menu changes only after Chrome
+  updates the installed app from the new manifest (it checks when the app opens, at most daily); until then sharing
+  links works the old way and picking a video inside the form works right away.
+- Live check: `https://yumyumtumtum.vercel.app/api/video/<new word each time>?op=selftest` (WebFetch keeps answers by
+  path; the whole check can take longer than WebFetch waits, so `&only=upload` or `&only=youtube`, and fetch the same
+  address again a minute later to read the finished answer from Vercel's cache).
+
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.
 - Troubleshooting: one step at a time, using his screenshots.
@@ -599,7 +647,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 ## Ideas not built yet
 - AI-written steps and cookware from a TikTok's speech (Claude Haiku, under a penny a video, needs Dave's own API key).
 - Store deals as a separate app that ties into the grocery list (see "Deals (removed)").
-- Fill in a video's recipe from what's said in it (see "Video recipes from what's said").
+- Fill in from a video using a TikTok's own speech captions (`r.speech`) plus the caption, with no download (Gemini, text only).
 - Meal planner (Yummly had one). The grocery list is ready for it.
 - An "Add what I need" button on What can I cook results.
 - "More like this" row on a recipe page.
