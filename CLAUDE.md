@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.3**.
+Current version: **2.3.1**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -43,7 +43,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   Recently saved, **Browse by cuisine** (scrollable tiles: Mexican, Asian, Italian, Chinese,
   Japanese, Thai, Korean, Vietnamese, Indian, Greek, Mediterranean, Middle Eastern, American,
   Southern, Cajun, BBQ, Caribbean, French, Spanish), **Browse by category** (Main dishes, Sides,
-  Appetizers, Soups & stews, Salads, Breakfast, Desserts, Baking, Bread, Drinks),
+  Marinades, Appetizers, Soups & stews, Salads, Breakfast, Desserts, Baking, Bread, Drinks),
   saved videos, quick fixes, still want to try, cook it again. "Your collections" was taken off Home in v2.2.1
   (Oct 16, 2026; Dave: "I'm not using this and I continue to scroll past it"); collections still live in Yums > My
   collections and the recipe page's Collections button.
@@ -194,7 +194,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js && node tests/video.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.3`).
+5. App changes: bump the version text in `V.me` (`version 2.3.1`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -315,6 +315,11 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - Categories come from `recipeCats({title, category, tags, meal})`: the recipe card's
   recipeCategory and keywords, the saved recipe's meal type, and words in the name ("Salsa
   Chicken" is a main dish, "Easy Salsa" is an appetizer).
+- **Marinades** (v2.3.1, Oct 18, 2026, Dave asked for it): "marinade(s)" or "brine(s)" in the name makes a recipe a
+  marinade and never a main dish, appetizer or side, even with steak in it or "Main Dish" on its card ("Lisa's Favorite
+  Carne Asada Marinade"); a card filed under marinades adds it too but keeps its other categories. "Marinated Cucumber
+  Salad" and "Brined Roast Turkey" are not marinades. Tile: a sauce bottle (`G.bottle`), third in the row. New ideas:
+  `CAT_Q.marinades` plus "<top meat> marinade"; What can I cook: "<meat> marinade", soy sauce and citrus marinades.
 - Results are cached on the phone per search (`COOK.cache`, and the last one in `yyt-cook-v2`)
   for 6 hours, and on Vercel for 6 hours.
 - Live check Sept 27, 2026 (v0.9 endpoint): 5 searches, 880 candidates, 40 recipes read, no

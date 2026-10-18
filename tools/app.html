@@ -788,6 +788,7 @@ const G = {
   noodles:'<path d="M8 32h48a24 22 0 0 1-48 0z"/><path d="M40 4 28 30M48 6 32 30"/><path d="M18 32c0-6 4-6 4-12M26 32c0-5 3-6 3-10"/>',
   pizza:'<path d="M10 14c14-6 30-6 44 0L32 58z"/><path d="M10 14c14-6 30-6 44 0"/><circle cx="26" cy="24" r="3"/><circle cx="38" cy="26" r="3"/><circle cx="32" cy="38" r="3"/>',
   sushi:'<rect x="10" y="24" width="44" height="22" rx="10"/><path d="M26 24v22M38 24v22"/><path d="M14 24c4-6 10-8 18-8s14 2 18 8"/>',
+  bottle:'<path d="M27 6h10v9l6 8v29a6 6 0 0 1-6 6H27a6 6 0 0 1-6-6V23l6-8z"/><path d="M21 31h22v13H21z"/><path d="M27 15h10"/>',
   flame:'<path d="M32 58c-12 0-18-9-16-19 2-8 9-12 10-22 7 5 8 11 7 16 3-2 5-5 5-9 7 6 10 13 10 19 0 9-7 15-16 15z"/><path d="M32 58c-5 0-8-4-7-8 1-4 5-6 6-11 4 4 8 8 8 12 0 4-3 7-7 7z"/>'
 };
 const MEALS = ['Breakfast','Lunch','Dinner','Dessert','Snack','Side','Drink'];
@@ -1406,7 +1407,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.3</p></div>';
+    + '<p class="ver">YumYum · version 2.3.1</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -3105,6 +3106,10 @@ function cookQueries(cat){
     q.push('homemade bread', 'dinner rolls', 'biscuits', 'flatbread'); if (has('tortillas')) q.push('homemade tortillas'); if (has('cornmeal')) q.push('cornbread');
   } else if (cat === 'drinks') {
     fruit.slice(0, 2).forEach(x => q.push(x + ' smoothie')); q.push('agua fresca', 'lemonade', 'smoothie');
+  } else if (cat === 'marinades') {
+    m.filter(x => !/^ground |eggs|beans|lentils|chickpeas/.test(x)).slice(0, 3).forEach(x => q.push(one(x) + ' marinade'));
+    if (has('soy sauce')) q.push('soy sauce marinade'); if (has('lime') || has('lemon') || has('orange')) q.push('citrus marinade');
+    q.push('marinade', 'steak marinade');
   }
   return q.map(x => x.toLowerCase().replace(/[|#]/g, ' ').replace(/\s+/g, ' ').trim()).filter((x, i, a) => x && a.indexOf(x) === i).slice(0, 8);
 }
@@ -3155,7 +3160,7 @@ function redrawCook(){
 
 /* what you can make */
 const CAT_TIP = {desserts:'Desserts need things like chocolate, fruit, cream cheese, or milk. Add what you have of those.', baking:'Add baking things you have, like chocolate chips, bananas, milk, or baking powder.',
-  bread:'Add yeast, milk, or baking powder if you have them.', drinks:'Add fruit, milk, or juice you have.', breakfast:'Add eggs, bacon, sausage, or bread if you have them.',
+  bread:'Add yeast, milk, or baking powder if you have them.', drinks:'Add fruit, milk, or juice you have.', marinades:'Add things like soy sauce, limes, garlic, vinegar, or orange juice if you have them.', breakfast:'Add eggs, bacon, sausage, or bread if you have them.',
   sides:'Add a few veggies, potatoes, rice, or beans.', soups:'Add broth, a meat, or a few veggies.', salads:'Add lettuce or veggies you have.', apps:'Add cheese, chips, or a meat.'};
 // fewest real ingredients missing first, then fewest spices, then what you'd like, then what uses more of your kitchen
 const byMatch = (a, b) => (a.m.missing.length - b.m.missing.length) || (a.m.spices.length - b.m.spices.length) || (b.s - a.s) || (b.m.have - a.m.have);
@@ -3376,13 +3381,14 @@ function cookwareHTML(K, G, checked){
 
 /* ---------- recipe categories: Main dishes, Sides, Soups, Desserts, and so on ---------- */
 const CAT_Q = {main:['easy dinner', 'dinner'], sides:['side dish', 'easy side dish'], apps:['appetizer', 'dip'], soups:['soup', 'stew'], salads:['salad'],
-  breakfast:['breakfast', 'brunch'], desserts:['dessert', 'cookies'], baking:['cookies', 'muffins', 'cake'], bread:['bread', 'rolls', 'biscuits'], drinks:['drinks', 'smoothie', 'agua fresca']};
+  breakfast:['breakfast', 'brunch'], desserts:['dessert', 'cookies'], baking:['cookies', 'muffins', 'cake'], bread:['bread', 'rolls', 'biscuits'], drinks:['drinks', 'smoothie', 'agua fresca'],
+  marinades:['marinade', 'steak marinade', 'chicken marinade', 'carne asada marinade']};
 // searches for a category's "New ideas", leaning toward what you like ("chicken soup")
 function catFeedQueries(k, P){
   const top = kind => Object.keys(P.w).filter(t => TERM_KIND[t] === kind && P.w[t] >= 1 && !neverHit(t)).sort((a, b) => P.w[b] - P.w[a]);
   const q = (CAT_Q[k] || [k]).slice();
   const prot = top('p')[0], dish = top('d')[0];
-  const word = {main:'dinner', soups:'soup', salads:'salad', apps:'appetizer', sides:'side dish'}[k];
+  const word = {main:'dinner', soups:'soup', salads:'salad', apps:'appetizer', sides:'side dish', marinades:'marinade'}[k];
   if (prot && word) q.unshift(prot + ' ' + word);
   if (k === 'main' && dish) q.unshift(dish);
   return q.filter((x, i, a) => a.indexOf(x) === i).slice(0, 4);
@@ -4241,12 +4247,15 @@ function matchRecipe(ingredients, P, title) {
 // recipe categories: [key, label, drawing, color, color]
 const CATS = [
   ['main', 'Main dishes', 'flame', '#E8743B', '#8A2E14'], ['sides', 'Sides', 'leaf', '#6CBF5A', '#2C7A3E'],
+  ['marinades', 'Marinades', 'bottle', '#D0703C', '#5E2A14'],
   ['apps', 'Appetizers', 'taco', '#F5A63B', '#C0461F'], ['soups', 'Soups & stews', 'bowl', '#E8503A', '#8E1B1B'],
   ['salads', 'Salads', 'leaf', '#58C4B4', '#1E7A74'], ['breakfast', 'Breakfast', 'egg', '#F7B733', '#C9621A'],
   ['desserts', 'Desserts', 'cake', '#F27A8C', '#9C2A4E'], ['baking', 'Baking', 'cookie', '#E0A650', '#9A5A1E'],
   ['bread', 'Bread', 'sandwich', '#C99A5B', '#7A4A1E'], ['drinks', 'Drinks', 'cup', '#5FA8E8', '#2B5BA8']
 ];
 const CAT_RE = {
+  // the marinade (or brine) itself; "Marinated Cucumber Salad" is a salad
+  marinades: /\b(marinades?|brines?)\b/,
   soups: /\b(soups?|stews?|chowders?|chili|chilli|pozole|posole|menudo|gumbo|bisque|pho|ramen|caldo|albondigas|minestrone|goulash|birria consomme|tortilla soup|zuppa|borscht|laksa)\b/,
   salads: /\b(salads?|slaw|coleslaw)\b/,
   breakfast: /\b(breakfast|brunch|pancakes?|waffles?|french toast|omelets?|omelettes?|frittatas?|quiche|chilaquiles|huevos|migas|scrambled eggs|hash browns|breakfast (burritos?|tacos|casserole|sandwich(es)?)|granola|oatmeal|overnight oats|crepes?|eggs benedict|biscuits and gravy|breakfast hash)\b/,
@@ -4271,6 +4280,9 @@ function recipeCats(r) {
   const say = (k, re) => re.test(title) || (card && re.test(card));
   const meat = foodsIn(r.title || '').some(id => KIND[id] === 'p');
   const savory = meat || NOT_DESSERT.test(title);
+  // "Carne Asada Marinade" is a marinade, not a main dish (even with steak in it); a recipe card filed under marinades counts too
+  const marinade = CAT_RE.marinades.test(title);
+  if (marinade || /\bmarinades?\b/.test(card)) out.add('marinades');
   if (say('soups', CAT_RE.soups) && !/\bchili (powder|flakes|oil|lime|crisp|sauce|garlic)\b|\bchili (dog|mac|cheese fries)\b/.test(title)) out.add('soups');
   if (CAT_RE.salads.test(title) || /\bsalad\b/.test(card)) out.add('salads');
   if (CAT_RE.breakfast.test(title) || /\b(breakfast|brunch)\b/.test(card)) out.add('breakfast');
@@ -4278,10 +4290,11 @@ function recipeCats(r) {
   if ((CAT_RE.baking.test(title) && !meat && !/\b(egg rolls?|spring rolls?|bread ?crumbs|garlic bread|cabbage rolls?|sushi|lobster rolls?)\b/.test(title)) || /\b(baking|baked goods)\b/.test(card)) out.add('baking');
   if ((CAT_RE.bread.test(title) && !meat && !/\b(bread ?crumbs|bread pudding|egg rolls?|spring rolls?|cinnamon rolls?|sweet rolls?|tortilla (soup|chips|casserole)|cabbage rolls?|sushi|lobster rolls?)\b/.test(title)) || /\b(breads?|rolls|biscuits)\b/.test(normFood(r.category || ''))) out.add('bread');
   if (say('drinks', CAT_RE.drinks) && !/\b(coffee cake|juice of|cider vinegar|pork|chicken|beef)\b/.test(title)) out.add('drinks');
-  if (CAT_RE.apps.test(title) || CAT_RE.appsAlone.test(title) || /\b(appetizers?|snacks?|starters?|dips?|party food|finger food)\b/.test(card)) out.add('apps');
-  if ((CAT_RE.sides.test(title) && !meat && !out.has('soups') && !out.has('desserts')) || /\bsides?( dish(es)?)?\b/.test(card)) out.add('sides');
+  if (((CAT_RE.apps.test(title) || CAT_RE.appsAlone.test(title)) && !marinade) || /\b(appetizers?|snacks?|starters?|dips?|party food|finger food)\b/.test(card)) out.add('apps');
+  if ((CAT_RE.sides.test(title) && !meat && !marinade && !out.has('soups') && !out.has('desserts')) || /\bsides?( dish(es)?)?\b/.test(card)) out.add('sides');
   if (/\b(main( course| dish(es)?)?|entrees?|dinners?|lunch)\b/.test(card)) out.add('main');
-  else if ((meat || CAT_RE.main.test(title)) && !['soups', 'salads', 'desserts', 'drinks', 'apps', 'breakfast', 'bread', 'sides'].some(k => out.has(k))) out.add('main');
+  else if ((meat || CAT_RE.main.test(title)) && !marinade && !['soups', 'salads', 'desserts', 'drinks', 'apps', 'breakfast', 'bread', 'sides'].some(k => out.has(k))) out.add('main');
+  if (marinade) out.delete('main'); // even when the card or the meal type says dinner
   if (out.has('bread') && !out.has('desserts')) out.add('baking');
   return CATS.map(c => c[0]).filter(k => out.has(k));
 }

@@ -66,7 +66,9 @@ const J = x => JSON.stringify(x);
   [['Cheesy Salsa Chicken and Rice', '', '["main"]'], ['Creamy Chicken & Wild Rice Soup', '', '["soups"]'], ['Chocolate Chip Cookies', '', '["desserts","baking"]'],
    ['Banana Bread', '', '["baking","bread"]'], ['Mexican Rice', 'Side Dish', '["sides"]'], ['Garlic Mashed Potatoes', '', '["sides"]'], ['Buffalo Chicken Dip', '', '["apps"]'],
    ['Easy Salsa', '', '["apps"]'], ['Breakfast Burritos', '', '["breakfast"]'], ['Taco Salad', '', '["salads"]'], ['Horchata', '', '["drinks"]'], ['Chicken Pot Pie', '', '["main"]'],
-   ['Chili Lime Chicken', '', '["main"]'], ['Beef Chili', '', '["soups"]'], ['Egg Rolls', '', '["apps"]'], ['Dinner Rolls', '', '["baking","bread"]'], ['Honey Garlic Chicken', 'Main Course', '["main"]']]
+   ['Chili Lime Chicken', '', '["main"]'], ['Beef Chili', '', '["soups"]'], ['Egg Rolls', '', '["apps"]'], ['Dinner Rolls', '', '["baking","bread"]'], ['Honey Garlic Chicken', 'Main Course', '["main"]'],
+   ["Lisa's Favorite Carne Asada Marinade", 'Main Dish', '["marinades"]'], ['Best Chicken Marinade', '', '["marinades"]'], ['Turkey Brine', '', '["marinades"]'],
+   ['Grilled Vegetable Marinade', '', '["marinades"]'], ['Marinated Cucumber Salad', '', '["salads"]'], ['Brined Roast Turkey', '', '["main"]'], ['Grilled Flank Steak', 'Marinades', '["main","marinades"]']]
     .forEach(([t, c, want]) => ok(cat(t, c) === want, 'category of "' + t + '" -> ' + cat(t, c)));
   ok(J(X.recipeCats({ title: 'Grandma\'s Special', meal: ['Dessert'] })) === '["desserts"]', 'saved recipe meal type counts');
   const ench = ['## For the enchiladas', '2 cups shredded chicken', '10 corn tortillas', '2 cups shredded Mexican cheese', '1 (10 oz) can red enchilada sauce', '## Toppings', 'sour cream', 'sliced green onions', 'cilantro'];
