@@ -2,19 +2,29 @@ name: live-check
 on:
   push:
     branches: [live-check]
+    paths: ['.github/workflows/live-check.yml', 'live-check/urls.txt']
+permissions:
+  contents: write
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Instagram through the YumYum reader on Vercel
+      - uses: actions/checkout@v4
+      - name: Run the checks
         run: |
-          for u in "https://www.instagram.com/p/BsOGulcndj-/" ; do
+          mkdir -p live-check; out=live-check/out.txt; : > $out
+          while read -r u; do
+            [ -z "$u" ] && continue
             e=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$u")
-            echo "=== $u"
-            curl -sS -m 60 "https://yumyumtumtum.vercel.app/api/recipe?url=$e&debug=1&v=ig$(date +%s)" | head -c 4000; echo
-          done
-      - name: Instagram embed page straight from GitHub
-        run: |
-          curl -sS -m 30 -A "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Mobile Safari/537.36" -o embed.html -w "status %{http_code} final %{url_effective} bytes %{size_download}\n" -L "https://www.instagram.com/p/BsOGulcndj-/embed/captioned/"
-          grep -o 'contextJSON' embed.html | head -2; grep -o 'class="Caption"' embed.html | head -2; grep -o 'edge_media_to_caption' embed.html | head -2; grep -o 'accounts/login' embed.html | head -2
-          head -c 1500 embed.html | tr '\n' ' '; echo
+            echo "=== READER $u" >> $out
+            curl -sS -m 70 "https://yumyumtumtum.vercel.app/api/recipe?url=$e&debug=1&v=ig$(date +%s)" | head -c 6000 >> $out; echo >> $out
+            code=$(echo "$u" | sed -nE 's#.*instagram\.com/(.*/)?(p|reels?|tv)/([A-Za-z0-9_-]+).*#\3#p')
+            if [ -n "$code" ]; then
+              echo "=== EMBED FROM GITHUB $code" >> $out
+              curl -sS -m 30 -A "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Mobile Safari/537.36" -o embed.html -w "status %{http_code} final %{url_effective} bytes %{size_download}\n" -L "https://www.instagram.com/p/$code/embed/captioned/" >> $out
+              for k in contextJSON 'class="Caption"' edge_media_to_caption accounts/login EmbeddedMediaImage 'xdt_' 'caption' ; do echo "$k: $(grep -o "$k" embed.html | wc -l)" >> $out; done
+              head -c 2500 embed.html | tr '\n' ' ' >> $out; echo >> $out
+            fi
+          done < live-check/urls.txt
+          git config user.name live-check; git config user.email live-check@users.noreply.github.com
+          git add $out; git commit -m "live check results [skip ci]" -q; git push -q
