@@ -1,0 +1,20 @@
+name: live-check
+on:
+  push:
+    branches: [live-check]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Instagram through the YumYum reader on Vercel
+        run: |
+          for u in "https://www.instagram.com/p/BsOGulcndj-/" ; do
+            e=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$u")
+            echo "=== $u"
+            curl -sS -m 60 "https://yumyumtumtum.vercel.app/api/recipe?url=$e&debug=1&v=ig$(date +%s)" | head -c 4000; echo
+          done
+      - name: Instagram embed page straight from GitHub
+        run: |
+          curl -sS -m 30 -A "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Mobile Safari/537.36" -o embed.html -w "status %{http_code} final %{url_effective} bytes %{size_download}\n" -L "https://www.instagram.com/p/BsOGulcndj-/embed/captioned/"
+          grep -o 'contextJSON' embed.html | head -2; grep -o 'class="Caption"' embed.html | head -2; grep -o 'edge_media_to_caption' embed.html | head -2; grep -o 'accounts/login' embed.html | head -2
+          head -c 1500 embed.html | tr '\n' ' '; echo
