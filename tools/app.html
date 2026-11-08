@@ -2111,8 +2111,8 @@ let VP = null; // {id, tall, big, x, y}
 const VP_LS = 'yyt-vplayer';
 function vidOf(r){
   if (!r) return null;
-  const u = r.mediaUrl || r.url || '';
-  if (r.platform === 'youtube') {
+  const u = r.videoUrl || r.mediaUrl || r.url || '';
+  if (r.platform === 'youtube' || (r.videoUrl && /(?:youtube[.]com|youtu[.]be)/.test(r.videoUrl))) {
     const id = (u.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([\w-]{6,})/) || [])[1];
     if (id) return {src:'https://www.youtube.com/embed/' + id + '?autoplay=1&playsinline=1&rel=0', tall:/shorts\//.test(u)};
   }
@@ -5979,10 +5979,24 @@ function readShare(){
   if (window.top !== window) return null;
   let p; try { p = new URLSearchParams(location.search); } catch (e) { return null; }
   const go0 = p.get('go');
+  const importCarnitas = p.get('import') === 'magazine-carnitas';
   const out = {add:p.has('add'), cook:p.has('cook') || go0 === 'cook', go:go0 === 'list' ? go0 : '', timers:go0 === 'timers', title:(p.get('title') || '').trim(), text:(p.get('text') || '').trim(), url:(p.get('url') || '').trim(), video:p.get('video') === '1'};
-  if (!out.add && !out.cook && !out.go && !out.timers && !out.title && !out.text && !out.url && !out.video) return null;
+  if (!out.add && !out.cook && !out.go && !out.timers && !out.title && !out.text && !out.url && !out.video && !importCarnitas) return null;
+  out.importCarnitas = importCarnitas;
   try { history.replaceState(null, '', location.pathname); } catch (e) {}
   return out;
+}
+
+
+/* Explicit one-tap import for the photographed carnitas recipe. No data reset or overwrites. */
+function importMagazineCarnitas(){
+  const data = {"id":"r-magazine-instant-pot-carnitas-2026","title":"Pork Carnitas (Instant Pot — Magazine Recipe)","description":"Classic, kid-friendly pork carnitas. The original magazine says citrus juices and beer keep this pork tender and flavorful.","url":"","platform":"none","source":"Instant Pot recipe magazine photograph","photoUrl":"https://i.ytimg.com/vi/BysDTg8XxT4/hqdefault.jpg","videoUrl":"https://www.youtube.com/watch?v=BysDTg8XxT4","meal":["Dinner"],"time":60,"servings":8,"cuisine":"Mexican","tags":["pork","carnitas","Instant Pot","pressure cooker","tacos","kid-friendly","magazine clipping"],"collections":[],"ingredients":["1 tablespoon vegetable oil","1 (4-pound) boneless pork shoulder, cut into 4 pieces","1 (12-ounce) bottle beer","1/2 cup fresh orange juice","1/4 cup fresh lime juice","1 tablespoon chopped garlic","1 teaspoon chopped fresh oregano","2 teaspoons chili powder","2 teaspoons cumin","2 teaspoons salt","1 teaspoon ground black pepper","Tortillas, for serving","Toppings: pickled red onions, guacamole, cilantro leaves, lime wedges"],"steps":["Select Sauté on the Instant Pot and add vegetable oil. When hot, working in 2 batches, add the pork and brown about 4 minutes per side.","Pour beer, orange juice, lime juice, garlic, oregano, chili powder, cumin, salt and pepper over the pork. Scrape any browned bits off the bottom to prevent a burn warning.","Lock the lid, set the valve to Sealing, and Pressure Cook on High for 30 minutes.","When the time is up, carefully use quick pressure release as directed by your Instant Pot manual. Open when safe.","Remove the pork to a baking sheet and shred it with two forks.","If desired, spread the shredded pork on the baking sheet and broil about 2 minutes to crisp the edges.","Divide between tortillas. Add pickled red onions, guacamole, cilantro and lime wedges to serve."],"srcNotes":["Original: photographed Instant Pot recipe magazine, title “Pork Carnitas — Classic, Kid-Friendly.” Magazine title and issue are not known.","Cooking demonstration available from the video play button: The Pot Heads; its recipe is similar, not identical.","Another closely matching video and recipe: https://damndelicious.net/2018/09/07/instant-pot-pork-carnitas/ . Seasoning amounts differ.","Original magazine states 1 hour total, 30 minutes active, 8 servings.","Cover image is from the related cooking video, not the magazine photograph."],"rating":0,"fav":false,"madeCount":0};
+  const existing = Store.recipes.get(data.id);
+  if (existing) { toast('Pork Carnitas is already saved'); go({name:'recipe',id:existing.id}); return; }
+  const r = Object.assign({}, data, {createdAt:now()});
+  putRecipe(r);
+  toast('Pork Carnitas added to YumYum');
+  go({name:'recipe',id:r.id});
 }
 
 /* ---------- boot ---------- */
@@ -6035,11 +6049,12 @@ async function boot(){
   }
   await startLocal();
   show(true);
+  if (share && share.importCarnitas) importMagazineCarnitas();
   tmLoad(); tmSchedule(); tmRender();
   if (share && share.timers) openTimers();
   else if (share && share.go && !share.add) go({name:share.go});
   else if (share && share.cook && !share.add) go({name:'cook'});
-  else if (share && !share.timers) openEditor(null, (share.title || share.text || share.url || share.video) ? share : null);
+  else if (share && !share.timers && !share.importCarnitas) openEditor(null, (share.title || share.text || share.url || share.video) ? share : null);
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 $('#tabs').innerHTML = navHTML();
