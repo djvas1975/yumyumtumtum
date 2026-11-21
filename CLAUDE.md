@@ -818,6 +818,13 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   @tia_lupe + photo + `igLocked`, the recipe page's Play and View on Instagram are intent links, no Get it card, an already-used
   copied link isn't reused, a no-link recipe shows Instagram + @tia_lupe and "See @tia_lupe on Instagram" (intent link to the
   profile), no steps -> /api/similar asked by itself, and before clipboard permission the card shows Add the link).
+  **Live with the real Gemini** (Nov 21, 2026, live-check `postimg` on a made-up reel screenshot: Dave's icon art as the video
+  frame, a black bar with "cocina_de_tia_lupe" and Seguir, a Spanish cochinita pibil caption): creator "@cocina_de_tia_lupe"
+  and app "instagram" both times; amounts and 180 °C kept; food boxes [155,34,540,895] (burrito and ramen, eyes cut out; the
+  old 3% margin pulled in the black bar, so now 1%) and [304,178,527,938] (just the ramen bowl). 7.8 s with the lite model;
+  51 s once when the lite answer stayed Spanish and gemini-3.6-flash was slow. Three screenshots inside a minute got "Gemini
+  is busy right now" (the free tier's per-minute limit, after a day of testing); one more after a 75 s pause worked.
+  **Not confirmed yet on Dave's phone**: the copied-link pickup (Chrome's clipboard prompt), the dish crop on a real reel.
 
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.
