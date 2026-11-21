@@ -1,3 +1,5 @@
+postimg live-check/pages/es-full.jpg
 postimg live-check/pages/es-nosteps.jpg
 postimg live-check/pages/es-full.jpg
 postimg live-check/pages/en-caption.jpg
+postimg live-check/pages/es-full.jpg
