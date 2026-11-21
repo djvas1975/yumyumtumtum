@@ -793,7 +793,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   youtube, pinterest, or ''), `photo` = {pic (1 = first picture sent), box [ymin, xmin, ymax, xmax] 0-1000} around the food
   only, from Gemini's `box_2d` (ai.google.dev image understanding: object detection boxes normalized to 0-1000); `photoOf`
   drops pic 0, broken boxes and anything under 15% of either side.
-- **Dish photo** (`cropDish` in app.html): the phone keeps the pieces it sent (`job.sent`), cuts the box out (3% margin,
+- **Dish photo** (`cropDish` in app.html): the phone keeps the pieces it sent (`job.sent`), cuts the box out (1% margin,
   at least 240 px each way, no strips thinner than 1:3), and hands it to `handlePhoto` like a picked photo, only when the
   recipe has no photo yet. `F.filled.photo` remembers it; Undo puts back the photo from before (`fSnap` keeps the photo
   fields now). The whole screenshot is still never used as the photo.
