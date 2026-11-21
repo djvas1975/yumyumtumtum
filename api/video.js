@@ -31,6 +31,10 @@ const API = 'https://generativelanguage.googleapis.com';
 // free-tier models, best first (checked Oct 17, 2026 on ai.google.dev/gemini-api/docs/pricing); GEMINI_MODEL overrides
 const MODELS = String(process.env.GEMINI_MODEL || 'gemini-3.8-flash,gemini-3.6-flash,gemini-3-flash-preview')
   .split(',').map(s => s.trim()).filter(Boolean);
+// pictures: a "lite" model first. Timed live Nov 21, 2026 on tests/fixtures/caption-shot.jpg, same answer from each:
+// gemini-3.5-flash-lite 1.4 s, gemini-3.1-flash-lite 14.5 s, gemini-3.7-flash 96 s, gemini-3.8-flash over 170 s
+const PIC_MODELS = String(process.env.GEMINI_PIC_MODEL || 'gemini-3.5-flash-lite,gemini-3.1-flash-lite')
+  .split(',').map(s => s.trim()).filter(Boolean);
 const MAX_VIDEO = 400 * 1024 * 1024;
 const SAMPLE = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 const SAMPLE_YT = 'LrCEvNIyX-I';
@@ -257,13 +261,15 @@ async function readPictures(key, b) {
     return { inlineData: { mimeType: type, data } };
   });
   if (total > MAX_PICS_TOTAL) throw usr('Those pictures are too big together. Send fewer at a time.');
-  return writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length), false, 'pictures');
+  return writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length), false, 'pictures', picModels());
 }
 
 // asks each free model in turn until one writes the recipe
-async function writeWith(key, parts, promptOf, low, what) {
+const picModels = () => Array.from(new Set((PICK.model ? [PICK.model] : PIC_MODELS).concat(MODELS)));
+let PICK = {}; // the health check's &model=
+async function writeWith(key, parts, promptOf, low, what, models) {
   let lastErr = null;
-  for (const model of MODELS) {
+  for (const model of (models || MODELS)) {
     for (let attempt = 0; attempt < 2; attempt++) {
       let out;
       try {
@@ -353,7 +359,7 @@ async function selftest(req, res, key, qp) {
   // &model=<name> tries one model only (to time each one); &only=models lists what the key can use
   const pick = /^gemini-[\w.-]{1,60}$/.test(String(qp.model || '')) ? String(qp.model) : '';
   const keep = MODELS.slice();
-  if (pick) MODELS.splice(0, MODELS.length, pick);
+  if (pick) { MODELS.splice(0, MODELS.length, pick); PICK = { model: pick }; }
   try {
   if (/models/.test(only)) {
     try {
@@ -423,7 +429,7 @@ async function selftest(req, res, key, qp) {
       note('error (YouTube)', { ok: false, error: plain(e), detail: String((e && e.message) || e).slice(0, 300), status: e && e.status });
     }
   }
-  } finally { MODELS.splice(0, MODELS.length, ...keep); }
+  } finally { MODELS.splice(0, MODELS.length, ...keep); PICK = {}; }
   res.status(200).json(out);
 }
 
@@ -467,3 +473,4 @@ module.exports._tidy = tidy;
 module.exports._parseJson = parseJson;
 module.exports._picturePrompt = picturePrompt;
 module.exports.MODELS = MODELS;
+module.exports.PIC_MODELS = PIC_MODELS;

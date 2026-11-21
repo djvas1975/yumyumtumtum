@@ -685,7 +685,11 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - Server (`readPictures`, `picturePrompt` in api/video.js): pictures go inline (`inlineData`) with a prompt to read the
   creator's recipe and ignore the app around it (likes, Follow, "more", hashtags, music, other people's comments), keep
   amounts exactly as written, and list guesses for anything cut off. Same model fallback, quoting retry and `tidy` as videos
-  (`writeWith`). Nothing is uploaded or kept.
+  (`writeWith`). Nothing is uploaded or kept. **Models for pictures:** `PIC_MODELS` (`GEMINI_PIC_MODEL` overrides) =
+  gemini-3.5-flash-lite, gemini-3.1-flash-lite, then the video models. Timed live Nov 21, 2026 on the fixture (`&model=` in
+  the health check; `&only=models` lists what the key can use), all with the same correct answer: 3.5-flash-lite 1.4 s,
+  3.1-flash-lite 14.5 s, 3.7-flash 96 s, 3.8-flash 83 to 123 s and once over 170 s. Gemini 3.8 Flash was that slow for the
+  YouTube check the same hour too, so the video models may need the same look.
 - Share: the manifest's share target file field is `media` (video/* and image/*); sw.js reads every file in the post (old
   installs still send `video`), keeps a video as `shared-video` or up to 4 pictures as `shared-image-<i>` in the `share-in`
   cache, and opens `./?image=N`; `vfSharedPics` picks them up. The share menu on Dave's phone offers YumYum for pictures only

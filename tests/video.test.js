@@ -164,6 +164,7 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   G.gen = []; genPlan = [];
   const shot = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(40000), type: 'image/jpeg' }, { data: 'data:image/png;base64,' + pic(30000), type: 'image/png' }], title: '', caption: 'Creamy chicken… more' });
   const sentP = G.gen[0] && G.gen[0].body.contents[0].parts;
+  ok(G.gen[0] && G.gen[0].model === 'gemini-3.5-flash-lite', 'pictures: the fast lite model is asked first -> ' + (G.gen[0] && G.gen[0].model));
   ok(shot.body.ok && shot.body.recipe.title === 'Crack Chicken Penne' && shot.body.recipe.ingredients[1] === '## Sauce', 'pictures: the recipe comes back tidied like a video’s -> ' + JSON.stringify(shot.body.recipe && shot.body.recipe.ingredients));
   ok(sentP && sentP.length === 3 && sentP[0].inlineData.mimeType === "image/jpeg" && sentP[1].inlineData.mimeType === "image/png" && !/^data:/.test(sentP[1].inlineData.data) && /2 pictures, in order/.test(sentP[2].text) && /Ignore the app around it/.test(sentP[2].text) && /Creamy chicken/.test(sentP[2].text), 'pictures: both go to Gemini in order with the screenshot prompt and the caption so far');
   const noPics = await call('POST', { op: 'image' }, {}, { images: [] });
@@ -186,7 +187,11 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   genPlan = [{ status: 429, body: { error: { code: 429, message: 'Quota exceeded', status: 'RESOURCE_EXHAUSTED' } } }];
   G.gen = [];
   const next = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(5000), type: 'image/heic' }] });
-  ok(next.body.ok && G.gen.map(x => x.model).join() === api.MODELS.slice(0, 2).join() && G.gen[1].body.contents[0].parts[0].inlineData.mimeType === 'image/heic', 'pictures: a used-up free limit moves on to the next model (HEIC photos go as they are)');
+  ok(next.body.ok && G.gen.map(x => x.model).join() === api.PIC_MODELS.slice(0, 2).join() && G.gen[1].body.contents[0].parts[0].inlineData.mimeType === 'image/heic', 'pictures: a used-up free limit moves on to the next model (HEIC photos go as they are)');
+  genPlan = api.PIC_MODELS.map(() => ({ status: 429, body: { error: { code: 429, message: 'Quota exceeded', status: 'RESOURCE_EXHAUSTED' } } }));
+  G.gen = [];
+  const fallback = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(5000), type: 'image/jpeg' }] });
+  ok(fallback.body.ok && G.gen.map(x => x.model).join() === api.PIC_MODELS.concat(api.MODELS[0]).join(), 'pictures: when the lite models are used up, the regular models still answer -> ' + G.gen.map(x => x.model).join());
   const evil = await call('POST', { op: 'image' }, { origin: 'https://evil.example' }, { images: [{ data: pic(5000), type: 'image/jpeg' }] });
   ok(evil.code === 403, 'pictures: other websites are turned away');
   }
