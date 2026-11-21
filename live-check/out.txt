@@ -1,6 +1,11 @@
-saved soup-fb 626001
-saved soup-tw 595204
-saved soup-embed-fb 347858
-saved soup-embedcap-fb 351422
-saved slow-fb 624174
 LIST:
+https://www.instagram.com/reel/Df2MWdejHRa/?igsh=MWx0bXo4bDFzZ2NyNw==|&ig=page
+https://www.instagram.com/reel/Df67GbKDPZp/|&ig=page
+https://www.instagram.com/p/DdovimajA-l/|&ig=page
+https://www.instagram.com/reel/Df-gqvgjO9F/
+https://www.instagram.com/reel/Cqv2Dixss3V/
+READER https://www.instagram.com/reel/Df2MWdejHRa/?igsh=MWx0bXo4bDFzZ2NyNw== &ig=page => ok | title Which soup got the top spot | caption 2186 | ing 18 | steps 0 | ["200 https://www.instagram.com/reel/Df2MWdejHRa/","page (preview bot): caption 2186 chars, photo yes"]
+READER https://www.instagram.com/reel/Df67GbKDPZp/ &ig=page => ok | title Who else is LIVING for the slow cooker in this mis | caption 1923 | ing 0 | steps 0 | ["200 https://www.instagram.com/reel/Df67GbKDPZp/","page (preview bot): caption 1923 chars, photo yes"]
+READER https://www.instagram.com/p/DdovimajA-l/ &ig=page => ok | title Tomorrow’s the day MEAL PREP is finally hitting th | caption 575 | ing 3 | steps 0 | ["200 https://www.instagram.com/p/DdovimajA-l/","page (preview bot): caption 575 chars, photo yes"]
+READER https://www.instagram.com/reel/Df-gqvgjO9F/  => ok | title This Black Friday, we’re drinking good coffee, fin | caption 1446 | ing 0 | steps 0 | ["200 https://www.instagram.com/p/Df-gqvgjO9F/embed/captioned/","embed: caption 1446 chars, photo yes"]
+READER https://www.instagram.com/reel/Cqv2Dixss3V/  => ok | title CREAMY BUTTER CHICKEN | caption 135 | ing 0 | steps 0 | ["200 https://www.instagram.com/p/Cqv2Dixss3V/embed/captioned/","embed: caption 135 chars, photo yes"]
