@@ -350,6 +350,18 @@ async function selftest(req, res, key, qp) {
   const note = (step, o) => { out.checks.push(Object.assign({ step }, o)); };
   if (!key) { out.ok = false; res.status(200).json(out); return; }
   const only = String(qp.only || 'upload,youtube,image');
+  // &model=<name> tries one model only (to time each one); &only=models lists what the key can use
+  const pick = /^gemini-[\w.-]{1,60}$/.test(String(qp.model || '')) ? String(qp.model) : '';
+  const keep = MODELS.slice();
+  if (pick) MODELS.splice(0, MODELS.length, pick);
+  try {
+  if (/models/.test(only)) {
+    try {
+      const r = await go(API + '/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key } });
+      const j = await r.json();
+      note('models', { ok: r.ok, names: (j.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent')).map(m => m.name.replace(/^models\//, '')).filter(n => /flash|pro/.test(n)) });
+    } catch (e) { note('models', { ok: false, error: String(e && e.message) }); }
+  }
   if (/upload/.test(only)) {
     let name = '';
     try {
@@ -411,6 +423,7 @@ async function selftest(req, res, key, qp) {
       note('error (YouTube)', { ok: false, error: plain(e), detail: String((e && e.message) || e).slice(0, 300), status: e && e.status });
     }
   }
+  } finally { MODELS.splice(0, MODELS.length, ...keep); }
   res.status(200).json(out);
 }
 
