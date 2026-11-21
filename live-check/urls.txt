@@ -1,3 +1,1 @@
-find https://busyinbrooklyn.com/mango-curry-crunch-salad/
-find https://busyinbrooklyn.com/chicken-gnocchi-shawarma-bake-2/
-find https://busyinbrooklyn.com/the-kugel-chronicles-yerushalmi-kugel/
+findbot https://www.instagram.com/reel/Cqv2Dixss3V/
