@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.5**.
+Current version: **2.5.1**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -158,6 +158,12 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   **Instagram and @creator** like a linked one (with no link, "See @creator on Instagram" opens their page); Play and View on
   Instagram open the **Instagram app** for reels only signed-in people can see (no useless "Get it" card); a screenshot with no
   steps gets **Steps from a similar recipe**. See "Screenshot recipes like the rest: how it works" below.
+- **Dish photo fix (v2.5.1, Nov 21, 2026; Dave: "It worked but didnt add a photo"):** his Adobo Pork caption screenshot came
+  back with no photo and no creator. Gemini must now always answer who posted it, the app, the language and the photo
+  (optional answers can be skipped). When a screenshot has no food in it, the filled card says "No photo of the dish in this
+  screenshot" with **Add a photo**: pause the video on the food, screenshot it, pick it, and only the photo is cut out and
+  added (the recipe boxes aren't touched). A food-only screenshot on a filled form, and "Just add the photo" on the preview,
+  do the same.
 - **Sync & backup (v2.2, Oct 16, 2026; was Cloud backup):** Dave asked for his phone and tablet to "save and use on both
   devices using same account". The same code on both keeps recipes, photos, collections, kitchen, grocery list, name and
   taste the same; changes show up on the other within a few minutes, and right away when it's opened. A second device:
@@ -213,7 +219,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js && node tests/video.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.4`).
+5. App changes: bump the version text in `V.me` (`version 2.5.1`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -824,7 +830,22 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   old 3% margin pulled in the black bar, so now 1%) and [304,178,527,938] (just the ramen bowl). 7.8 s with the lite model;
   51 s once when the lite answer stayed Spanish and gemini-3.6-flash was slow. Three screenshots inside a minute got "Gemini
   is busy right now" (the free tier's per-minute limit, after a day of testing); one more after a 75 s pause worked.
-  **Not confirmed yet on Dave's phone**: the copied-link pickup (Chrome's clipboard prompt), the dish crop on a real reel.
+  **Confirmed on Dave's phone Nov 21, 2026:** the copied-link pickup ("Added the link you copied"). **Not confirmed yet**: the
+  dish crop on a real reel.
+- **v2.5.1 (same day), after Dave's first real one had no photo and no "Posted by":** `PIC_SCHEMA` (pictures only) makes
+  `language`, `creator`, `app` and `photo` (with `pic` and `box_2d`) required, since Gemini can leave optional fields out;
+  videos keep `SCHEMA`. The prompt says a reel's video frame counts even with the caption over part of it (box the part the
+  text doesn't cover), pick the clearest view when several pictures show food, and `[0, 0, 0, 0]` when none does.
+  `logPictures` writes one line per screenshot read to Vercel's runtime logs (`[pictures] {model, retried, ms, pics, kb,
+  isRecipe, ing, steps, lang, creator: true/false, app, photo box, photoRaw when photoOf dropped it, tokens}`; no recipe text,
+  no username), readable with the Vercel connector (`get_runtime_logs`, project prj_ZBOHiMUWXPNdbego33DabS1tWZCx, team
+  team_wcGVYZ4p1Gl2MrgWjYgiCbf1; Hobby keeps logs about an hour). Phone: `addDishPhoto(job, r)` (crop + `handlePhoto`, only
+  when the form has no photo) and `dishPhotoDone`; `F.filled.photoWait` while cropping; with no photo `filledHTML` shows "No
+  photo of the dish in this screenshot…" and **Add a photo** (`vf-photoshot` sets `F.photoNext`, a 5-minute stamp that
+  `picStart` turns into `job.photoOnly`; `vf-pickimg` clears it). A photo-only job, or a picture with food and no recipe
+  while Ingredients or Directions have text, adds just the photo; the preview on a filled form has **Just add the photo**
+  (`vf-photo`). A photo added this way is part of the fill, so Undo takes it too. Tested (tests/video.test.js 68 checks,
+  tests/video.playwright.js 95). **Not confirmed yet on Dave's phone.**
 
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.

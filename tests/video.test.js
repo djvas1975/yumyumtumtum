@@ -130,6 +130,7 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   ok(sent.contents[0].parts[0].fileData.fileUri.endsWith('files/vid1') && sent.contents[0].parts[0].fileData.mimeType === 'video/mp4', 'the uploaded video is sent by its Gemini address');
   ok(/chicken pasta/.test(prompt) && /So easy/.test(prompt) && /own words/.test(prompt), 'the prompt has the saved name and caption, and asks for steps in its own words');
   ok(sent.generationConfig.responseMimeType === 'application/json' && sent.generationConfig.responseSchema.properties.ingredients && !sent.generationConfig.mediaResolution, 'asks for JSON in the recipe’s shape, full detail for a short clip');
+  ok(!sent.generationConfig.responseSchema.required.includes('creator') && !sent.generationConfig.responseSchema.required.includes('photo'), 'videos keep the old list of required answers (no creator or photo)');
   ok(!/test-key-123/.test(JSON.stringify(mk.body)), 'the key never shows up in an answer');
 
   // ---- YouTube: no upload, low detail, and a quote-blocked answer gets one more try ----
@@ -166,6 +167,10 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   const sentP = G.gen[0] && G.gen[0].body.contents[0].parts;
   ok(G.gen[0] && G.gen[0].model === 'gemini-3.5-flash-lite', 'pictures: the fast lite model is asked first -> ' + (G.gen[0] && G.gen[0].model));
   ok(shot.body.ok && shot.body.recipe.title === 'Crack Chicken Penne' && shot.body.recipe.ingredients[1] === '## Sauce', 'pictures: the recipe comes back tidied like a video’s -> ' + JSON.stringify(shot.body.recipe && shot.body.recipe.ingredients));
+  // v2.5.1: for pictures the creator, app, language and photo must be answered (Dave's first screenshot came back without them)
+  const sch = G.gen[0] && G.gen[0].body.generationConfig.responseSchema;
+  ok(sch && ['language', 'creator', 'app', 'photo'].every(k => sch.required.includes(k)) && sch.properties.photo.required.join() === 'pic,box_2d' && sch.required.includes('ingredients'), 'pictures: Gemini must answer language, creator, app and photo (pic and box)');
+  ok(/video frame counts when the food can be seen, even with the caption over part of it/.test(sentP && sentP[2].text) && /box_2d is \[0, 0, 0, 0\]/.test(sentP && sentP[2].text), 'pictures: the prompt says a reel frame behind the caption counts, and what to answer with no food');
   ok(sentP && sentP.length === 3 && sentP[0].inlineData.mimeType === "image/jpeg" && sentP[1].inlineData.mimeType === "image/png" && !/^data:/.test(sentP[1].inlineData.data) && /2 pictures, in order/.test(sentP[2].text) && /Ignore the app around it/.test(sentP[2].text) && /Creamy chicken/.test(sentP[2].text), 'pictures: both go to Gemini in order with the screenshot prompt and the caption so far');
   const noPics = await call('POST', { op: 'image' }, {}, { images: [] });
   ok(!noPics.body.ok && /Pick a screenshot/.test(noPics.body.error), 'pictures: none sent -> plain message');

@@ -503,6 +503,48 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
   if (st5 === 'prompt') ok(!!(await q5.$('#f-filled [data-act="clip-add"]')) && await q5.inputValue('#f-url') === '', 'before Chrome is allowed to read what\'s copied: an "Add the link" button, nothing read by itself');
   else ok(await q5.inputValue('#f-url') === '', 'clipboard permission is "' + st5 + '" here: nothing read by itself');
 
+  // ---- 11. v2.5.1: a caption screenshot with no food in it (Dave's Adobo Pork, Nov 21, 2026) ----
+  const p6 = await page('light', ANDROID);
+  await openAdd(p6);
+  G.plan = [{ recipe: Object.assign({}, SHOT, { title: 'Adobo Pork', photo: null }) }];
+  await p6.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  await waitFilled(p6); await p6.waitForTimeout(400);
+  const fc6 = await p6.textContent('#f-vf');
+  ok(/No photo of the dish in this screenshot/.test(fc6) && !!(await p6.$('#f-filled [data-act="vf-photoshot"]')), 'v2.5.1: no food in the screenshot -> the card says so, with an "Add a photo" button');
+  await p6.$eval('#f-filled', el => el.scrollIntoView({ block: 'start' })); await p6.waitForTimeout(200);
+  await shot(p6, '26-v251-no-photo');
+  // "Add a photo": a second screenshot (the video paused on the food; Gemini finds no recipe in it) -> only the photo
+  const ingBefore = await p6.inputValue('#f-ing');
+  G.plan = [{ recipe: { isRecipe: false, title: '', ingredients: [], steps: [], notes: [], equipment: [], totalTime: 0, servings: 0, cuisine: '', meals: [], guesses: [], language: 'English', creator: '', app: 'instagram', photo: { pic: 1, box_2d: [0, 0, 400, 1000] } } }];
+  const [fch] = await Promise.all([p6.waitForEvent('filechooser'), p6.click('#f-filled [data-act="vf-photoshot"]')]);
+  await fch.setFiles(path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  const got6 = await p6.waitForFunction(() => { const F = window.__t.getF(); return !!(F && F.photoKey && F.filled && F.filled.photo && !F.vf); }, null, { timeout: 15000 }).then(() => true, () => false);
+  ok(got6 && /Added a photo of the dish from your screenshot/.test(await p6.textContent('#f-vf')) && await p6.inputValue('#f-ing') === ingBefore && await p6.inputValue('#f-title') === 'Adobo Pork', 'Add a photo: the dish is cut out of the second screenshot; the recipe boxes stay as they were');
+  // Undo takes the whole fill back, photo included
+  await p6.click('#f-filled [data-act="vf-undo"]'); await p6.waitForTimeout(400);
+  ok(await p6.evaluate(() => { const F = window.__t.getF(); return !F.photoKey && !F.filled; }), 'Undo after Add a photo takes the photo away with the rest');
+  // the photo picker opened by "Add a photo" but cancelled doesn't turn the next "Fill in from a screenshot" into photo-only
+  G.plan = [{ recipe: Object.assign({}, SHOT, { title: 'Adobo Pork', photo: null }) }];
+  await p6.evaluate(() => { const F = window.__t.getF(); F.photoNext = Date.now(); });
+  await p6.click('[data-act="vf-pickimg"]').catch(() => {});
+  await p6.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  ok(await waitFilled(p6) && await p6.inputValue('#f-title') === 'Adobo Pork', 'Fill in from a screenshot after a cancelled Add a photo still fills in the recipe');
+  // a form that already has a recipe: a food-only screenshot from "Fill in from a screenshot" adds just the photo
+  G.plan = [{ recipe: { isRecipe: false, title: '', ingredients: [], steps: [], notes: [], equipment: [], totalTime: 0, servings: 0, cuisine: '', meals: [], guesses: [], language: '', creator: '', app: '', photo: { pic: 1, box_2d: [0, 0, 400, 1000] } } }];
+  await p6.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  ok(await p6.waitForFunction(() => { const F = window.__t.getF(); return !!(F && F.photoKey && !F.vf); }, null, { timeout: 15000 }).then(() => true, () => false) && await p6.inputValue('#f-title') === 'Adobo Pork', 'a food-only screenshot on a filled form adds just the photo (no "didn’t find a recipe")');
+  // the preview (a second recipe screenshot on a filled form) offers "Just add the photo"
+  await p6.evaluate(() => window.__t.getF() && (document.querySelector('[data-act="rmphoto"]') || {}).click && document.querySelector('[data-act="rmphoto"]').click());
+  await p6.waitForTimeout(300);
+  G.plan = [{ recipe: Object.assign({}, SHOT, { title: 'Other Dish' }) }];
+  await p6.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  const pv6 = await p6.waitForSelector('#f-vf [data-act="vf-photo"]', { timeout: 15000 }).then(() => true, () => false);
+  ok(pv6, 'a second recipe screenshot on a filled form: the preview offers "Just add the photo"');
+  if (pv6) {
+    await p6.click('#f-vf [data-act="vf-photo"]');
+    ok(await p6.waitForFunction(() => { const F = window.__t.getF(); return !!(F && F.photoKey && !F.vf); }, null, { timeout: 8000 }).then(() => true, () => false) && await p6.inputValue('#f-title') === 'Adobo Pork', 'Just add the photo: the photo goes in, the recipe stays Adobo Pork');
+  }
+
   ok(!errs.length, 'no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
   await b.close(); srv.close();
   console.log('\nScreenshots in ' + SP);

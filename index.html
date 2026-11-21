@@ -1426,7 +1426,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.5</p></div>';
+    + '<p class="ver">YumYum · version 2.5.1</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -5304,6 +5304,11 @@ async function vfRun(job){
       const j0 = await vPost('image', {images:pics, title:($('#f-title') || {}).value || '', caption:(F.imp && F.imp.caption) || (base0 && base0.caption) || ''}, job.ctrl.signal);
       if (!live()) return;
       job.res = j0.recipe; job.stage = j0.recipe && j0.recipe.isRecipe ? 'done' : 'none';
+      // v2.5.1: a picture just for the photo, or food with no recipe while the form already has one -> only the photo
+      if (job.photoOnly || (job.stage === 'none' && !fNothingToReplace() && j0.recipe && j0.recipe.photo && !formHasPhoto())) {
+        const ok = await addDishPhoto(job, j0.recipe).catch(() => false);
+        if (ok || job.photoOnly) { dishPhotoDone(job, ok); return; }
+      }
       // v2.4.1: nothing to replace (Ingredients and Directions empty) -> fill in right away, with Undo; else the preview asks first
       if (job.stage === 'done' && fNothingToReplace()) { vfUse(true); return; }
       renderVF();
@@ -5378,7 +5383,9 @@ function picStart(files){
   const imgs = files.filter(f => f && (/^image\//.test(f.type || '') || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || '')));
   if (!imgs.length) { toast("That isn't a picture."); return; }
   vfCancel();
-  F.vf = {f:F, src:'image', images:imgs, stage:'shrink', pct:0, name:'', ctrl:new AbortController(), tries:0};
+  // "Add a photo" on the filled card opened the picker: this picture is only for the photo
+  const photoOnly = !!(F.photoNext && Date.now() - F.photoNext < 5 * 60 * 1000); F.photoNext = 0;
+  F.vf = {f:F, src:'image', images:imgs, stage:'shrink', pct:0, name:'', ctrl:new AbortController(), tries:0, photoOnly};
   renderVF(); renderDet();
   clipTry(true);
   vfRun(F.vf);
@@ -5476,7 +5483,7 @@ function renderVF(){
   if (j.stage === 'upload') { const p = Math.round(j.pct * 100); box.innerHTML = '<div class="vfcard"><div class="vf-h"><span class="spin sm"></span><b>Sending the video to Gemini</b><span class="vf-pct">' + p + '%</span></div><div class="vfbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p + '"><i style="width:' + p + '%"></i></div><div class="vf-row">' + (j.tries ? '<span class="vf-fine">Trying again…</span>' : '<span class="vf-fine">Keep YumYum open until it’s done.</span>') + cancel + '</div></div>'; return; }
   const pic = j.src === 'image', many = pic && j.images.length > 1;
   if (j.stage === 'shrink') { box.innerHTML = '<div class="vfcard"><div class="vf-h"><span class="spin sm"></span><b>Getting the ' + (many ? 'pictures' : 'picture') + ' ready</b></div><div class="vf-row"><span class="vf-fine">A second or two.</span>' + cancel + '</div></div>'; return; }
-  if (j.stage === 'wait' || j.stage === 'write') { box.innerHTML = '<div class="vfcard"><div class="vf-h"><span class="spin sm"></span><b>' + (j.stage === 'wait' ? 'Gemini is getting the video ready' : pic ? 'Gemini is reading the ' + (many ? 'pictures' : 'picture') : 'Gemini is watching it and writing the recipe') + '</b></div><div class="vf-row"><span class="vf-fine">' + (j.stage === 'wait' ? 'A few seconds.' : pic ? 'Usually 10 to 20 seconds.' : 'Usually under a minute.') + '</span>' + cancel + '</div></div>'; return; }
+  if (j.stage === 'wait' || j.stage === 'write') { box.innerHTML = '<div class="vfcard"><div class="vf-h"><span class="spin sm"></span><b>' + (j.stage === 'wait' ? 'Gemini is getting the video ready' : j.photoOnly ? 'Gemini is finding the dish' : pic ? 'Gemini is reading the ' + (many ? 'pictures' : 'picture') : 'Gemini is watching it and writing the recipe') + '</b></div><div class="vf-row"><span class="vf-fine">' + (j.stage === 'wait' ? 'A few seconds.' : pic ? 'Usually 10 to 20 seconds.' : 'Usually under a minute.') + '</span>' + cancel + '</div></div>'; return; }
   if (j.stage === 'error') { box.innerHTML = '<div class="vfcard bad"><div class="vf-h">' + icon('x') + '<b>' + esc(j.msg) + '</b></div><div class="opt-b"><button type="button" class="btn primary sm" data-act="vf-retry">Try again</button><button type="button" class="btn ghost sm" data-act="vf-close">Close</button></div></div>'; return; }
   if (j.stage === 'none') { box.innerHTML = '<div class="vfcard"><div class="vf-h"><b>' + (pic ? 'Gemini didn’t find a recipe in ' + (many ? 'these pictures' : 'that picture') + '.' : 'Gemini didn’t find a recipe in this video.') + '</b></div>' + (pic ? '<p class="vf-fine">On a reel, tap “more” on the caption first so the whole recipe is on screen.</p>' : '') + '<div class="opt-b"><button type="button" class="btn ghost sm" data-act="' + (pic ? 'vf-pickimg' : 'vf-pick') + '">' + (pic ? 'Pick other pictures' : 'Pick another video') + '</button><button type="button" class="btn ghost sm" data-act="vf-close">Close</button></div></div>'; return; }
   const r = j.res;
@@ -5494,7 +5501,7 @@ function renderVF(){
     + (repl.length ? '<p class="vf-warn">This replaces what’s in ' + esc(joinList(repl)) + ' now.</p>' : '')
     + (j.frame && !formHasPhoto() ? '<p class="vf-fine">Adds a picture from the video as the photo.</p>' : '')
     + (pic && !$('#f-url').value.trim() ? '<p class="vf-fine">Tip: paste the post’s link in the Link box too (in the app: Share, then Copy link), so you can open the video from the recipe.</p>' : '')
-    + '<div class="opt-b"><button type="button" class="btn primary sm" data-act="vf-use">Use it</button><button type="button" class="btn ghost sm" data-act="vf-close">Not now</button></div>'
+    + '<div class="opt-b"><button type="button" class="btn primary sm" data-act="vf-use">Use it</button>' + (pic && r.photo && !formHasPhoto() && (hasIng || hasSteps) ? '<button type="button" class="btn ghost sm" data-act="vf-photo">' + icon('image') + 'Just add the photo</button>' : '') + '<button type="button" class="btn ghost sm" data-act="vf-close">Not now</button></div>'
     + '<p class="vf-fine">' + (pic ? 'Read by Gemini from your ' + (many ? 'pictures' : 'picture') : 'Written by Gemini from the video') + '. Check the amounts before you cook.</p></div>';
 }
 /* v2.4.1 screenshot fill-in: Undo. A snapshot of the boxes before the fill; Undo puts it back. */
@@ -5528,7 +5535,9 @@ function filledHTML(d){
   return '<div class="vfcard ok" id="f-filled"><div class="vf-h">' + icon('check') + '<b>Filled in from your ' + (many ? 'screenshots' : 'screenshot') + '</b></div>'
     + '<p class="vf-fine">' + esc(facts.join(' · ')) + (r.language ? ' · Translated from ' + esc(r.language) + ', amounts and units kept as written' : '') + '</p>'
     + (r.guesses.length ? '<p class="vf-guess"><b>Check:</b> ' + esc(r.guesses.slice(0, 3).join('; ')) + '</p>' : '')
-    + (d.photo ? '<p class="vf-fine">' + icon('image') + ' Added a photo of the dish from your screenshot.</p>' : '')
+    + (d.photo ? '<p class="vf-fine">' + icon('image') + ' Added a photo of the dish from your screenshot.</p>'
+      : d.photoWait || formHasPhoto() ? ''
+      : '<div class="vf-row"><span class="vf-fine">No photo of the dish in this screenshot. Pause the video on the food, take another screenshot, and add it here.</span><button type="button" class="btn ghost sm" data-act="vf-photoshot">' + icon('image') + 'Add a photo</button></div>')
     + (r.creator ? '<p class="vf-fine">Posted by ' + esc(r.creator) + (PLAT[r.app] ? ' on ' + esc(PLAT[r.app].name) : '') + '.</p>' : '')
     + clipLineHTML()
     + '<div class="vf-row"><span class="vf-fine">Read by Gemini. Look it over, then tap ' + (F && F.id ? 'Save changes' : 'Yum it') + '.</span><button type="button" class="btn ghost sm" data-act="vf-undo">Undo</button></div></div>';
@@ -5595,6 +5604,25 @@ async function cropDish(piece, box){
     return b ? new File([b], 'from-the-screenshot.jpg', {type:'image/jpeg'}) : null;
   } catch (e) { return null; }
 }
+// the dish from a screenshot as the recipe's photo, only when the recipe has none yet; true when it was added
+async function addDishPhoto(job, r){
+  const piece = r && r.photo && job && job.sent && job.sent[r.photo.pic - 1];
+  if (!piece || formHasPhoto()) return false;
+  const f = job.f, file = await cropDish(piece, r.photo.box);
+  if (!file || F !== f || formHasPhoto()) return false;
+  await handlePhoto(file);
+  return !!(F === f && (F.photoKey || F.photoId || F.photoData));
+}
+// v2.5.1: a second screenshot just for the photo (the "Add a photo" button on the filled card, "Just add the photo",
+// or a picture with food but no recipe while the form already has one). The recipe boxes aren't touched.
+function dishPhotoDone(job, ok, quiet){
+  if (!F || F !== job.f) return;
+  if (F.vf === job) F.vf = null;
+  if (ok && F.filled) F.filled.photo = {photoKey:F.photoKey || null, photoId:F.photoId || null};
+  renderVF(); renderDet();
+  if (ok) toast('Added a photo of the dish from your screenshot.');
+  else if (!quiet) toast('Gemini didn’t see the dish in that picture. Pause the video on the food and try again, or tap Add photo to use any picture.');
+}
 function vfUse(auto){
   const j = F && F.vf; if (!j || !j.res) return;
   const pic = j.src === 'image', before = pic ? fSnap() : null;
@@ -5613,11 +5641,14 @@ function vfUse(auto){
   if (pic) {
     const d = F.filled = {res:r, auto:!!auto, n:j.images.length, undo:before, after:fSnap()};
     // the dish photo, when a screenshot shows the food and the recipe has no photo yet
-    const piece = r.photo && j.sent && j.sent[r.photo.pic - 1];
-    if (piece && !formHasPhoto()) cropDish(piece, r.photo.box).then(file => {
-      if (!file || !F || F.filled !== d || formHasPhoto()) return;
-      return handlePhoto(file).then(() => { if (F && F.filled === d && (F.photoKey || F.photoId || F.photoData)) { d.photo = {photoKey:F.photoKey || null, photoId:F.photoId || null}; renderVF(); } });
-    }).catch(() => {});
+    if (r.photo && !formHasPhoto()) {
+      d.photoWait = true;
+      addDishPhoto(j, r).catch(() => false).then(ok => {
+        d.photoWait = false;
+        if (ok && F && F.filled === d) d.photo = {photoKey:F.photoKey || null, photoId:F.photoId || null};
+        if (F && F.filled === d) renderVF();
+      });
+    }
     renderVF(); renderPrev(); renderDet();
     toast(auto ? 'Filled in from your screenshot. Look it over, then save.' : 'Filled in. Look it over, then save.', {label:'Undo', fn:vfUndo});
     const c = $('#f-filled'); if (c) c.scrollIntoView({block:'start', behavior:'smooth'});
@@ -6193,7 +6224,9 @@ const A = {
   'f-pastetext': () => { const b = $('#f-pastebox'); if (!b) return; b.hidden = !b.hidden; if (!b.hidden) setTimeout(() => $('#f-paste').focus(), 30); },
   'f-parsetext': () => fSortPasted(false),
   'vf-pick': () => { const i = $('#f-vfile'); if (i) i.click(); },
-  'vf-pickimg': () => { const i = $('#f-ifile'); if (i) i.click(); },
+  'vf-pickimg': () => { if (F) F.photoNext = 0; const i = $('#f-ifile'); if (i) i.click(); },
+  'vf-photoshot': () => { if (!F) return; F.photoNext = Date.now(); const i = $('#f-ifile'); if (i) i.click(); },
+  'vf-photo': () => { const j = F && F.vf; if (!j || !j.res) return; j.stage = 'write'; j.photoOnly = true; renderVF(); addDishPhoto(j, j.res).catch(() => false).then(ok => dishPhotoDone(j, ok)); },
   'vf-yt': () => { const id = vfYt(); if (id) vfStart({youtube:id}); },
   'vf-cancel': () => { vfCancel(); renderVF(); renderDet(); toast('Stopped.'); },
   'vf-close': () => { vfCancel(); renderVF(); renderDet(); },

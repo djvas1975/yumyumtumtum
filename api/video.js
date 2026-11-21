@@ -178,6 +178,14 @@ const SCHEMA = {
   },
   required: ['isRecipe', 'title', 'ingredients', 'steps', 'notes', 'equipment', 'totalTime', 'servings', 'cuisine', 'meals', 'guesses']
 };
+// v2.5.1: for pictures, the language, creator, app and photo must always be answered. Optional fields can be left out,
+// and Dave's first real screenshot (Nov 21, 2026) came back with no creator and no photo.
+const PIC_SCHEMA = Object.assign({}, SCHEMA, {
+  properties: Object.assign({}, SCHEMA.properties, {
+    photo: Object.assign({}, SCHEMA.properties.photo, { required: ['pic', 'box_2d'] })
+  }),
+  required: SCHEMA.required.concat(['language', 'creator', 'app', 'photo'])
+});
 
 function promptFor(b, ownWords) {
   const title = clip(b.title, 140);
@@ -251,7 +259,7 @@ function picturePrompt(b, ownWords, n, strict) {
     '- guesses: short notes on anything you couldn\'t read clearly, had to guess, or that seems to be missing, like "Amount of garlic was cut off" or "Oven temperature isn\'t given". Empty if nothing.',
     '- creator: the username of the person who posted it, as shown next to the post or caption, like "@cocina_de_tia_lupe". Not someone who only commented, liked or is tagged. "" if no username is shown.',
     '- app: which app the screenshot is from, judging by how it looks: "instagram", "tiktok", "facebook", "youtube" or "pinterest". "" for a cookbook, magazine, website or anything else.',
-    '- photo: if a picture shows the food itself (a frame of the video, a photo of the dish), pic is that picture\'s number (1 for the first) and box_2d is [ymin, xmin, ymax, xmax] around the food, normalized to 0-1000. Keep text, buttons, faces and hands out of the box as much as you can. If no picture shows the food, pic is 0.',
+    '- photo: if a picture shows the food itself (a frame of the video, a photo of the dish), pic is that picture\'s number (1 for the first) and box_2d is [ymin, xmin, ymax, xmax] around the food, normalized to 0-1000. On a video screenshot, the video frame counts when the food can be seen, even with the caption over part of it: box the part of the food the text doesn\'t cover. Keep text, buttons, faces and hands out of the box as much as you can. If more than one picture shows food, pick the clearest view of the dish. If no picture shows the food, pic is 0 and box_2d is [0, 0, 0, 0].',
     '- isRecipe: false if the pictures have no recipe in them (no ingredients and no steps), and then leave the lists empty.',
     'Do not add ingredients, amounts or steps that are not in the pictures.',
     ownWords ? 'Write every step and note in your own words. Do not copy any text word for word.' : '',
@@ -284,17 +292,31 @@ async function readPictures(key, b) {
   });
   if (total > MAX_PICS_TOTAL) throw usr('Those pictures are too big together. Send fewer at a time.');
   const t0 = Date.now();
-  const out = await writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length), false, 'pictures', picModels());
+  let out = await writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length), false, 'pictures', picModels());
   // still in Spanish: ask once more, firmly, starting with the next stronger model, within what's left of Vercel's time
   const left = LIMITS.total - (Date.now() - t0);
   if (stillSpanish(out.recipe) && left > 20000) {
     try {
       const next = MODELS.filter(m => m !== out.model);
       const again = await writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length, true), false, 'pictures', next.length ? next : MODELS, left - 5000);
-      if (again.recipe.isRecipe && !stillSpanish(again.recipe)) return Object.assign(again, { retried: out.model });
+      if (again.recipe.isRecipe && !stillSpanish(again.recipe)) out = Object.assign(again, { retried: out.model });
     } catch (e) {}
   }
+  logPictures(out, parts.length, total, Date.now() - t0);
   return out;
+}
+// one line in Vercel's logs per screenshot read, so a missing photo or creator can be looked into later. No recipe
+// text and no username: just what came back and how long it took.
+function logPictures(out, n, bytes, ms) {
+  try {
+    const r = out.recipe || {};
+    console.log('[pictures] ' + JSON.stringify({
+      model: out.model, retried: out.retried || undefined, ms, pics: n, kb: Math.round(bytes / 1024),
+      isRecipe: !!r.isRecipe, ing: (r.ingredients || []).length, steps: (r.steps || []).length, lang: r.language || 'English',
+      creator: !!r.creator, app: r.app || '', photo: r.photo ? { pic: r.photo.pic, box: r.photo.box } : null,
+      photoRaw: r.photo ? undefined : r.photoRaw, tokens: out.tokens
+    }));
+  } catch (e) {}
 }
 
 // asks each free model in turn until one writes the recipe
@@ -311,7 +333,7 @@ async function writeWith(key, parts, promptOf, low, what, models, budget) {
       if (left < 5000) throw lastErr || usr('Gemini is slow right now. Try again in a few minutes.');
       let out;
       try {
-        out = await ask(key, model, parts, promptOf(attempt > 0), low, Math.min(what === 'pictures' ? LIMITS.pictures : LIMITS.video, left));
+        out = await ask(key, model, parts, promptOf(attempt > 0), low, Math.min(what === 'pictures' ? LIMITS.pictures : LIMITS.video, left), what === 'pictures' ? PIC_SCHEMA : SCHEMA);
       } catch (e) {
         lastErr = e;
         if (e.slow) break; // too slow: the next model
@@ -329,8 +351,8 @@ async function writeWith(key, parts, promptOf, low, what, models, budget) {
   throw lastErr || usr('Gemini couldn’t do this one.');
 }
 
-async function ask(key, model, parts, prompt, low, ms) {
-  const gen = { responseMimeType: 'application/json', responseSchema: SCHEMA };
+async function ask(key, model, parts, prompt, low, ms, schema) {
+  const gen = { responseMimeType: 'application/json', responseSchema: schema || SCHEMA };
   if (low) gen.mediaResolution = 'MEDIA_RESOLUTION_LOW';
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), ms || 80000);
@@ -400,7 +422,7 @@ function tidy(o) {
   const cuisine = CUISINES.find(c => c.toLowerCase() === cu.toLowerCase()) || (/^(none|n\/a|unknown|other)$/i.test(cu) ? '' : cu);
   const meals = list(o.meals, 7, 20).map(m => MEALS.find(x => x.toLowerCase() === m.toLowerCase().replace(/s$/, ''))).filter(Boolean);
   const title = str(o.title, 140).replace(/#[\p{L}\p{N}_]+/gu, '').replace(/\s+/g, ' ').trim();
-  return {
+  const out = {
     isRecipe: o.isRecipe !== false && (ingredients.length > 0 || steps.length > 0),
     title,
     ingredients,
@@ -419,6 +441,9 @@ function tidy(o) {
     app: APPS.includes(String(o.app || '').toLowerCase().trim()) ? String(o.app).toLowerCase().trim() : '',
     photo: photoOf(o.photo)
   };
+  // what Gemini said about the photo before photoOf checked it (for the log only; not sent to the phone)
+  Object.defineProperty(out, 'photoRaw', { value: o.photo || null, enumerable: false });
+  return out;
 }
 
 /* ---------- health check with the real key (Claude runs this after a change) ---------- */
