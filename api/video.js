@@ -14,8 +14,13 @@
 //                                     -> {ok, recipe:{isRecipe,title,ingredients,steps,notes,equipment,totalTime,
 //                                         servings,cuisine,meals,guesses}, model}; the uploaded video is deleted
 // POST /api/video?op=drop             {name}                   -> deletes an uploaded video (Cancel)
-// GET  /api/video?op=selftest[&only=upload|youtube][&yt=<id>]  -> runs the whole thing on a small sample video and a
-//                                     YouTube Short with the real key, and reports each step (never the key)
+// POST /api/video?op=image            {images:[{data:<base64>, type}], title, caption}  (v2.4: screenshots of a caption,
+//                                     or photos of a cookbook or magazine page; up to 8 pictures, the phone shrinks and
+//                                     slices them so the whole request stays under Vercel's 4.5 MB)
+//                                     -> {ok, recipe:{same as op=make}, model}; nothing is kept
+// GET  /api/video?op=selftest[&only=upload|youtube|image][&yt=<id>][&img=<picture on the app's own sites>]
+//                                  -> runs the whole thing on a small sample video, a YouTube Short and a sample
+//                                     screenshot with the real key, and reports each step (never the key)
 //
 // Only the app (a browser on https://djvas1975.github.io) can use the POST calls. The free tier has no bill, so the
 // worst a stranger could do is use up the day's free limit.
@@ -29,6 +34,10 @@ const MODELS = String(process.env.GEMINI_MODEL || 'gemini-3.8-flash,gemini-3.6-f
 const MAX_VIDEO = 400 * 1024 * 1024;
 const SAMPLE = 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4';
 const SAMPLE_YT = 'LrCEvNIyX-I';
+// a made-up Instagram caption screenshot in this repo (tests/fixtures), served by the app's own sites
+const SAMPLE_IMG = 'https://djvas1975.github.io/yumyumtumtum/tests/fixtures/caption-shot.jpg';
+const MAX_PICS = 8, MAX_PIC = 1.6 * 1024 * 1024, MAX_PICS_TOTAL = 3.3 * 1024 * 1024;
+const PIC_TYPES = /^image\/(jpeg|png|webp|heic|heif)$/;
 
 const MEALS = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Snack', 'Side', 'Drink'];
 const CUISINES = ['American', 'Asian', 'BBQ', 'Cajun', 'Caribbean', 'Chinese', 'Cuban', 'Filipino', 'French', 'German', 'Greek', 'Hawaiian', 'Indian', 'Italian', 'Japanese', 'Korean', 'Mediterranean', 'Mexican', 'Middle Eastern', 'Puerto Rican', 'Salvadoran', 'Southern', 'Spanish', 'Tex-Mex', 'Thai', 'Vietnamese'];
@@ -65,6 +74,11 @@ module.exports = async (req, res) => {
     if (op === 'make') {
       const b = await bodyJson(req);
       res.status(200).json(Object.assign({ ok: true }, await makeRecipe(key, b)));
+      return;
+    }
+    if (op === 'image') {
+      const b = await bodyJson(req);
+      res.status(200).json(Object.assign({ ok: true }, await readPictures(key, b)));
       return;
     }
     if (op === 'drop') {
@@ -196,38 +210,87 @@ async function makeRecipe(key, b) {
   // long videos at Gemini's low setting (about a third of the tokens), so the free tier's limits stretch further
   const low = !!b.youtube || Number(b.dur) > 180;
   try {
-    let lastErr = null;
-    for (const model of MODELS) {
-      for (let attempt = 0; attempt < 2; attempt++) {
-        let out;
-        try {
-          out = await ask(key, model, part, promptFor(b, attempt > 0), low);
-        } catch (e) {
-          lastErr = e;
-          if (e.status === 404 || e.status === 429 || (e.status === 400 && /not (found|supported)|unknown model|is not available/i.test(e.message))) break; // next model
-          if (e.status >= 500 && attempt === 0) { await wait(1500); continue; }
-          throw e;
-        }
-        if (out.recite && attempt === 0) { lastErr = usr('Gemini wouldn’t write this one out.'); continue; } // once more, in its own words
-        if (!out.text) { lastErr = usr(out.blocked ? 'Gemini wouldn’t look at this video.' : 'Gemini didn’t send a recipe back. Try again.'); break; }
-        const recipe = tidy(parseJson(out.text));
-        if (!recipe) { lastErr = usr('Gemini’s answer came back garbled. Try again.'); continue; }
-        return { recipe, model, tokens: out.tokens || undefined };
-      }
-    }
-    throw lastErr || usr('Gemini couldn’t do this one.');
+    return await writeWith(key, [part], ownWords => promptFor(b, ownWords), low, 'video');
   } finally {
     if (name) await dropFile(key, name); // the video is only needed for this one answer
   }
 }
 
-async function ask(key, model, part, prompt, low) {
+// pictures (v2.4): screenshots of a post's caption, or photos of a cookbook, magazine or recipe card
+function picturePrompt(b, ownWords, n) {
+  const title = clip(b.title, 140);
+  const caption = clip(b.caption, 4000);
+  return [
+    'You are filling in a recipe card in a home cook\'s recipe app from ' + (n > 1 ? n + ' pictures, in order' : 'a picture') + '.',
+    'They are screenshots of a social media post (most often the caption of an Instagram, TikTok or Facebook video), or photos of a cookbook, magazine or recipe card page. Pieces of one long screenshot can overlap; don\'t repeat the overlapping lines.',
+    'Read the recipe the creator wrote. Ignore the app around it: likes, view counts, buttons like Follow or Reply, "more", hashtags, music names, ads, and comments by other people (use a comment only when the creator wrote it to add to the recipe).',
+    title ? 'The cook saved it as: "' + title + '".' : '',
+    caption ? 'Text the app already got from the post (it may be only part of it):\n"""\n' + caption + '\n"""' : '',
+    'Write the recipe in plain American English, even if the pictures are in another language.',
+    '- title: the dish\'s name, short, like "Crack Chicken Penne". No emoji.',
+    '- ingredients: one item each, with the amounts exactly as written, like "2 lb chicken thighs", "1 cup shredded cheddar". If the recipe has parts (a sauce, a topping), put a heading line before each part, like "## For the sauce". Leave the amount out when none is written; don\'t make one up.',
+    '- steps: what to do, in order, one step each, a sentence or two. No numbers at the start. Keep temperatures and times.',
+    '- notes: tips, swaps or warnings the creator gives. Empty if none.',
+    '- equipment: pans, appliances and tools named, like "Large skillet", "Air fryer", "9x13 baking dish".',
+    '- totalTime: total minutes if written, else 0. servings: if written, else 0.',
+    '- cuisine: one of ' + CUISINES.join(', ') + ', or "" if none fits.',
+    '- meals: any of ' + MEALS.join(', ') + ' that fit.',
+    '- guesses: short notes on anything you couldn\'t read clearly or had to guess, like "Amount of garlic was cut off". Empty if nothing.',
+    '- isRecipe: false if the pictures have no recipe in them (no ingredients and no steps), and then leave the lists empty.',
+    'Do not add ingredients or steps that are not in the pictures.',
+    ownWords ? 'Write every step and note in your own words. Do not copy any text word for word.' : ''
+  ].filter(Boolean).join('\n');
+}
+async function readPictures(key, b) {
+  b = b || {};
+  const list = Array.isArray(b.images) ? b.images : [];
+  if (!list.length) throw usr('Pick a screenshot or a photo first.');
+  if (list.length > MAX_PICS) throw usr('That’s too many pictures. Send up to ' + MAX_PICS + '.');
+  let total = 0;
+  const parts = list.map(x => {
+    const data = String((x && x.data) || '').replace(/^data:[^,]*,/, '').replace(/\s+/g, '');
+    const type = PIC_TYPES.test(String((x && x.type) || '')) ? String(x.type) : 'image/jpeg';
+    const bytes = Math.floor(data.length * 3 / 4);
+    if (!/^[A-Za-z0-9+/]+=*$/.test(data) || bytes < 200) throw usr('One of the pictures didn’t come through. Try again.');
+    if (bytes > MAX_PIC) throw usr('One of the pictures is too big. Try a smaller one.');
+    total += bytes;
+    return { inlineData: { mimeType: type, data } };
+  });
+  if (total > MAX_PICS_TOTAL) throw usr('Those pictures are too big together. Send fewer at a time.');
+  return writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length), false, 'pictures');
+}
+
+// asks each free model in turn until one writes the recipe
+async function writeWith(key, parts, promptOf, low, what) {
+  let lastErr = null;
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let out;
+      try {
+        out = await ask(key, model, parts, promptOf(attempt > 0), low);
+      } catch (e) {
+        lastErr = e;
+        if (e.status === 404 || e.status === 429 || (e.status === 400 && /not (found|supported)|unknown model|is not available/i.test(e.message))) break; // next model
+        if (e.status >= 500 && attempt === 0) { await wait(1500); continue; }
+        throw e;
+      }
+      if (out.recite && attempt === 0) { lastErr = usr('Gemini wouldn’t write this one out.'); continue; } // once more, in its own words
+      if (!out.text) { lastErr = usr(out.blocked ? (what === 'pictures' ? 'Gemini wouldn’t look at these pictures.' : 'Gemini wouldn’t look at this video.') : 'Gemini didn’t send a recipe back. Try again.'); break; }
+      const recipe = tidy(parseJson(out.text));
+      if (!recipe) { lastErr = usr('Gemini’s answer came back garbled. Try again.'); continue; }
+      return { recipe, model, tokens: out.tokens || undefined };
+    }
+  }
+  throw lastErr || usr('Gemini couldn’t do this one.');
+}
+
+async function ask(key, model, parts, prompt, low) {
   const gen = { responseMimeType: 'application/json', responseSchema: SCHEMA };
   if (low) gen.mediaResolution = 'MEDIA_RESOLUTION_LOW';
   const r = await go(API + '/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
     method: 'POST',
     headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: [part, { text: prompt }] }], generationConfig: gen })
+    body: JSON.stringify({ contents: [{ role: 'user', parts: parts.concat([{ text: prompt }]) }], generationConfig: gen })
   });
   const raw = await r.text();
   if (!r.ok) throw gErr(r.status, raw);
@@ -286,7 +349,7 @@ async function selftest(req, res, key, qp) {
   const out = { ok: true, key: key ? 'set (' + key.length + ' characters)' : 'missing', models: MODELS, checks: [] };
   const note = (step, o) => { out.checks.push(Object.assign({ step }, o)); };
   if (!key) { out.ok = false; res.status(200).json(out); return; }
-  const only = String(qp.only || 'upload,youtube');
+  const only = String(qp.only || 'upload,youtube,image');
   if (/upload/.test(only)) {
     let name = '';
     try {
@@ -316,6 +379,25 @@ async function selftest(req, res, key, qp) {
       out.ok = false;
       note('error', { ok: false, error: plain(e), detail: String((e && e.message) || e).slice(0, 300), status: e && e.status });
       if (name) await dropFile(key, name);
+    }
+  }
+  if (/image/.test(only)) {
+    try {
+      const t0 = Date.now();
+      let src = String(qp.img || SAMPLE_IMG);
+      let u = null; try { u = new URL(src); } catch (e) { u = null; }
+      // only pictures on the app's own sites, so this can't be used to fetch anything else
+      if (!u || u.protocol !== 'https:' || !/^(djvas1975\.github\.io|yumyumtumtum\.vercel\.app)$/.test(u.hostname)) src = SAMPLE_IMG;
+      const ir = await go(src);
+      const buf = Buffer.from(await ir.arrayBuffer());
+      note('sample picture', { ok: ir.ok && buf.length > 1000, bytes: buf.length, ms: Date.now() - t0 });
+      const t1 = Date.now();
+      const m = await readPictures(key, { images: [{ data: buf.toString('base64'), type: /png$/i.test(src) ? 'image/png' : 'image/jpeg' }] });
+      const r = m.recipe;
+      note('write recipe (picture)', { ok: true, model: m.model, ms: Date.now() - t1, tokens: m.tokens, isRecipe: r.isRecipe, title: r.title, ingredients: r.ingredients, steps: r.steps, notes: r.notes, totalTime: r.totalTime, servings: r.servings, cuisine: r.cuisine, meals: r.meals, guesses: r.guesses });
+    } catch (e) {
+      out.ok = false;
+      note('error (picture)', { ok: false, error: plain(e), detail: String((e && e.message) || e).slice(0, 300), status: e && e.status });
     }
   }
   if (/youtube/.test(only)) {
@@ -370,4 +452,5 @@ async function bodyJson(req) {
 module.exports._setFetch = f => { FETCH = f; };
 module.exports._tidy = tidy;
 module.exports._parseJson = parseJson;
+module.exports._picturePrompt = picturePrompt;
 module.exports.MODELS = MODELS;

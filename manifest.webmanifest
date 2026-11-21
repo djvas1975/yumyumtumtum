@@ -99,7 +99,7 @@
       "url": "url",
       "files": [
         {
-          "name": "video",
+          "name": "media",
           "accept": [
             "video/*",
             ".mp4",
@@ -107,7 +107,14 @@
             ".m4v",
             ".webm",
             ".3gp",
-            ".mkv"
+            ".mkv",
+            "image/*",
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp",
+            ".heic",
+            ".heif"
           ]
         }
       ]

@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.3.3**.
+Current version: **2.4**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -139,6 +139,12 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   ("It guessed: …", "This replaces what's in Ingredients now", "Adds a picture from the video as the photo"); nothing is
   filled in until **Use it**. Share a video from the gallery to YumYum and it starts by itself. The recipe page then says
   "Gemini wrote this from the video. Check the amounts before you cook." See "Fill in from a video: how it works" below.
+- **Fill in from a screenshot (v2.4, Nov 21, 2026):** Dave's Instagram reel was shown only to people signed in, so no
+  reader can get it from the link (see the Instagram notes below), and he asked for "something that will automatically do
+  this". The closest a web app can get: a "Fill in from a screenshot" button beside "Fill in from a video" (pick 1 to 4
+  pictures), and **Share > YumYum** from a screenshot or the gallery, which opens Save a recipe and starts by itself.
+  Gemini reads the caption (or a photo of a cookbook or magazine page) and the same preview card and **Use it** follow. The
+  recipe page then says "Gemini read this from a screenshot or photo." See "Fill in from a screenshot: how it works" below.
 - **Sync & backup (v2.2, Oct 16, 2026; was Cloud backup):** Dave asked for his phone and tablet to "save and use on both
   devices using same account". The same code on both keeps recipes, photos, collections, kitchen, grocery list, name and
   taste the same; changes show up on the other within a few minutes, and right away when it's opened. A second device:
@@ -170,7 +176,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
 | `api/backup.js` | Cloud backup and sync to the private Vercel Blob store: `POST ?op=save&day=&daily=1[&if=<etag>|none]`, `GET ?op=pull&have=<etag>`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). Artistry uses the same endpoint with `&app=artistry` (see the Artistry cloud backup section). |
-| `api/video.js` | Fill in from a video with Gemini (free tier). `POST ?op=start` {size,type} -> Gemini's one-time upload address (the phone sends the file there itself); `op=state` {name}; `op=make` {name or youtube, dur, title, caption} -> the recipe as JSON (the video is deleted after); `op=drop` {name}. `GET /api/video/<anything>?op=selftest[&only=upload|youtube][&yt=<id>]` runs it all with the real key on a sample clip and a YouTube Short. Key: `GEMINI_API_KEY` (Vercel Secret). Models: `GEMINI_MODEL` or gemini-3.8-flash, gemini-3.6-flash, gemini-3-flash-preview (next one on a 429/404). |
+| `api/video.js` | Fill in from a video with Gemini (free tier). `POST ?op=start` {size,type} -> Gemini's one-time upload address (the phone sends the file there itself); `op=state` {name}; `op=make` {name or youtube, dur, title, caption} -> the recipe as JSON (the video is deleted after); `op=drop` {name}; since v2.4 `op=image` {images:[{data (base64), type}], title, caption} (up to 8 pictures, 1.6 MB each, 3.3 MB together) -> the same recipe JSON. `GET /api/video/<anything>?op=selftest[&only=upload|youtube|image][&yt=<id>][&img=<picture on github.io or vercel.app>]` runs it all with the real key on a sample clip, a YouTube Short and `tests/fixtures/caption-shot.jpg` (a made-up caption screenshot). Key: `GEMINI_API_KEY` (Vercel Secret). Models: `GEMINI_MODEL` or gemini-3.8-flash, gemini-3.6-flash, gemini-3-flash-preview (next one on a 429/404). |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
 | `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`), cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`), and the What you'll need list (`GEAR`, `GEAR_LIKELY`, `gearFor(recipe)`, `gearHeard(text)`). Sources are listed at the top of the file. |
@@ -179,7 +185,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
 | `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js`, `tests/timers.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup and sync with a fake Blob store, and similar-recipe matching with fake recipe sites. |
 | `tests/video.test.js` | Fill in from a video: the real api/video.js with a pretend Gemini (start, model fallback on a used-up free limit, tidying Gemini's answer, quote-blocked retry, YouTube, delete after, health check). |
-| `tests/video.playwright.js` | The button, sending, preview, Use it, the recipe-page note, YouTube, errors, Cancel, a dropped upload, dark mode, and Share > YumYum (a video and a plain link) through the real service worker (Playwright + ffmpeg, about a minute; not in the quick list). Run after building when this feature changes. |
+| `tests/video.playwright.js` | The button, sending, preview, Use it, the recipe-page note, YouTube, errors, Cancel, a dropped upload, dark mode, and Share > YumYum (a video, a screenshot, and a plain link) through the real service worker; since v2.4 also Fill in from a screenshot (sizes sent, a long screenshot cut in pieces, a camera photo made smaller, no recipe, not a picture, dark mode) (Playwright + ffmpeg, about a minute; not in the quick list). Run after building when this feature changes. |
 | `tests/sync.playwright.js` | A phone and a tablet syncing through the real api/backup.js on a pretend Blob store (Playwright, about a minute; not in the quick list). Run after building when sync changes. |
 | `package.json` | Only for Vercel: the `@vercel/blob` SDK used by api/backup.js. (npm's registry refused `@vercel/blob` inside Claude sessions on Sept 29, 2026, so tests fake it; Vercel installs it on deploy.) |
 | `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s, similar 30 s, video 180 s; Hobby with Fluid compute allows up to 300 s), and `/api/video/:tag` -> `/api/video` for live checks. |
@@ -194,7 +200,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js && node tests/video.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.3.3`).
+5. App changes: bump the version text in `V.me` (`version 2.4`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -661,6 +667,35 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - Live check: `https://yumyumtumtum.vercel.app/api/video/<new word each time>?op=selftest` (WebFetch keeps answers by
   path; the whole check can take longer than WebFetch waits, so `&only=upload` or `&only=youtube`, and fetch the same
   address again a minute later to read the finished answer from Vercel's cache).
+
+## Fill in from a screenshot: how it works (built Nov 21, 2026, v2.4)
+- Why: some Instagram posts are shown only to people signed in (private accounts, age limits). No server, no "link my
+  account" (Meta ended consumer API access Dec 4, 2024; what's left is for Business/Creator accounts and their own posts),
+  and not ChatGPT (same sign-in wall; Plus doesn't include API use) can read them. Signing in as Dave from a server would
+  break Instagram's terms and risk his account. Dave's phone can see them, so it hands YumYum a screenshot.
+- Phone (tools/app.html, "fill in from a screenshot" next to the video block): `#f-ifile` (accept image/*, multiple, first
+  4 used), `picStart` makes `F.vf = {src:'image', images, stage:'shrink'|'write'|'done'|'none'|'error'}` and `vfRun` takes the
+  picture path: `prepPics` opens each with createImageBitmap (an `<img>` for formats Chrome can't, else a raw JPEG/PNG/WEBP/
+  HEIC up to 1.5 MB as it is), makes it at most 1080 wide, cuts anything taller than 2600 into 2200-high pieces with 120 px
+  overlap (a scrolling screenshot's words stay readable), at most 8 pieces, JPEG 0.8 (0.62, then 0.45 if the set is over
+  3 MB). Then `op=image` with the name typed so far and the caption the reader got. The preview card says "Gemini read the
+  recipe", tips to paste the link when the Link box is empty, and never uses the screenshot as the recipe photo. `F.ai.src
+  = 'image'`; `aiNoteHTML` shows "Gemini read this from a screenshot or photo." Nothing reads "no recipe": "tap “more” on
+  the caption first". The Instagram sign-in-only message now points at the screenshot first, then a screen recording.
+- Server (`readPictures`, `picturePrompt` in api/video.js): pictures go inline (`inlineData`) with a prompt to read the
+  creator's recipe and ignore the app around it (likes, Follow, "more", hashtags, music, other people's comments), keep
+  amounts exactly as written, and list guesses for anything cut off. Same model fallback, quoting retry and `tidy` as videos
+  (`writeWith`). Nothing is uploaded or kept.
+- Share: the manifest's share target file field is `media` (video/* and image/*); sw.js reads every file in the post (old
+  installs still send `video`), keeps a video as `shared-video` or up to 4 pictures as `shared-image-<i>` in the `share-in`
+  cache, and opens `./?image=N`; `vfSharedPics` picks them up. The share menu on Dave's phone offers YumYum for pictures only
+  after Chrome updates the installed app from the new manifest (it checks when the app opens, at most daily); the button
+  works right away.
+- Tested Nov 21, 2026: tests/video.test.js (pretend Gemini: order, prompt, limits, broken data, no recipe, quoting retry,
+  free-limit fallback, HEIC as it is, other sites turned away) and tests/video.playwright.js (button, 1080x2523 sent for the
+  fixture, preview, Use it, saved note, a 1080x6000 screenshot -> three 1080x2200 pieces plus a 4000x3000 photo -> 1080x810
+  in one request of about 270 KB, no recipe, not a picture, shared through the real service worker under both field names,
+  dark mode). **Not confirmed yet on Dave's phone.**
 
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.

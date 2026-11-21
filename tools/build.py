@@ -79,14 +79,16 @@ def build_manifest():
              "icons": [{"src": pic("icons/shortcut-timer.png"), "sizes": "96x96", "type": "image/png"}]}
         ],
         # Android sends shared links in "text" (sometimes "title"); the app reads all three. Since v2.3 a video file can
-        # be shared too, which needs a form post: the service worker (sw.js, "share-in") keeps the video for the app and
-        # sends links on to ./?title=&text=&url= exactly like before.
+        # be shared too, and since v2.4 pictures (a screenshot of a caption, a photo of a cookbook page), which needs a
+        # form post: the service worker (sw.js, "share-in") keeps them for the app and sends links on to
+        # ./?title=&text=&url= exactly like before. (The field was "video" before 2.4; sw.js reads every file it gets.)
         "share_target": {
             "action": (BASE or "./") + "share-in",
             "method": "POST",
             "enctype": "multipart/form-data",
             "params": {"title": "title", "text": "text", "url": "url",
-                       "files": [{"name": "video", "accept": ["video/*", ".mp4", ".mov", ".m4v", ".webm", ".3gp", ".mkv"]}]},
+                       "files": [{"name": "media", "accept": ["video/*", ".mp4", ".mov", ".m4v", ".webm", ".3gp", ".mkv",
+                                                         "image/*", ".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"]}]},
         },
     }
 
@@ -115,19 +117,28 @@ self.addEventListener('notificationclick', e => {
     return self.clients.openWindow('./?go=timers');
   }));
 });
-// Share > YumYum (a link, or since v2.3 a video from the gallery) arrives as a form post to ./share-in. GitHub Pages
-// can't take a post, so it's answered here: a video is kept in the "share-in" cache for the app to pick up, and the
-// app opens at ./?title=&text=&url=(&video=1), the same address a shared link always used.
+// Share > YumYum (a link, since v2.3 a video, since v2.4 up to 4 pictures) arrives as a form post to ./share-in. GitHub
+// Pages can't take a post, so it's answered here: a video or pictures are kept in the "share-in" cache for the app to
+// pick up, and the app opens at ./?title=&text=&url=(&video=1 or &image=N), the same address a shared link always used.
 async function shareIn(req) {
   const q = new URLSearchParams();
   try {
     const fd = await req.formData();
     ['title', 'text', 'url'].forEach(k => { const v = fd.get(k); if (typeof v === 'string' && v.trim()) q.set(k, v.trim().slice(0, 2000)); });
-    const f = fd.getAll('video').find(x => x && typeof x !== 'string' && x.size);
-    if (f) {
-      const c = await caches.open('share-in');
-      await c.put(new URL('./shared-video', self.registration.scope).href, new Response(f, {headers: {'content-type': f.type || 'video/mp4', 'x-name': encodeURIComponent(f.name || 'video.mp4')}}));
+    const files = [];
+    for (const [, v] of fd.entries()) if (v && typeof v !== 'string' && v.size) files.push(v);
+    const isPic = f => /^image\//.test(f.type || '') || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || '');
+    const c = await caches.open('share-in');
+    const vid = files.find(f => !isPic(f));
+    if (vid) {
+      await c.put(new URL('./shared-video', self.registration.scope).href, new Response(vid, {headers: {'content-type': vid.type || 'video/mp4', 'x-name': encodeURIComponent(vid.name || 'video.mp4')}}));
       q.set('video', '1');
+    } else {
+      const pics = files.filter(isPic).slice(0, 4);
+      for (let i = 0; i < pics.length; i++) {
+        await c.put(new URL('./shared-image-' + i, self.registration.scope).href, new Response(pics[i], {headers: {'content-type': pics[i].type || 'image/jpeg', 'x-name': encodeURIComponent(pics[i].name || 'picture.jpg')}}));
+      }
+      if (pics.length) q.set('image', String(pics.length));
     }
   } catch (err) {}
   const qs = q.toString();

@@ -21,7 +21,12 @@ const SRV = path.join(SP, 'srv'); fs.mkdirSync(SRV, { recursive: true });
   const ff = a => cp.execFileSync('ffmpeg', ['-y', '-loglevel', 'error'].concat(a));
   ff(['-f', 'lavfi', '-i', 'testsrc=duration=6:size=360x640:rate=24', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=6', '-c:v', 'libvpx', '-b:v', '400k', '-c:a', 'libvorbis', '-shortest', path.join(SP, 'clip.webm')]);
   ff(['-f', 'lavfi', '-i', 'testsrc=duration=6:size=360x640:rate=24', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', path.join(SP, 'clip.mp4')]);
+  // v2.4 pictures: a long scrolling screenshot (cut into pieces on the phone) and a big camera photo (made smaller)
+  ff(['-f', 'lavfi', '-i', 'testsrc=size=1080x6000', '-frames:v', '1', path.join(SP, 'tall.png')]);
+  ff(['-f', 'lavfi', '-i', 'testsrc=size=4000x3000', '-frames:v', '1', '-q:v', '3', path.join(SP, 'camera.jpg')]);
 }
+// width and height of a JPEG sent to Gemini (base64)
+const jpegSize = b64 => { const b = Buffer.from(b64, 'base64'); let i = 2; while (i + 9 < b.length) { if (b[i] !== 0xFF) return null; const m = b[i + 1], len = b.readUInt16BE(i + 2); if (m >= 0xC0 && m <= 0xC3) return b.readUInt16BE(i + 7) + 'x' + b.readUInt16BE(i + 5); i += 2 + len; } return null; };
 
 // ---- pretend Gemini (the server side through the real api/video.js, the phone's upload through a page route) ----
 process.env.GEMINI_API_KEY = 'test-key-123';
@@ -201,7 +206,8 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
   G.uploadFail = 1;
   await p.setInputFiles('#f-vfile', path.join(SP, 'clip.mp4'));
   ok(await waitStage(p, 'done', 25000), 'a dropped upload tries once more by itself, then works');
-  ok(await p.evaluate(() => !window.__t.getF().vf.frame), 'no picture from a video the phone can’t play (no error either)');
+  // (only where this browser can't play H.264; newer test browsers can, and then a picture is fine)
+  if (await p.evaluate(() => !document.createElement('video').canPlayType('video/mp4; codecs="avc1.42E01E"'))) ok(await p.evaluate(() => !window.__t.getF().vf.frame), 'no picture from a video the phone can’t play (no error either)');
   await p.click('[data-act="vf-close"]');
   await p.evaluate(() => document.querySelector('[data-act="closesheet"]').click()); await p.waitForTimeout(400);
 
@@ -215,18 +221,20 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
 
   // ---- 7. Share > YumYum through the real service worker: a video, and a plain link like before ----
   const sc = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+  await sc.route(/yumyumtumtum\.vercel\.app\/api\/video/, serveApi);
   const s = await sc.newPage(); s.on('pageerror', e => errs.push(e.message));
   await s.goto('http://localhost:8791/'); await s.waitForTimeout(500);
   await s.evaluate(() => navigator.serviceWorker.ready.then(() => true));
   await s.reload(); await s.waitForTimeout(800);
   ok(await s.evaluate(() => !!navigator.serviceWorker.controller), 'the service worker is running the app');
-  const share = async (fields, file) => {
+  const share = async (fields, file, field) => {
     await s.evaluate(f => {
       const form = document.createElement('form'); form.method = 'POST'; form.enctype = 'multipart/form-data'; form.action = './share-in'; form.id = 'fakeshare';
       Object.entries(f).forEach(([k, v]) => { const i = document.createElement('input'); i.name = k; i.value = v; form.appendChild(i); });
-      const fi = document.createElement('input'); fi.type = 'file'; fi.name = 'video'; fi.id = 'fakefile'; form.appendChild(fi);
+      const fi = document.createElement('input'); fi.type = 'file'; fi.name = f.__field || 'video'; fi.id = 'fakefile'; form.appendChild(fi);
+      delete f.__field; form.querySelectorAll('input[name="__field"]').forEach(x => x.remove());
       document.body.appendChild(form);
-    }, fields);
+    }, Object.assign({}, fields, field ? { __field: field } : {}));
     if (file) await s.setInputFiles('#fakefile', file);
     await Promise.all([s.waitForNavigation(), s.evaluate(() => document.getElementById('fakeshare').submit())]);
     await s.waitForTimeout(1200);
@@ -238,6 +246,72 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
   const got = await s.evaluate(async () => { const F = window.__t.getF(); return { vf: !!(F && F.vf), name: F && F.vf && F.vf.file ? F.vf.file.name : '', size: F && F.vf && F.vf.file ? F.vf.file.size : 0, left: !!(await (await caches.open('share-in')).match(new URL('./shared-video', location.href).href)) }; });
   ok(got.vf && got.name === 'clip.webm' && got.size === fs.statSync(path.join(SP, 'clip.webm')).size && !got.left, 'a video shared to YumYum opens Save a recipe and starts on that video (and isn’t left behind in storage)');
   await shot(s, '9-shared-video');
+
+  // a screenshot shared to YumYum (Share from the screenshot toolbar or the gallery; the 2.4 share menu calls the field "media")
+  await s.goto('http://localhost:8791/'); await s.waitForTimeout(600);
+  const gs = G.gen.length;
+  await share({ title: '', text: '', url: '' }, path.join(R, 'tests/fixtures/caption-shot.jpg'), 'media');
+  const sp = await s.waitForFunction(() => { const F = window.__t.getF(); return F && F.vf && F.vf.stage === 'done'; }, null, { timeout: 15000 }).then(() => true, () => false);
+  const gotP = await s.evaluate(async () => { const F = window.__t.getF(); return { src: F && F.vf && F.vf.src, n: F && F.vf && F.vf.images ? F.vf.images.length : 0, left: !!(await (await caches.open('share-in')).match(new URL('./shared-image-0', location.href).href)) }; });
+  ok(sp && gotP.src === 'image' && gotP.n === 1 && !gotP.left && G.gen.length === gs + 1, 'a screenshot shared to YumYum opens Save a recipe and Gemini reads it by itself (nothing left in storage)');
+  await s.$eval('#f-vf', el => el.scrollIntoView({ block: 'start' }));
+  await shot(s, '13-shared-screenshot');
+  // the old share menu (before Chrome updates the installed app) names the field "video": a picture there still works
+  await s.goto('http://localhost:8791/'); await s.waitForTimeout(600);
+  await share({ title: '', text: '', url: '' }, path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  ok(await s.evaluate(() => { const F = window.__t.getF(); return !!(F && F.vf && F.vf.src === 'image'); }), 'a picture sent under the old field name is still read as a picture');
+
+  // ---- 8. Fill in from a screenshot (v2.4) ----
+  const q = await page();
+  await openAdd(q);
+  ok(/Fill in from a screenshot/.test(await q.textContent('#f-vfrow')), 'the form also has a "Fill in from a screenshot" button');
+  await shot(q, '10-screenshot-button');
+  let g0 = G.gen.length;
+  await q.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  ok(await waitStage(q, 'done', 15000), 'picking a screenshot: Gemini reads it');
+  let gp = G.gen[G.gen.length - 1].contents[0].parts;
+  ok(G.gen.length === g0 + 1 && gp.length === 2 && gp[0].inlineData.mimeType === 'image/jpeg' && jpegSize(gp[0].inlineData.data) === '1080x2523' && /Ignore the app around it/.test(gp[1].text), 'one screenshot went to Gemini as a 1080-wide JPEG with the screenshot prompt -> ' + jpegSize(gp[0].inlineData.data));
+  const pv = await q.textContent('#f-vf');
+  ok(/Gemini read the recipe/.test(pv) && /Crack Chicken Penne/.test(pv) && /Tip: paste the post’s link/.test(pv) && /Read by Gemini from your picture\./.test(pv) && !/Adds a picture/.test(pv), 'preview: "Gemini read the recipe", the link tip, no photo from the screenshot');
+  await q.$eval('#f-vf', el => el.scrollIntoView({ block: 'start' }));
+  await shot(q, '11-screenshot-preview');
+  await q.click('[data-act="vf-use"]'); await q.waitForTimeout(700);
+  ok(await q.inputValue('#f-title') === 'Crack Chicken Penne' && (await q.inputValue('#f-ing')).split('\n').length === 6 && await q.evaluate(() => { const F = window.__t.getF(); return !F.photoKey && !F.photoData; }), 'Use it fills the boxes and leaves the photo alone');
+  await q.click('button[form="edform"]'); await q.waitForTimeout(900);
+  const savedP = await q.evaluate(() => window.__t.list().find(r => r.title === 'Crack Chicken Penne' && r.aiFill && r.aiFill.src === 'image'));
+  ok(!!savedP, 'the saved recipe remembers Gemini read it from a picture');
+  await q.evaluate(id => window.__t.go({ name: 'recipe', id }), savedP.id); await q.waitForTimeout(700);
+  ok(/Gemini read this from a screenshot or photo\. Check the amounts before you cook\./.test(await q.textContent('#sec-ing')), 'the recipe page says Gemini read it from a screenshot');
+  await q.$eval('#sec-ing', el => el.scrollIntoView({ block: 'start' })); await q.waitForTimeout(300);
+  await shot(q, '12-screenshot-recipe-note');
+  // a long scrolling screenshot is cut into overlapping pieces; a big camera photo is made smaller; both in one go
+  await openAdd(q);
+  g0 = G.gen.length;
+  await q.setInputFiles('#f-ifile', [path.join(SP, 'tall.png'), path.join(SP, 'camera.jpg')]);
+  ok(await waitStage(q, 'done', 20000), 'two pictures at once: Gemini reads them');
+  gp = G.gen[G.gen.length - 1].contents[0].parts;
+  const sizes = gp.filter(x => x.inlineData).map(x => jpegSize(x.inlineData.data));
+  ok(sizes.join() === '1080x2200,1080x2200,1080x2200,1080x810', 'the long screenshot became 3 overlapping 1080x2200 pieces, the camera photo 1080x810 -> ' + sizes.join());
+  ok(/4 pictures, in order/.test(gp[gp.length - 1].text) && /Read by Gemini from your pictures\./.test(await q.textContent('#f-vf')), 'Gemini is told the pieces are in order; the preview says "pictures"');
+  const total = gp.filter(x => x.inlineData).reduce((a, x) => a + x.inlineData.data.length, 0);
+  ok(total < 4.2 * 1024 * 1024, 'the whole request stays under Vercel’s 4.5 MB -> ' + Math.round(total / 1024) + ' KB of picture data');
+  await q.click('[data-act="vf-close"]');
+  // no recipe in the picture
+  G.plan = [{ recipe: { isRecipe: false, title: '', ingredients: [], steps: [], notes: [], equipment: [], totalTime: 0, servings: 0, cuisine: '', meals: [], guesses: [] } }];
+  await q.setInputFiles('#f-ifile', path.join(SP, 'camera.jpg'));
+  ok(await waitStage(q, 'none', 15000) && /didn’t find a recipe in that picture/.test(await q.textContent('#f-vf')) && /tap “more” on the caption/.test(await q.textContent('#f-vf')), 'a picture with no recipe says so, with the "tap more" tip');
+  await shot(q, '14-screenshot-none');
+  await q.click('[data-act="vf-close"]');
+  // a file that isn't a picture
+  await q.setInputFiles('#f-ifile', path.join(SP, 'clip.webm'));
+  await q.waitForTimeout(400);
+  ok(await q.evaluate(() => !window.__t.getF().vf), 'a file that isn’t a picture is turned away');
+  const qd = await page('dark');
+  await openAdd(qd);
+  await qd.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  await waitStage(qd, 'done', 15000);
+  await qd.$eval('#f-vf', el => el.scrollIntoView({ block: 'start' }));
+  await shot(qd, '15-screenshot-preview-dark');
 
   ok(!errs.length, 'no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
   await b.close(); srv.close();

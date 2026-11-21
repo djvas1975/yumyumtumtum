@@ -20,6 +20,7 @@ async function fakeFetch(url, o) {
   const u = new URL(url);
   G.calls.push((o.method || 'GET') + ' ' + u.pathname + (u.search ? '?…' : ''));
   if (/flower\.mp4$/.test(u.pathname)) return new Response(Buffer.alloc(700000, 7));
+  if (/caption-shot\.jpg$/.test(u.pathname)) { G.imgFetched = u.href; return new Response(Buffer.alloc(90000, 9)); }
   if (u.pathname === '/upload/v1beta/files' && !u.searchParams.get('upload_id')) {
     if (h['x-goog-api-key'] !== 'test-key-123') return json({ error: { code: 400, message: 'API key not valid. Please pass a valid API key.', status: 'INVALID_ARGUMENT' } }, 400);
     const id = 'up' + (G.nextUp++);
@@ -157,6 +158,39 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   const gone = await call('POST', { op: 'make' }, {}, { youtube: 'LrCEvNIyX-I' });
   ok(!gone.body.ok && G.gen.slice(-3).map(x => x.model).join() === api.MODELS.join(), 'tries every free model before giving up');
 
+  // ---- pictures (v2.4): screenshots of a caption, or a cookbook page ----
+  {
+  const pic = n => Buffer.alloc(n, 5).toString('base64');
+  G.gen = []; genPlan = [];
+  const shot = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(40000), type: 'image/jpeg' }, { data: 'data:image/png;base64,' + pic(30000), type: 'image/png' }], title: '', caption: 'Creamy chicken… more' });
+  const sentP = G.gen[0] && G.gen[0].body.contents[0].parts;
+  ok(shot.body.ok && shot.body.recipe.title === 'Crack Chicken Penne' && shot.body.recipe.ingredients[1] === '## Sauce', 'pictures: the recipe comes back tidied like a video’s -> ' + JSON.stringify(shot.body.recipe && shot.body.recipe.ingredients));
+  ok(sentP && sentP.length === 3 && sentP[0].inlineData.mimeType === "image/jpeg" && sentP[1].inlineData.mimeType === "image/png" && !/^data:/.test(sentP[1].inlineData.data) && /2 pictures, in order/.test(sentP[2].text) && /Ignore the app around it/.test(sentP[2].text) && /Creamy chicken/.test(sentP[2].text), 'pictures: both go to Gemini in order with the screenshot prompt and the caption so far');
+  const noPics = await call('POST', { op: 'image' }, {}, { images: [] });
+  ok(!noPics.body.ok && /Pick a screenshot/.test(noPics.body.error), 'pictures: none sent -> plain message');
+  const tooMany = await call('POST', { op: 'image' }, {}, { images: Array.from({ length: 9 }, () => ({ data: pic(2000), type: 'image/jpeg' })) });
+  ok(!tooMany.body.ok && /up to 8/.test(tooMany.body.error), 'pictures: more than 8 -> plain message');
+  const tooBig = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(1800000), type: 'image/jpeg' }] });
+  ok(!tooBig.body.ok && /too big/.test(tooBig.body.error), 'pictures: one too big -> plain message');
+  const bigTogether = await call('POST', { op: 'image' }, {}, { images: [1, 2, 3].map(() => ({ data: pic(1200000), type: 'image/jpeg' })) });
+  ok(!bigTogether.body.ok && /too big together/.test(bigTogether.body.error), 'pictures: too big together -> plain message');
+  const junk = await call('POST', { op: 'image' }, {}, { images: [{ data: 'not base64 !!', type: 'image/jpeg' }] });
+  ok(!junk.body.ok && /didn’t come through/.test(junk.body.error), 'pictures: broken data -> plain message');
+  genPlan = [{ body: answer({ isRecipe: false, title: '', ingredients: [], steps: [], notes: [], equipment: [], totalTime: 0, servings: 0, cuisine: '', meals: [], guesses: [] }) }];
+  const notRecipe = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(5000), type: 'image/webp' }] });
+  ok(notRecipe.body.ok && notRecipe.body.recipe.isRecipe === false, 'pictures: no recipe in them -> isRecipe false');
+  genPlan = [{ body: { candidates: [{ finishReason: 'RECITATION' }] } }];
+  G.gen = [];
+  const recite = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(5000), type: 'image/jpeg' }] });
+  ok(recite.body.ok && G.gen.length === 2 && /own words/.test(G.gen[1].body.contents[0].parts[1].text), 'pictures: a quoting block gets one more try in its own words');
+  genPlan = [{ status: 429, body: { error: { code: 429, message: 'Quota exceeded', status: 'RESOURCE_EXHAUSTED' } } }];
+  G.gen = [];
+  const next = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(5000), type: 'image/heic' }] });
+  ok(next.body.ok && G.gen.map(x => x.model).join() === api.MODELS.slice(0, 2).join() && G.gen[1].body.contents[0].parts[0].inlineData.mimeType === 'image/heic', 'pictures: a used-up free limit moves on to the next model (HEIC photos go as they are)');
+  const evil = await call('POST', { op: 'image' }, { origin: 'https://evil.example' }, { images: [{ data: pic(5000), type: 'image/jpeg' }] });
+  ok(evil.code === 403, 'pictures: other websites are turned away');
+  }
+
   // ---- cancel ----
   G.files.set('files/vid9', { name: 'files/vid9', state: 'ACTIVE', uri: 'x', mimeType: 'video/mp4' });
   const drop = await call('POST', { op: 'drop' }, {}, { name: 'files/vid9' });
@@ -166,7 +200,10 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   genPlan = [];
   const self = await call('GET', { op: 'selftest' }, { origin: undefined });
   const names = (self.body.checks || []).map(c => c.step + (c.ok ? '' : ' (failed)'));
-  ok(self.body.ok && names.join(' | ') === 'sample video | start upload | phone may send it (preflight) | send it like the phone | Gemini got it ready | write recipe (uploaded video) | write recipe (YouTube)', 'selftest: ' + names.join(' | '));
+  ok(self.body.ok && names.join(' | ') === 'sample video | start upload | phone may send it (preflight) | send it like the phone | Gemini got it ready | write recipe (uploaded video) | sample picture | write recipe (picture) | write recipe (YouTube)', 'selftest: ' + names.join(' | '));
+  G.imgFetched = '';
+  await call('GET', { op: 'selftest', only: 'image', img: 'https://evil.example/x.jpg' }, { origin: undefined });
+  ok(/^https:\/\/djvas1975\.github\.io\/yumyumtumtum\/tests\/fixtures\/caption-shot\.jpg$/.test(G.imgFetched), 'selftest only fetches a sample picture from the app’s own sites -> ' + G.imgFetched);
   ok(self.body.checks[2].allowOrigin === 'https://djvas1975.github.io' && self.body.checks[3].allowOrigin === 'https://djvas1975.github.io', 'selftest reports whether Google lets the app’s site send and read the upload');
   ok(/set \(12 characters\)/.test(self.body.key) && !/test-key-123/.test(JSON.stringify(self.body)), 'selftest says the key is set without showing it');
 
