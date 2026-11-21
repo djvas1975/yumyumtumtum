@@ -4,7 +4,7 @@
 (() => {
 'use strict';
 const VERSION = '2.2';
-const READER_V = 3;
+const READER_V = 4;
 const Cats = window.Cats, Hol = window.Holidays, Sup = window.Supplies;
 const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 const API = (LOCAL || /(^|\.)vercel\.app$/.test(location.hostname)) ? '' : 'https://yumyumtumtum.vercel.app';

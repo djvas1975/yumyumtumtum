@@ -151,8 +151,21 @@ Add the butter and garlic and toss for 1 minute more.`;
     'https://www.youtube.com/oembed?format=json&url=https%3A%2F%2Fwww.youtube.com%2Fshorts%2FabcDEF12345': JSON.stringify({ title: 'Chicken & Dumplings in 60 seconds', author_name: 'Cook Guy' }),
     'https://www.youtube.com/watch?v=abcDEF12345': '<html><script>var x = {"shortDescription":"The coziest soup!\\nFull recipe: https://blog.example.com/chicken-dumplings\\nMy knives: https://amzn.to/abc"};</script></html>'
   };
-  global.fetch = async (url) => {
-    const body = pages[url];
+  // 2026 reels whose embed comes back empty: only a link-preview bot gets the caption, in the page's preview tags
+  const igBotPage = (desc, title) => '<html><head><meta property="og:image" content="https://scontent.cdninstagram.com/reel-og.jpg" /><meta property="og:title" content="' + title + '" /><meta property="og:description" content="' + desc + '" /></head><body></body></html>';
+  pages['https://www.instagram.com/p/DfReel1234/embed/captioned/'] = '<html><head></head><body>app shell</body></html>';
+  pages['https://www.instagram.com/reel/DfReel1234/'] = '<html><head></head><body>app shell</body></html>';
+  pages['https://www.instagram.com/reel/DfReel1234/ @bot'] = igBotPage('1,204 likes, 87 comments - sazonsisters on November 18, 2026: &quot;Creamy Tuscan Chicken &#x1f60d;&#x1f525;\n\nIngredients:\n2 chicken breasts\n1 cup heavy cream\n1/2 cup sun dried tomatoes\n2 cups spinach\n3 cloves garlic\n\nDirections:\n1. Sear the chicken 5 minutes a side.\n2. Add the garlic, cream and tomatoes.\n3. Stir in the spinach and serve.\n\n#dinner #easyrecipes&quot;.'.replace(/\\n/g, '\n'), 'Sazon Sisters on Instagram: &quot;Creamy Tuscan Chicken &#x1f60d;&#x1f525;&quot;');
+  pages['https://www.instagram.com/p/DfHidden99/embed/captioned/'] = '<html><body>Sorry</body></html>';
+  pages['https://www.instagram.com/p/DfHidden99/ @bot'] = igBotPage('cookwithmaria on November 2, 2026: &quot;Salsa verde\nIngredients:\n8 tomatillos\n2 jalapenos\n1/2 onion\nSteps:\n1. Boil everything 10 minutes.\n2. Blend with cilantro.&quot;'.replace(/\\n/g, '\n'), 'Maria on Instagram: &quot;Salsa verde&quot;');
+  pages['https://www.instagram.com/p/DfLogin000/embed/captioned/'] = '<html><body>Sorry</body></html>';
+  pages['https://www.instagram.com/p/DfLogin000/'] = igBotPage('Create an account or log in to Instagram', 'Instagram');
+  pages['https://www.instagram.com/p/DfLogin000/ @bot'] = igBotPage('Create an account or log in to Instagram', 'Instagram');
+  const seen = [];
+  global.fetch = async (url, o) => {
+    const h = (o && o.headers) || {}, isBot = /externalhit|Twitterbot/.test(h['User-Agent'] || '');
+    if (/instagram\.com/.test(url)) seen.push((isBot ? 'bot ' : 'phone ') + url + (isBot && h['sec-ch-ua'] ? ' +browser-headers' : ''));
+    const body = (isBot && pages[url + ' @bot']) || pages[url];
     if (body == null) return { status: 404, ok: false, headers: new Map(), text: async () => '' };
     return { status: 200, ok: true, headers: new Map([['content-type', 'text/html']]), text: async () => body };
   };
@@ -174,6 +187,16 @@ Add the butter and garlic and toss for 1 minute more.`;
 
   const ig3 = await readRecipe('https://www.instagram.com/p/NoEmbed77/');
   ok(!/likes/.test(ig3.title) && ig3.title === 'Marry me chicken pasta' && ig3.author === '@tori_and_nessa', 'instagram teaser fallback: no "68K likes" title -> ' + ig3.title);
+
+  const ig4 = await readRecipe('https://www.instagram.com/reel/DfReel1234/?igsh=MWx0bXo4bDFzZ2NyNw==');
+  ok(ig4.title === 'Creamy Tuscan Chicken' && ig4.author === '@sazonsisters' && /reel-og\.jpg/.test(ig4.image), 'instagram 2026 reel, empty embed: preview-bot page gives title, creator, photo -> ' + J([ig4.title, ig4.author, ig4.image]));
+  ok(J(ig4.ingredients) === J(['2 chicken breasts', '1 cup heavy cream', '1/2 cup sun dried tomatoes', '2 cups spinach', '3 cloves garlic']) && ig4.steps.length === 3 && !/#dinner/.test(ig4.steps[2]), 'instagram 2026 reel: ingredients and steps from the preview text -> ' + J([ig4.ingredients, ig4.steps]));
+  ok(seen.some(x => x === 'bot https://www.instagram.com/reel/DfReel1234/') && !seen.some(x => /browser-headers/.test(x)), 'instagram: the bot asks for the clean reel address, without a browser\'s extra headers -> ' + J(seen.filter(x => /DfReel/.test(x))));
+  const ig5 = await readRecipe('https://www.instagram.com/p/DfHidden99/');
+  ok(ig5.title === 'Salsa verde' && ig5.author === '@cookwithmaria' && ig5.ingredients.length === 3 && ig5.steps.length === 2, 'instagram with likes hidden: "someone on Nov 2, 2026: …" -> ' + J([ig5.title, ig5.author, ig5.ingredients.length, ig5.steps.length]));
+  let igErr = '';
+  try { await readRecipe('https://www.instagram.com/p/DfLogin000/'); } catch (e) { igErr = e.message; }
+  ok(igErr === 'Instagram wouldn’t share this post’s details.', 'instagram private or removed post: plain message -> ' + igErr);
 
   const pin = await readRecipe('https://www.pinterest.com/pin/123456789012/');
   ok(pin.kind === 'recipe' && pin.title === 'Chicken and Dumplings' && pin.ingredients.length === 4 && pin.recipeUrl === 'https://blog.example.com/chicken-dumplings', 'pinterest: follows the pin to the recipe -> ' + J([pin.title, pin.ingredients.length, pin.recipeUrl]));

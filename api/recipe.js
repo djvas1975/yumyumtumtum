@@ -41,6 +41,7 @@ module.exports = async (req, res) => {
   if (bad) { res.status(400).json({ ok: false, error: bad }); return; }
   const trace = req.query && req.query.debug ? [] : null;
   if (trace && req.query.subs) trace.subs = true; // debug only: check for the video's own captions (spoken words)
+  if (trace && req.query.ig === 'page') trace.igPage = true; // debug only: skip Instagram's embed, to check the preview-bot page
   try {
     const out = await readRecipe(url, trace);
     if (trace) out.trace = trace;
@@ -476,6 +477,9 @@ function ytId(u) {
 
 /* ---------------- Instagram ---------------- */
 // The post page only shows servers a short teaser, but every post also has an embed version with the whole caption.
+// Link-preview bots. Instagram gives them the post's caption in its preview tags, even when the
+// post can't be embedded or the reader gets an empty page (checked Nov 21, 2026 on 2026 reels).
+const IG_BOTS = ['facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)', 'Twitterbot/1.0'];
 async function readInstagram(url, trace) {
   let code = igCode(url), page = url;
   if (!code) {
@@ -483,25 +487,37 @@ async function readInstagram(url, trace) {
     try { const r = await fetchText(url, { headOnly: true, trace }); page = r.finalUrl; code = igCode(page); }
     catch (e) { if (trace) trace.push('resolve: ' + e.message); }
   }
+  const t0 = Date.now(), late = () => Date.now() - t0 > 35000;
   let caption = '', image = '', author = '', problem = '';
-  if (code) {
-    try {
-      const { text: html, finalUrl } = await fetchText('https://www.instagram.com/p/' + code + '/embed/captioned/', { trace });
-      const e = /accounts\/login/.test(finalUrl) ? { caption: '', image: '', author: '' } : igEmbed(html);
-      caption = e.caption; image = e.image; author = e.author;
-      if (trace) trace.push('embed: caption ' + caption.length + ' chars, photo ' + (image ? 'yes' : 'no'));
-    } catch (e) { problem = e.message; if (trace) trace.push('embed failed: ' + e.message); }
+  const take = (o, how) => {
+    if (o.caption && o.caption.length > caption.length) caption = o.caption;
+    if (!image) image = o.image || '';
+    if (!author) author = o.author || '';
+    if (trace) trace.push(how + ': caption ' + (o.caption || '').length + ' chars, photo ' + (o.image ? 'yes' : 'no'));
+  };
+  const bot = ua => ({ trace, plain: true, headers: { 'User-Agent': ua } });
+  if (code && !(trace && trace.igPage)) {
+    // the embed page: as a phone, then as a link-preview bot if the phone got nothing
+    for (const opts of [{ trace }, bot(IG_BOTS[0])]) {
+      if (caption || late()) break;
+      try {
+        const { text: html, finalUrl } = await fetchText('https://www.instagram.com/p/' + code + '/embed/captioned/', opts);
+        take(/accounts\/login/.test(finalUrl) ? {} : igEmbed(html), opts.plain ? 'embed (preview bot)' : 'embed');
+      } catch (e) { problem = problem || e.message; if (trace) trace.push('embed failed: ' + e.message); }
+    }
   }
   if (!caption || !image) {
-    try {
-      const { text: html } = await fetchText(page, { trace });
-      const o = igOg(html);
-      if (!caption) caption = o.caption;
-      if (!image) image = o.image;
-      if (!author) author = o.author;
-    } catch (e) { problem = problem || e.message; if (trace) trace.push('page failed: ' + e.message); }
+    // the post's own page: its preview tags have the caption ("12 likes, 3 comments - someone on May 1, 2026: …")
+    const post = code ? 'https://www.instagram.com/' + (/\/(reels?|tv)\//i.test(page) ? 'reel' : 'p') + '/' + code + '/' : page;
+    for (const opts of [bot(IG_BOTS[0]), { trace }, bot(IG_BOTS[1])]) {
+      if ((caption && image) || late()) break;
+      try {
+        const { text: html } = await fetchText(post, opts);
+        take(igOg(html), opts.plain ? 'page (preview bot)' : 'page');
+      } catch (e) { problem = problem || e.message; if (trace) trace.push('page failed: ' + e.message); }
+    }
   }
-  if (!caption && !image) throw new Error(problem || 'Instagram wouldn’t share this post’s details.');
+  if (!caption && !image) throw new Error(problem && !/^That page/.test(problem) ? problem : 'Instagram wouldn’t share this post’s details.');
   const out = blank(url);
   out.kind = 'video';
   out.siteName = 'Instagram';
@@ -559,7 +575,8 @@ function igOg(html) {
   let caption = '', author = '';
   // a sign-in page instead of the post
   if (/\b(log ?in|sign up|create an account)\b/i.test(d + ' ' + t) && !/likes?,/i.test(d)) return { caption: '', author: '', image: '' };
-  const m = d.match(/^[\d,.]+\s*[KkMm]?\s+likes?,\s*[\d,.]+\s*[KkMm]?\s+comments?\s*[-–]\s*([\w.]+)\s+on\s+[^:]{3,40}:\s*["“]?([\s\S]*?)["”]?\.?$/i);
+  // likes and comments can be hidden: "someone on May 1, 2026: …"
+  const m = d.match(/^(?:[\d,.]+\s*[KkMm]?\s+likes?,\s*[\d,.]+\s*[KkMm]?\s+comments?\s*[-–]\s*)?([\w.]+)\s+on\s+(?:[A-Z][a-z]+ \d{1,2}, \d{4}|[^:\n]{3,40}):\s*["“]?([\s\S]*?)["”]?\.?\s*$/);
   if (m) { author = m[1]; caption = m[2]; }
   else if (!/^[\d,.]+\s*[KkMm]?\s+(likes?|followers?)\b/i.test(d)) caption = d;
   const tm = t.match(/^(.*?)\s+on\s+Instagram\s*:\s*["“]?([\s\S]*?)["”]?$/i);
