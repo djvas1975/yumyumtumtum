@@ -1,2 +1,1 @@
-https://www.instagram.com/reel/DfLcvZ0o6o6/?cnvx=MWdsMXhjZTk2d3AyYw==
-https://www.instagram.com/reel/Df2MWdejHRa/
+get https://yumyumtumtum.vercel.app/api/video/shot1795290742?op=selftest&only=image
