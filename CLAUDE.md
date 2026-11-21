@@ -828,7 +828,7 @@ a speed trainer on the metronome (speeds up every few bars).
 3. Test: `node tests/crafts.test.js && node tests/music.test.js && node tests/holidays.test.js && node tests/supplies.test.js && node tests/practice.test.js`
    (crafts.test fails if step 2 was skipped), plus the YumYum tests if api/recipe.js or lib/ changed. Bump
    `const VERSION = '2.x'` in crafts/app.js for visible changes (2.2 now). If api/idea.js answers change, bump `READER_V`
-   in crafts/app.js (3 now): Vercel caches /api/idea answers for a day. For a screen check, serve the repo folder, open
+   in crafts/app.js (4 now): Vercel caches /api/idea answers for a day. For a screen check, serve the repo folder, open
    /crafts/ in Playwright at 390x844 and route `**/api/**` to fakes (the reader features need https, so the test copy
    replaces `location.protocol === 'https:'` in app.js with `true`).
 4. Commit as djvas1975 and push to `main`; Vercel deploys in about a minute.
