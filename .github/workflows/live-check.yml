@@ -18,6 +18,7 @@ jobs:
             case "$u" in
               find\ *) curl -sS -m 30 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36" -L "${u#find }" | grep -oE 'instagram\.com/(reel|p)/[A-Za-z0-9_-]{6,}' | sort -u | head -3 | sed 's#^#https://www.#' >> list.txt ;;
               findbot\ *) curl -sS -m 30 -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" -L "${u#findbot }" > fb.html; grep -oE '"(code|shortcode)":"D[A-Za-z0-9_-]{9,12}"' fb.html | sort -u | head -6 | sed -E 's#.*:"([^"]+)"#https://www.instagram.com/reel/\1/#' >> list.txt; echo "findbot bytes $(wc -c < fb.html) codes $(grep -oE '"(code|shortcode)":"[A-Za-z0-9_-]{9,14}"' fb.html | sort -u | head -12 | tr '\n' ' ')" >> $out ;;
+              save\ *) set -- ${u#save }; mkdir -p live-check/pages; curl -sS -m 30 -A "$2" -L "$3" | gzip -9 > "live-check/pages/$1.html.gz"; echo "saved $1 $(zcat live-check/pages/$1.html.gz | wc -c)" >> $out ;;
               *) echo "$u" >> list.txt ;;
             esac
           done < live-check/urls.txt
@@ -36,4 +37,4 @@ jobs:
             done
           done < list.txt
           git config user.name live-check; git config user.email live-check@users.noreply.github.com
-          git add $out; git commit -m "live check results [skip ci]" -q; git push -q
+          git add $out live-check/pages 2>/dev/null; git commit -m "live check results [skip ci]" -q; git push -q

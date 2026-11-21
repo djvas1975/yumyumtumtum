@@ -1,1 +1,5 @@
-findbot https://www.instagram.com/reel/Cqv2Dixss3V/
+save soup-fb facebookexternalhit/1.1 https://www.instagram.com/reel/Df2MWdejHRa/
+save soup-tw Twitterbot/1.0 https://www.instagram.com/reel/Df2MWdejHRa/
+save soup-embed-fb facebookexternalhit/1.1 https://www.instagram.com/p/Df2MWdejHRa/embed/
+save soup-embedcap-fb facebookexternalhit/1.1 https://www.instagram.com/p/Df2MWdejHRa/embed/captioned/
+save slow-fb facebookexternalhit/1.1 https://www.instagram.com/reel/Df67GbKDPZp/
