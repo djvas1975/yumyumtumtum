@@ -1,4 +1,1 @@
-get https://yumyumtumtum.vercel.app/api/video/e1795291659?op=selftest&only=image
-get https://yumyumtumtum.vercel.app/api/video/f1795291659?op=selftest&only=youtube&model=gemini-3.5-flash-lite
-get https://yumyumtumtum.vercel.app/api/video/g1795291659?op=selftest&only=youtube&model=gemini-3.6-flash
-get https://yumyumtumtum.vercel.app/api/video/h1795291659?op=selftest&only=youtube&model=gemini-3.5-flash
+get https://yumyumtumtum.vercel.app/api/video/i1795291891?op=selftest
