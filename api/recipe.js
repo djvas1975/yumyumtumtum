@@ -48,7 +48,7 @@ module.exports = async (req, res) => {
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate=604800');
     res.status(200).json(Object.assign({ ok: true }, out));
   } catch (e) {
-    res.status(200).json({ ok: false, error: (e && e.message) || 'Could not read that page.', trace: trace || undefined });
+    res.status(200).json({ ok: false, error: (e && e.message) || 'Could not read that page.', hint: (e && e.hint) || undefined, trace: trace || undefined });
   }
 };
 
@@ -488,7 +488,7 @@ async function readInstagram(url, trace) {
     catch (e) { if (trace) trace.push('resolve: ' + e.message); }
   }
   const t0 = Date.now(), late = () => Date.now() - t0 > 35000;
-  let caption = '', image = '', author = '', problem = '';
+  let caption = '', image = '', author = '', problem = '', broken = false;
   const take = (o, how) => {
     if (o.caption && o.caption.length > caption.length) caption = o.caption;
     if (!image) image = o.image || '';
@@ -502,6 +502,8 @@ async function readInstagram(url, trace) {
       if (caption || late()) break;
       try {
         const { text: html, finalUrl } = await fetchText('https://www.instagram.com/p/' + code + '/embed/captioned/', opts);
+        // "The link to this photo or video may be broken, or the post may have been removed."
+        if (/class=["']EmbedBrokenMedia/.test(html)) broken = true;
         take(/accounts\/login/.test(finalUrl) ? {} : igEmbed(html), opts.plain ? 'embed (preview bot)' : 'embed');
       } catch (e) { problem = problem || e.message; if (trace) trace.push('embed failed: ' + e.message); }
     }
@@ -517,7 +519,17 @@ async function readInstagram(url, trace) {
       } catch (e) { problem = problem || e.message; if (trace) trace.push('page failed: ' + e.message); }
     }
   }
-  if (!caption && !image) throw new Error(problem && !/^That page/.test(problem) ? problem : 'Instagram wouldn’t share this post’s details.');
+  if (!caption && !image) {
+    // Instagram says the post isn't there, yet it opens in the app: it's shown only to people signed in
+    // (a private account, an age limit, or the creator's settings). Checked Nov 21, 2026 on Dave's reel DfLcvZ0o6o6:
+    // the embed said "may be broken", and no preview bot got a caption or photo.
+    if (broken) {
+      const e = new Error('Instagram only shows this post to people signed in to Instagram, so YumYum can’t read it.');
+      e.hint = 'record';
+      throw e;
+    }
+    throw new Error(problem && !/^That page/.test(problem) ? problem : 'Instagram wouldn’t share this post’s details.');
+  }
   const out = blank(url);
   out.kind = 'video';
   out.siteName = 'Instagram';

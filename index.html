@@ -1419,7 +1419,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.3.2</p></div>';
+    + '<p class="ver">YumYum · version 2.3.3</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1694,7 +1694,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '16'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '17'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -1707,7 +1707,7 @@ async function readLink(url){
   try {
     const res = await fetch(READER + '/api/recipe?url=' + encodeURIComponent(url) + '&v=' + READER_V, {signal:ctrl.signal});
     j = await res.json();
-    if (!j.ok) throw new Error((j.error || "Couldn't read that page.").replace(/\.?$/, '.'));
+    if (!j.ok) { const e = new Error((j.error || "Couldn't read that page.").replace(/\.?$/, '.')); if (j.hint) e.hint = j.hint; throw e; }
   } catch (e) {
     err = e && e.name === 'AbortError' ? new Error('That site took too long to answer.') : e instanceof TypeError ? new Error("Couldn't reach the recipe reader. Check your connection.") : e;
   } finally { clearTimeout(t); }
@@ -4931,7 +4931,7 @@ async function startRead(url){
   let j;
   try { j = await readLink(url); }
   catch (e) {
-    if (F === f && normUrl(f.lastReadUrl) === normUrl(url)) { f.readState = 'failed'; f.readMsg = e.message; f.readCopy = !!e.canCopy; renderDet(); }
+    if (F === f && normUrl(f.lastReadUrl) === normUrl(url)) { f.readState = 'failed'; f.readMsg = e.message; f.readCopy = !!e.canCopy; f.readHint = e.hint || ''; renderDet(); }
     return;
   }
   if (normUrl(f.lastReadUrl) !== normUrl(url)) return;
@@ -4982,6 +4982,9 @@ function renderDet(){
   if (F.readState === 'done' && F.imp && F.imp.captionCut) st += '<p class="readst">' + esc(p.name) + ' only shared the start of the caption, so some of the recipe may be missing.</p>';
   if (F.readState === 'failed') st = F.readCopy
     ? '<p class="readst bad">' + esc(F.readMsg) + ' <button type="button" class="linkbtn sm" data-act="f-reread">Try again</button></p>' + copyCardHTML('form', '')
+    : F.readHint === 'record'
+    // a post Instagram shows only to people signed in: the reel can still be screen-recorded and read by Gemini
+    ? '<p class="readst bad">' + esc(F.readMsg) + '</p><p class="readst"><span>You can still get the recipe: screen-record the reel on your phone (with its sound), then tap <b>Fill in from a video</b> below and pick the recording. Or use Paste recipe text.</span></p>'
     : '<p class="readst bad">' + esc(F.readMsg) + ' You can still save it, or use Paste recipe text. <button type="button" class="linkbtn sm" data-act="f-reread">Try again</button></p>';
   if (F.readState === 'pasted') st = '<p class="readst ok">' + icon('check') + 'Got ' + esc(joinList(F.pastedParts || [])) + ' from what you copied</p>';
   box.innerHTML = '<p class="detect">' + icon(p.ic) + '<span>' + esc(p.name) + (extra ? ' · ' + esc(extra) : '') + '</span></p>' + st

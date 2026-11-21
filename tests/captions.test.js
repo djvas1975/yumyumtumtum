@@ -161,6 +161,8 @@ Add the butter and garlic and toss for 1 minute more.`;
   pages['https://www.instagram.com/p/DfLogin000/embed/captioned/'] = '<html><body>Sorry</body></html>';
   pages['https://www.instagram.com/p/DfLogin000/'] = igBotPage('Create an account or log in to Instagram', 'Instagram');
   pages['https://www.instagram.com/p/DfLogin000/ @bot'] = igBotPage('Create an account or log in to Instagram', 'Instagram');
+  pages['https://www.instagram.com/p/DfSigned01/embed/captioned/'] = '<html><body><div class="EmbedBrokenMedia"><div class="ebmMessage">The link to this photo or video may be broken, or the post may have been removed.</div></div></body></html>';
+  pages['https://www.instagram.com/reel/DfSigned01/'] = '<html><head><title>Instagram</title></head><body>app shell</body></html>';
   const seen = [];
   global.fetch = async (url, o) => {
     const h = (o && o.headers) || {}, isBot = /externalhit|Twitterbot/.test(h['User-Agent'] || '');
@@ -197,6 +199,10 @@ Add the butter and garlic and toss for 1 minute more.`;
   let igErr = '';
   try { await readRecipe('https://www.instagram.com/p/DfLogin000/'); } catch (e) { igErr = e.message; }
   ok(igErr === 'Instagram wouldn’t share this post’s details.', 'instagram private or removed post: plain message -> ' + igErr);
+
+  let igE = null;
+  try { await readRecipe('https://www.instagram.com/reel/DfSigned01/?cnvx=MWdsMXhjZTk2d3AyYw=='); } catch (e) { igE = e; }
+  ok(igE && igE.hint === 'record' && /only shows this post to people signed in/.test(igE.message), 'instagram post only for people signed in: says so, with the screen-record hint -> ' + (igE && igE.message));
 
   const pin = await readRecipe('https://www.pinterest.com/pin/123456789012/');
   ok(pin.kind === 'recipe' && pin.title === 'Chicken and Dumplings' && pin.ingredients.length === 4 && pin.recipeUrl === 'https://blog.example.com/chicken-dumplings', 'pinterest: follows the pin to the recipe -> ' + J([pin.title, pin.ingredients.length, pin.recipeUrl]));

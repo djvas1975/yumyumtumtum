@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.3.2**.
+Current version: **2.3.3**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -194,7 +194,7 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
 4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js && node tests/video.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.3.2`).
+5. App changes: bump the version text in `V.me` (`version 2.3.3`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -225,6 +225,13 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   whole caption with its line breaks. Checked from GitHub's servers Nov 21, 2026 on six 2026 reels: as a phone the reel page
   has no preview tags at all; as either bot it has the full caption (the same 2,186 characters the embed gave) and photo.
   Debug: `&debug=1&ig=page` skips the embed to test the bot page path. Private posts still can't be read. `READER_V` 16.
+  **v2.3.3 (same day): Dave's reel turned out to be shown only to people signed in to Instagram** (`DfLcvZ0o6o6`: the embed
+  said "The link to this photo or video may be broken, or the post may have been removed" (`EmbedBrokenMedia`), and the
+  reel page had no preview tags for facebookexternalhit, Twitterbot, Googlebot or a phone, from GitHub and from Vercel,
+  while other reels read fine at the same moment; usually a private account or an age-limited post). Nothing outside a
+  signed-in Instagram can read those. The reader now answers `{ok:false, error:'Instagram only shows this post to people
+  signed in to Instagram, so YumYum can't read it.', hint:'record'}`, and the Save sheet (`F.readHint`) says to
+  screen-record the reel with its sound and use Fill in from a video, or Paste recipe text. `READER_V` 17.
   The live-check branch (`live-check`, workflow `.github/workflows/live-check.yml`) runs such checks from GitHub when
   `live-check/urls.txt` changes: plain URLs go through the Vercel reader and a user-agent probe, `findbot <reel>` lists newer
   reels from that page, `save <name> <UA> <url>` keeps a gzipped copy in `live-check/pages/`; results land in
@@ -451,7 +458,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 ## Video recipes from what's said (checked Sept 28, 2026; the free part built Oct 10, 2026 in v1.7)
 - **Built (v1.7):** the reader asks for TikTok's speech captions on every TikTok (`readTikTok(url, trace, {speech:true})`,
-  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0, 14 since v2.0.1, 15 since v2.1.1, 16 since v2.3.2); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
+  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0, 14 since v2.0.1, 15 since v2.1.1, 16 since v2.3.2, 17 since v2.3.3); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
   shows it as "What they said in the video" when there are no written steps (collapsed under the steps otherwise).
 - Probe: `/api/recipe?url=<video>&debug=1&subs=1` lists the video's own captions and shows the start
   of the caption file. Debug only; normal reads don't change.
