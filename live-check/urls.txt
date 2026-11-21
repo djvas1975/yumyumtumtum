@@ -1,2 +1,1 @@
-get https://yumyumtumtum.vercel.app/api/video/shotb1795290942?op=selftest&only=image
-get https://yumyumtumtum.vercel.app/api/video/ytb1795290942?op=selftest&only=youtube
+get https://yumyumtumtum.vercel.app/api/video/m1795291230?op=selftest&only=models
