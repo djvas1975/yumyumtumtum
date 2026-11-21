@@ -726,7 +726,8 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   from before; if anything was changed after the fill it asks first ("Undo the fill-in?"). My notes and tags aren't touched.
 - **English, units kept** (`picturePrompt` in api/video.js): translate words only, never convert numbers, units or
   temperatures (500 g stays 500 g, 180 °C stays 180 °C, "1/2 taza" -> "1/2 cup"); no steps written -> steps left empty with a
-  guess "No steps were written in the screenshot"; missing things ("Oven temperature isn't given") go in `guesses`.
+  guess "No steps were written in the screenshot"; missing things ("Oven temperature isn't given") go in `guesses`; the name
+  in English too (a dish's own name like Cochinita Pibil stays); a total time only when the recipe writes one.
   `language` in the answer (`tidy` makes English ''); saved as `r.aiFill.lang`; the recipe page says "Gemini read this from a
   screenshot or photo and translated it from Spanish."
 - **Can't read this recipe?** (`igCardHTML` in `renderDet`): for an Instagram link whose read failed, or read fine with no

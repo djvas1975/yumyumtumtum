@@ -233,6 +233,7 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   ok(/translate the name, ingredients, steps and notes into English/.test(pp) && /Never convert numbers, units or temperatures/.test(pp) && /"180 °C" stays "180 °C"/.test(pp) && /"500 g de carne" becomes "500 g beef"/.test(pp), 'the screenshot prompt: translate into English, never convert amounts, units or temperatures');
   ok(/If no steps are written, leave steps empty/.test(pp) && /Do not add ingredients, amounts or steps that are not in the pictures/.test(pp) && /seems to be missing/.test(pp), 'the screenshot prompt: no made-up steps or amounts; missing things go in the guesses');
   ok(/- language:/.test(pp), 'the screenshot prompt asks which language it was in');
+  ok(/"Salsa verde para tacos" becomes "Salsa Verde for Tacos"/.test(pp) && /Don't add up step times/.test(pp), 'the screenshot prompt: the name in English too, and no total time worked out from the steps');
   ok(api._tidy({ title: 'X', ingredients: ['1 cup milk'], language: 'spanish' }).language === 'Spanish' && api._tidy({ title: 'X', ingredients: ['1 cup milk'], language: 'English' }).language === '' && api._tidy({ title: 'X', ingredients: ['1 cup milk'] }).language === '', 'tidy keeps the language ("Spanish"), and English or nothing comes back empty');
 
   console.log(fails ? '\n' + fails + ' FAILED' : '\nAll video tests passed');
