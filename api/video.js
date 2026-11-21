@@ -29,7 +29,8 @@ const { cors } = require('../lib/parse');
 
 const API = 'https://generativelanguage.googleapis.com';
 // free-tier models, best first (checked Oct 17, 2026 on ai.google.dev/gemini-api/docs/pricing); GEMINI_MODEL overrides
-const MODELS = String(process.env.GEMINI_MODEL || 'gemini-3.8-flash,gemini-3.6-flash,gemini-3-flash-preview')
+// (order changed Nov 21, 2026: 3.6 Flash wrote the YouTube check in 6.6 s, 3.8 Flash took over 170 s that hour)
+const MODELS = String(process.env.GEMINI_MODEL || 'gemini-3.6-flash,gemini-3.8-flash,gemini-3-flash-preview')
   .split(',').map(s => s.trim()).filter(Boolean);
 // pictures: a "lite" model first. Timed live Nov 21, 2026 on tests/fixtures/caption-shot.jpg, same answer from each:
 // gemini-3.5-flash-lite 1.4 s, gemini-3.1-flash-lite 14.5 s, gemini-3.7-flash 96 s, gemini-3.8-flash over 170 s
@@ -267,15 +268,21 @@ async function readPictures(key, b) {
 // asks each free model in turn until one writes the recipe
 const picModels = () => Array.from(new Set((PICK.model ? [PICK.model] : PIC_MODELS).concat(MODELS)));
 let PICK = {}; // the health check's &model=
+// how long one model may take before the next one is asked, and the whole budget (Vercel stops the function at 180 s)
+const LIMITS = { pictures: 40000, video: 80000, total: 160000 };
 async function writeWith(key, parts, promptOf, low, what, models) {
   let lastErr = null;
+  const end = Date.now() + LIMITS.total;
   for (const model of (models || MODELS)) {
     for (let attempt = 0; attempt < 2; attempt++) {
+      const left = end - Date.now();
+      if (left < 5000) throw lastErr || usr('Gemini is slow right now. Try again in a few minutes.');
       let out;
       try {
-        out = await ask(key, model, parts, promptOf(attempt > 0), low);
+        out = await ask(key, model, parts, promptOf(attempt > 0), low, Math.min(what === 'pictures' ? LIMITS.pictures : LIMITS.video, left));
       } catch (e) {
         lastErr = e;
+        if (e.slow) break; // too slow: the next model
         if (e.status === 404 || e.status === 429 || (e.status === 400 && /not (found|supported)|unknown model|is not available/i.test(e.message))) break; // next model
         if (e.status >= 500 && attempt === 0) { await wait(1500); continue; }
         throw e;
@@ -290,15 +297,24 @@ async function writeWith(key, parts, promptOf, low, what, models) {
   throw lastErr || usr('Gemini couldn’t do this one.');
 }
 
-async function ask(key, model, parts, prompt, low) {
+async function ask(key, model, parts, prompt, low, ms) {
   const gen = { responseMimeType: 'application/json', responseSchema: SCHEMA };
   if (low) gen.mediaResolution = 'MEDIA_RESOLUTION_LOW';
-  const r = await go(API + '/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
-    method: 'POST',
-    headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts: parts.concat([{ text: prompt }]) }], generationConfig: gen })
-  });
-  const raw = await r.text();
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms || 80000);
+  let r, raw;
+  try {
+    r = await go(API + '/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+      method: 'POST',
+      headers: { 'x-goog-api-key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: parts.concat([{ text: prompt }]) }], generationConfig: gen }),
+      signal: ctrl.signal
+    });
+    raw = await r.text();
+  } catch (e) {
+    if (ctrl.signal.aborted) { const x = usr('Gemini is slow right now. Try again in a few minutes.'); x.slow = true; throw x; }
+    throw e;
+  } finally { clearTimeout(t); }
   if (!r.ok) throw gErr(r.status, raw);
   let j; try { j = JSON.parse(raw); } catch (e) { throw usr('Gemini’s answer came back garbled. Try again.'); }
   const c = (j.candidates || [])[0] || {};
@@ -474,3 +490,4 @@ module.exports._parseJson = parseJson;
 module.exports._picturePrompt = picturePrompt;
 module.exports.MODELS = MODELS;
 module.exports.PIC_MODELS = PIC_MODELS;
+module.exports._limits = LIMITS;

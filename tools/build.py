@@ -127,7 +127,7 @@ async function shareIn(req) {
     ['title', 'text', 'url'].forEach(k => { const v = fd.get(k); if (typeof v === 'string' && v.trim()) q.set(k, v.trim().slice(0, 2000)); });
     const files = [];
     for (const [, v] of fd.entries()) if (v && typeof v !== 'string' && v.size) files.push(v);
-    const isPic = f => /^image\//.test(f.type || '') || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || '');
+    const isPic = f => /^image\\//.test(f.type || '') || /\\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || '');
     const c = await caches.open('share-in');
     const vid = files.find(f => !isPic(f));
     if (vid) {

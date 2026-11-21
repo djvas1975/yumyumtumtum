@@ -60,7 +60,7 @@ async function fakeFetch(url, o) {
     const body = JSON.parse(o.body);
     G.gen.push({ model: decodeURIComponent(gm[1]), body });
     const plan = genPlan.length ? genPlan.shift() : null;
-    if (typeof plan === 'function') return plan(decodeURIComponent(gm[1]), body);
+    if (typeof plan === 'function') return plan(decodeURIComponent(gm[1]), body, o);
     if (plan) return json(plan.body, plan.status || 200);
     return json(answer(GOOD));
   }
@@ -118,7 +118,7 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   const mk = await call('POST', { op: 'make' }, {}, { name: 'files/vid1', dur: 45, title: 'chicken pasta', caption: 'So easy!! #dinner' });
   const r = mk.body.recipe || {};
   ok(mk.body.ok && mk.body.model === api.MODELS[1], 'free limit on the first model: the next free model writes it (' + mk.body.model + ')');
-  ok(G.gen[0].model === 'gemini-3.8-flash', 'tries gemini-3.8-flash first');
+  ok(G.gen[0].model === 'gemini-3.6-flash', 'tries gemini-3.6-flash first (3.8 Flash was the slow one on Nov 21, 2026)');
   ok(r.title === 'Crack Chicken Penne', 'title without hashtags');
   ok(JSON.stringify(r.ingredients) === JSON.stringify(['1 lb penne', '## Sauce', '8 oz cream cheese', '1 packet ranch seasoning', '1 cup shredded cheddar']), 'ingredients: bullets dropped, "Sauce:" becomes a ## heading');
   ok(JSON.stringify(r.steps) === JSON.stringify(['Boil the penne until al dente.', 'Melt the cream cheese with the ranch.', 'Toss everything together and top with cheese.']), 'steps: "1." and "Step 2:" taken off (the app numbers them)');
@@ -192,6 +192,18 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   G.gen = [];
   const fallback = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(5000), type: 'image/jpeg' }] });
   ok(fallback.body.ok && G.gen.map(x => x.model).join() === api.PIC_MODELS.concat(api.MODELS[0]).join(), 'pictures: when the lite models are used up, the regular models still answer -> ' + G.gen.map(x => x.model).join());
+  // a model that takes too long: the next one is asked (Vercel would stop the whole thing at 180 s)
+  const hang = (m, b, o) => new Promise((res, rej) => o.signal.addEventListener('abort', () => rej(Object.assign(new Error('The operation was aborted'), { name: 'AbortError' }))));
+  api._limits.pictures = 200; api._limits.video = 300;
+  genPlan = [hang];
+  G.gen = [];
+  const slow = await call('POST', { op: 'image' }, {}, { images: [{ data: pic(5000), type: 'image/jpeg' }] });
+  ok(slow.body.ok && G.gen.map(x => x.model).join() === api.PIC_MODELS.slice(0, 2).join(), 'pictures: a model that hangs is dropped for the next one -> ' + G.gen.map(x => x.model).join());
+  genPlan = [hang, hang, hang, hang, hang, hang];
+  G.gen = [];
+  const slowAll = await call('POST', { op: 'make' }, {}, { youtube: 'LrCEvNIyX-I' });
+  ok(!slowAll.body.ok && /slow right now/.test(slowAll.body.error) && G.gen.length === api.MODELS.length, 'video: every model too slow -> "Gemini is slow right now", one try each');
+  api._limits.pictures = 40000; api._limits.video = 80000;
   const evil = await call('POST', { op: 'image' }, { origin: 'https://evil.example' }, { images: [{ data: pic(5000), type: 'image/jpeg' }] });
   ok(evil.code === 403, 'pictures: other websites are turned away');
   }
