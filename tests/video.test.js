@@ -233,7 +233,21 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   ok(/translate the name, ingredients, steps and notes into English/.test(pp) && /Never convert numbers, units or temperatures/.test(pp) && /"180 °C" stays "180 °C"/.test(pp) && /"500 g de carne" becomes "500 g beef"/.test(pp), 'the screenshot prompt: translate into English, never convert amounts, units or temperatures');
   ok(/If no steps are written, leave steps empty/.test(pp) && /Do not add ingredients, amounts or steps that are not in the pictures/.test(pp) && /seems to be missing/.test(pp), 'the screenshot prompt: no made-up steps or amounts; missing things go in the guesses');
   ok(/- language:/.test(pp), 'the screenshot prompt asks which language it was in');
-  ok(/"Salsa verde para tacos" becomes "Salsa Verde for Tacos"/.test(pp) && /Don't add up step times/.test(pp), 'the screenshot prompt: the name in English too, and no total time worked out from the steps');
+  ok(/"Salsa Verde for Tacos" \(from "Salsa verde para tacos"\)/.test(pp) && /Don't add up step times/.test(pp) && /Remember: everything you write is in English/.test(pp), 'the screenshot prompt: the name in English too, no total worked out from step times, and a last reminder to write in English');
+  const onePic = Buffer.alloc(5000, 5).toString('base64');
+  // a Spanish screenshot that comes back still in Spanish is asked once more, firmly, of the next stronger model
+  const ES_BACK = { isRecipe: true, title: 'Cochinita Pibil al Horno', language: 'Spanish', ingredients: ['1 kg pierna de cerdo en trozos', '100 g pasta de achiote', '1 taza jugo de naranja agria', '250 ml agua', 'Sal al gusto'], steps: ['Licúa el achiote con los jugos.', 'Hornea tapado a 180 °C durante 2 horas.'], notes: [], equipment: [], totalTime: 0, servings: 0, cuisine: 'Mexican', meals: ['Dinner'], guesses: [] };
+  const EN_BACK = Object.assign({}, ES_BACK, { title: 'Baked Cochinita Pibil', ingredients: ['1 kg pork leg in chunks', '100 g achiote paste', '1 cup sour orange juice', '250 ml water', 'Salt to taste'], steps: ['Blend the achiote with the juices.', 'Bake covered at 180 °C for 2 hours.'] });
+  ok(api._stillSpanish(api._tidy(ES_BACK)) && !api._stillSpanish(api._tidy(EN_BACK)) && !api._stillSpanish(api._tidy(Object.assign({}, EN_BACK, { language: '' }))) && !api._stillSpanish(api._tidy(Object.assign({}, EN_BACK, { ingredients: ['1 lb ground beef', '1 can chili con carne beans', '1 cup pico de gallo', '2 cups water', 'Salt'] }))), 'still-in-Spanish check: catches Spanish lines, not English ones (even "chili con carne" or "pico de gallo")');
+  G.gen = []; genPlan = [{ body: answer(ES_BACK) }, { body: answer(EN_BACK) }];
+  const es = await call('POST', { op: 'image' }, {}, { images: [{ data: onePic, type: 'image/jpeg' }] });
+  ok(es.body.ok && es.body.recipe.ingredients[0] === '1 kg pork leg in chunks' && es.body.recipe.steps[1] === 'Bake covered at 180 °C for 2 hours.' && es.body.recipe.language === 'Spanish' && G.gen.length === 2 && G.gen[0].model === 'gemini-3.5-flash-lite' && G.gen[1].model === 'gemini-3.6-flash' && /Your last answer left words in Spanish/.test(G.gen[1].body.contents[0].parts.slice(-1)[0].text), 'a Spanish screenshot answered in Spanish is asked again, firmly, of gemini-3.6-flash, and the English answer is used -> ' + G.gen.map(x => x.model).join(', '));
+  G.gen = []; genPlan = [{ body: answer(ES_BACK) }, { body: answer(ES_BACK) }];
+  const es2 = await call('POST', { op: 'image' }, {}, { images: [{ data: onePic, type: 'image/jpeg' }] });
+  ok(es2.body.ok && es2.body.recipe.ingredients[0] === '1 kg pierna de cerdo en trozos' && G.gen.length === 2, 'if the second answer is still Spanish, the first one comes back (only one extra try)');
+  G.gen = []; genPlan = [{ body: answer(Object.assign({}, EN_BACK, { language: '' })) }];
+  await call('POST', { op: 'image' }, {}, { images: [{ data: onePic, type: 'image/jpeg' }] });
+  ok(G.gen.length === 1, 'an English screenshot is asked only once');
   ok(api._tidy({ title: 'X', ingredients: ['1 cup milk'], language: 'spanish' }).language === 'Spanish' && api._tidy({ title: 'X', ingredients: ['1 cup milk'], language: 'English' }).language === '' && api._tidy({ title: 'X', ingredients: ['1 cup milk'] }).language === '', 'tidy keeps the language ("Spanish"), and English or nothing comes back empty');
 
   console.log(fails ? '\n' + fails + ' FAILED' : '\nAll video tests passed');

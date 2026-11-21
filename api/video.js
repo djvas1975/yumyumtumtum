@@ -223,10 +223,11 @@ async function makeRecipe(key, b) {
 }
 
 // pictures (v2.4): screenshots of a post's caption, or photos of a cookbook, magazine or recipe card
-function picturePrompt(b, ownWords, n) {
+function picturePrompt(b, ownWords, n, strict) {
   const title = clip(b.title, 140);
   const caption = clip(b.caption, 4000);
   return [
+    strict ? 'Your last answer left words in Spanish. This time write the title and every ingredient, step, note and cookware item in English. Only numbers and units stay as written.' : '',
     'You are filling in a recipe card in a home cook\'s recipe app from ' + (n > 1 ? n + ' pictures, in order' : 'a picture') + '.',
     'They are screenshots of a social media post (most often the caption of an Instagram, TikTok or Facebook video), or photos of a cookbook, magazine or recipe card page. Pieces of one long screenshot can overlap; don\'t repeat the overlapping lines.',
     'Read the recipe the creator wrote. Ignore the app around it: likes, view counts, buttons like Follow or Reply, "more", hashtags, music names, ads, and comments by other people (use a comment only when the creator wrote it to add to the recipe).',
@@ -235,7 +236,7 @@ function picturePrompt(b, ownWords, n) {
     'Write the recipe in plain American English. If the pictures are in another language (often Spanish), translate the name, ingredients, steps and notes into English.',
     'Translate only the words. Never convert numbers, units or temperatures: keep every amount, unit and temperature the way it is written. "500 g de carne" becomes "500 g beef", "1/2 taza de leche" becomes "1/2 cup milk", "2 cucharadas" becomes "2 tablespoons", "180 °C" stays "180 °C" (not °F), "250 ml" stays "250 ml".',
     '- language: the language the recipe was written in, like "Spanish". "English" if it was already in English.',
-    '- title: the dish\'s name in English, short, like "Crack Chicken Penne". Keep a dish\'s own name that English uses too (Cochinita Pibil, Salsa Verde, Pozole) and translate the rest ("Salsa verde para tacos" becomes "Salsa Verde for Tacos"). No emoji.',
+    '- title: the dish\'s name in English, short, like "Crack Chicken Penne" or "Salsa Verde for Tacos" (from "Salsa verde para tacos"). No emoji.',
     '- ingredients: one item each, with the amounts exactly as written, like "2 lb chicken thighs", "1 cup shredded cheddar". If the recipe has parts (a sauce, a topping), put a heading line before each part, like "## For the sauce". Leave the amount out when none is written; don\'t make one up.',
     '- steps: the steps written in the pictures, in order, one step each, a sentence or two. No numbers at the start. Keep temperatures and times exactly as written. If no steps are written, leave steps empty (don\'t write your own) and add a guess saying "No steps were written in the screenshot".',
     '- notes: tips, swaps or warnings the creator gives. Empty if none.',
@@ -246,8 +247,18 @@ function picturePrompt(b, ownWords, n) {
     '- guesses: short notes on anything you couldn\'t read clearly, had to guess, or that seems to be missing, like "Amount of garlic was cut off" or "Oven temperature isn\'t given". Empty if nothing.',
     '- isRecipe: false if the pictures have no recipe in them (no ingredients and no steps), and then leave the lists empty.',
     'Do not add ingredients, amounts or steps that are not in the pictures.',
-    ownWords ? 'Write every step and note in your own words. Do not copy any text word for word.' : ''
+    ownWords ? 'Write every step and note in your own words. Do not copy any text word for word.' : '',
+    'Remember: everything you write is in English. Only the numbers and units stay as written.'
   ].filter(Boolean).join('\n');
+}
+// v2.4.1: did a Spanish screenshot come back still in Spanish? (live Nov 21, 2026: gemini-3.5-flash-lite once left all
+// the ingredients in Spanish). Only checked when Gemini says the pictures weren't in English.
+const ES_WORDS = /(^|[\s(])(de|del|con|y|para|al gusto|tazas?|cucharadas?|cucharaditas?|dientes|pizca|sal|agua|jugo|cebolla|ajo|horno|hornea|licúa|mezcla|deja|sirve|agrega)(?=[\s,.;:)]|$)/i;
+function stillSpanish(r) {
+  if (!r || !r.language) return false;
+  const lines = r.ingredients.concat(r.steps).filter(x => !/^## /.test(x));
+  const hits = lines.filter(x => ES_WORDS.test(x) || /[ñ¿¡]|ción\b/i.test(x)).length;
+  return lines.length > 0 && hits >= Math.max(2, Math.ceil(lines.length * 0.3));
 }
 async function readPictures(key, b) {
   b = b || {};
@@ -265,7 +276,18 @@ async function readPictures(key, b) {
     return { inlineData: { mimeType: type, data } };
   });
   if (total > MAX_PICS_TOTAL) throw usr('Those pictures are too big together. Send fewer at a time.');
-  return writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length), false, 'pictures', picModels());
+  const t0 = Date.now();
+  const out = await writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length), false, 'pictures', picModels());
+  // still in Spanish: ask once more, firmly, starting with the next stronger model, within what's left of Vercel's time
+  const left = LIMITS.total - (Date.now() - t0);
+  if (stillSpanish(out.recipe) && left > 20000) {
+    try {
+      const next = MODELS.filter(m => m !== out.model);
+      const again = await writeWith(key, parts, ownWords => picturePrompt(b, ownWords, parts.length, true), false, 'pictures', next.length ? next : MODELS, left - 5000);
+      if (again.recipe.isRecipe && !stillSpanish(again.recipe)) return Object.assign(again, { retried: out.model });
+    } catch (e) {}
+  }
+  return out;
 }
 
 // asks each free model in turn until one writes the recipe
@@ -273,9 +295,9 @@ const picModels = () => Array.from(new Set((PICK.model ? [PICK.model] : PIC_MODE
 let PICK = {}; // the health check's &model=
 // how long one model may take before the next one is asked, and the whole budget (Vercel stops the function at 180 s)
 const LIMITS = { pictures: 40000, video: 80000, total: 160000 };
-async function writeWith(key, parts, promptOf, low, what, models) {
+async function writeWith(key, parts, promptOf, low, what, models, budget) {
   let lastErr = null;
-  const end = Date.now() + LIMITS.total;
+  const end = Date.now() + (budget || LIMITS.total);
   for (const model of (models || MODELS)) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const left = end - Date.now();
@@ -493,6 +515,7 @@ module.exports._setFetch = f => { FETCH = f; };
 module.exports._tidy = tidy;
 module.exports._parseJson = parseJson;
 module.exports._picturePrompt = picturePrompt;
+module.exports._stillSpanish = stillSpanish;
 module.exports.MODELS = MODELS;
 module.exports.PIC_MODELS = PIC_MODELS;
 module.exports._limits = LIMITS;
