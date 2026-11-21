@@ -1,5 +1,2 @@
-https://www.instagram.com/reel/DfLcvZ0o6o6/?cnvx=MWdsMXhjZTk2d3AyYw==|&probe=1
-https://www.instagram.com/reel/DfLcvZ0o6o6/|&ig=page
-save dave-fb facebookexternalhit/1.1 https://www.instagram.com/reel/DfLcvZ0o6o6/
-save dave-embedcap-fb facebookexternalhit/1.1 https://www.instagram.com/p/DfLcvZ0o6o6/embed/captioned/
-save dave-gbot Googlebot/2.1 https://www.instagram.com/reel/DfLcvZ0o6o6/
+https://www.instagram.com/reel/DfLcvZ0o6o6/?cnvx=MWdsMXhjZTk2d3AyYw==
+https://www.instagram.com/reel/Df2MWdejHRa/
