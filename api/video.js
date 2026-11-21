@@ -169,7 +169,8 @@ const SCHEMA = {
     servings: { type: 'INTEGER', description: 'Servings, 0 if unknown' },
     cuisine: { type: 'STRING' },
     meals: { type: 'ARRAY', items: { type: 'STRING' } },
-    guesses: { type: 'ARRAY', items: { type: 'STRING' }, description: 'What you estimated instead of seeing or hearing it' }
+    guesses: { type: 'ARRAY', items: { type: 'STRING' }, description: 'What you estimated instead of seeing or hearing it' },
+    language: { type: 'STRING', description: 'The language the recipe was written in, like "Spanish"' } // v2.4.1, pictures only
   },
   required: ['isRecipe', 'title', 'ingredients', 'steps', 'notes', 'equipment', 'totalTime', 'servings', 'cuisine', 'meals', 'guesses']
 };
@@ -231,18 +232,20 @@ function picturePrompt(b, ownWords, n) {
     'Read the recipe the creator wrote. Ignore the app around it: likes, view counts, buttons like Follow or Reply, "more", hashtags, music names, ads, and comments by other people (use a comment only when the creator wrote it to add to the recipe).',
     title ? 'The cook saved it as: "' + title + '".' : '',
     caption ? 'Text the app already got from the post (it may be only part of it):\n"""\n' + caption + '\n"""' : '',
-    'Write the recipe in plain American English, even if the pictures are in another language.',
+    'Write the recipe in plain American English. If the pictures are in another language (often Spanish), translate the name, ingredients, steps and notes into English.',
+    'Translate only the words. Never convert numbers, units or temperatures: keep every amount, unit and temperature the way it is written. "500 g de carne" becomes "500 g beef", "1/2 taza de leche" becomes "1/2 cup milk", "2 cucharadas" becomes "2 tablespoons", "180 °C" stays "180 °C" (not °F), "250 ml" stays "250 ml".',
+    '- language: the language the recipe was written in, like "Spanish". "English" if it was already in English.',
     '- title: the dish\'s name, short, like "Crack Chicken Penne". No emoji.',
     '- ingredients: one item each, with the amounts exactly as written, like "2 lb chicken thighs", "1 cup shredded cheddar". If the recipe has parts (a sauce, a topping), put a heading line before each part, like "## For the sauce". Leave the amount out when none is written; don\'t make one up.',
-    '- steps: what to do, in order, one step each, a sentence or two. No numbers at the start. Keep temperatures and times.',
+    '- steps: the steps written in the pictures, in order, one step each, a sentence or two. No numbers at the start. Keep temperatures and times exactly as written. If no steps are written, leave steps empty (don\'t write your own) and add a guess saying "No steps were written in the screenshot".',
     '- notes: tips, swaps or warnings the creator gives. Empty if none.',
     '- equipment: pans, appliances and tools named, like "Large skillet", "Air fryer", "9x13 baking dish".',
     '- totalTime: total minutes if written, else 0. servings: if written, else 0.',
     '- cuisine: one of ' + CUISINES.join(', ') + ', or "" if none fits.',
     '- meals: any of ' + MEALS.join(', ') + ' that fit.',
-    '- guesses: short notes on anything you couldn\'t read clearly or had to guess, like "Amount of garlic was cut off". Empty if nothing.',
+    '- guesses: short notes on anything you couldn\'t read clearly, had to guess, or that seems to be missing, like "Amount of garlic was cut off" or "Oven temperature isn\'t given". Empty if nothing.',
     '- isRecipe: false if the pictures have no recipe in them (no ingredients and no steps), and then leave the lists empty.',
-    'Do not add ingredients or steps that are not in the pictures.',
+    'Do not add ingredients, amounts or steps that are not in the pictures.',
     ownWords ? 'Write every step and note in your own words. Do not copy any text word for word.' : ''
   ].filter(Boolean).join('\n');
 }
@@ -361,7 +364,9 @@ function tidy(o) {
     servings: int(o.servings, 500),
     cuisine,
     meals: Array.from(new Set(meals)),
-    guesses: list(o.guesses, 10, 200)
+    guesses: list(o.guesses, 10, 200),
+    // v2.4.1: the language a screenshot was written in ('' for English or not said), so the app can say "Translated from Spanish"
+    language: /^(english|en|unknown|none|n\/a)?$/i.test(str(o.language, 30).trim()) ? '' : str(o.language, 30).trim().replace(/^./, c => c.toUpperCase())
   };
 }
 

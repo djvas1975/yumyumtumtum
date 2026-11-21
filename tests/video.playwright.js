@@ -102,8 +102,8 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
   await new Promise(o => srv.listen(8791, o));
   const b = await chromium.launch();
   const errs = [];
-  const page = async (scheme) => {
-    const c = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: scheme || 'light', serviceWorkers: 'block' });
+  const page = async (scheme, ua) => {
+    const c = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: scheme || 'light', serviceWorkers: 'block', userAgent: ua });
     const p = await c.newPage(); p.on('pageerror', e => errs.push(e.message));
     await p.route(/yumyumtumtum\.vercel\.app\/api\/video/, serveApi);
     await p.route(/generativelanguage\.googleapis\.com\/upload\//, serveUpload);
@@ -251,15 +251,15 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
   await s.goto('http://localhost:8791/'); await s.waitForTimeout(600);
   const gs = G.gen.length;
   await share({ title: '', text: '', url: '' }, path.join(R, 'tests/fixtures/caption-shot.jpg'), 'media');
-  const sp = await s.waitForFunction(() => { const F = window.__t.getF(); return F && F.vf && F.vf.stage === 'done'; }, null, { timeout: 15000 }).then(() => true, () => false);
-  const gotP = await s.evaluate(async () => { const F = window.__t.getF(); return { src: F && F.vf && F.vf.src, n: F && F.vf && F.vf.images ? F.vf.images.length : 0, left: !!(await (await caches.open('share-in')).match(new URL('./shared-image-0', location.href).href)) }; });
-  ok(sp && gotP.src === 'image' && gotP.n === 1 && !gotP.left && G.gen.length === gs + 1, 'a screenshot shared to YumYum opens Save a recipe and Gemini reads it by itself (nothing left in storage)');
+  const sp = await s.waitForFunction(() => { const F = window.__t.getF(); return F && F.filled; }, null, { timeout: 15000 }).then(() => true, () => false);
+  const gotP = await s.evaluate(async () => { const F = window.__t.getF(); return { n: F && F.filled ? F.filled.n : 0, ing: document.querySelector('#f-ing').value, left: !!(await (await caches.open('share-in')).match(new URL('./shared-image-0', location.href).href)) }; });
+  ok(sp && gotP.n === 1 && gotP.ing.split('\n').length === 6 && !gotP.left && G.gen.length === gs + 1, 'a screenshot shared to YumYum opens Save a recipe, Gemini reads it and the empty form fills in by itself, no extra tap (nothing left in storage)');
   await s.$eval('#f-vf', el => el.scrollIntoView({ block: 'start' }));
   await shot(s, '13-shared-screenshot');
   // the old share menu (before Chrome updates the installed app) names the field "video": a picture there still works
   await s.goto('http://localhost:8791/'); await s.waitForTimeout(600);
   await share({ title: '', text: '', url: '' }, path.join(R, 'tests/fixtures/caption-shot.jpg'));
-  ok(await s.evaluate(() => { const F = window.__t.getF(); return !!(F && F.vf && F.vf.src === 'image'); }), 'a picture sent under the old field name is still read as a picture');
+  ok(await s.waitForFunction(() => { const F = window.__t.getF(); return !!(F && ((F.vf && F.vf.src === 'image') || F.filled)); }, null, { timeout: 15000 }).then(() => true, () => false), 'a picture sent under the old field name is still read as a picture');
 
   // ---- 8. Fill in from a screenshot (v2.4) ----
   const q = await page();
@@ -267,16 +267,21 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
   ok(/Fill in from a screenshot/.test(await q.textContent('#f-vfrow')), 'the form also has a "Fill in from a screenshot" button');
   await shot(q, '10-screenshot-button');
   let g0 = G.gen.length;
+  const waitFilled = (p, ms) => p.waitForFunction(() => { const F = window.__t.getF(); return F && F.filled && !F.vf; }, null, { timeout: ms || 15000 }).then(() => true, () => false);
   await q.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
-  ok(await waitStage(q, 'done', 15000), 'picking a screenshot: Gemini reads it');
+  ok(await waitFilled(q), 'picking a screenshot with an empty form: Gemini reads it and it fills in by itself (no Use it)');
   let gp = G.gen[G.gen.length - 1].contents[0].parts;
   ok(G.gen.length === g0 + 1 && gp.length === 2 && gp[0].inlineData.mimeType === 'image/jpeg' && jpegSize(gp[0].inlineData.data) === '1080x2523' && /Ignore the app around it/.test(gp[1].text), 'one screenshot went to Gemini as a 1080-wide JPEG with the screenshot prompt -> ' + jpegSize(gp[0].inlineData.data));
   const pv = await q.textContent('#f-vf');
-  ok(/Gemini read the recipe/.test(pv) && /Crack Chicken Penne/.test(pv) && /Tip: paste the post’s link/.test(pv) && /Read by Gemini from your picture\./.test(pv) && !/Adds a picture/.test(pv), 'preview: "Gemini read the recipe", the link tip, no photo from the screenshot');
-  await q.$eval('#f-vf', el => el.scrollIntoView({ block: 'start' }));
-  await shot(q, '11-screenshot-preview');
-  await q.click('[data-act="vf-use"]'); await q.waitForTimeout(700);
-  ok(await q.inputValue('#f-title') === 'Crack Chicken Penne' && (await q.inputValue('#f-ing')).split('\n').length === 6 && await q.evaluate(() => { const F = window.__t.getF(); return !F.photoKey && !F.photoData; }), 'Use it fills the boxes and leaves the photo alone');
+  ok(/Filled in from your screenshot/.test(pv) && /5 ingredients · 3 steps · 1 tip · 35 min · serves 6/.test(pv) && /Check: Amount of cheddar/.test(pv) && /Tip: paste the post’s link/.test(pv) && /Undo/.test(pv) && !/Translated/.test(pv), 'the filled-in card: what came in, what to check, the link tip, Undo (no "Translated" for English)');
+  ok(await q.inputValue('#f-title') === 'Crack Chicken Penne' && (await q.inputValue('#f-ing')).split('\n').length === 6 && (await q.inputValue('#f-steps')).split('\n').length === 3 && await q.inputValue('#f-time') === '35' && await q.evaluate(() => { const F = window.__t.getF(); return !F.photoKey && !F.photoData; }), 'the boxes are filled in and the photo is left alone');
+  await q.waitForTimeout(400);
+  await shot(q, '11-screenshot-filled');
+  // Undo puts the empty form back; filling again works
+  await q.click('#f-filled [data-act="vf-undo"]'); await q.waitForTimeout(400);
+  ok(await q.inputValue('#f-title') === '' && await q.inputValue('#f-ing') === '' && await q.inputValue('#f-steps') === '' && await q.inputValue('#f-time') === '' && await q.evaluate(() => { const F = window.__t.getF(); return !F.filled && !F.ai && !F.meal.size; }) && /Fill in from a screenshot/.test(await q.textContent('#f-vfrow')), 'Undo empties the boxes again (and forgets Gemini filled them)');
+  await q.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  ok(await waitFilled(q), 'after Undo, a screenshot fills it in again');
   await q.click('button[form="edform"]'); await q.waitForTimeout(900);
   const savedP = await q.evaluate(() => window.__t.list().find(r => r.title === 'Crack Chicken Penne' && r.aiFill && r.aiFill.src === 'image'));
   ok(!!savedP, 'the saved recipe remembers Gemini read it from a picture');
@@ -287,15 +292,27 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
   // a long scrolling screenshot is cut into overlapping pieces; a big camera photo is made smaller; both in one go
   await openAdd(q);
   g0 = G.gen.length;
+  await q.fill('#f-ing', '1 lb pasta\n2 cups marinara');
   await q.setInputFiles('#f-ifile', [path.join(SP, 'tall.png'), path.join(SP, 'camera.jpg')]);
   ok(await waitStage(q, 'done', 20000), 'two pictures at once: Gemini reads them');
+  const pv2 = await q.textContent('#f-vf');
+  ok(/Gemini read the recipe/.test(pv2) && /This replaces what’s in Ingredients now/.test(pv2) && /Use it/.test(pv2) && await q.inputValue('#f-ing') === '1 lb pasta\n2 cups marinara', 'with Ingredients already filled in: the preview asks first and nothing is replaced yet');
+  await q.$eval('#f-vf', el => el.scrollIntoView({ block: 'start' }));
+  await shot(q, '16-screenshot-asks-first');
   gp = G.gen[G.gen.length - 1].contents[0].parts;
   const sizes = gp.filter(x => x.inlineData).map(x => jpegSize(x.inlineData.data));
   ok(sizes.join() === '1080x2200,1080x2200,1080x2200,1080x810', 'the long screenshot became 3 overlapping 1080x2200 pieces, the camera photo 1080x810 -> ' + sizes.join());
   ok(/4 pictures, in order/.test(gp[gp.length - 1].text) && /Read by Gemini from your pictures\./.test(await q.textContent('#f-vf')), 'Gemini is told the pieces are in order; the preview says "pictures"');
   const total = gp.filter(x => x.inlineData).reduce((a, x) => a + x.inlineData.data.length, 0);
   ok(total < 4.2 * 1024 * 1024, 'the whole request stays under Vercel’s 4.5 MB -> ' + Math.round(total / 1024) + ' KB of picture data');
-  await q.click('[data-act="vf-close"]');
+  await q.click('[data-act="vf-use"]'); await q.waitForTimeout(500);
+  ok((await q.inputValue('#f-ing')).split('\n').length === 6 && /Filled in from your screenshots/.test(await q.textContent('#f-vf')), 'Use it replaces Ingredients and leaves the Undo card');
+  await q.fill('#f-notes', 'Kids liked it');
+  await q.fill('#f-steps', (await q.inputValue('#f-steps')) + '\nServe hot.');
+  await q.click('#f-filled [data-act="vf-undo"]'); await q.waitForTimeout(400);
+  const askd = await q.textContent('#modal');
+  await q.click('#dlg-yes'); await q.waitForTimeout(400);
+  ok(/Undo the fill-in\?/.test(askd) && await q.inputValue('#f-ing') === '1 lb pasta\n2 cups marinara' && await q.inputValue('#f-steps') === '' && await q.inputValue('#f-notes') === 'Kids liked it', 'Undo after changes asks first, then puts back the old ingredients (My notes, which the fill never touches, stay)');
   // no recipe in the picture
   G.plan = [{ recipe: { isRecipe: false, title: '', ingredients: [], steps: [], notes: [], equipment: [], totalTime: 0, servings: 0, cuisine: '', meals: [], guesses: [] } }];
   await q.setInputFiles('#f-ifile', path.join(SP, 'camera.jpg'));
@@ -309,9 +326,106 @@ const shot = (p, n) => p.screenshot({ path: path.join(SP, n + '.png') });
   const qd = await page('dark');
   await openAdd(qd);
   await qd.setInputFiles('#f-ifile', path.join(R, 'tests/fixtures/caption-shot.jpg'));
-  await waitStage(qd, 'done', 15000);
-  await qd.$eval('#f-vf', el => el.scrollIntoView({ block: 'start' }));
-  await shot(qd, '15-screenshot-preview-dark');
+  await waitFilled(qd);
+  await qd.waitForTimeout(400);
+  await shot(qd, '15-screenshot-filled-dark');
+
+  // ---- 9. v2.4.1: the Instagram post YumYum can't read -> the screenshot way, on an Android phone ----
+  const ANDROID = 'Mozilla/5.0 (Linux; Android 15; SM-S928U) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Mobile Safari/537.36';
+  const REEL = 'https://www.instagram.com/reel/DfLcvZ0o6o6/';
+  const SPANISH = { isRecipe: true, language: 'Spanish', title: 'Pork Adobo', ingredients: ['500 g pork shoulder', '1/2 cup orange juice', '200 ml water', '2 tablespoons achiote paste', 'Salt'], steps: ['Blend the orange juice, water and achiote.', 'Coat the pork and let it rest overnight.', 'Bake at 180 °C for 40 minutes.'], notes: [], equipment: ['Blender'], totalTime: 0, servings: 0, cuisine: 'Mexican', meals: ['Dinner'], guesses: ['Amount of salt isn’t given'] };
+  // the reader: a sign-in-only reel fails like the live one did; another reel reads, but its caption has no recipe
+  const igReader = route => {
+    const u = decodeURIComponent(route.request().url());
+    const body = /NoRecipe1/.test(u) ? { ok: true, kind: 'video', platform: 'instagram', title: '', caption: 'So good!! Recipe in the comments 👇', ingredients: [], steps: [] }
+      : { ok: false, error: 'Instagram only shows this post to people signed in to Instagram, so YumYum can’t read it.', hint: 'record' };
+    return route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  };
+  const noNav = p => p.evaluate(() => document.addEventListener('click', e => { if (e.target.closest('[data-act="ig-open"]')) e.preventDefault(); }, true)); // Playwright can't open the Instagram app
+  const awayAndBack = p => p.evaluate(() => { let st = 'hidden'; Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => st }); Object.defineProperty(document, 'hidden', { configurable: true, get: () => st === 'hidden' }); document.dispatchEvent(new Event('visibilitychange')); st = 'visible'; document.dispatchEvent(new Event('visibilitychange')); });
+  const failed = p => p.waitForFunction(() => { const F = window.__t.getF(); return F && (F.readState === 'failed' || F.readState === 'done'); }, null, { timeout: 8000 }).then(() => true, () => false);
+  const draft = p => p.evaluate(() => JSON.parse(localStorage.getItem('yyt-draft-v1') || 'null'));
+
+  const a = await page('light', ANDROID);
+  await a.route(/vercel\.app\/api\/recipe/, igReader);
+  await noNav(a);
+  await openAdd(a);
+  await a.fill('#f-url', REEL + '?igsh=MTZ3bWQ5');
+  await failed(a);
+  const card = await a.textContent('#f-det');
+  const href = await a.getAttribute('#f-igr [data-act="ig-open"]', 'href');
+  ok(/Can’t read this recipe\?/.test(card) && /signed in to Instagram/.test(card) && /Open the post in Instagram, expand the recipe or comment, take a screenshot, and bring it back to YumYum\./.test(card) && /Open in Instagram/.test(card) && /Use my screenshot/.test(card), 'a reel YumYum can’t read shows "Can’t read this recipe?" with Open in Instagram and Use my screenshot');
+  ok(/^intent:\/\/www\.instagram\.com\/reel\/DfLcvZ0o6o6\//.test(href) && /#Intent;scheme=https;package=com\.instagram\.android;S\.browser_fallback_url=https%3A%2F%2Fwww\.instagram\.com%2Freel%2FDfLcvZ0o6o6%2F/.test(href) && /;end$/.test(href), 'on Android, Open in Instagram goes to the Instagram app (the web page if it isn’t installed) -> ' + href.slice(0, 70) + '…');
+  await a.$eval('#f-igr', el => el.scrollIntoView({ block: 'center' })); await a.waitForTimeout(200);
+  await shot(a, '17-ig-cant-read');
+  await a.click('#f-igr [data-act="ig-open"]'); await a.waitForTimeout(200);
+  const d1 = await draft(a);
+  ok(d1 && /DfLcvZ0o6o6/.test(d1.v['#f-url']) && d1.igAt > 0 && d1.readState === 'failed', 'tapping Open in Instagram keeps the unsaved form first');
+  await awayAndBack(a); await a.waitForTimeout(500);
+  const back = await a.textContent('#f-igr');
+  ok(/Got your screenshot\?/.test(back) && /primary/.test(await a.getAttribute('#f-igr [data-act="vf-pickimg"]', 'class')) && /DfLcvZ0o6o6/.test(await a.inputValue('#f-url')), 'back from Instagram: the form is as it was, and the card asks "Got your screenshot?" with Use my screenshot first');
+  await shot(a, '18-ig-back');
+  G.plan = [{ recipe: SPANISH }];
+  const [fc] = await Promise.all([a.waitForEvent('filechooser'), a.click('#f-igr [data-act="vf-pickimg"]')]);
+  ok(fc.isMultiple(), 'Use my screenshot opens the picture picker (up to 4)');
+  await fc.setFiles(path.join(R, 'tests/fixtures/caption-shot.jpg'));
+  ok(await waitFilled(a), 'the screenshot fills in the empty form by itself');
+  const fv = await a.textContent('#f-vf'), dv = await a.textContent('#f-det');
+  ok(await a.inputValue('#f-ing') === SPANISH.ingredients.join('\n') && /Bake at 180 °C for 40 minutes\./.test(await a.inputValue('#f-steps')) && await a.inputValue('#f-time') === '' && await a.inputValue('#f-serv') === '', 'amounts, units and temperatures go in exactly as Gemini read them (500 g, 1/2 cup, 200 ml, 180 °C); no made-up time or servings');
+  ok(/Translated from Spanish, amounts and units kept as written/.test(fv) && /Check: Amount of salt isn’t given/.test(fv) && !/Tip: paste/.test(fv), 'the card says it was translated from Spanish and what to check (no link tip: the reel link is already there)');
+  ok(/The link stays saved with the recipe, so you can open the reel later\./.test(dv) && !(await a.$('#f-igr')) && /DfLcvZ0o6o6/.test(await a.inputValue('#f-url')), 'the reel link stays in the Link box and the card steps aside');
+  await a.evaluate(() => window.scrollTo(0, 0)); await a.$eval('#f-det', el => el.scrollIntoView({ block: 'start' })); await a.waitForTimeout(200);
+  await shot(a, '19-ig-filled-spanish');
+  await a.click('button[form="edform"]'); await a.waitForTimeout(900);
+  const savedIg = await a.evaluate(() => window.__t.list().find(r => r.title === 'Pork Adobo'));
+  ok(savedIg && /instagram\.com\/reel\/DfLcvZ0o6o6/.test(savedIg.url) && savedIg.platform === 'instagram' && savedIg.aiFill && savedIg.aiFill.lang === 'Spanish' && savedIg.ingredients[0] === '500 g pork shoulder', 'saved with the original reel link, as an Instagram recipe, noting the Spanish');
+  ok(!(await draft(a)), 'saving drops the kept form');
+  ok(/Gemini read this from a screenshot or photo and translated it from Spanish\. Check the amounts before you cook\./.test(await a.textContent('#sec-ing')), 'the recipe page says it was translated from Spanish');
+  await a.$eval('#sec-ing', el => el.scrollIntoView({ block: 'start' })); await a.waitForTimeout(300);
+  await shot(a, '20-ig-recipe-spanish');
+  // a reel YumYum reads, but the recipe isn't in the caption (it's in a comment)
+  await openAdd(a);
+  await a.fill('#f-url', 'https://www.instagram.com/reel/NoRecipe1/');
+  await failed(a);
+  ok(/Can’t read this recipe\?/.test(await a.textContent('#f-det')) && /the recipe isn’t in it\. It may be in a comment/.test(await a.textContent('#f-det')), 'a reel whose caption has no recipe gets the same card ("It may be in a comment")');
+  await a.evaluate(() => document.querySelector('[data-act="closesheet"]').click()); await a.waitForTimeout(400);
+  ok(!(await draft(a)), 'closing the form drops the kept form');
+  // Android closes YumYum while Dave is in Instagram: the form comes back when he returns
+  await openAdd(a);
+  await a.fill('#f-url', REEL);
+  await failed(a);
+  await a.fill('#f-notes', 'From Tia’s reel');
+  await a.click('#f-igr [data-act="ig-open"]'); await a.waitForTimeout(200);
+  await a.reload(); await a.waitForTimeout(1200);
+  ok(await a.$('#edform') && await a.inputValue('#f-url') === REEL && await a.inputValue('#f-notes') === 'From Tia’s reel' && /Got your screenshot\?/.test(await a.textContent('#f-det')) && /Picked up where you left off/.test(await a.textContent('#toast')), 'YumYum closed in the background: on return the form is back (link, notes, the screenshot card), "Picked up where you left off"');
+  await shot(a, '21-ig-picked-up');
+  await a.evaluate(() => document.querySelector('[data-act="closesheet"]').click()); await a.waitForTimeout(400);
+  await a.reload(); await a.waitForTimeout(1000);
+  ok(!(await a.$('#edform')), 'after closing the form, opening YumYum again starts normally');
+  // a desktop browser gets the plain link in a new tab
+  const dsk = await page();
+  await dsk.route(/vercel\.app\/api\/recipe/, igReader);
+  await openAdd(dsk);
+  await dsk.fill('#f-url', REEL);
+  await failed(dsk);
+  ok(await dsk.getAttribute('#f-igr [data-act="ig-open"]', 'href') === REEL && await dsk.getAttribute('#f-igr [data-act="ig-open"]', 'target') === '_blank', 'not on Android: Open in Instagram is the plain link in a new tab');
+  // Share > YumYum from the screenshot (through the real service worker): it lands in the kept form, link and all
+  await sc.route(/vercel\.app\/api\/recipe/, igReader);
+  await s.goto('http://localhost:8791/'); await s.waitForTimeout(600);
+  await openAdd(s);
+  await s.fill('#f-url', REEL);
+  await failed(s);
+  await noNav(s);
+  await s.click('#f-igr [data-act="ig-open"]'); await s.waitForTimeout(200);
+  G.plan = [{ recipe: SPANISH }];
+  await share({ title: '', text: '', url: '' }, path.join(R, 'tests/fixtures/caption-shot.jpg'), 'media');
+  ok(await waitFilled(s, 15000) && await s.inputValue('#f-url') === REEL && await s.inputValue('#f-ing') === SPANISH.ingredients.join('\n'), 'a screenshot shared to YumYum lands in the kept form: the reel link stays and the recipe fills in by itself');
+  await shot(s, '22-shared-into-kept-form');
+  // a kept form that already has its recipe isn't waiting for a screenshot: a new one starts a fresh form
+  await s.goto('http://localhost:8791/'); await s.waitForTimeout(900);
+  ok(await s.$('#edform') && await s.inputValue('#f-url') === REEL && await s.inputValue('#f-ing') === SPANISH.ingredients.join('\n'), 'opening YumYum again brings back the unsaved form with its recipe');
+  await share({ title: '', text: '', url: '' }, path.join(R, 'tests/fixtures/caption-shot.jpg'), 'media');
+  ok(await waitFilled(s, 15000) && await s.inputValue('#f-url') === '' && await s.inputValue('#f-title') === 'Crack Chicken Penne', 'a screenshot shared when the kept form already has a recipe starts a fresh form (no wrong link)');
 
   ok(!errs.length, 'no page errors' + (errs.length ? ': ' + errs.join(' | ') : ''));
   await b.close(); srv.close();
