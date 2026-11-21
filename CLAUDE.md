@@ -766,7 +766,13 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   caption with no recipe, the intent link, kept on Open in Instagram, back from Instagram, Use my screenshot opens the picker,
   Spanish amounts and units as given, the link kept and saved, the recipe-page note, kept form after Android closes YumYum,
   closing drops it, desktop link, a screenshot shared into the kept form through the real service worker, and a kept form
-  that already has a recipe isn't joined). **Not confirmed yet on Dave's phone**: the intent link opening the Instagram app,
+  that already has a recipe isn't joined). **Live with the real Gemini** (Nov 21, 2026, live-check `postimg` on made-up
+  Instagram-style screenshots): a Spanish cochinita pibil (1 kg, 100 g, 1 taza, 1/2 taza, 250 ml, 2 cucharadas, 180 °C) came
+  back in English with every amount, unit and temperature as written in 3 of 3 tries (once through the still-in-Spanish
+  retry, 7.8 s; otherwise 1.8 to 4.5 s); an ingredients-only Spanish salsa verde came back with no steps and the guess "No
+  steps were written in the screenshot"; an English caption came back with no language. Gemini sometimes still fills Total
+  time from a step (120 min for "2 hours" in the oven, overnight marinade not counted) and lists serving items named in a
+  step (tortillas, red onion) as ingredients. **Not confirmed yet on Dave's phone**: the intent link opening the Instagram app,
   the kept form after a real background close, and the share menu after the update.
 
 ## How Dave likes to work
