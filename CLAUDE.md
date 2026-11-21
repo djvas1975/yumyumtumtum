@@ -760,7 +760,8 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   projects found the same (github.com/soulfactorx/pi-desktop-mobile/pull/34: installing failed once extensions were added;
   github.com/tugallo80/renzoderoma-/pull/281: a non-MIME entry may make the server drop the share target). So the installed
   YumYum has probably never picked up the Oct 17 video share either. Now `accept: ["image/*", "video/*"]` only (sw.js still
-  sorts files by type or name). Not confirmed until Dave's phone updates. Background: the manifest is checked when the app
+  sorts files by type or name). **Confirmed on Dave's phone Nov 21, 2026 (about 15 minutes after the fix, after a second
+  about://webapks Update): YumYum shows in the screenshot Share menu and reads the shared picture.** Background: the manifest is checked when the app
   opens, at most once every 24 hours; a `share_target` change queues an update that installs after all YumYum windows are
   closed **and the phone is plugged in and on Wi-Fi**. Faster, no reinstall: plug in on Wi-Fi, close YumYum, open Chrome,
   go to `about://webapks`, tap **Update** under YumYum ("Update Status" -> Pending/Scheduled), open YumYum once, close it, wait
@@ -787,6 +788,20 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - For looks, show a picture and let him choose. He'll say plainly when something misses.
 
 ## Ideas not built yet
+- **Screenshot recipes like the rest (brainstorm Nov 21, 2026, after sharing worked; nothing picked yet).** A screenshot
+  recipe with no link has no photo, no source/creator, no Open in Instagram and no video. Ideas, smallest first, all on
+  the free Gemini tier: (1) the link comes along by itself: copy the reel's link in Instagram, then share the screenshot;
+  YumYum reads a social link copied in the last few minutes from the clipboard (Chrome asks once) and attaches it (today's
+  kept form already joins a shared screenshot to a reel link shared first); (2) Gemini reads the @creator and which app
+  from the screenshot -> platform icon and "@name" like linked recipes, and Open @name in Instagram when there's no post
+  link; (3) the food photo from the screenshot: Gemini object detection (`box_2d` [ymin, xmin, ymax, xmax], 0-1000, per
+  ai.google.dev image understanding) finds the dish in a screenshot that shows the video (or a second screenshot of it)
+  and YumYum crops it as the recipe photo; (4) View on Instagram and the play button open the Instagram app (`igAppUrl`)
+  for reels YumYum knows are sign-in-only (the in-app embed can't show those); (5) Steps from a similar recipe (v1.7) also
+  for screenshot recipes missing steps (today it needs `r.url`, app.html `findSimilar` trigger); (6) bigger: keep a shared
+  screen recording as the recipe's video on this phone only (IndexedDB; not synced, 1 GB free Blob); Fill in from a video
+  already reads it. Not possible: finding the original post from a screenshot (no Instagram search API; scraping breaks
+  its terms).
 - A small native Android helper with a floating "screenshot this" button over Instagram (option B of the screenshot plan,
   Nov 21, 2026): days of work, a separate app installed from a file, Android asks "Allow screen capture?" every time. Not
   approved; the web-app version (2.4.1) was chosen.
