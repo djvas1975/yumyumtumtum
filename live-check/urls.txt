@@ -1,1 +1,1 @@
-get https://yumyumtumtum.vercel.app/api/video/i1795291891?op=selftest
+postimg live-check/pages/adobo-test.jpg

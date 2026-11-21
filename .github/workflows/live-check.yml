@@ -20,6 +20,7 @@ jobs:
               findbot\ *) curl -sS -m 30 -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" -L "${u#findbot }" > fb.html; grep -oE '"(code|shortcode)":"D[A-Za-z0-9_-]{9,12}"' fb.html | sort -u | head -6 | sed -E 's#.*:"([^"]+)"#https://www.instagram.com/reel/\1/#' >> list.txt; echo "findbot bytes $(wc -c < fb.html) codes $(grep -oE '"(code|shortcode)":"[A-Za-z0-9_-]{9,14}"' fb.html | sort -u | head -12 | tr '\n' ' ')" >> $out ;;
               save\ *) set -- ${u#save }; mkdir -p live-check/pages; curl -sS -m 30 -A "$2" -L "$3" | gzip -9 > "live-check/pages/$1.html.gz"; echo "saved $1 $(zcat live-check/pages/$1.html.gz | wc -c)" >> $out ;;
               get\ *) echo "GET ${u#get }" >> $out; curl -sS -m 170 "${u#get }" | head -c 6000 >> $out; echo >> $out ;;
+              postimg\ *) f="${u#postimg }"; node -e 'const fs=require("fs");fs.writeFileSync("body.json",JSON.stringify({images:[{data:fs.readFileSync(process.argv[1]).toString("base64"),type:"image/jpeg"}],title:"",caption:""}))' "$f"; s=$(date +%s%3N); r=$(curl -sS -m 170 -X POST -H "Origin: https://djvas1975.github.io" -H "Content-Type: application/json" --data-binary @body.json "https://yumyumtumtum.vercel.app/api/video?op=image"); echo "POSTIMG $f ms=$(( $(date +%s%3N) - s )) $r" | head -c 6000 >> $out; echo >> $out ;;
               *) echo "$u" >> list.txt ;;
             esac
           done < live-check/urls.txt
