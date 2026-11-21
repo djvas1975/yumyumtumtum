@@ -23,10 +23,12 @@ jobs:
             esac
           done < live-check/urls.txt
           echo "LIST:" >> $out; cat list.txt >> $out
-          while read -r u; do
-            [ -z "$u" ] && continue
-            r=$(curl -sS -m 70 "https://yumyumtumtum.vercel.app/api/recipe?url=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$u")&debug=1&v=ua$(date +%s)")
-            echo "READER $u => $(echo "$r" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);console.log((j.ok?"ok":"FAIL "+j.error)+" | title "+(j.title||"").slice(0,50)+" | caption "+(j.caption||"").length+" | ing "+(j.ingredients||[]).length+" | steps "+(j.steps||[]).length+" | "+JSON.stringify(j.trace||[]))}catch(e){console.log("bad json "+s.slice(0,200))}})')" >> $out
+          while read -r line; do
+            [ -z "$line" ] && continue
+            u="${line%%|*}"; x=""; case "$line" in *\|*) x="${line#*|}";; esac
+            r=$(curl -sS -m 70 "https://yumyumtumtum.vercel.app/api/recipe?url=$(node -e 'console.log(encodeURIComponent(process.argv[1]))' "$u")&debug=1&v=ua$(date +%s)$x")
+            echo "READER $u $x => $(echo "$r" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);console.log((j.ok?"ok":"FAIL "+j.error)+" | title "+(j.title||"").slice(0,50)+" | caption "+(j.caption||"").length+" | ing "+(j.ingredients||[]).length+" | steps "+(j.steps||[]).length+" | "+JSON.stringify(j.trace||[]))}catch(e){console.log("bad json "+s.slice(0,200))}})')" >> $out
+            case "$x" in *probe*) ;; *) continue;; esac
             code=$(echo "$u" | sed -nE 's#.*instagram\.com/(.*/)?(p|reels?|tv)/([A-Za-z0-9_-]+).*#\3#p')
             for ua in "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)" "Twitterbot/1.0" "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"; do
               for pg in "https://www.instagram.com/reel/$code/" "https://www.instagram.com/p/$code/embed/"; do

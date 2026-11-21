@@ -1,5 +1,5 @@
-save soup-fb facebookexternalhit/1.1 https://www.instagram.com/reel/Df2MWdejHRa/
-save soup-tw Twitterbot/1.0 https://www.instagram.com/reel/Df2MWdejHRa/
-save soup-embed-fb facebookexternalhit/1.1 https://www.instagram.com/p/Df2MWdejHRa/embed/
-save soup-embedcap-fb facebookexternalhit/1.1 https://www.instagram.com/p/Df2MWdejHRa/embed/captioned/
-save slow-fb facebookexternalhit/1.1 https://www.instagram.com/reel/Df67GbKDPZp/
+https://www.instagram.com/reel/Df2MWdejHRa/?igsh=MWx0bXo4bDFzZ2NyNw==|&ig=page
+https://www.instagram.com/reel/Df67GbKDPZp/|&ig=page
+https://www.instagram.com/p/DdovimajA-l/|&ig=page
+https://www.instagram.com/reel/Df-gqvgjO9F/
+https://www.instagram.com/reel/Cqv2Dixss3V/
