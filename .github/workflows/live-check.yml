@@ -19,14 +19,7 @@ jobs:
             for ua in "facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)" "Twitterbot/1.0" "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"; do
               for pg in "https://www.instagram.com/reel/$code/" "https://www.instagram.com/p/$code/embed/"; do
                 curl -sS -m 30 -A "$ua" -o page.html -w "%{http_code} %{url_effective} %{size_download}" -L "$pg" > meta.txt
-                d=$(node -e '
-                  const h=require("fs").readFileSync("page.html","utf8");
-                  const m=(p)=>{const r=new RegExp("<meta[^>]+(?:property|name)=[\"\x27]"+p+"[\"\x27][^>]*content=[\"\x27]([^\"\x27]*)","i").exec(h)||new RegExp("<meta[^>]+content=[\"\x27]([^\"\x27]*)[\"\x27][^>]*(?:property|name)=[\"\x27]"+p+"[\"\x27]","i").exec(h);return m?m[1]:""};
-                  const d=m("og:description"), t=m("og:title"), img=m("og:image"), vid=m("og:video");
-                  const cap=(h.match(/"caption"\s*:\s*\{[^{}]*?"text"\s*:\s*"((?:[^"\\]|\\.)*)"/)||[])[1]||"";
-                  const ecap=(h.match(/class="Caption"/)?"Caption-div":"")+(h.match(/edge_media_to_caption/)?" edge":"")+(h.match(/contextJSON/)?" ctx":"");
-                  console.log("og:desc "+d.length+" ["+d.slice(0,90).replace(/\s+/g," ")+"] og:title "+t.length+" img "+(img?"y":"n")+" vid "+(vid?"y":"n")+" capjson "+cap.length+" "+ecap+" login "+(/accounts\/login|Log in|Sign up/.test(h.slice(0,200000))?"y":"n"));
-                ')
+                d=$(node live-check/probe.js page.html 2>&1 | tail -1)
                 echo "$code | ${ua:0:22} | ${pg#https://www.instagram.com/} | $(cat meta.txt) | $d" >> $out
               done
             done
