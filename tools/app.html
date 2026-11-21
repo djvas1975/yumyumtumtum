@@ -505,6 +505,7 @@ html.haspill #toast{bottom:calc(146px + env(safe-area-inset-bottom,0px))}
 ul.vf-list .vf-more,ol.vf-list .vf-more{list-style:none;margin-left:-20px;font-size:12.5px;color:var(--ink-3);font-weight:700}
 .vf-guess{font-size:13px;color:var(--ink-2)}
 .vf-warn{font-size:13px;font-weight:700;color:var(--chili)}
+.vf-fine .ic{width:13px;height:13px;vertical-align:-2px}
 .fromnote.ai .ic{width:15px;height:15px;flex:none;margin-top:3px;color:var(--chili)}
 
 /* discover */
@@ -1184,7 +1185,7 @@ function media(r, cls){
     + (r.sample ? '<span class="ex">Example</span>' : '') + '</div>';
 }
 function srcLabel(r){
-  if (r.platform === 'none') return 'My recipe';
+  if (r.platform === 'none') return (r.shot && r.shot.creator) || 'My recipe';
   if (r.platform === 'web') return r.source || hostOf(r.url);
   return (r.source && r.source.charAt(0) === '@') ? r.source : plat(r).name;
 }
@@ -1300,7 +1301,7 @@ function stat(v, l){ return '<div class="stat"><b>' + esc(v) + '</b><span>' + l 
 V.recipe = (rt) => {
   const r = Store.recipes.get(rt.id);
   if (!r) return missingHTML("This recipe isn't here anymore.");
-  const p = plat(r); const src = srcLabel(r);
+  const p = (r.platform === 'none' && r.shot && PLAT[r.shot.app]) ? PLAT[r.shot.app] : plat(r); const src = srcLabel(r);
   const ing = r.ingredients || [], steps = r.steps || [], tips = r.srcNotes || [], nut = r.nutrition || [], tags = r.tags || [];
   const nIng = countItems(ing), nSteps = countItems(steps);
   const cols = (r.collections || []).map(id => Store.cols.get(id)).filter(Boolean);
@@ -1310,11 +1311,12 @@ V.recipe = (rt) => {
   const site = r.siteName || (r.platform === 'web' ? hostOf(r.url) : '');
   const byline = [r.author ? 'By ' + r.author.replace(/^by\s+/i, '') : '', r.platform === 'web' && site && site !== src ? site : ''].filter(Boolean).join(' · ');
   const reading = READING.has(r.id);
-  const wantsMore = !!r.url && r.platform !== 'none' && !r.sample && canRead() && !r.importedAt && (!nIng || !nSteps || !hasOwnPhoto(r));
+  const wantsMore = !!r.url && r.platform !== 'none' && !r.sample && !r.igLocked && canRead() && !r.importedAt && (!nIng || !nSteps || !hasOwnPhoto(r));
   const times = [r.prepTime ? 'Prep ' + fmtTime(r.prepTime) : '', r.cookTime ? 'Cook ' + fmtTime(r.cookTime) : '', r.yieldText && !/^\d+$/.test(r.yieldText) ? 'Makes ' + r.yieldText.replace(/^(makes|yield[s]?:?)\s*/i, '') : ''].filter(Boolean).join(' · ');
   let h = '<div class="hero">' + media(r, 'hero-media')
     + '<div class="hero-bar"><button class="circ" data-act="back" aria-label="Back">' + icon('back') + '</button><span class="sp"></span>'
-    + (vidOf(r) ? '<button class="circ' + (VP && VP.id === r.id ? ' on' : '') + '" data-act="vplay" data-id="' + esc(r.id) + '" aria-pressed="' + !!(VP && VP.id === r.id) + '" aria-label="' + (VP && VP.id === r.id ? 'Close the video' : 'Play the video') + '">' + icon('play') + '</button>' : '')
+    + (r.igLocked && r.platform === 'instagram' ? '<a class="circ" href="' + esc(igAppUrl(r.url)) + '"' + igTarget() + ' aria-label="Watch it in Instagram">' + icon('play') + '</a>'
+      : vidOf(r) ? '<button class="circ' + (VP && VP.id === r.id ? ' on' : '') + '" data-act="vplay" data-id="' + esc(r.id) + '" aria-pressed="' + !!(VP && VP.id === r.id) + '" aria-label="' + (VP && VP.id === r.id ? 'Close the video' : 'Play the video') + '">' + icon('play') + '</button>' : '')
     + '<button class="circ" data-act="timers" aria-label="Timers">' + icon('timer') + '</button>'
     + '<button class="circ' + (r.fav ? ' on' : '') + '" data-fav="' + esc(r.id) + '" aria-pressed="' + (!!r.fav) + '" aria-label="' + (r.fav ? 'Remove from Favorites' : 'Add to Favorites') + '">' + icon(r.fav ? 'heartf' : 'heart') + '</button>'
     + '<button class="circ" data-act="more" data-id="' + esc(r.id) + '" aria-label="More options">' + icon('more') + '</button></div></div>';
@@ -1363,7 +1365,7 @@ V.recipe = (rt) => {
     if (!wantsMore) {
       h += noStepsHTML(r, nIng);
       // look for a similar recipe on its own the first time (once per visit if it fails)
-      if (r.url && !r.sample && !r.similar && canRead() && !SIM.busy.has(r.id) && !SIM.tried.has(r.id)) setTimeout(() => findSimilar(r.id), 0);
+      if ((r.url || (r.aiFill && r.aiFill.src === 'image')) && !r.sample && !r.similar && canRead() && !SIM.busy.has(r.id) && !SIM.tried.has(r.id)) setTimeout(() => findSimilar(r.id), 0);
     }
   }
   // website recipes saved before the reader looked for videos in the article: check once, quietly
@@ -1380,7 +1382,10 @@ V.recipe = (rt) => {
   if (cols.length) h += '<div class="block"><h2>In collections</h2><div class="wrapchips">' + cols.map(c => '<button class="chip" data-col="' + esc(c.id) + '">' + icon('folder') + esc(c.name) + '</button>').join('') + '</div></div>';
   if (tags.length) h += '<div class="block"><h2>Tags</h2><div class="wrapchips">' + tags.map(t => '<button class="chip" data-tagq="' + esc(t) + '">#' + esc(t) + '</button>').join('') + '</div></div>';
   h += '<p class="saved">Saved ' + fmtDate(r.createdAt) + (r.lastMade ? ' · Last made ' + fmtDate(r.lastMade) : '') + (r.cuisine ? ' · ' + esc(r.cuisine) : '') + (site && r.platform === 'web' ? ' · Recipe from ' + esc(site) : '') + '</p></div>';
-  if (r.url) h += '<div class="cta-bar"><div class="cta-in"><a class="btn primary" href="' + esc(jumpUrl(r)) + '" target="_blank" rel="noopener noreferrer"><span class="cta-t"><small>' + esc(cta[0]) + '</small><b>' + esc(cta[1]) + '</b></span>' + icon('ext') + '</a><button class="btn ghost sq" data-act="copylink" data-id="' + esc(r.id) + '" aria-label="Copy link">' + icon('copy') + '</button></div></div>';
+  const shotHome = !r.url && r.shot && r.shot.creator && profileUrl(r.shot);
+  if (shotHome) h += '<div class="cta-bar"><div class="cta-in"><a class="btn primary" href="' + esc(r.shot.app === 'instagram' ? igAppUrl(shotHome) : shotHome) + '"' + (r.shot.app === 'instagram' ? igTarget() : ' target="_blank" rel="noopener noreferrer"') + '><span class="cta-t"><small>See ' + esc(r.shot.creator) + ' on</small><b>' + esc(PLAT[r.shot.app].name) + '</b></span>' + icon('ext') + '</a><button class="btn ghost sq" data-act="edit" data-id="' + esc(r.id) + '" aria-label="Add the post’s link">' + icon('link') + '</button></div></div>';
+  if (r.url && r.platform === 'instagram') h += '<div class="cta-bar"><div class="cta-in"><a class="btn primary" href="' + esc(igAppUrl(jumpUrl(r))) + '"' + igTarget() + '><span class="cta-t"><small>' + esc(cta[0]) + '</small><b>' + esc(cta[1]) + '</b></span>' + icon('ext') + '</a><button class="btn ghost sq" data-act="copylink" data-id="' + esc(r.id) + '" aria-label="Copy link">' + icon('copy') + '</button></div></div>';
+  else if (r.url) h += '<div class="cta-bar"><div class="cta-in"><a class="btn primary" href="' + esc(jumpUrl(r)) + '" target="_blank" rel="noopener noreferrer"><span class="cta-t"><small>' + esc(cta[0]) + '</small><b>' + esc(cta[1]) + '</b></span>' + icon('ext') + '</a><button class="btn ghost sq" data-act="copylink" data-id="' + esc(r.id) + '" aria-label="Copy link">' + icon('copy') + '</button></div></div>';
   return h;
 };
 V.me = () => {
@@ -1409,7 +1414,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.4.1</p></div>';
+    + '<p class="ver">YumYum · version 2.5</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -2450,7 +2455,7 @@ async function listenVideo(id){
 }
 function noStepsHTML(r, nIng){
   const mine = r.platform === 'web' || r.platform === 'none' || r.platform === 'pinterest';
-  const what = mine ? 'This recipe doesn\'t have the steps written out.' : 'This ' + (isVideo(r) ? 'video' : 'post') + '\'s caption doesn\'t have the steps.';
+  const what = r.aiFill && r.aiFill.src === 'image' && r.platform === 'none' ? 'The screenshot didn\'t have the steps written out.' : mine ? 'This recipe doesn\'t have the steps written out.' : 'This ' + (isVideo(r) ? 'video' : 'post') + '\'s caption doesn\'t have the steps.';
   return '<div class="block" id="sec-steps"><h2>Directions</h2><p class="nsl">' + what + (canRead() ? ' Here\'s what the app found:' : '') + '</p>'
     + (r.platform === 'tiktok' ? saidCardHTML(r) : '') + simCardHTML(r, nIng)
     + '<button class="addrow nsadd" data-act="edit" data-id="' + esc(r.id) + '">' + icon('plus') + 'Or add the directions yourself</button></div>';
@@ -4994,6 +4999,15 @@ function igAppUrl(url){
   if (!/Android/i.test(navigator.userAgent || '')) return url;
   return 'intent://' + url.replace(/^https?:\/\//i, '') + '#Intent;scheme=https;package=com.instagram.android;S.browser_fallback_url=' + encodeURIComponent(url) + ';end';
 }
+// on Android an intent link leaves YumYum for the Instagram app; anywhere else, a new tab
+const igTarget = () => /Android/i.test(navigator.userAgent || '') ? '' : ' target="_blank" rel="noopener noreferrer"';
+// v2.5: a creator's own page, for a screenshot recipe with no post link
+function profileUrl(shot){
+  const h = String(shot.creator || '').replace(/^@/, '');
+  if (!/^[A-Za-z0-9._]{2,30}$/.test(h)) return '';
+  return {instagram:'https://www.instagram.com/' + h + '/', tiktok:'https://www.tiktok.com/@' + h, facebook:'https://www.facebook.com/' + h,
+    youtube:'https://www.youtube.com/@' + h, pinterest:'https://www.pinterest.com/' + h + '/'}[shot.app] || '';
+}
 function igCardHTML(why){
   const back = !!F.igBack, android = /Android/i.test(navigator.userAgent || '');
   return '<div class="cpcard igr" id="f-igr"><b>' + (back ? 'Got your screenshot?' : 'Can’t read this recipe?') + '</b>'
@@ -5121,8 +5135,17 @@ function saveEditor(){
   if (base && base.stepsFrom && JSON.stringify(base.steps || []) !== JSON.stringify(r.steps)) delete r.stepsFrom;
   // Gemini wrote it from a video: the recipe page says so, until both the ingredients and the steps are changed by hand
   const same = (a, b) => JSON.stringify(a || []) === JSON.stringify(b || []);
-  if (F.ai && (same(r.steps, F.ai.steps) || same(r.ingredients, F.ai.ingredients))) { r.aiFill = {at:F.ai.at, src:F.ai.src, guesses:F.ai.guesses}; if (F.ai.lang) r.aiFill.lang = F.ai.lang; }
+  if (F.ai && (same(r.steps, F.ai.steps) || same(r.ingredients, F.ai.ingredients))) {
+    r.aiFill = {at:F.ai.at, src:F.ai.src, guesses:F.ai.guesses}; if (F.ai.lang) r.aiFill.lang = F.ai.lang;
+    // v2.5: who posted it and which app, read from the screenshot (shown like a linked recipe's source)
+    if (F.ai.shot && (F.ai.shot.app || F.ai.shot.creator)) r.shot = F.ai.shot;
+  }
   else if (r.aiFill && base && !same(base.steps, r.steps) && !same(base.ingredients, r.ingredients)) delete r.aiFill;
+  if (r.shot && r.shot.creator && !(r.source && r.source.charAt(0) === '@') && (r.platform === 'none' || (PLAT[r.platform] && PLAT[r.platform].video) || r.platform === 'pinterest')) r.source = r.shot.creator;
+  // v2.5: a reel only signed-in people can see: Play and View on Instagram open the Instagram app, and no "Get it" card
+  if (d && d.platform === 'instagram' && F.readState === 'failed' && F.readHint === 'record' && normUrl(F.lastReadUrl || '') === normUrl(d.url)) r.igLocked = true;
+  else if (!sameLink) delete r.igLocked;
+  if (F.clip && d && normUrl(F.clip) === normUrl(d.url)) { try { localStorage.setItem(CLIP_USED, normUrl(d.url)); } catch (e) {} }
   if (F.imp && d && normUrl(F.lastReadUrl || '') === normUrl(d.url)) {
     const j = F.imp;
     ['description', 'author', 'siteName', 'anchor', 'caption', 'recipeUrl', 'yieldText'].forEach(k => { if (j[k] && !r[k]) r[k] = j[k]; });
@@ -5166,7 +5189,7 @@ function draftSave(){
       : imp ? {lastReadUrl:F.lastReadUrl, readState:'done', imp:imp} : {};
     localStorage.setItem(DRAFT_KEY, JSON.stringify(Object.assign({at:Date.now(), id:F.id, v:v, titleAuto:F.titleAuto, fromShare:F.fromShare,
       meal:Array.from(F.meal), tags:F.tags.slice(), cols:Array.from(F.cols), photoKey:F.photoKey || null, photoUrl:F.photoUrl || null,
-      uploadedLocal:F.uploadedLocal.slice(), ai:F.ai || null, filled:F.filled || null, igAt:F.igAt || 0}, read)));
+      uploadedLocal:F.uploadedLocal.slice(), ai:F.ai || null, filled:F.filled || null, igAt:F.igAt || 0, clip:F.clip || null}, read)));
   } catch (e) {}
 }
 function draftClear(){ try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} }
@@ -5186,7 +5209,7 @@ function resumeDraft(pre){
   openEditor(r, {resume:true});
   Object.entries(d.v).forEach(([s, val]) => { const el = $(s); if (el) el.value = val || ''; });
   Object.assign(F, {titleAuto:!!d.titleAuto, fromShare:!!d.fromShare, meal:new Set(d.meal || []), tags:d.tags || [], cols:new Set(d.cols || []),
-    ai:d.ai || null, filled:d.filled || null, igAt:d.igAt || 0, igBack:!!d.igAt, uploadedLocal:d.uploadedLocal || []});
+    ai:d.ai || null, filled:d.filled || null, igAt:d.igAt || 0, igBack:!!d.igAt, uploadedLocal:d.uploadedLocal || [], clip:d.clip || null});
   F.url = (d.v['#f-url'] || '').trim(); F.det = F.url ? detect(F.url) : null;
   if (d.photoKey) { F.photoKey = d.photoKey; if (IDB.db) IDB.get('photos', d.photoKey).then(b => { if (b && F && F.photoKey === d.photoKey) { const u = URL.createObjectURL(b); PHOTO_URLS.set(d.photoKey, u); F.preview = u; renderPrev(); } }).catch(() => {}); }
   else if (d.photoUrl) F.photoUrl = d.photoUrl;
@@ -5263,6 +5286,7 @@ async function vfRun(job){
       // shrink and slice on the phone, so the pictures fit in one request to Vercel (4.5 MB at most)
       const pics = await prepPics(job.images);
       if (!live()) return;
+      job.sent = pics;
       job.stage = 'write'; renderVF();
       const base0 = F.id ? Store.recipes.get(F.id) : null;
       const j0 = await vPost('image', {images:pics, title:($('#f-title') || {}).value || '', caption:(F.imp && F.imp.caption) || (base0 && base0.caption) || ''}, job.ctrl.signal);
@@ -5344,6 +5368,7 @@ function picStart(files){
   vfCancel();
   F.vf = {f:F, src:'image', images:imgs, stage:'shrink', pct:0, name:'', ctrl:new AbortController(), tries:0};
   renderVF(); renderDet();
+  clipTry(true);
   vfRun(F.vf);
 }
 const PIC_W = 1080, PIC_SLICE = 2200, PIC_OVER = 120, PIC_MAX = 8, PIC_BUDGET = 3.0 * 1024 * 1024;
@@ -5464,7 +5489,8 @@ function renderVF(){
 const FSNAP = ['#f-title', '#f-ing', '#f-steps', '#f-srcnotes', '#f-equip', '#f-time', '#f-serv', '#f-cuisine'];
 const fNothingToReplace = () => !!($('#f-ing') && !$('#f-ing').value.trim() && !$('#f-steps').value.trim());
 function fSnap(){
-  const o = {v:{}, meal:Array.from(F.meal), titleAuto:F.titleAuto, fromShare:F.fromShare, ai:F.ai || null};
+  const o = {v:{}, meal:Array.from(F.meal), titleAuto:F.titleAuto, fromShare:F.fromShare, ai:F.ai || null,
+    photo:{photoKey:F.photoKey || null, photoId:F.photoId || null, photoData:F.photoData || null, photoUrl:F.photoUrl || null, preview:F.preview || null}};
   FSNAP.forEach(s => { const el = $(s); o.v[s] = el ? el.value : ''; });
   return o;
 }
@@ -5477,6 +5503,8 @@ async function vfUndo(){
   const u = d.undo;
   FSNAP.forEach(s => { const el = $(s); if (el) el.value = u.v[s]; });
   F.meal = new Set(u.meal); F.titleAuto = u.titleAuto; F.fromShare = u.fromShare; F.ai = u.ai;
+  // the dish photo the fill cropped from the screenshot goes too (it's deleted on Save or close, like any unused photo)
+  if (d.photo && u.photo && (F.photoKey || null) === d.photo.photoKey && (F.photoId || null) === d.photo.photoId) Object.assign(F, u.photo);
   F.filled = null;
   renderFMeals(); renderPrev(); renderVF(); renderDet();
   toast('Put back what was there before.');
@@ -5488,8 +5516,72 @@ function filledHTML(d){
   return '<div class="vfcard ok" id="f-filled"><div class="vf-h">' + icon('check') + '<b>Filled in from your ' + (many ? 'screenshots' : 'screenshot') + '</b></div>'
     + '<p class="vf-fine">' + esc(facts.join(' · ')) + (r.language ? ' · Translated from ' + esc(r.language) + ', amounts and units kept as written' : '') + '</p>'
     + (r.guesses.length ? '<p class="vf-guess"><b>Check:</b> ' + esc(r.guesses.slice(0, 3).join('; ')) + '</p>' : '')
-    + (!($('#f-url') || {}).value ? '<p class="vf-fine">Tip: paste the post’s link in the Link box too (in the app: Share, then Copy link), so you can open the video from the recipe. You can add it later with Edit.</p>' : '')
+    + (d.photo ? '<p class="vf-fine">' + icon('image') + ' Added a photo of the dish from your screenshot.</p>' : '')
+    + (r.creator ? '<p class="vf-fine">Posted by ' + esc(r.creator) + (PLAT[r.app] ? ' on ' + esc(PLAT[r.app].name) : '') + '.</p>' : '')
+    + clipLineHTML()
     + '<div class="vf-row"><span class="vf-fine">Read by Gemini. Look it over, then tap ' + (F && F.id ? 'Save changes' : 'Yum it') + '.</span><button type="button" class="btn ghost sm" data-act="vf-undo">Undo</button></div></div>';
+}
+// v2.5: the post link someone copied (Instagram: Share, then Copy link) comes along with the screenshot
+function clipLineHTML(){
+  if (!F) return '';
+  const u = (($('#f-url') || {}).value || '').trim();
+  if (F.clip && u && normUrl(u) === normUrl(F.clip)) return '<div class="vf-row"><span class="vf-fine">' + icon('link') + ' Added the link you copied, so the post opens from the recipe.</span><button type="button" class="linkbtn sm" data-act="clip-remove">Remove</button></div>';
+  if (u) return '';
+  return (F.clipAsk ? '<div class="vf-row"><span class="vf-fine">Copied the post’s link in Instagram (Share, then Copy link)?</span><button type="button" class="btn ghost sm" data-act="clip-add">' + icon('link') + 'Add the link</button></div>' : '')
+    + '<p class="vf-fine">Tip: in Instagram, tap Share, then Copy link before you share the screenshot, and YumYum adds the link by itself. You can also paste it in the Link box now or later with Edit.</p>';
+}
+const CLIP_USED = 'yyt-clip-used', CLIP_APPS = ['instagram', 'tiktok', 'facebook', 'youtube', 'pinterest'];
+async function clipState(){
+  if (!navigator.clipboard || !navigator.clipboard.readText) return 'none';
+  try { return (await navigator.permissions.query({name:'clipboard-read'})).state; } catch (e) { return 'prompt'; }
+}
+// a social post link in what was copied, unless it's already saved with a recipe or was used before
+async function clipLink(){
+  let txt = '';
+  try { txt = await navigator.clipboard.readText(); } catch (e) { return {err:true}; }
+  const m = String(txt || '').match(/https?:\/\/[^\s]+/i); if (!m) return {none:true};
+  const d = detect(m[0]);
+  if (!d || CLIP_APPS.indexOf(d.platform) < 0 || (d.platform === 'instagram' && !/instagram\.com\/(reels?|p|tv)\//i.test(d.url))) return {none:true};
+  let used = ''; try { used = localStorage.getItem(CLIP_USED) || ''; } catch (e) {}
+  if (used === normUrl(d.url) || list().some(x => x.url && normUrl(x.url) === normUrl(d.url))) return {old:true};
+  return {url:d.url};
+}
+// auto: only when Chrome already allows reading what's copied (no prompt without a tap); else the card offers a button
+async function clipTry(auto){
+  const f = F; if (!f || !canRead()) return;
+  if ((($('#f-url') || {}).value || '').trim()) return;
+  if (auto) {
+    const st = await clipState();
+    if (F !== f) return;
+    if (st !== 'granted') { f.clipAsk = st === 'prompt'; renderVF(); return; }
+  }
+  const c = await clipLink();
+  if (F !== f) return;
+  f.clipAsk = false;
+  if (c.url && !(($('#f-url') || {}).value || '').trim()) { $('#f-url').value = c.url; f.clip = c.url; onUrlInput(); if (!auto) toast('Added the link you copied.'); }
+  else if (!auto) toast(c.err ? "YumYum couldn't see what you copied. Paste the link in the Link box." : c.old ? 'That link is already saved with a recipe.' : "There's no Instagram, TikTok or other post link in what you copied.");
+  renderVF();
+}
+// v2.5: the dish, cut out of the screenshot where Gemini says the food is (box in 0-1000 of that picture)
+async function cropDish(piece, box){
+  try {
+    const bin = atob(piece.data), u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const im = await openPic(new Blob([u8], {type:piece.type || 'image/jpeg'}));
+    if (!im) return null;
+    const w = im.width || im.naturalWidth, h = im.height || im.naturalHeight;
+    let y0 = box[0] / 1000 * h, x0 = box[1] / 1000 * w, y1 = box[2] / 1000 * h, x1 = box[3] / 1000 * w;
+    const px = (x1 - x0) * 0.03, py = (y1 - y0) * 0.03;
+    x0 = Math.max(0, x0 - px); y0 = Math.max(0, y0 - py); x1 = Math.min(w, x1 + px); y1 = Math.min(h, y1 + py);
+    const cw = x1 - x0, ch = y1 - y0;
+    if (cw < 240 || ch < 240 || cw / ch > 3 || ch / cw > 3) return null; // too small or a thin strip: not a photo
+    const k = Math.min(1, 1400 / Math.max(cw, ch)), c = document.createElement('canvas');
+    c.width = Math.round(cw * k); c.height = Math.round(ch * k);
+    c.getContext('2d').drawImage(im, x0, y0, cw, ch, 0, 0, c.width, c.height);
+    try { im.close && im.close(); } catch (e) {}
+    const b = await canvasJpeg(c, 0.88);
+    return b ? new File([b], 'from-the-screenshot.jpg', {type:'image/jpeg'}) : null;
+  } catch (e) { return null; }
 }
 function vfUse(auto){
   const j = F && F.vf; if (!j || !j.res) return;
@@ -5504,9 +5596,16 @@ function vfUse(auto){
   if (!F.meal.size && r.meals.length) { r.meals.forEach(m => F.meal.add(m)); renderFMeals(); }
   if (j.frame && !formHasPhoto()) handlePhoto(new File([j.frame], 'from-the-video.jpg', {type:'image/jpeg'}));
   F.ai = {at:now(), src:j.src, ingredients:r.ingredients.slice(0, 200), steps:r.steps.slice(0, 150), guesses:r.guesses.slice(0, 10), lang:r.language || ''};
+  if (pic && (r.creator || r.app)) F.ai.shot = {app:r.app || '', creator:r.creator || ''};
   F.vf = null;
   if (pic) {
-    F.filled = {res:r, auto:!!auto, n:j.images.length, undo:before, after:fSnap()};
+    const d = F.filled = {res:r, auto:!!auto, n:j.images.length, undo:before, after:fSnap()};
+    // the dish photo, when a screenshot shows the food and the recipe has no photo yet
+    const piece = r.photo && j.sent && j.sent[r.photo.pic - 1];
+    if (piece && !formHasPhoto()) cropDish(piece, r.photo.box).then(file => {
+      if (!file || !F || F.filled !== d || formHasPhoto()) return;
+      return handlePhoto(file).then(() => { if (F && F.filled === d && (F.photoKey || F.photoId || F.photoData)) { d.photo = {photoKey:F.photoKey || null, photoId:F.photoId || null}; renderVF(); } });
+    }).catch(() => {});
     renderVF(); renderPrev(); renderDet();
     toast(auto ? 'Filled in from your screenshot. Look it over, then save.' : 'Filled in. Look it over, then save.', {label:'Undo', fn:vfUndo});
     const c = $('#f-filled'); if (c) c.scrollIntoView({block:'start', behavior:'smooth'});
@@ -6087,6 +6186,8 @@ const A = {
   'vf-cancel': () => { vfCancel(); renderVF(); renderDet(); toast('Stopped.'); },
   'vf-close': () => { vfCancel(); renderVF(); renderDet(); },
   'vf-undo': () => vfUndo(),
+  'clip-add': () => clipTry(false),
+  'clip-remove': () => { if (!F) return; F.clip = null; const u = $('#f-url'); if (u) { u.value = ''; onUrlInput(); } renderVF(); },
   'ig-open': () => { if (!F) return; F.igAt = Date.now(); F.igBack = false; draftSave(); }, // the link itself opens Instagram
   'vf-retry': () => { const j = F && F.vf; if (!j) return; const src = j.images ? {images:j.images} : j.file ? {file:j.file} : {youtube:j.yt}; vfStart(src); },
   'vf-use': () => vfUse(),

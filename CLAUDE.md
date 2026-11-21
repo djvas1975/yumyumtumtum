@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.4.1**.
+Current version: **2.5**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -152,6 +152,12 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   recipe?** with **Open in Instagram** (the Instagram app itself) and **Use my screenshot**. The unsaved form survives a trip to
   Instagram, even if Android closes YumYum meanwhile, and a screenshot shared to YumYum lands in it with the reel link kept.
   See "Screenshot rescue: how it works" below.
+- **Screenshot recipes like the rest (v2.5, Nov 21, 2026; Dave: "I want these screenshot recipes to be as if the app like the
+  rest… I want the app to do a majority of the work"; he picked ideas 1-5 of the brainstorm, "Ok go"):** a link copied in
+  Instagram (Share, Copy link) comes along by itself; Gemini cuts the **dish photo** out of the screenshot; the recipe shows
+  **Instagram and @creator** like a linked one (with no link, "See @creator on Instagram" opens their page); Play and View on
+  Instagram open the **Instagram app** for reels only signed-in people can see (no useless "Get it" card); a screenshot with no
+  steps gets **Steps from a similar recipe**. See "Screenshot recipes like the rest: how it works" below.
 - **Sync & backup (v2.2, Oct 16, 2026; was Cloud backup):** Dave asked for his phone and tablet to "save and use on both
   devices using same account". The same code on both keeps recipes, photos, collections, kitchen, grocery list, name and
   taste the same; changes show up on the other within a few minutes, and right away when it's opened. A second device:
@@ -183,7 +189,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `api/discover.js` | Discover: `GET /api/discover?q=...` (no q = newest). Options: `sites=delish,tasty`, `n=8`, `debug=1`, `all=1`. |
 | `api/image.js` | Photo proxy: `GET /api/image?url=...` (falls back to the Internet Archive). |
 | `api/backup.js` | Cloud backup and sync to the private Vercel Blob store: `POST ?op=save&day=&daily=1[&if=<etag>|none]`, `GET ?op=pull&have=<etag>`, `POST ?op=photo&id=`, `GET ?op=info`, `GET ?op=get&day=latest|<day>`, `GET ?op=photo&id=`. Header `x-backup-key` = the recovery code. Each code gets its own folder `backup/u/<first 32 hex of sha256("yyt:"+code)>/`; at most `MAX_PEOPLE` (10) codes can start one (`backup/_people.json`, hashes only), so strangers can't fill the store. No store yet: `{ok:false, needsSetup:true}`. Uses `@vercel/blob` (package.json). Artistry uses the same endpoint with `&app=artistry` (see the Artistry cloud backup section). |
-| `api/video.js` | Fill in from a video with Gemini (free tier). `POST ?op=start` {size,type} -> Gemini's one-time upload address (the phone sends the file there itself); `op=state` {name}; `op=make` {name or youtube, dur, title, caption} -> the recipe as JSON (the video is deleted after); `op=drop` {name}; since v2.4 `op=image` {images:[{data (base64), type}], title, caption} (up to 8 pictures, 1.6 MB each, 3.3 MB together) -> the same recipe JSON (since v2.4.1 plus `language`, '' when English). `GET /api/video/<anything>?op=selftest[&only=upload|youtube|image][&yt=<id>][&img=<picture on github.io or vercel.app>]` runs it all with the real key on a sample clip, a YouTube Short and `tests/fixtures/caption-shot.jpg` (a made-up caption screenshot). Key: `GEMINI_API_KEY` (Vercel Secret). Models: `GEMINI_MODEL` or gemini-3.6-flash, gemini-3.8-flash, gemini-3-flash-preview (next one on a 429/404 or when one takes too long); pictures use `PIC_MODELS` (lite first) before those. |
+| `api/video.js` | Fill in from a video with Gemini (free tier). `POST ?op=start` {size,type} -> Gemini's one-time upload address (the phone sends the file there itself); `op=state` {name}; `op=make` {name or youtube, dur, title, caption} -> the recipe as JSON (the video is deleted after); `op=drop` {name}; since v2.4 `op=image` {images:[{data (base64), type}], title, caption} (up to 8 pictures, 1.6 MB each, 3.3 MB together) -> the same recipe JSON (since v2.4.1 plus `language`, '' when English; since v2.5 plus `creator` "@name", `app`, and `photo` {pic, box}). `GET /api/video/<anything>?op=selftest[&only=upload|youtube|image][&yt=<id>][&img=<picture on github.io or vercel.app>]` runs it all with the real key on a sample clip, a YouTube Short and `tests/fixtures/caption-shot.jpg` (a made-up caption screenshot). Key: `GEMINI_API_KEY` (Vercel Secret). Models: `GEMINI_MODEL` or gemini-3.6-flash, gemini-3.8-flash, gemini-3-flash-preview (next one on a 429/404 or when one takes too long); pictures use `PIC_MODELS` (lite first) before those. |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
 | `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`), cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`), and the What you'll need list (`GEAR`, `GEAR_LIKELY`, `gearFor(recipe)`, `gearHeard(text)`). Sources are listed at the top of the file. |
@@ -192,7 +198,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
 | `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js`, `tests/timers.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup and sync with a fake Blob store, and similar-recipe matching with fake recipe sites. |
 | `tests/video.test.js` | Fill in from a video: the real api/video.js with a pretend Gemini (start, model fallback on a used-up free limit, tidying Gemini's answer, quote-blocked retry, YouTube, delete after, health check). |
-| `tests/video.playwright.js` | The button, sending, preview, Use it, the recipe-page note, YouTube, errors, Cancel, a dropped upload, dark mode, and Share > YumYum (a video, a screenshot, and a plain link) through the real service worker; since v2.4 also Fill in from a screenshot (sizes sent, a long screenshot cut in pieces, a camera photo made smaller, no recipe, not a picture, dark mode); since v2.4.1 the screenshot rescue (fills by itself, Undo, the Instagram card on an Android phone, the kept form) (Playwright + ffmpeg, about two minutes; not in the quick list). Run after building when this feature changes. |
+| `tests/video.playwright.js` | The button, sending, preview, Use it, the recipe-page note, YouTube, errors, Cancel, a dropped upload, dark mode, and Share > YumYum (a video, a screenshot, and a plain link) through the real service worker; since v2.4 also Fill in from a screenshot (sizes sent, a long screenshot cut in pieces, a camera photo made smaller, no recipe, not a picture, dark mode); since v2.4.1 the screenshot rescue (fills by itself, Undo, the Instagram card on an Android phone, the kept form); since v2.5 the copied link, the dish photo cut out, @creator, the Instagram app links and similar steps (Playwright + ffmpeg, about two minutes; not in the quick list). Run after building when this feature changes. |
 | `tests/sync.playwright.js` | A phone and a tablet syncing through the real api/backup.js on a pretend Blob store (Playwright, about a minute; not in the quick list). Run after building when sync changes. |
 | `package.json` | Only for Vercel: the `@vercel/blob` SDK used by api/backup.js. (npm's registry refused `@vercel/blob` inside Claude sessions on Sept 29, 2026, so tests fake it; Vercel installs it on deploy.) |
 | `vercel.json` | Function time limits (reader 60 s, Discover 30 s, cook 45 s, backup 30 s, similar 30 s, video 180 s; Hobby with Fluid compute allows up to 300 s), and `/api/video/:tag` -> `/api/video` for live checks. |
@@ -781,6 +787,38 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   step (tortillas, red onion) as ingredients. **Not confirmed yet on Dave's phone**: the intent link opening the Instagram app,
   the kept form after a real background close, and the share menu after the update.
 
+## Screenshot recipes like the rest: how it works (built Nov 21, 2026, v2.5)
+- **Server** (`picturePrompt`, `SCHEMA`, `tidy` in api/video.js; pictures only): `creator` (the poster's username, not
+  commenters; `handleOf` keeps `@` + letters, numbers, dots, underscores, 2-30), `app` (`APPS`: instagram, tiktok, facebook,
+  youtube, pinterest, or ''), `photo` = {pic (1 = first picture sent), box [ymin, xmin, ymax, xmax] 0-1000} around the food
+  only, from Gemini's `box_2d` (ai.google.dev image understanding: object detection boxes normalized to 0-1000); `photoOf`
+  drops pic 0, broken boxes and anything under 15% of either side.
+- **Dish photo** (`cropDish` in app.html): the phone keeps the pieces it sent (`job.sent`), cuts the box out (3% margin,
+  at least 240 px each way, no strips thinner than 1:3), and hands it to `handlePhoto` like a picked photo, only when the
+  recipe has no photo yet. `F.filled.photo` remembers it; Undo puts back the photo from before (`fSnap` keeps the photo
+  fields now). The whole screenshot is still never used as the photo.
+- **Copied link** (`clipTry`, `clipLink`, `clipLineHTML`; localStorage `yyt-clip-used`): when a screenshot starts and the Link
+  box is empty, if Chrome already allows reading what's copied (`navigator.permissions` `clipboard-read` = granted) the first
+  Instagram post/reel, TikTok, Facebook, YouTube or Pinterest link in it goes into the Link box (`onUrlInput`, so a readable
+  post also brings its photo and video), shown as "Added the link you copied · Remove". Not yet allowed (`prompt`): the card
+  offers **Add the link** (a tap, so Chrome can ask once). A link already saved with a recipe, or the last one used
+  (`yyt-clip-used`, set on Save), is skipped, so an old copy never lands on a new recipe. A profile link isn't a post.
+- **Who posted it** (`r.shot = {app, creator}`, from `F.ai.shot`): `r.source` becomes "@creator" for social posts and for
+  no-link recipes (`srcLabel` for `platform 'none'` shows it); the recipe page's chip shows the app's name and icon even with
+  no link (`r.platform` stays 'none', so nothing treats it as a video). No link: the bottom bar is **See @creator on
+  Instagram** (`profileUrl`; Instagram through `igAppUrl`) plus a link button that opens Edit.
+- **Sign-in-only reels** (`r.igLocked`, set on Save when the reader said `hint:'record'` for that link; dropped when the link
+  changes): the hero's Play is a link to the Instagram app, no "Get the recipe from the video" card. **View on Instagram**
+  on every Instagram recipe now goes through `igAppUrl` (the app, signed in) on Android (`igTarget`: no new tab there).
+- **No steps**: the recipe page's similar-recipe lookup (`findSimilar`) now also runs for screenshot recipes with no link
+  (`r.aiFill.src === 'image'`), and says "The screenshot didn't have the steps written out."
+- Tested Nov 21, 2026 (tests/video.test.js: prompt asks for creator, app, food box; tidy, `handleOf`, `photoOf`;
+  tests/video.playwright.js on an Android phone profile: a copied reel link goes in by itself, the dish is cut out (1080x1039
+  from the fixture's top 40%), "Posted by @tia_lupe on Instagram", Undo takes the photo out too, Save keeps link + Instagram +
+  @tia_lupe + photo + `igLocked`, the recipe page's Play and View on Instagram are intent links, no Get it card, an already-used
+  copied link isn't reused, a no-link recipe shows Instagram + @tia_lupe and "See @tia_lupe on Instagram" (intent link to the
+  profile), no steps -> /api/similar asked by itself, and before clipboard permission the card shows Add the link).
+
 ## How Dave likes to work
 - Android phone with Chrome. Not a programmer. Plain English, short answers, bottom line first.
 - Troubleshooting: one step at a time, using his screenshots.
@@ -788,7 +826,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 - For looks, show a picture and let him choose. He'll say plainly when something misses.
 
 ## Ideas not built yet
-- **Screenshot recipes like the rest (brainstorm Nov 21, 2026, after sharing worked; nothing picked yet).** A screenshot
+- **Screenshot recipes like the rest (brainstorm Nov 21, 2026; ideas 1-5 built in v2.5, 6 not).** A screenshot
   recipe with no link has no photo, no source/creator, no Open in Instagram and no video. Ideas, smallest first, all on
   the free Gemini tier: (1) the link comes along by itself: copy the reel's link in Instagram, then share the screenshot;
   YumYum reads a social link copied in the last few minutes from the clipboard (Chrome asks once) and attaches it (today's

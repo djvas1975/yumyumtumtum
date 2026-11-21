@@ -248,6 +248,12 @@ const call = (method, query, headers, body) => new Promise(resolve => {
   G.gen = []; genPlan = [{ body: answer(Object.assign({}, EN_BACK, { language: '' })) }];
   await call('POST', { op: 'image' }, {}, { images: [{ data: onePic, type: 'image/jpeg' }] });
   ok(G.gen.length === 1, 'an English screenshot is asked only once');
+  // v2.5: who posted it, which app, where the food is
+  ok(/- creator: the username of the person who posted it/.test(pp) && /- app: which app the screenshot is from/.test(pp) && /- photo: if a picture shows the food itself/.test(pp) && /normalized to 0-1000/.test(pp), 'the screenshot prompt asks for the creator, the app and a box around the food');
+  const t5 = api._tidy({ title: 'X', ingredients: ['1 cup milk'], creator: 'cocina_de_tia_lupe', app: 'Instagram', photo: { pic: 1, box_2d: [40, 60, 520, 940] } });
+  ok(t5.creator === '@cocina_de_tia_lupe' && t5.app === 'instagram' && t5.photo && t5.photo.pic === 1 && t5.photo.box.join() === '40,60,520,940', 'tidy: "@name", the app, and the food box -> ' + JSON.stringify([t5.creator, t5.app, t5.photo]));
+  ok(api._handleOf('@@Tia Lupe') === '@TiaLupe' && api._handleOf('a') === '' && api._handleOf('Tía Lupe!') === '' && api._handleOf('.dot') === '' && api._tidy({ title: 'X', ingredients: ['a'], app: 'cookbook' }).app === '', 'tidy: odd usernames and unknown apps come back empty');
+  ok(api._photoOf({ pic: 0, box_2d: [0, 0, 1000, 1000] }) === null && api._photoOf({ pic: 1, box_2d: [100, 100, 200, 900] }) === null && api._photoOf({ pic: 2, box_2d: [-5, 10, 1200, 600] }).box.join() === '0,10,1000,600' && api._photoOf({ pic: 1, box_2d: [1, 2, 3] }) === null && api._tidy({ title: 'X', ingredients: ['a'] }).photo === null, 'tidy: no food (pic 0), a sliver under 15%, or a broken box gives no photo; out-of-range edges are clamped');
   ok(api._tidy({ title: 'X', ingredients: ['1 cup milk'], language: 'spanish' }).language === 'Spanish' && api._tidy({ title: 'X', ingredients: ['1 cup milk'], language: 'English' }).language === '' && api._tidy({ title: 'X', ingredients: ['1 cup milk'] }).language === '', 'tidy keeps the language ("Spanish"), and English or nothing comes back empty');
 
   console.log(fails ? '\n' + fails + ' FAILED' : '\nAll video tests passed');

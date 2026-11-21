@@ -170,7 +170,11 @@ const SCHEMA = {
     cuisine: { type: 'STRING' },
     meals: { type: 'ARRAY', items: { type: 'STRING' } },
     guesses: { type: 'ARRAY', items: { type: 'STRING' }, description: 'What you estimated instead of seeing or hearing it' },
-    language: { type: 'STRING', description: 'The language the recipe was written in, like "Spanish"' } // v2.4.1, pictures only
+    language: { type: 'STRING', description: 'The language the recipe was written in, like "Spanish"' }, // v2.4.1, pictures only
+    // v2.5, pictures only: who posted it, which app, and where the food is (so the app can crop a photo)
+    creator: { type: 'STRING', description: 'The username of whoever posted it, like "@cocina_de_tia_lupe"' },
+    app: { type: 'STRING', description: 'instagram, tiktok, facebook, youtube, pinterest, or ""' },
+    photo: { type: 'OBJECT', properties: { pic: { type: 'INTEGER' }, box_2d: { type: 'ARRAY', items: { type: 'INTEGER' } } } }
   },
   required: ['isRecipe', 'title', 'ingredients', 'steps', 'notes', 'equipment', 'totalTime', 'servings', 'cuisine', 'meals', 'guesses']
 };
@@ -245,6 +249,9 @@ function picturePrompt(b, ownWords, n, strict) {
     '- cuisine: one of ' + CUISINES.join(', ') + ', or "" if none fits.',
     '- meals: any of ' + MEALS.join(', ') + ' that fit.',
     '- guesses: short notes on anything you couldn\'t read clearly, had to guess, or that seems to be missing, like "Amount of garlic was cut off" or "Oven temperature isn\'t given". Empty if nothing.',
+    '- creator: the username of the person who posted it, as shown next to the post or caption, like "@cocina_de_tia_lupe". Not someone who only commented, liked or is tagged. "" if no username is shown.',
+    '- app: which app the screenshot is from, judging by how it looks: "instagram", "tiktok", "facebook", "youtube" or "pinterest". "" for a cookbook, magazine, website or anything else.',
+    '- photo: if a picture shows the food itself (a frame of the video, a photo of the dish), pic is that picture\'s number (1 for the first) and box_2d is [ymin, xmin, ymax, xmax] around the food, normalized to 0-1000. Keep text, buttons, faces and hands out of the box as much as you can. If no picture shows the food, pic is 0.',
     '- isRecipe: false if the pictures have no recipe in them (no ingredients and no steps), and then leave the lists empty.',
     'Do not add ingredients, amounts or steps that are not in the pictures.',
     ownWords ? 'Write every step and note in your own words. Do not copy any text word for word.' : '',
@@ -361,6 +368,24 @@ function parseJson(text) {
   return null;
 }
 
+// v2.5: a username as "@name" (Instagram and TikTok allow letters, numbers, dots and underscores)
+const APPS = ['instagram', 'tiktok', 'facebook', 'youtube', 'pinterest'];
+function handleOf(v) {
+  const h = String(v || '').trim().replace(/^@+/, '').replace(/\s+/g, '');
+  return /^[A-Za-z0-9._]{2,30}$/.test(h) && !/^\.|\.$/.test(h) ? '@' + h : '';
+}
+// where the food is: {pic (1 = first picture), box [ymin, xmin, ymax, xmax] in 0-1000}, or null when it's missing,
+// too small (under 15% of either side) or not a real box
+function photoOf(p) {
+  if (!p || typeof p !== 'object') return null;
+  const pic = Math.round(Number(p.pic));
+  const b = Array.isArray(p.box_2d) ? p.box_2d.map(Number) : Array.isArray(p.box) ? p.box.map(Number) : [];
+  if (!(pic >= 1) || b.length !== 4 || b.some(x => !isFinite(x))) return null;
+  const box = b.map(x => Math.max(0, Math.min(1000, Math.round(x))));
+  if (box[2] - box[0] < 150 || box[3] - box[1] < 150) return null;
+  return { pic, box };
+}
+
 // tidy Gemini's answer into exactly what the app's boxes take
 function tidy(o) {
   if (!o || typeof o !== 'object') return null;
@@ -388,7 +413,11 @@ function tidy(o) {
     meals: Array.from(new Set(meals)),
     guesses: list(o.guesses, 10, 200),
     // v2.4.1: the language a screenshot was written in ('' for English or not said), so the app can say "Translated from Spanish"
-    language: /^(english|en|unknown|none|n\/a)?$/i.test(str(o.language, 30).trim()) ? '' : str(o.language, 30).trim().replace(/^./, c => c.toUpperCase())
+    language: /^(english|en|unknown|none|n\/a)?$/i.test(str(o.language, 30).trim()) ? '' : str(o.language, 30).trim().replace(/^./, c => c.toUpperCase()),
+    // v2.5: screenshots only (a video's answer has none of these)
+    creator: handleOf(o.creator),
+    app: APPS.includes(String(o.app || '').toLowerCase().trim()) ? String(o.app).toLowerCase().trim() : '',
+    photo: photoOf(o.photo)
   };
 }
 
@@ -516,6 +545,8 @@ module.exports._tidy = tidy;
 module.exports._parseJson = parseJson;
 module.exports._picturePrompt = picturePrompt;
 module.exports._stillSpanish = stillSpanish;
+module.exports._photoOf = photoOf;
+module.exports._handleOf = handleOf;
 module.exports.MODELS = MODELS;
 module.exports.PIC_MODELS = PIC_MODELS;
 module.exports._limits = LIMITS;
