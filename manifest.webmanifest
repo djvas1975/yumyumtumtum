@@ -101,20 +101,8 @@
         {
           "name": "media",
           "accept": [
-            "video/*",
-            ".mp4",
-            ".mov",
-            ".m4v",
-            ".webm",
-            ".3gp",
-            ".mkv",
             "image/*",
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".webp",
-            ".heic",
-            ".heif"
+            "video/*"
           ]
         }
       ]

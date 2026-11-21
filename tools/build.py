@@ -82,13 +82,15 @@ def build_manifest():
         # be shared too, and since v2.4 pictures (a screenshot of a caption, a photo of a cookbook page), which needs a
         # form post: the service worker (sw.js, "share-in") keeps them for the app and sends links on to
         # ./?title=&text=&url= exactly like before. (The field was "video" before 2.4; sw.js reads every file it gets.)
+        # MIME types only (v2.4.1): Chrome builds the installed app's Android intent filters from this list, and those
+        # take MIME types; file endings like ".mp4" (in since v2.3) can make the update fail or drop the share target.
+        # sw.js still tells pictures from videos by type or file name.
         "share_target": {
             "action": (BASE or "./") + "share-in",
             "method": "POST",
             "enctype": "multipart/form-data",
             "params": {"title": "title", "text": "text", "url": "url",
-                       "files": [{"name": "media", "accept": ["video/*", ".mp4", ".mov", ".m4v", ".webm", ".3gp", ".mkv",
-                                                         "image/*", ".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"]}]},
+                       "files": [{"name": "media", "accept": ["image/*", "video/*"]}]},
         },
     }
 

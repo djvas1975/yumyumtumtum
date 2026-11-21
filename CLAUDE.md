@@ -753,9 +753,14 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   is what lets a shared screenshot join the reel's form.
 - Fix found while testing: `openEditor` over an open form used to run the old form's cleanup on the new one (F became null).
   No tap could do that before; a restored form made it possible. It now closes the old form first.
-- **Share menu status (checked Nov 21, 2026):** the manifest is right (`media` takes image/* and video/* with extensions, as
-  developer.chrome.com recommends). YumYum is missing from the screenshot Share menu because Chrome hasn't rebuilt the
-  installed app yet: web.dev "How Chrome handles updates to the web app manifest": the manifest is checked when the app
+- **Share menu status (Nov 21, 2026):** after the about://webapks Update below, YumYum was still missing from Dave's
+  screenshot Share menu (Samsung, his screenshots of both pages of the Apps list). Likely cause, fixed the same day: since
+  v2.3 (Oct 17) the share target's `accept` list mixed file endings (".mp4", ".jpg"…) with MIME types. Chrome copies that
+  list as-is to the WebAPK server, which turns it into Android intent filters, and those only take MIME types; two other
+  projects found the same (github.com/soulfactorx/pi-desktop-mobile/pull/34: installing failed once extensions were added;
+  github.com/tugallo80/renzoderoma-/pull/281: a non-MIME entry may make the server drop the share target). So the installed
+  YumYum has probably never picked up the Oct 17 video share either. Now `accept: ["image/*", "video/*"]` only (sw.js still
+  sorts files by type or name). Not confirmed until Dave's phone updates. Background: the manifest is checked when the app
   opens, at most once every 24 hours; a `share_target` change queues an update that installs after all YumYum windows are
   closed **and the phone is plugged in and on Wi-Fi**. Faster, no reinstall: plug in on Wi-Fi, close YumYum, open Chrome,
   go to `about://webapks`, tap **Update** under YumYum ("Update Status" -> Pending/Scheduled), open YumYum once, close it, wait
