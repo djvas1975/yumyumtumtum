@@ -1,0 +1,4 @@
+sum https://yumyumtumtum.vercel.app/api/discover?q=chicken&n=2&debug=1&all=1
+sum https://yumyumtumtum.vercel.app/api/discover?q=chicken&n=2&debug=1&sites=trial
+sum https://yumyumtumtum.vercel.app/api/discover?q=thanksgiving%20side%20dishes&n=3&debug=1
+sum https://yumyumtumtum.vercel.app/api/discover?q=tamales&n=2&debug=1&sites=trial
