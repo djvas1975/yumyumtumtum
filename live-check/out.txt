@@ -1,161 +1,120 @@
-SUM https://yumyumtumtum.vercel.app/api/discover?q=chicken&n=2&debug=1&all=1
-items 100
-bakerbynature | 2 | 691ms |  | 200 https://bakerbynature.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-beyondkimchee | 2 | 698ms |  | 200 https://www.beyondkimchee.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-butterbeready | 2 | 726ms |  | 301 https://butterbeready.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-cafedelites | 2 | 629ms |  | 200 https://cafedelites.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_med
-carlsbadcravings | 2 | 2515ms |  | 200 https://carlsbadcravings.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feature
-chefsavvy | 2 | 864ms |  | 200 https://chefsavvy.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_media
-chopstickchronicles | 2 | 853ms |  | 200 https://www.chopstickchronicles.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_
-cookwithmanali | 2 | 765ms |  | 200 https://www.cookwithmanali.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-coopcancook | 2 | 802ms |  | 200 https://coopcancook.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_med
-damndelicious | 2 | 718ms |  | 200 https://damndelicious.net/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-delish | 2 | 1157ms |  | 200 https://www.delish.com/search/?q=chicken
-dimitrasdishes | 2 | 957ms |  | 200 https://www.dimitrasdishes.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-divascancook | 2 | 1784ms |  | 200 https://divascancook.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-handletheheat | 2 | 1130ms |  | 200 https://handletheheat.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-hungryhuy | 2 | 1887ms |  | 200 https://www.hungryhuy.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-hungryinthailand | 2 | 594ms |  | 200 https://hungryinthailand.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feature
-iheartrecipes | 2 | 602ms |  | 200 https://iheartrecipes.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-inspiredtaste | 2 | 533ms |  | 200 https://www.inspiredtaste.net/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-jessicagavin | 2 | 579ms |  | 200 https://www.jessicagavin.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feature
-jocooks | 2 | 718ms |  | 200 https://www.jocooks.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_med
-joyfulhealthyeats | 2 | 659ms |  | 200 https://www.joyfulhealthyeats.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fe
-koreanbapsang | 2 | 698ms |  | 200 https://www.koreanbapsang.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-kristineskitchen | 2 | 896ms |  | 200 https://kristineskitchenblog.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-lifeinthelofthouse | 2 | 1767ms |  | 200 https://life-in-the-lofthouse.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fe
-maricruzavalos | 2 | 823ms |  | 200 https://www.maricruzavalos.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-mexicanplease | 2 | 543ms |  | 200 https://www.mexicanplease.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-mexicoinmykitchen | 2 | 1281ms |  | 200 https://www.mexicoinmykitchen.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fe
-ministryofcurry | 2 | 854ms |  | 200 https://ministryofcurry.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured
-mygreekdish | 2 | 1569ms |  | 200 https://www.mygreekdish.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured
-omnivorescookbook | 2 | 561ms |  | 200 https://omnivorescookbook.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-onceuponachef | 2 | 443ms |  | 200 https://www.onceuponachef.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-panlasangpinoy | 2 | 678ms |  | 200 https://panlasangpinoy.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-pickledplum | 2 | 1031ms |  | 200 https://pickledplum.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_med
-pinchofyum | 2 | 1852ms |  | 200 https://pinchofyum.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_medi
-pioneerwoman | 2 | 496ms |  | 200 https://www.thepioneerwoman.com/search/?q=chicken
-pipingpotcurry | 2 | 1038ms |  | 301 https://www.pipingpotcurry.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-rachelcooksthai | 2 | 478ms |  | 200 https://rachelcooksthai.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured
-recipesfromapantry | 2 | 1907ms |  | 301 https://recipesfromapantry.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-recipetineats | 2 | 1020ms |  | 200 https://www.recipetineats.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-saltandlavender | 2 | 793ms |  | 200 https://www.saltandlavender.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feat
-sixsistersstuff | 2 | 583ms |  | 200 https://www.sixsistersstuff.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feat
-skinnytaste | 2 | 583ms |  | 200 https://www.skinnytaste.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured
-southernbite | 2 | 653ms |  | 200 https://southernbite.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-spendwithpennies | 2 | 568ms |  | 200 https://www.spendwithpennies.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-tasty | 2 | 514ms |  | 200 https://tasty.co/search?q=chicken
-thaicaliente | 2 | 613ms |  | 200 https://www.thaicaliente.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feature
-theanthonykitchen | 2 | 708ms |  | 200 https://www.theanthonykitchen.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fe
-thegirlwhoateeverything | 2 | 742ms |  | 200 https://www.the-girl-who-ate-everything.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,
-thewoksoflife | 2 | 638ms |  | 200 https://thewoksoflife.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-vietworldkitchen | 2 | 459ms |  | 200 https://www.vietworldkitchen.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-SUM https://yumyumtumtum.vercel.app/api/discover?q=chicken&n=2&debug=1&sites=trial
-items 32
-acouplecooks | 0 | 185ms | That site blocked the recipe reader. | 403 https://www.acouplecooks.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feature
-ambitiouskitchen | 2 | 444ms |  | 200 https://www.ambitiouskitchen.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-aspicyperspective | 2 | 737ms |  | 301 https://www.aspicyperspective.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fe
-bakingamoment | 0 | 277ms | That site blocked the recipe reader. | 403 https://bakingamoment.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-blessthismess | 2 | 3297ms |  | 200 https://www.blessthismessplease.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_
-browneyedbaker | 0 | 241ms | That site blocked the recipe reader. | 403 https://www.browneyedbaker.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-chicanoeats | 2 | 1158ms |  | 200 https://chicanoeats.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_med
-cookieandkate | 0 | 149ms | That site blocked the recipe reader. | 403 https://cookieandkate.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-dinnersdishes | 2 | 1027ms |  | 200 https://dinnersdishesanddesserts.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack
-downshiftology | 0 | 148ms | That site blocked the recipe reader. | 403 https://downshiftology.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-favfamilyrecipes | 0 | 196ms | That site blocked the recipe reader. | 403 https://www.favfamilyrecipes.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-feelgoodfoodie | 0 | 151ms | That site blocked the recipe reader. | 403 https://feelgoodfoodie.net/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-foxyfolksy | 2 | 1102ms |  | 200 https://www.foxyfolksy.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-houseofnasheats | 0 | 277ms | That site blocked the recipe reader. | 403 https://houseofnasheats.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured
-iowagirleats | 0 | 180ms | That site blocked the recipe reader. | 403 https://iowagirleats.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-julieblanner | 0 | 242ms | That site blocked the recipe reader. | 403 https://julieblanner.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-justataste | 0 | 195ms | That site blocked the recipe reader. | 403 https://www.justataste.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-kawalingpinoy | 0 | 151ms | That site blocked the recipe reader. | 403 https://www.kawalingpinoy.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-laurenslatest | 2 | 3195ms |  | 200 https://laurenslatest.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-livewellbakeoften | 2 | 1635ms |  | 200 https://www.livewellbakeoften.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fe
-loveandlemons | 2 | 782ms |  | 200 https://www.loveandlemons.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-mexicanfoodjournal | 2 | 469ms |  | 200 https://mexicanfoodjournal.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-mommyshomecooking | 2 | 1695ms |  | 200 https://mommyshomecooking.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-muydelish | 0 | 162ms | That site blocked the recipe reader. | 403 https://www.muydelish.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-mylatinatable | 2 | 885ms |  | 200 https://www.mylatinatable.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-rasamalaysia | 0 | 151ms | That site blocked the recipe reader. | 403 https://rasamalaysia.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-realhousemoms | 0 | 214ms | That site blocked the recipe reader. | 403 https://realhousemoms.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-shugarysweets | 0 | 215ms | That site blocked the recipe reader. | 403 https://www.shugarysweets.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-simplydelicious | 2 | 753ms |  | 301 https://www.simply-delicious-food.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpac
-southernplate | 0 | 249ms | That site blocked the recipe reader. | 403 https://www.southernplate.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-tasteandtell | 0 | 236ms | That site blocked the recipe reader. | 403 https://www.tasteandtellblog.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-thebakermama | 0 | 275ms | That site blocked the recipe reader. | 403 https://thebakermama.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-thecookierookie | 0 | 282ms | That site blocked the recipe reader. | 403 https://www.thecookierookie.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feat
-thecountrycook | 2 | 793ms |  | 200 https://www.thecountrycook.net/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-theendlessmeal | 2 | 766ms |  | 200 https://www.theendlessmeal.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-thekitchenmagpie | 2 | 784ms |  | 200 https://www.thekitchenmagpie.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-thereciperebel | 0 | 184ms | That site blocked the recipe reader. | 403 https://www.thereciperebel.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-wholesomeyum | 0 | 186ms | That site blocked the recipe reader. | 403 https://www.wholesomeyum.com/wp-json/wp/v2/posts?per_page=6&search=chicken&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feature
-SUM https://yumyumtumtum.vercel.app/api/discover?q=thanksgiving%20side%20dishes&n=3&debug=1
-items 74
-butterbeready | 3 | 400ms |  | 301 https://butterbeready.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,da
-cafedelites | 3 | 615ms |  | 200 https://cafedelites.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date
-carlsbadcravings | 3 | 2036ms |  | 200 https://carlsbadcravings.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title
-chefsavvy | 3 | 838ms |  | 200 https://chefsavvy.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,j
-coopcancook | 2 | 353ms |  | 200 https://coopcancook.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date
-damndelicious | 3 | 576ms |  | 200 https://damndelicious.net/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,da
-delish | 3 | 1161ms |  | 200 https://www.delish.com/search/?q=thanksgiving%20side%20dishes
-inspiredtaste | 3 | 281ms |  | 200 https://www.inspiredtaste.net/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,titl
-jessicagavin | 3 | 358ms |  | 200 https://www.jessicagavin.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title
-jocooks | 3 | 733ms |  | 200 https://www.jocooks.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date
-joyfulhealthyeats | 3 | 439ms |  | 200 https://www.joyfulhealthyeats.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,
-kristineskitchen | 3 | 766ms |  | 200 https://kristineskitchenblog.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,t
-lifeinthelofthouse | 3 | 1251ms |  | 200 https://life-in-the-lofthouse.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,
-onceuponachef | 3 | 350ms |  | 200 https://www.onceuponachef.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,titl
-pinchofyum | 3 | 890ms |  | 200 https://pinchofyum.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,
-pioneerwoman | 3 | 547ms |  | 200 https://www.thepioneerwoman.com/search/?q=thanksgiving%20side%20dishes
-recipesfromapantry | 3 | 1504ms |  | 301 https://recipesfromapantry.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,tit
-recipetineats | 3 | 1828ms |  | 200 https://www.recipetineats.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,titl
-saltandlavender | 3 | 604ms |  | 200 https://www.saltandlavender.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,ti
-sixsistersstuff | 0 | 274ms |  | 200 https://www.sixsistersstuff.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,ti
-skinnytaste | 3 | 421ms |  | 200 https://www.skinnytaste.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,
-southernbite | 3 | 308ms |  | 200 https://southernbite.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,dat
-spendwithpennies | 3 | 547ms |  | 200 https://www.spendwithpennies.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,t
-tasty | 3 | 482ms |  | 200 https://tasty.co/search?q=thanksgiving%20side%20dishes
-theanthonykitchen | 3 | 500ms |  | 200 https://www.theanthonykitchen.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fields=link,
-thegirlwhoateeverything | 3 | 432ms |  | 200 https://www.the-girl-who-ate-everything.com/wp-json/wp/v2/posts?per_page=7&search=thanksgiving%20side%20dishes&orderby=relevance&_embed=wp:featuredmedia&_fi
-SUM https://yumyumtumtum.vercel.app/api/discover?q=tamales&n=2&debug=1&sites=trial
-items 28
-acouplecooks | 0 | 235ms | That site blocked the recipe reader. | 403 https://www.acouplecooks.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feature
-ambitiouskitchen | 2 | 602ms |  | 200 https://www.ambitiouskitchen.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-aspicyperspective | 2 | 718ms |  | 301 https://www.aspicyperspective.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fe
-bakingamoment | 0 | 204ms | That site blocked the recipe reader. | 403 https://bakingamoment.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-blessthismess | 2 | 2559ms |  | 200 https://www.blessthismessplease.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_
-browneyedbaker | 0 | 218ms | That site blocked the recipe reader. | 403 https://www.browneyedbaker.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-chicanoeats | 2 | 1202ms |  | 200 https://chicanoeats.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_med
-cookieandkate | 0 | 242ms | That site blocked the recipe reader. | 403 https://cookieandkate.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-dinnersdishes | 2 | 1037ms |  | 200 https://dinnersdishesanddesserts.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack
-downshiftology | 0 | 246ms | That site blocked the recipe reader. | 403 https://downshiftology.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-favfamilyrecipes | 0 | 224ms | That site blocked the recipe reader. | 403 https://www.favfamilyrecipes.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-feelgoodfoodie | 0 | 225ms | That site blocked the recipe reader. | 403 https://feelgoodfoodie.net/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-foxyfolksy | 2 | 796ms |  | 200 https://www.foxyfolksy.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-houseofnasheats | 2 | 999ms |  | 200 https://houseofnasheats.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured
-iowagirleats | 0 | 234ms | That site blocked the recipe reader. | 403 https://iowagirleats.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-julieblanner | 0 | 654ms |  | 200 https://julieblanner.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-justataste | 0 | 220ms | That site blocked the recipe reader. | 403 https://www.justataste.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_
-kawalingpinoy | 2 | 683ms |  | 200 https://www.kawalingpinoy.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-laurenslatest | 0 | 3615ms |  | 200 https://laurenslatest.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-livewellbakeoften | 0 | 892ms |  | 200 https://www.livewellbakeoften.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fe
-loveandlemons | 2 | 811ms |  | 200 https://www.loveandlemons.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-mexicanfoodjournal | 2 | 509ms |  | 200 https://mexicanfoodjournal.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-mommyshomecooking | 2 | 1476ms |  | 200 https://mommyshomecooking.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-muydelish | 0 | 234ms | That site blocked the recipe reader. | 403 https://www.muydelish.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-mylatinatable | 2 | 913ms |  | 200 https://www.mylatinatable.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-rasamalaysia | 0 | 227ms | That site blocked the recipe reader. | 403 https://rasamalaysia.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-realhousemoms | 0 | 220ms | That site blocked the recipe reader. | 403 https://realhousemoms.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_m
-shugarysweets | 0 | 218ms | That site blocked the recipe reader. | 403 https://www.shugarysweets.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-simplydelicious | 0 | 633ms |  | 301 https://www.simply-delicious-food.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpac
-southernplate | 0 | 521ms |  | 200 https://www.southernplate.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featur
-tasteandtell | 2 | 1725ms |  | 200 https://www.tasteandtellblog.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-thebakermama | 0 | 203ms | That site blocked the recipe reader. | 403 https://thebakermama.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featured_me
-thecookierookie | 1 | 912ms |  | 200 https://www.thecookierookie.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feat
-thecountrycook | 0 | 804ms |  | 200 https://www.thecountrycook.net/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-theendlessmeal | 0 | 586ms |  | 200 https://www.theendlessmeal.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-thekitchenmagpie | 1 | 578ms |  | 200 https://www.thekitchenmagpie.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_fea
-thereciperebel | 0 | 240ms | That site blocked the recipe reader. | 403 https://www.thereciperebel.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_featu
-wholesomeyum | 0 | 219ms | That site blocked the recipe reader. | 403 https://www.wholesomeyum.com/wp-json/wp/v2/posts?per_page=6&search=tamales&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_feature
+SUM https://yumyumtumtum.vercel.app/api/discover?q=thanksgiving%20turkey&n=2&debug=1&v=18
+items 71
+ambitiouskitchen | 2 | 615ms |  | 200 https://www.ambitiouskitchen.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,da
+aspicyperspective | 2 | 802ms |  | 301 https://www.aspicyperspective.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,d
+blessthismess | 2 | 2704ms |  | 200 https://www.blessthismessplease.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title
+butterbeready | 2 | 598ms |  | 301 https://butterbeready.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetp
+cafedelites | 2 | 809ms |  | 200 https://cafedelites.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpac
+carlsbadcravings | 2 | 2150ms |  | 200 https://carlsbadcravings.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,j
+chefsavvy | 2 | 839ms |  | 200 https://chefsavvy.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack_
+coopcancook | 2 | 825ms |  | 200 https://coopcancook.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpac
+damndelicious | 2 | 733ms |  | 200 https://damndelicious.net/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetp
+delish | 2 | 987ms |  | 200 https://www.delish.com/search/?q=thanksgiving%20turkey
+dinnersdishes | 2 | 1121ms |  | 200 https://dinnersdishesanddesserts.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,titl
+inspiredtaste | 2 | 486ms |  | 200 https://www.inspiredtaste.net/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,
+jessicagavin | 2 | 441ms |  | 200 https://www.jessicagavin.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,j
+jocooks | 2 | 879ms |  | 200 https://www.jocooks.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpac
+joyfulhealthyeats | 2 | 487ms |  | 200 https://www.joyfulhealthyeats.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,d
+kristineskitchen | 2 | 760ms |  | 200 https://kristineskitchenblog.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,da
+laurenslatest | 2 | 4624ms |  | 200 https://laurenslatest.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetp
+lifeinthelofthouse | 2 | 1122ms |  | 200 https://life-in-the-lofthouse.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,d
+loveandlemons | 2 | 906ms |  | 200 https://www.loveandlemons.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,
+mommyshomecooking | 2 | 2476ms |  | 200 https://mommyshomecooking.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,
+onceuponachef | 2 | 410ms |  | 200 https://www.onceuponachef.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,
+pinchofyum | 2 | 952ms |  | 200 https://pinchofyum.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpack
+pioneerwoman | 2 | 850ms |  | 200 https://www.thepioneerwoman.com/search/?q=thanksgiving%20turkey
+recipesfromapantry | 1 | 1600ms |  | 301 https://recipesfromapantry.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date
+recipetineats | 2 | 1328ms |  | 200 https://www.recipetineats.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,
+saltandlavender | 2 | 623ms |  | 200 https://www.saltandlavender.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,dat
+simplydelicious | 2 | 927ms |  | 301 https://www.simply-delicious-food.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,tit
+sixsistersstuff | 0 | 344ms |  | 200 https://www.sixsistersstuff.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,dat
+skinnytaste | 2 | 455ms |  | 200 https://www.skinnytaste.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,je
+southernbite | 2 | 462ms |  | 200 https://southernbite.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date,jetpa
+spendwithpennies | 2 | 610ms |  | 200 https://www.spendwithpennies.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,da
+tasty | 2 | 547ms |  | 200 https://tasty.co/search?q=thanksgiving%20turkey
+theanthonykitchen | 2 | 918ms |  | 200 https://www.theanthonykitchen.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,d
+thecountrycook | 2 | 1071ms |  | 200 https://www.thecountrycook.net/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date
+theendlessmeal | 2 | 765ms |  | 200 https://www.theendlessmeal.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,date
+thegirlwhoateeverything | 2 | 520ms |  | 200 https://www.the-girl-who-ate-everything.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=li
+thekitchenmagpie | 2 | 748ms |  | 200 https://www.thekitchenmagpie.com/wp-json/wp/v2/posts?per_page=6&search=thanksgiving%20turkey&orderby=relevance&_embed=wp:featuredmedia&_fields=link,title,da
+SUM https://yumyumtumtum.vercel.app/api/discover?q=turkey&n=2&debug=1&sites=edamam
+items 0
+edamam | 0 | 0ms | Off: needs EDAMAM_APP_ID and EDAMAM_APP_KEY in Vercel. | 
+GET https://djvas1975.github.io/yumyumtumtum/sw.js
+// yumyumtumtum offline support. VERSION changes on every build so phones pick up updates.
+const VERSION = 'yyt-20261121-193943';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys()
+    .then(keys => Promise.all(keys.filter(k => k.startsWith('yyt-') && k !== VERSION).map(k => caches.delete(k))))
+    .then(() => self.clients.claim()));
+});
+// a timer's notification: Stop, +1 min, or a tap on it (stops the alarm and opens the timers)
+self.addEventListener('notificationclick', e => {
+  const d = (e.notification && e.notification.data) || {};
+  e.notification.close();
+  if (!d.timer) return;
+  const msg = {timer: e.action || 'open', id: d.timer};
+  e.waitUntil(self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(list => {
+    list.forEach(c => c.postMessage(msg));
+    const c = list[0];
+    if (c) return msg.timer === 'open' && 'focus' in c ? c.focus() : undefined;
+    return self.clients.openWindow('./?go=timers');
+  }));
+});
+// Share > YumYum (a link, since v2.3 a video, since v2.4 up to 4 pictures) arrives as a form post to ./share-in. GitHub
+// Pages can't take a post, so it's answered here: a video or pictures are kept in the "share-in" cache for the app to
+// pick up, and the app opens at ./?title=&text=&url=(&video=1 or &image=N), the same address a shared link always used.
+async function shareIn(req) {
+  const q = new URLSearchParams();
+  try {
+    const fd = await req.formData();
+    ['title', 'text', 'url'].forEach(k => { const v = fd.get(k); if (typeof v === 'string' && v.trim()) q.set(k, v.trim().slice(0, 2000)); });
+    const files = [];
+    for (const [, v] of fd.entries()) if (v && typeof v !== 'string' && v.size) files.push(v);
+    const isPic = f => /^image\//.test(f.type || '') || /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || '');
+    const c = await caches.open('share-in');
+    const vid = files.find(f => !isPic(f));
+    if (vid) {
+      await c.put(new URL('./shared-video', self.registration.scope).href, new Response(vid, {headers: {'content-type': vid.type || 'video/mp4', 'x-name': encodeURIComponent(vid.name || 'video.mp4')}}));
+      q.set('video', '1');
+    } else {
+      const pics = files.filter(isPic).slice(0, 4);
+      for (let i = 0; i < pics.length; i++) {
+        await c.put(new URL('./shared-image-' + i, self.registration.scope).href, new Response(pics[i], {headers: {'content-type': pics[i].type || 'image/jpeg', 'x-name': encodeURIComponent(pics[i].name || 'picture.jpg')}}));
+      }
+      if (pics.length) q.set('image', String(pics.length));
+    }
+  } catch (err) {}
+  const qs = q.toString();
+  return Response.redirect(new URL('./' + (qs ? '?' + qs : ''), self.registration.scope).href, 303);
+}
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method === 'POST' && new URL(req.url).pathname.endsWith('/share-in')) { e.respondWith(shareIn(req)); return; }
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+  // the app page: try the network first so updates show up, fall back to the saved copy offline
+  if (req.mode === 'navigate') {
+    e.respondWith(fetch(req).then(res => {
+      if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put('./index.html', copy)); }
+      return res;
+    }).catch(() => caches.match('./index.html')));
+    return;
+  }
+  // app files and fonts: answer from the saved copy right away, refresh it in the background
+  if (url.origin === location.origin || /(^|\.)fonts\.(googleapis|gstatic)\.com$/.test(url.hostname)) {
+    e.respondWith(caches.match(req).then(hit => {
+      const net = fetch(req).then(res => {
+        if (res && (res.ok || res.type === 'opaque')) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
+        return res;
+      }).catch(() => hit);
+      return hit || net;
+    }));
+  }
+});
+
 LIST:
