@@ -22,6 +22,7 @@ const VIET = /vietnamese|asian|pho|banh mi|bun |spring roll|lemongrass/;
 const INDIAN = /indian|curry|masala|tikka|biryani|dal|daal|paneer|naan|korma|tandoori|samosa|chana/;
 const GREEK = /greek|mediterranean|gyro|souvlaki|spanakopita|moussaka|tzatziki|hummus|falafel|middle eastern|lebanese/;
 const SOUTH = /southern|soul|cajun|creole|gumbo|jambalaya|fried chicken|collard|cornbread|biscuit|grits|mac and cheese|smothered|oxtail|dumplings/;
+const FIL = /filipino|pinoy|adobo|lumpia|pancit|sinigang|asian/;
 const BAKE = /bak|cake|cookie|bread|pie|brownie|muffin|dessert|cheesecake|cupcake|biscuit|roll|pastry/;
 
 const SOURCES = [
@@ -56,7 +57,7 @@ const SOURCES = [
   { id: 'hungryinthailand', name: 'Hungry in Thailand', kind: 'wp', home: 'https://hungryinthailand.com', topics: THAI },
   { id: 'vietworldkitchen', name: 'Viet World Kitchen', kind: 'wp', home: 'https://www.vietworldkitchen.com', topics: VIET },
   { id: 'hungryhuy', name: 'Hungry Huy', kind: 'wp', home: 'https://www.hungryhuy.com', topics: VIET },
-  { id: 'panlasangpinoy', name: 'Panlasang Pinoy', kind: 'wp', home: 'https://panlasangpinoy.com', topics: /filipino|pinoy|adobo|lumpia|pancit|sinigang|asian/ },
+  { id: 'panlasangpinoy', name: 'Panlasang Pinoy', kind: 'wp', home: 'https://panlasangpinoy.com', topics: FIL },
   { id: 'cookwithmanali', name: 'Cook with Manali', kind: 'wp', home: 'https://www.cookwithmanali.com', topics: INDIAN },
   { id: 'pipingpotcurry', name: 'Piping Pot Curry', kind: 'wp', home: 'https://www.pipingpotcurry.com', topics: INDIAN },
   { id: 'ministryofcurry', name: 'Ministry of Curry', kind: 'wp', home: 'https://ministryofcurry.com', topics: INDIAN },
@@ -83,47 +84,34 @@ const SOURCES = [
   { id: 'theanthonykitchen', name: 'The Anthony Kitchen', kind: 'wp', home: 'https://www.theanthonykitchen.com', wide: true },
   { id: 'coopcancook', name: 'Coop Can Cook', kind: 'wp', home: 'https://coopcancook.com', wide: true },
   { id: 'butterbeready', name: 'Butter Be Ready', kind: 'wp', home: 'https://butterbeready.com', wide: true },
-  // Nov 21, 2026: candidates to try (sites=trial); the ones that answer get moved up
-  { id: 'muydelish', name: 'Muy Delish', kind: 'wp', home: 'https://www.muydelish.com', trial: true, topics: MEX },
-  { id: 'mylatinatable', name: 'My Latina Table', kind: 'wp', home: 'https://www.mylatinatable.com', trial: true, topics: MEX },
-  { id: 'chicanoeats', name: 'Chicano Eats', kind: 'wp', home: 'https://chicanoeats.com', trial: true, topics: MEX },
-  { id: 'mexicanfoodjournal', name: 'Mexican Food Journal', kind: 'wp', home: 'https://mexicanfoodjournal.com', trial: true, topics: MEX },
-  { id: 'kawalingpinoy', name: 'Kawaling Pinoy', kind: 'wp', home: 'https://www.kawalingpinoy.com', trial: true, topics: /filipino|pinoy|adobo|lumpia|pancit|sinigang|asian/ },
-  { id: 'foxyfolksy', name: 'Foxy Folksy', kind: 'wp', home: 'https://www.foxyfolksy.com', trial: true, topics: /filipino|pinoy|adobo|lumpia|pancit|sinigang|asian/ },
-  { id: 'rasamalaysia', name: 'Rasa Malaysia', kind: 'wp', home: 'https://rasamalaysia.com', trial: true, topics: CHI },
-  { id: 'loveandlemons', name: 'Love and Lemons', kind: 'wp', home: 'https://www.loveandlemons.com', trial: true },
-  { id: 'cookieandkate', name: 'Cookie and Kate', kind: 'wp', home: 'https://cookieandkate.com', trial: true },
-  { id: 'downshiftology', name: 'Downshiftology', kind: 'wp', home: 'https://downshiftology.com', trial: true },
-  { id: 'feelgoodfoodie', name: 'Feel Good Foodie', kind: 'wp', home: 'https://feelgoodfoodie.net', trial: true },
-  { id: 'ambitiouskitchen', name: 'Ambitious Kitchen', kind: 'wp', home: 'https://www.ambitiouskitchen.com', trial: true },
-  { id: 'thereciperebel', name: 'The Recipe Rebel', kind: 'wp', home: 'https://www.thereciperebel.com', trial: true },
-  { id: 'iowagirleats', name: 'Iowa Girl Eats', kind: 'wp', home: 'https://iowagirleats.com', trial: true },
-  { id: 'acouplecooks', name: 'A Couple Cooks', kind: 'wp', home: 'https://www.acouplecooks.com', trial: true },
-  { id: 'wholesomeyum', name: 'Wholesome Yum', kind: 'wp', home: 'https://www.wholesomeyum.com', trial: true },
-  { id: 'blessthismess', name: 'Bless This Mess', kind: 'wp', home: 'https://www.blessthismessplease.com', trial: true },
-  { id: 'favfamilyrecipes', name: 'Favorite Family Recipes', kind: 'wp', home: 'https://www.favfamilyrecipes.com', trial: true },
-  { id: 'laurenslatest', name: 'Lauren’s Latest', kind: 'wp', home: 'https://laurenslatest.com', trial: true },
-  { id: 'justataste', name: 'Just a Taste', kind: 'wp', home: 'https://www.justataste.com', trial: true },
-  { id: 'shugarysweets', name: 'Shugary Sweets', kind: 'wp', home: 'https://www.shugarysweets.com', trial: true, topics: BAKE },
-  { id: 'dinnersdishes', name: 'Dinners, Dishes, and Desserts', kind: 'wp', home: 'https://dinnersdishesanddesserts.com', trial: true },
-  { id: 'realhousemoms', name: 'Real Housemoms', kind: 'wp', home: 'https://realhousemoms.com', trial: true },
-  { id: 'theendlessmeal', name: 'The Endless Meal', kind: 'wp', home: 'https://www.theendlessmeal.com', trial: true },
-  { id: 'simplydelicious', name: 'Simply Delicious', kind: 'wp', home: 'https://www.simply-delicious-food.com', trial: true },
-  { id: 'tasteandtell', name: 'Taste and Tell', kind: 'wp', home: 'https://www.tasteandtellblog.com', trial: true },
-  { id: 'thecountrycook', name: 'The Country Cook', kind: 'wp', home: 'https://www.thecountrycook.net', trial: true, topics: SOUTH },
-  { id: 'southernplate', name: 'Southern Plate', kind: 'wp', home: 'https://www.southernplate.com', trial: true, topics: SOUTH },
-  { id: 'julieblanner', name: 'Julie Blanner', kind: 'wp', home: 'https://julieblanner.com', trial: true },
-  { id: 'mommyshomecooking', name: 'Mommy’s Home Cooking', kind: 'wp', home: 'https://mommyshomecooking.com', trial: true },
-  { id: 'aspicyperspective', name: 'A Spicy Perspective', kind: 'wp', home: 'https://www.aspicyperspective.com', trial: true },
-  { id: 'browneyedbaker', name: 'Brown Eyed Baker', kind: 'wp', home: 'https://www.browneyedbaker.com', trial: true, topics: BAKE },
-  { id: 'livewellbakeoften', name: 'Live Well Bake Often', kind: 'wp', home: 'https://www.livewellbakeoften.com', trial: true, topics: BAKE },
-  { id: 'thebakermama', name: 'The BakerMama', kind: 'wp', home: 'https://thebakermama.com', trial: true },
-  { id: 'bakingamoment', name: 'Baking a Moment', kind: 'wp', home: 'https://bakingamoment.com', trial: true, topics: BAKE },
-  { id: 'houseofnasheats', name: 'House of Nash Eats', kind: 'wp', home: 'https://houseofnasheats.com', trial: true },
-  { id: 'thecookierookie', name: 'The Cookie Rookie', kind: 'wp', home: 'https://www.thecookierookie.com', trial: true },
-  { id: 'thekitchenmagpie', name: 'The Kitchen Magpie', kind: 'wp', home: 'https://www.thekitchenmagpie.com', trial: true },
+  // added Nov 21, 2026 (answered both checks from Vercel, "chicken" and "tamales")
+  { id: 'chicanoeats', name: 'Chicano Eats', kind: 'wp', home: 'https://chicanoeats.com', topics: MEX },
+  { id: 'mexicanfoodjournal', name: 'Mexican Food Journal', kind: 'wp', home: 'https://mexicanfoodjournal.com', topics: MEX },
+  { id: 'mylatinatable', name: 'My Latina Table', kind: 'wp', home: 'https://www.mylatinatable.com', topics: MEX },
+  { id: 'foxyfolksy', name: 'Foxy Folksy', kind: 'wp', home: 'https://www.foxyfolksy.com', topics: FIL },
+  { id: 'livewellbakeoften', name: 'Live Well Bake Often', kind: 'wp', home: 'https://www.livewellbakeoften.com', topics: BAKE },
+  { id: 'thecountrycook', name: 'The Country Cook', kind: 'wp', home: 'https://www.thecountrycook.net', wide: true },
+  { id: 'ambitiouskitchen', name: 'Ambitious Kitchen', kind: 'wp', home: 'https://www.ambitiouskitchen.com', wide: true },
+  { id: 'aspicyperspective', name: 'A Spicy Perspective', kind: 'wp', home: 'https://www.aspicyperspective.com', wide: true },
+  { id: 'blessthismess', name: 'Bless This Mess', kind: 'wp', home: 'https://www.blessthismessplease.com', wide: true },
+  { id: 'dinnersdishes', name: 'Dinners, Dishes, and Desserts', kind: 'wp', home: 'https://dinnersdishesanddesserts.com', wide: true },
+  { id: 'laurenslatest', name: 'Lauren’s Latest', kind: 'wp', home: 'https://laurenslatest.com', wide: true },
+  { id: 'loveandlemons', name: 'Love and Lemons', kind: 'wp', home: 'https://www.loveandlemons.com', wide: true },
+  { id: 'mommyshomecooking', name: 'Mommy’s Home Cooking', kind: 'wp', home: 'https://mommyshomecooking.com', wide: true },
+  { id: 'simplydelicious', name: 'Simply Delicious', kind: 'wp', home: 'https://www.simply-delicious-food.com', wide: true },
+  { id: 'theendlessmeal', name: 'The Endless Meal', kind: 'wp', home: 'https://www.theendlessmeal.com', wide: true },
+  { id: 'thekitchenmagpie', name: 'The Kitchen Magpie', kind: 'wp', home: 'https://www.thekitchenmagpie.com', wide: true },
+  // Edamam's free Developer plan (developer.edamam.com/meal-planner-api, checked Nov 21, 2026): over 2 million recipes from
+  // across the web, including big sites that turn this server away (Food Network, Allrecipes...). Off until Dave adds his own
+  // EDAMAM_APP_ID and EDAMAM_APP_KEY in Vercel. Its terms: only searches a person asks for (Discover, holiday and category
+  // ideas, not What can I cook's bulk reading), and "Powered by Edamam" shown with the results (the app does that).
+  { id: 'edamam', name: 'Edamam', kind: 'edamam', keyed: true },
 ];
 // Food Network, Allrecipes, Simply Recipes, Serious Eats and some blogs turn servers away, so they're left out here.
+// Tried Nov 21, 2026 and blocked (403) from Vercel: A Couple Cooks, Baking a Moment, Brown Eyed Baker, Cookie and Kate,
+// Downshiftology, Favorite Family Recipes, Feel Good Foodie, Iowa Girl Eats, Just a Taste, Muy Delish, Rasa Malaysia,
+// Real Housemoms, Shugary Sweets, The BakerMama, The Recipe Rebel, Wholesome Yum. Answered only some of the time (left
+// out): Kawaling Pinoy, House of Nash Eats, Julie Blanner, Southern Plate, Taste and Tell, The Cookie Rookie.
 // The app offers a button to search them in the browser instead, and reading a single recipe from them still works.
 
 module.exports = async (req, res) => {
@@ -138,7 +126,7 @@ module.exports = async (req, res) => {
   let sources;
   if (want.length) sources = SOURCES.filter(s => want.includes(s.id) || (s.trial && want.includes('trial')));
   else if (qp.all) sources = SOURCES.filter(s => !s.trial);
-  else sources = SOURCES.filter(s => !s.trial && (s.core || s.wide || (q && s.topics && s.topics.test(q.toLowerCase()))));
+  else sources = SOURCES.filter(s => !s.trial && (s.core || s.wide || (s.keyed && q && keyOn(s)) || (q && s.topics && s.topics.test(q.toLowerCase()))));
 
   const report = [];
   const lists = await Promise.all(sources.map(async s => {
@@ -169,6 +157,7 @@ module.exports = async (req, res) => {
 
 async function readSource(s, q, n, trace) {
   if (s.kind === 'wp') return fromWordPress(s, q, n, trace);
+  if (s.kind === 'edamam') return fromEdamam(s, q, n, trace);
   const url = q ? s.search(q) : s.latest;
   const { text } = await fetchText(url, { trace });
   return cardsFromPage(text, s).slice(0, n);
@@ -250,6 +239,40 @@ async function fromWordPress(s, q, n, trace) {
     };
   }).filter(x => x.title && x.url && !ROUNDUP.test(x.title)).slice(0, n);
 }
+/* ---------- Edamam (Dave's own free keys) ---------- */
+const keyOn = s => s.kind === 'edamam' ? !!(process.env.EDAMAM_APP_ID && process.env.EDAMAM_APP_KEY) : false;
+// recipe sites that need a paid subscription to see the recipe
+const PAYWALL = /(^|\.)(nytimes\.com|americastestkitchen\.com|cooksillustrated\.com|cookscountry\.com|washingtonpost\.com|wsj\.com)$/;
+async function fromEdamam(s, q, n, trace) {
+  const id = process.env.EDAMAM_APP_ID, key = process.env.EDAMAM_APP_KEY;
+  if (!id || !key) throw new Error('Off: needs EDAMAM_APP_ID and EDAMAM_APP_KEY in Vercel.');
+  if (!q) return []; // Edamam only searches
+  const url = 'https://api.edamam.com/api/recipes/v2?type=public&q=' + enc(q) + '&app_id=' + enc(id) + '&app_key=' + enc(key)
+    + ['label', 'url', 'image', 'images', 'source'].map(f => '&field=' + f).join('');
+  let text;
+  try {
+    // no trace here: the address has the key in it, and debug answers are public
+    ({ text } = await fetchText(url, { headers: { Accept: 'application/json', 'Edamam-Account-User': process.env.EDAMAM_USER || 'yumyum' } }));
+  } catch (e) {
+    if (trace) trace.push('edamam failed: ' + String(e.message || e).replace(key, '•••'));
+    throw new Error(String(e.message || e).replace(key, '•••'));
+  }
+  let j;
+  try { j = JSON.parse(text); } catch (e) { throw new Error('Not a recipe list.'); }
+  const hits = Array.isArray(j.hits) ? j.hits : [];
+  if (trace) trace.push('edamam ' + hits.length + ' hits for "' + q + '"');
+  const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
+  return hits.map(h => h && h.recipe).filter(Boolean).map(r => {
+    const im = r.images || {};
+    return {
+      title: clean(decode(String(r.label || ''))).slice(0, 140),
+      url: String(r.url || ''),
+      image: (im.LARGE && im.LARGE.url) || (im.REGULAR && im.REGULAR.url) || r.image || '',
+      source: 'edamam', sourceName: clean(String(r.source || '')) || host(r.url), by: 'edamam'
+    };
+  }).filter(x => x.title && /^https?:\/\//.test(x.url) && host(x.url) && !PAYWALL.test(host(x.url)) && !ROUNDUP.test(x.title)).slice(0, n);
+}
+
 // "25 Best Chicken Recipes", gift guides, meal plans: not a single recipe
 const ROUNDUP = /^(over |top |the |our )?\d+\+?\s|\b(recipes|ideas|roundup|round-up|meal plan|gift guide|giveaway|what i ate|favorites of|best of \d{4}|menu|everything you need to know|guide to|lunchbox|freezer stash|what (is|are) )\b|^what (is|are)\b|\?$/i;
 

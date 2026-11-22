@@ -6,7 +6,7 @@ people see changed: the web addresses, the GitHub repo, the Vercel project, the 
 name on purpose, so nothing on other accounts had to change and old backups still restore. It saves recipes and cooking videos from TikTok,
 Instagram, YouTube, Facebook, Pinterest, and any recipe website, organizes them, and opens
 the original when it's time to cook. Built with Claude, step by step, starting Sept 26, 2026.
-Current version: **2.5.1**.
+Current version: **2.6**.
 
 This file is the handoff for a fresh chat. A Claude session that has this GitHub repo reads
 it automatically. In any other chat, attach this file and say what you want changed.
@@ -40,7 +40,7 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 - **Bottom bar:** Home, Search, Yums, +, List (with a count badge), Cook (What can I cook?), Me.
   Cook opened from the tab has no back arrow; opened from Home or a category page it does.
 - **Home:** greeting, search pill, quick filter chips, **Just for you** (Discover picks),
-  Recently saved, **Browse by cuisine** (scrollable tiles: Mexican, Asian, Italian, Chinese,
+  **Holidays & seasons** (v2.6, see below), Recently saved, **Browse by cuisine** (scrollable tiles: Mexican, Asian, Italian, Chinese,
   Japanese, Thai, Korean, Vietnamese, Indian, Greek, Mediterranean, Middle Eastern, American,
   Southern, Cajun, BBQ, Caribbean, French, Spanish), **Browse by category** (Main dishes, Sides,
   Marinades, Appetizers, Soups & stews, Salads, Breakfast, Desserts, Baking, Bread, Drinks),
@@ -113,8 +113,8 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   the app pick again" clears it.
 - **Search:** Dave's own recipes with filters (type, time, status, cuisine, meal, source) and
   sorting, plus a **Find new recipes on Delish, Tasty, and more** button.
-- **Discover** (Home > Just for you > See all): free recipes from 33 sites, search, Newest, and
-  cuisine chips. Tap a card for a full preview, one tap saves it, ✕ = "Not for me".
+- **Discover** (Home > Just for you > See all): free recipes from 66 sites (plus Edamam once Dave adds his free keys),
+  search, Newest, and cuisine chips. Tap a card for a full preview, one tap saves it, ✕ = "Not for me".
 - **What can I cook?** (green card on Home, or long-press the app icon): Dave adds what's in
   his kitchen (type it, or tap foods). It shows his saved recipes and new ones from the recipe
   sites, each marked "Ready to cook", "Have the main stuff" (only spices missing), or "Need
@@ -164,6 +164,14 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
   screenshot" with **Add a photo**: pause the video on the food, screenshot it, pick it, and only the photo is cut out and
   added (the recipe boxes aren't touched). A food-only screenshot on a filled form, and "Just add the photo" on the preview,
   do the same.
+- **Holidays & seasons (v2.6, Nov 21, 2026; Dave: "Add holiday/seasonal section"):** a Home row with the holidays in the
+  next 45 days ("Thanksgiving · Thursday", "Christmas · In 33 days", "3 saved"), the season ("Fall · Now through Dec 20"),
+  and All holidays. A holiday's page: its date and countdown, **Your <holiday> recipes** (saved ones whose name or tags say
+  so, or saved from that page), **Ideas for <holiday>** from the recipe sites with course chips (Thanksgiving: Turkey &
+  mains, Sides, Pies & desserts, Leftovers), and Coming up. 17 food holidays (New Year's, Super Bowl, Valentine's, St.
+  Patrick's, Easter, Cinco de Mayo, Mother's Day, Memorial Day, Father's Day, Fourth of July, Labor Day, Mexican
+  Independence Day, Halloween, Día de los Muertos, Thanksgiving, Hanukkah, Christmas) and 4 seasons. See "Holidays &
+  seasons: how it works" below.
 - **Sync & backup (v2.2, Oct 16, 2026; was Cloud backup):** Dave asked for his phone and tablet to "save and use on both
   devices using same account". The same code on both keeps recipes, photos, collections, kitchen, grocery list, name and
   taste the same; changes show up on the other within a few minutes, and right away when it's opened. A second device:
@@ -198,11 +206,14 @@ backup" below). A new chat still can't see them. Before big changes, Dave can ta
 | `api/video.js` | Fill in from a video with Gemini (free tier). `POST ?op=start` {size,type} -> Gemini's one-time upload address (the phone sends the file there itself); `op=state` {name}; `op=make` {name or youtube, dur, title, caption} -> the recipe as JSON (the video is deleted after); `op=drop` {name}; since v2.4 `op=image` {images:[{data (base64), type}], title, caption} (up to 8 pictures, 1.6 MB each, 3.3 MB together) -> the same recipe JSON (since v2.4.1 plus `language`, '' when English; since v2.5 plus `creator` "@name", `app`, and `photo` {pic, box}). `GET /api/video/<anything>?op=selftest[&only=upload|youtube|image][&yt=<id>][&img=<picture on github.io or vercel.app>]` runs it all with the real key on a sample clip, a YouTube Short and `tests/fixtures/caption-shot.jpg` (a made-up caption screenshot). Key: `GEMINI_API_KEY` (Vercel Secret). Models: `GEMINI_MODEL` or gemini-3.6-flash, gemini-3.8-flash, gemini-3-flash-preview (next one on a 429/404 or when one takes too long); pictures use `PIC_MODELS` (lite first) before those. |
 | `api/cook.js` | What can I cook: `GET /api/cook?q=chicken|chicken rice&have=chicken,rice&b=salt,…&x=mexican` (up to 8 searches split on `|`; `have` picks which recipes to read and sorts the answer; `x` adds cuisine sites; `n` default 44, max 48; `debug=1` shows each site, page, and how each recipe matched). Returns `{title,url,image,source,sourceName,ingredients,category,cuisine,totalTime,servings}`. |
 | `lib/pantry.js` | Ingredient reader and kitchen matcher (about 210 foods, longest match wins, families like "beans" or "broth", spices kept apart), `splitFoods` for typed lists, `recipeCats` (recipe categories), `AISLES`/`aisleOf` (grocery store sections), and `foodName` (a list item uses the recipe's words: "Potato starch", not "Cornstarch"). |
+| `lib/holidays.js` | Food holidays and seasons (v2.6): `HOLIDAYS` (date rule, days, emoji, colors, food words `kw`, `courses` = [key, label, category, searches]), `HOL_SEASONS`, `holNext`, `holSeason`, `holUpcoming`, `holWhen`, `holMatch`, `holQueries`. Copied into app.html by tools/sync_caption.py. |
 | `lib/kitchen.js` | Ingredient swaps (`SWAPS`, `swapFor(line)`, `swapHave(option, pantry)`), cookware tips (`TOOLS`, `TEMPS`, `toolsFor(recipe)`), and the What you'll need list (`GEAR`, `GEAR_LIKELY`, `gearFor(recipe)`, `gearHeard(text)`). Sources are listed at the top of the file. |
 | `api/similar.js` | Steps from a similar recipe: `GET /api/similar?q=<dish>&ing=<food ids>&skip=<url|url>` (`debug=1` for each site and score). Searches the Discover sites, reads the closest 6 recipe cards (`readRecipe` from api/recipe.js), returns up to 3 with steps. |
 | `lib/parse.js` | Shared helpers: safe fetching, HTML and JSON-LD reading, **caption parser**, `recipeFromPage` (a whole copied page -> its recipe card), archive fallback. |
 | `tools/sync_caption.py` | Copies the caption parser (lib/parse.js), the kitchen matcher (lib/pantry.js), and kitchen help (lib/kitchen.js) into app.html. |
 | `tests/reader.test.js`, `tests/captions.test.js`, `tests/cook.test.js`, `tests/list.test.js`, `tests/kitchen.test.js`, `tests/backup.test.js`, `tests/similar.test.js`, `tests/timers.test.js` | Offline tests with fake pages, real captions, ingredient matching, grocery sections and names, swaps, cookware tips and the What you'll need list, cloud backup and sync with a fake Blob store, and similar-recipe matching with fake recipe sites. |
+| `tests/discover.test.js`, `tests/holidays-yum.test.js` | Discover's Edamam source with a fake internet (off without keys, the key never in debug answers, paywalls and roundups left out, never used by What can I cook), and the holiday dates, countdowns, matching and searches. |
+| `tests/holidays.playwright.js` | Holidays & seasons on a phone screen with the clock at Nov 21, 2026 and a pretend Discover (tiles, Thanksgiving page, course chips, saving files it under the holiday, Edamam credit, All holidays, a season, dark mode). About 20 seconds; not in the quick list. |
 | `tests/video.test.js` | Fill in from a video: the real api/video.js with a pretend Gemini (start, model fallback on a used-up free limit, tidying Gemini's answer, quote-blocked retry, YouTube, delete after, health check). |
 | `tests/video.playwright.js` | The button, sending, preview, Use it, the recipe-page note, YouTube, errors, Cancel, a dropped upload, dark mode, and Share > YumYum (a video, a screenshot, and a plain link) through the real service worker; since v2.4 also Fill in from a screenshot (sizes sent, a long screenshot cut in pieces, a camera photo made smaller, no recipe, not a picture, dark mode); since v2.4.1 the screenshot rescue (fills by itself, Undo, the Instagram card on an Android phone, the kept form); since v2.5 the copied link, the dish photo cut out, @creator, the Instagram app links and similar steps (Playwright + ffmpeg, about two minutes; not in the quick list). Run after building when this feature changes. |
 | `tests/sync.playwright.js` | A phone and a tablet syncing through the real api/backup.js on a pretend Blob store (Playwright, about a minute; not in the quick list). Run after building when sync changes. |
@@ -216,10 +227,10 @@ Claude's WebFetch checks) still work. It refuses private or internal addresses.
 
 ## Making a change (the routine)
 1. Edit `tools/app.html` for the app, or `api/` and `lib/` for the reader or Discover.
-2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js` or `lib/kitchen.js`, changed, run `python3 tools/sync_caption.py`.
+2. If the caption section of `lib/parse.js`, or anything in `lib/pantry.js`, `lib/kitchen.js` or `lib/holidays.js`, changed, run `python3 tools/sync_caption.py`.
 3. Build: `python3 tools/build.py https://djvas1975.github.io/yumyumtumtum/`
-4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js && node tests/video.test.js`
-5. App changes: bump the version text in `V.me` (`version 2.5.1`).
+4. Test: `node tests/reader.test.js && node tests/captions.test.js && node tests/cook.test.js && node tests/list.test.js && node tests/kitchen.test.js && node tests/backup.test.js && node tests/similar.test.js && node tests/timers.test.js && node tests/video.test.js && node tests/discover.test.js && node tests/holidays-yum.test.js`
+5. App changes: bump the version text in `V.me` (`version 2.6`).
    Reader or Discover changes: also bump `READER_V` in app.html. Vercel caches reader answers
    for a day, and the `&v=` value makes phones get fresh ones.
 6. Commit as `djvas1975 <djvas1975@users.noreply.github.com>` and push to `main`.
@@ -284,7 +295,32 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   still match what an earlier read gave (`impSig`) and the new read covers the same caption or more.
 
 ## Discover: how it works
-- **Sites that answer (50):** Delish, The Pioneer Woman, and Tasty (their own search pages).
+- **Nov 21, 2026 check (v2.6, `READER_V` 18):** all 50 sites below still answered from Vercel. 38 new candidates were tried
+  twice (searches "chicken" and "tamales", through the live-check branch's new `sum <url>` line, which prints each site's
+  count, time and error): 16 answered both times and were added: Mexican (topics): Chicano Eats, Mexican Food Journal, My
+  Latina Table; Filipino: Foxy Folksy; baking: Live Well Bake Often; general (`wide`): The Country Cook, Ambitious Kitchen,
+  A Spicy Perspective, Bless This Mess, Dinners Dishes and Desserts, Lauren's Latest, Love and Lemons, Mommy's Home
+  Cooking, Simply Delicious, The Endless Meal, The Kitchen Magpie. Now 66. Blocked and answered-sometimes ones are listed
+  in api/discover.js.
+- **Edamam (free sign-up, built but off until Dave adds keys):** Edamam's Recipe Search API plans are paid ($9+/month), but
+  its Meal Planner **Developer** plan is free and includes recipe calls on web recipes from third-party sites
+  (developer.edamam.com/meal-planner-api, read Nov 21, 2026: "FREE", recipe calls per minute 500; "All plans allow only human,
+  end user driven requests"; attribution required: "Powered by" + their logo linking to developer.edamam.com). Its index
+  covers big sites that turn Vercel away (Food Network, Allrecipes...). `api/discover.js` source `edamam` (`keyed: true`)
+  runs only when `EDAMAM_APP_ID` and `EDAMAM_APP_KEY` are set in Vercel and there's a search; it sends
+  `Edamam-Account-User: yumyum` (`EDAMAM_USER` overrides), asks only for label/url/image/images/source, skips paywalled
+  sites (`PAYWALL`: NYT Cooking, America's Test Kitchen, Cook's Illustrated/Country, WaPo, WSJ) and roundups, and never puts
+  the key in a debug answer. It's not `core`/`wide`/topics, so What can I cook and Similar never use it. The phone shows "Some
+  ideas found with Powered by Edamam" (`edamamNote`, a text link for now; swap in their logo image once someone can look
+  at it). Edamam's image links may expire (signed S3 links, probably an hour; not confirmed for Edamam); a broken image
+  falls back to the photo proxy and then the drawn art, and saving reads the recipe's own page. **To turn it on:** sign up
+  free at developer.edamam.com (Meal Planner API, Developer plan, Get Started), Dashboard > Applications > the app's
+  Application ID and Key, then Vercel > yumyumtumtum > Settings > Environment Variables: `EDAMAM_APP_ID`, `EDAMAM_APP_KEY`
+  (Production and Preview), redeploy. Then check `https://yumyumtumtum.vercel.app/api/discover?q=turkey&n=3&debug=1&sites=edamam`.
+- Also looked at (Nov 21, 2026), not built: Spoonacular (free plan with a daily point limit, 50 or 150 points depending on
+  the source, backlink required; its pricing page wasn't readable that day), TheMealDB (test key "1" free for personal
+  projects, a few hundred recipes; a public app is asked to become a paying supporter).
+- **Sites that answer (50, Sept 27, 2026):** Delish, The Pioneer Woman, and Tasty (their own search pages).
   RecipeTin Eats, Spend With Pennies, Cafe Delites, Damn Delicious, Pinch of Yum, Once Upon a
   Chef, and Jo Cooks (WordPress search). Added Sept 27, 2026 (`wide: true`, asked in every
   search): Chef Savvy, Salt & Lavender, Inspired Taste, Jessica Gavin, Southern Bite, The Girl
@@ -368,6 +404,21 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   for 6 hours, and on Vercel for 6 hours.
 - Live check Sept 27, 2026 (v0.9 endpoint): 5 searches, 880 candidates, 40 recipes read, no
   errors, 8.6 seconds.
+
+## Holidays & seasons: how it works (built Nov 21, 2026, v2.6)
+- Data in `lib/holidays.js` (synced into app.html; `HOL_SEASONS` because app.html already has a `SEASONS` for For you's
+  seasonal pick). Dates: fixed days, nth/last weekday rules, Easter computus, Hanukkah table (2025-2030, same as Artistry);
+  multi-day ones have `days` (New Year's = Dec 31-Jan 1, Christmas = Dec 24-25 for Nochebuena, Día de los Muertos Nov 1-2,
+  Mexican Independence Sept 15-16, Hanukkah 8). Super Bowl 2027 lands on Valentine's Day (Feb 14), by the 2nd-Sunday rule.
+- Matching saved recipes (`holMatch`): `r.hols` (set when saved from a holiday's ideas: `buildFeed` marks items with
+  `it.hol`, `saveDiscovered` copies it), or the title and tags contain one of the holiday's words (word boundaries; "ground
+  turkey tacos", "stuffed peppers" and "ranch dressing" are not Thanksgiving). Seasons use looser words (soup is winter).
+- Phone: `holHomeSec` (after Just for you), `V.hol` (route `{name:'hol', key:<id>|'_all', course}`), `holFeedHTML`, feed keys
+  `h:<id>` (one search from each course) or `h:<id>:<course>` (that course's searches; its category filters the ideas like a
+  category page). `go()` now also compares `key`, so one holiday page can open another (before, two pages of the same
+  kind with no id counted as the same page).
+- Tested Nov 21, 2026: tests/holidays-yum.test.js (dates for 2026-2027, countdowns, coming up, seasons, matching, searches)
+  and tests/holidays.playwright.js. **Not confirmed yet on Dave's phone.**
 
 ## Cloud backup: how it works (built Sept 29, 2026)
 - Storage: a **private** Vercel Blob store connected to the yumyumtumtum Vercel project (Storage tab >
@@ -483,7 +534,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
 
 ## Video recipes from what's said (checked Sept 28, 2026; the free part built Oct 10, 2026 in v1.7)
 - **Built (v1.7):** the reader asks for TikTok's speech captions on every TikTok (`readTikTok(url, trace, {speech:true})`,
-  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0, 14 since v2.0.1, 15 since v2.1.1, 16 since v2.3.2, 17 since v2.3.3); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
+  `speech` in the answer, `READER_V` 11; 12 since v1.8, 13 since v2.0, 14 since v2.0.1, 15 since v2.1.1, 16 since v2.3.2, 17 since v2.3.3, 18 since v2.6 (new Discover sites)); the phone keeps it as `r.speech` (or `r.speechChecked` when TikTok has none) and
   shows it as "What they said in the video" when there are no written steps (collapsed under the steps otherwise).
 - Probe: `/api/recipe?url=<video>&debug=1&subs=1` lists the video's own captions and shows the start
   of the caption file. Debug only; normal reads don't change.
@@ -868,6 +919,7 @@ values. Playwright's Chromium works for screenshots of the app. Make a test copy
   screen recording as the recipe's video on this phone only (IndexedDB; not synced, 1 GB free Blob); Fill in from a video
   already reads it. Not possible: finding the original post from a screenshot (no Instagram search API; scraping breaks
   its terms).
+- Holidays: let Dave add or take a recipe off a holiday by hand (today it's by name/tags or saved from the holiday page).
 - A small native Android helper with a floating "screenshot this" button over Instagram (option B of the screenshot plan,
   Nov 21, 2026): days of work, a separate app installed from a file, Android asks "Allow screen capture?" every time. Not
   approved; the web-app version (2.4.1) was chosen.

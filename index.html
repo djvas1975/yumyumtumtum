@@ -117,6 +117,22 @@ body[data-route="recipe"] #view{padding-bottom:calc(112px + env(safe-area-inset-
 .cuis-t b{font:800 17px/1.1 var(--display);letter-spacing:-.01em;text-shadow:0 1px 6px rgba(0,0,0,.3)}
 .cuis-t small{font-size:12px;font-weight:700;opacity:.9}
 .cuis.none .art{filter:saturate(.75)}
+.cuis.hol{flex-basis:138px}
+.cuis.hol .cuis-t b{font-size:16px}
+#holfeed{margin-top:12px}
+.hol-bg{position:absolute;inset:0;background:linear-gradient(150deg,var(--a),var(--b))}
+.hol-emo{position:absolute;top:16px;right:12px;font-size:54px;line-height:1;filter:drop-shadow(0 4px 10px rgba(0,0,0,.28))}
+.hol-n{position:absolute;top:10px;left:10px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,.92);color:#2A1B33;font-size:11px;font-weight:800}
+.holrows{display:flex;flex-direction:column;gap:8px}
+.holrow{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--line);text-align:left;color:var(--ink)}
+.holrow .he{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-size:24px;background:linear-gradient(150deg,var(--a),var(--b))}
+.holrow .ht{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.holrow .ht b{font-weight:800;font-size:15px}
+.holrow .ht small{color:var(--ink-3);font-size:13px}
+.holrow .hw{flex:none;font-size:13px;font-weight:800;color:var(--chili)}
+.holrow .ic{flex:none;width:18px;height:18px;color:var(--ink-3)}
+.ednote{margin:10px 2px 0;font-size:12px;color:var(--ink-3)}
+.ednote a{color:inherit;font-weight:700}
 .cuis.none .cuis-t small{opacity:.75}
 
 /* cards */
@@ -1247,6 +1263,7 @@ V.home = () => {
     + '<div class="chips scroll-x" data-sx="hq">' + hq.map(x => '<button class="chip" data-hf="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>'
     + kitchenCardHTML()
     + homeDiscoverSec()
+    + holHomeSec(all)
     + sec('Recently saved', rowHTML(all.slice(0, 8), true, 'recent'), {col:'_all'})
     + sec('Browse by category', catRowHTML(all))
     + sec('Browse by cuisine', cuisineRowHTML(all))
@@ -1426,7 +1443,7 @@ V.me = () => {
     + (canBackup ? '' : '<p class="hint">Downloading a backup is not available in this view yet.</p>') + '</section>'
     + (hasEx ? '<section class="panel"><h2>Example recipes</h2><p>The recipes marked Example are here so you can see how things work. Remove them when you\'re ready to start fresh. Your own recipes stay put.</p><div class="acts"><button class="btn ghost" data-act="rmexamples">' + icon('trash') + 'Remove examples</button></div></section>' : '')
     + '<section class="panel"><h2>' + mode[0] + '</h2><p>' + mode[1] + '</p></section>'
-    + '<p class="ver">YumYum · version 2.5.1</p></div>';
+    + '<p class="ver">YumYum · version 2.6</p></div>';
 };
 function missingHTML(msg){ return backBar('') + '<div class="wrap"><div class="empty"><h3>' + esc(msg) + '</h3><button class="btn primary" data-tab="home">Go to Home</button></div></div>'; }
 
@@ -1440,7 +1457,7 @@ function go(route){
   if (!$('#sheet').hidden) closeSheet();
   if (TABS.indexOf(route.name) >= 0 || route.tab) stack = [route];
   else {
-    if (c.name === route.name && c.id === route.id) return;
+    if (c.name === route.name && c.id === route.id && c.key === route.key) return;
     stack.push(route);
     try { history.pushState({yyt:stack.length}, ''); pushed++; } catch (e) {}
   }
@@ -1469,6 +1486,7 @@ function mountView(r){
   if (r.name === 'cook') { mountCook(r); return; }
   if (r.name === 'list') { mountList(r); return; }
   if (r.name === 'cat') { loadFeed('k:' + r.key); return; }
+  if (r.name === 'hol') { if (r.key !== '_all' && holById(r.key)) loadFeed(holKey(r)); return; }
   if (r.name !== 'search') return;
   const q = $('#q');
   q.value = S.q;
@@ -1701,7 +1719,7 @@ function dataURLToBlob(d){ const m = String(d).match(/^data:([^;,]+)(;base64)?,(
 
 /* ---------- recipe reader (installed phone app) ---------- */
 const READER = 'https://yumyumtumtum.vercel.app';
-const READER_V = '17'; // bump when the reader changes, so phones don't get yesterday's saved answers
+const READER_V = '18'; // bump when the reader changes, so phones don't get yesterday's saved answers
 const canRead = () => window.top === window && location.protocol === 'https:' && !(window.claude && typeof window.claude.use === 'function');
 const isHead = s => /^##\s/.test(s || '');
 const countItems = a => (a || []).filter(x => !isHead(x)).length;
@@ -2693,6 +2711,11 @@ async function buildFeed(key){
   else if (key === 'new') queries = [''];
   else if (key.indexOf('c:') === 0) { const c = key.slice(2); queries = [CUISINE_Q[c] || c.toLowerCase()]; }
   else if (key.indexOf('k:') === 0) { opts.cat = key.slice(2); queries = catFeedQueries(opts.cat, P); }
+  else if (key.indexOf('h:') === 0) {
+    const parts = key.split(':'), h = holById(parts[1]), c = h && h.courses.find(x => x[0] === parts[2]);
+    if (!h) throw new Error('That holiday wasn\'t found.');
+    queries = holQueries(h, parts[2] || ''); opts.hol = h.id; if (c && c[2]) opts.cat = c[2];
+  }
   else { opts.q = key.slice(2); queries = [opts.q]; }
   const res = await Promise.allSettled(queries.map(fetchDiscover));
   const ok = res.filter(r => r.status === 'fulfilled').map(r => r.value);
@@ -2705,7 +2728,9 @@ async function buildFeed(key){
   }));
   const ranked = rankItems(Array.from(byUrl.values()), P, opts);
   // a category's ideas: drop the ones whose name says they're something else
-  return opts.cat ? ranked.filter(it => { const c = catsOf({title:it.title}); return !c.length || c.indexOf(opts.cat) >= 0; }) : ranked;
+  const out = opts.cat ? ranked.filter(it => { const c = catsOf({title:it.title}); return !c.length || c.indexOf(opts.cat) >= 0; }) : ranked;
+  if (opts.hol) out.forEach(it => { it.hol = opts.hol; }); // saving one files it under that holiday
+  return out;
 }
 function remember(items){ items.forEach(it => { it.id = it.id || discId(it.url); DISC.byId.set(it.id, it); }); return items; }
 const tasteSig = () => forYouQueries(tasteProfile()).queries.join('|') + '|' + neverList().join(',');
@@ -2739,6 +2764,7 @@ function redrawDiscover(){
   const r = cur();
   if (r.name === 'cook') { redrawCook(); return; }
   if (r.name === 'cat') { const b = $('#catfeed'); if (b) b.innerHTML = catFeedHTML(r); return; }
+  if (r.name === 'hol') { const b = $('#holfeed'); if (b) b.innerHTML = holFeedHTML(r); return; }
   if (r.name === 'discover' && $('#dfeed')) { $('#dfeed').innerHTML = discFeedHTML(r); return; }
   if (r.name === 'home') refresh();
 }
@@ -2759,7 +2785,7 @@ function homeDiscoverSec(){
   if (!f || !f.loading) setTimeout(() => loadFeed('foryou'), 0);
   const items = feedItems('foryou').slice(0, 10);
   if (!items.length && f && f.error) return '';
-  const body = '<div class="row scroll-x" data-sx="disc">' + (items.length ? items.map(it => dcard(it, true)).join('') : skelCards(3, true)) + '</div>';
+  const body = '<div class="row scroll-x" data-sx="disc">' + (items.length ? items.map(it => dcard(it, true)).join('') : skelCards(3, true)) + '</div>' + edamamNote(items);
   return sec('Just for you', body, {go:'discover'});
 }
 const DISC_TABS = [['foryou', 'For you'], ['new', 'Newest']].concat(CUISINE_TILES.map(t => ['c:' + t[0], t[0]]));
@@ -2792,7 +2818,8 @@ function discFeedHTML(rt){
   else {
     h += (f.loading ? '<p class="readst"><span class="spin sm"></span>Finding more…</p>' : '')
       + '<div class="grid">' + items.slice(0, shown).map(it => dcard(it)).join('') + '</div>'
-      + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '');
+      + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '')
+      + edamamNote(items.slice(0, shown));
   }
   h += '<div class="dnote"><b>Also try</b><span>These sites don\'t let outside apps search them, but you can search there and tap Share, then YumYum, to save a recipe.</span><div class="morelinks">'
     + MORE_SITES.map(s => '<a class="chip" href="' + esc(q ? s[1](q) : s[2]) + '" target="_blank" rel="noopener noreferrer">' + esc(s[0]) + icon('ext') + '</a>').join('') + '</div></div>';
@@ -2869,6 +2896,7 @@ async function saveDiscovered(id){
     ingredients:[], steps:[], srcNotes:[], equipment:[], notes:'', photoId:null, photoKey:null, photoData:null, photoUrl:null,
     rating:0, fav:false, madeCount:0, createdAt:now(), sample:false, found:'discover'};
   if (!st.j && Array.isArray(it.ingredients) && it.ingredients.length) r0.ingredients = it.ingredients.slice(0, 200);
+  if (it.hol) r0.hols = [it.hol];
   const r = st.j ? Object.assign(r0, importFields(r0, st.j)) : r0;
   if (!r.siteName) r.siteName = it.sourceName || '';
   DISC.savedNow.set(normUrl(it.url), r.id);
@@ -3398,6 +3426,78 @@ function cookwareHTML(K, G, checked){
     + '</div>';
 }
 
+/* ---------- holidays & seasons (v2.6): the calendar and food words are in lib/holidays.js ---------- */
+const holKey = r => 'h:' + r.key + (r.course ? ':' + r.course : '');
+const fmtMD = d => d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+// "Thursday, Nov 26", "Dec 24–25", "Dec 4–11"
+function holDateText(n){
+  if (+n.start === +n.end) return n.start.toLocaleDateString('en-US', {weekday:'long', month:'short', day:'numeric'});
+  return fmtMD(n.start) + '–' + (n.start.getMonth() === n.end.getMonth() ? n.end.getDate() : fmtMD(n.end));
+}
+const seasonStart = (h, now) => { const t = new Date(now.getFullYear(), now.getMonth(), now.getDate()); let d = new Date(t.getFullYear(), h.start[0], h.start[1]); if (d < t) d = new Date(t.getFullYear() + 1, h.start[0], h.start[1]); return d; };
+// what a tile or row says under the name
+function holSub(h, now){
+  if (h.start) { const se = holSeason(now); return se.season.id === h.id ? 'Now through ' + fmtMD(se.until) : 'Starts ' + fmtMD(seasonStart(h, now)); }
+  const n = holNext(h, now); return n ? holWhen(n, now) : 'No date yet';
+}
+const holCount = (h, all) => all.filter(r => holMatch(r, h)).length;
+// next to a full date: "Today", "Tomorrow", "In 5 days" (not the weekday again)
+const holSoon = (n, now) => n.days <= 1 ? holWhen(n, now) : 'In ' + n.days + ' days';
+function holTile(h, sub, count){
+  return '<button class="cuis hol" data-holgo="' + h.id + '" aria-label="' + esc(h.name + ', ' + sub) + '"><span class="hol-bg" style="--a:' + h.a + ';--b:' + h.b + '"></span>'
+    + '<span class="hol-emo" aria-hidden="true">' + h.emoji + '</span>' + (count ? '<span class="hol-n">' + count + ' saved</span>' : '')
+    + '<span class="cuis-shade"></span><span class="cuis-t"><b>' + esc(h.name) + '</b><small>' + esc(sub) + '</small></span></button>';
+}
+// Home: holidays in the next 45 days, then the season, then All holidays
+function holHomeSec(all){
+  const now = new Date(), se = holSeason(now);
+  const tiles = holUpcoming(now).map(x => holTile(x.h, holWhen(x.n, now), holCount(x.h, all)))
+    .concat(holTile(se.season, 'Now through ' + fmtMD(se.until), holCount(se.season, all)))
+    .concat('<button class="cuis hol" data-holgo="_all" aria-label="All holidays"><span class="hol-bg" style="--a:#9575B8;--b:#3E2A5B"></span><span class="hol-emo" aria-hidden="true">📅</span><span class="cuis-shade"></span><span class="cuis-t"><b>All holidays</b><small>Plan ahead</small></span></button>');
+  return sec('Holidays &amp; seasons', '<div class="row scroll-x" data-sx="hol">' + tiles.join('') + '</div>');
+}
+function holRowsHTML(hs, now, all){
+  return '<div class="holrows">' + hs.map(h => '<button class="holrow" data-holgo="' + h.id + '"><span class="he" style="--a:' + h.a + ';--b:' + h.b + '" aria-hidden="true">' + h.emoji + '</span>'
+    + '<span class="ht"><b>' + esc(h.name) + '</b><small>' + esc(h.start ? holSub(h, now) : (() => { const n = holNext(h, now); return n ? holDateText(n) : 'No date yet'; })()) + (holCount(h, all) ? ' · ' + plural(holCount(h, all), 'recipe') + ' saved' : '') + '</small></span>'
+    + (h.start ? '' : (() => { const n = holNext(h, now); return n ? '<span class="hw">' + esc(holSoon(n, now)) + '</span>' : ''; })()) + icon('back', 'flip') + '</button>').join('') + '</div>';
+}
+// every holiday, soonest first, then the seasons
+function holAllHTML(){
+  const now = new Date(), all = list();
+  const hs = HOLIDAYS.map(h => ({h:h, n:holNext(h, now)})).sort((a, b) => (a.n ? +a.n.start : 9e15) - (b.n ? +b.n.start : 9e15)).map(x => x.h);
+  return backBar('<div class="ph-t"><h1 class="title sm">Holidays &amp; seasons</h1><p class="ph-sub">Ideas for every one, and your recipes for it</p></div>') + '<div class="wrap">'
+    + '<section class="sec"><div class="sec-h"><h2>Holidays</h2></div>' + holRowsHTML(hs, now, all) + '</section>'
+    + '<section class="sec"><div class="sec-h"><h2>Seasons</h2></div>' + holRowsHTML(HOL_SEASONS, now, all) + '</section></div>';
+}
+V.hol = (rt) => {
+  if (rt.key === '_all') return holAllHTML();
+  const h = holById(rt.key); if (!h) return missingHTML('That holiday wasn\'t found.');
+  const now = new Date(), all = list(), n = h.start ? null : holNext(h, now);
+  const sub = h.start ? holSub(h, now) : n ? holDateText(n) + ' · ' + holSoon(n, now) : 'No date for this one yet';
+  const mine = sorted(all.filter(r => holMatch(r, h)), 'new'), ms = rt.mshown || 12, course = rt.course || '';
+  let html = backBar('<div class="ph-t"><h1 class="title sm">' + h.emoji + ' ' + esc(h.name) + '</h1><p class="ph-sub">' + esc(sub) + '</p></div>') + '<div class="wrap">'
+    + '<section class="sec"><div class="sec-h"><h2>Your ' + esc(h.name) + ' recipes</h2>' + (mine.length ? '<span class="muted">' + mine.length + '</span>' : '') + '</div>'
+    + (mine.length ? '<div class="grid">' + mine.slice(0, ms).map(r => card(r)).join('') + '</div>' + (mine.length > ms ? '<div class="morebar"><button class="btn ghost" data-act="holmore">Show more</button></div>' : '')
+      : '<p class="dhint">Nothing saved for ' + esc(h.name) + ' yet. Tap ' + icon('heart') + ' on an idea below and it shows up here.</p>')
+    + '</section>';
+  if (canRead()) html += '<section class="sec"><div class="sec-h"><h2>Ideas for ' + esc(h.name) + '</h2></div>'
+    + (h.courses.length > 1 ? '<div class="chips scroll-x" data-sx="holc">' + [['', 'All']].concat(h.courses.map(c => [c[0], c[1]])).map(c => '<button class="chip' + (c[0] === course ? ' on' : '') + '" data-holc="' + c[0] + '">' + esc(c[1]) + '</button>').join('') + '</div>' : '')
+    + '<div id="holfeed">' + holFeedHTML(rt) + '</div></section>';
+  const next = holUpcoming(now, 120).map(x => x.h).filter(x => x.id !== h.id).slice(0, 3);
+  html += '<section class="sec"><div class="sec-h"><h2>Coming up</h2><button class="link" data-holgo="_all">All holidays</button></div>' + holRowsHTML(next.length ? next : HOL_SEASONS.filter(x => x.id !== h.id).slice(0, 2), now, all) + '</section>';
+  return html + '</div>';
+};
+function holFeedHTML(rt){
+  const key = holKey(rt), f = DISC.feeds[key] || {}, items = feedItems(key), shown = rt.shown || 12;
+  if (f.loading && !items.length) return '<div class="grid">' + skelCards(4) + '</div>';
+  if (f.error && !items.length) return '<div class="empty small"><h3>Couldn\'t load ideas</h3><p>' + esc(f.error) + '</p><button class="btn ghost" data-act="holretry">Try again</button></div>';
+  if (!items.length) return f.loading || !f.items ? '<div class="grid">' + skelCards(4) + '</div>' : '<p class="dhint">Nothing found right now. Check back in a bit.</p>';
+  return '<div class="grid">' + items.slice(0, shown).map(it => dcard(it)).join('') + '</div>'
+    + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '') + edamamNote(items.slice(0, shown));
+}
+// Edamam's free plan asks for "Powered by Edamam" with the results it finds (api/discover.js)
+const edamamNote = items => items.some(it => it.by === 'edamam') ? '<p class="ednote">Some ideas found with <a href="https://developer.edamam.com" target="_blank" rel="noopener noreferrer">Powered by Edamam</a></p>' : '';
+
 /* ---------- recipe categories: Main dishes, Sides, Soups, Desserts, and so on ---------- */
 const CAT_Q = {main:['easy dinner', 'dinner'], sides:['side dish', 'easy side dish'], apps:['appetizer', 'dip'], soups:['soup', 'stew'], salads:['salad'],
   breakfast:['breakfast', 'brunch'], desserts:['dessert', 'cookies'], baking:['cookies', 'muffins', 'cake'], bread:['bread', 'rolls', 'biscuits'], drinks:['drinks', 'smoothie', 'agua fresca'],
@@ -3441,16 +3541,18 @@ function catFeedHTML(rt){
   if (f.error && !items.length) return '<div class="empty small"><h3>Couldn\'t load recipes</h3><p>' + esc(f.error) + '</p><button class="btn ghost" data-act="catretry">Try again</button></div>';
   if (!items.length) return f.loading || !f.items ? '<div class="grid">' + skelCards(4) + '</div>' : '<p class="dhint">Nothing found right now. Check back in a bit.</p>';
   return '<p class="dhint">Picked from what you save, cook, and rate. Tap ' + icon('x') + ' on anything that\'s not your thing.</p><div class="grid">' + items.slice(0, shown).map(it => dcard(it)).join('') + '</div>'
-    + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '');
+    + (items.length > shown ? '<div class="morebar"><button class="btn ghost" data-act="dmore">Show more</button></div>' : '') + edamamNote(items.slice(0, shown));
 }
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-pq],[data-prm],[data-pb],[data-psug],[data-nv],[data-nrm],[data-cc],[data-catgo],[data-cookcat],[data-gtoggle],[data-grm],[data-tlrow]'); if (!t) return;
+  const t = e.target.closest('[data-pq],[data-prm],[data-pb],[data-psug],[data-nv],[data-nrm],[data-cc],[data-catgo],[data-holgo],[data-holc],[data-cookcat],[data-gtoggle],[data-grm],[data-tlrow]'); if (!t) return;
   const d = t.dataset;
   if (d.gtoggle) { toggleGrocery(d.gtoggle); return; }
   if (d.grm) { removeGrocery(d.grm); return; }
   if (d.tlrow != null) { tlToggle(+d.tlrow); return; }
   if (d.cc != null) { const r = cur(); if ((r.cat || '') === d.cc) return; r.cat = d.cc; r.shown = 12; r.wshown = 12; redrawCook(); clearTimeout(cookTimer); loadCook(false); return; }
   if (d.catgo) { go({name:'cat', key:d.catgo}); return; }
+  if (d.holgo) { go({name:'hol', key:d.holgo}); return; }
+  if (d.holc != null) { const r = cur(); if ((r.course || '') === d.holc) return; r.course = d.holc; r.shown = 12; refresh(); loadFeed(holKey(r)); return; }
   if (d.cookcat != null) { go({name:'cook', cat:d.cookcat}); return; }
   if (d.pq) togglePantry(d.pq);
   else if (d.prm) removePantry(d.prm);
@@ -4836,6 +4938,134 @@ function heardIn(text) {
 }
 const gearHeard = text => heardIn(text).map(h => h.name);
 /* ---- end kitchen help ---- */
+
+/* ---- holidays: food holidays and seasons ---- */
+const HOL_NTH = (y, m, wd, n) => {
+  if (n < 0) { const d = new Date(y, m + 1, 0); return new Date(y, m, d.getDate() - ((d.getDay() - wd + 7) % 7)); }
+  const d = new Date(y, m, 1); return new Date(y, m, 1 + ((wd - d.getDay() + 7) % 7) + 7 * (n - 1));
+};
+function holEaster(y){
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  return new Date(y, Math.floor((h + l - 7 * m + 114) / 31) - 1, ((h + l - 7 * m + 114) % 31) + 1);
+}
+const HOL_HANUKKAH = {2025:[11, 14], 2026:[11, 4], 2027:[11, 24], 2028:[11, 12], 2029:[11, 1], 2030:[11, 20]};
+// courses: [key, label, recipe category it should be (for the ideas), searches]
+const HOLIDAYS = [
+  {id:'newyear', name:'New Year’s', emoji:'🎆', a:'#4E5BD6', b:'#1C1E5A', date:y => new Date(y, 11, 31), days:2,
+    kw:['new year', 'new years', 'nye', 'black eyed peas', 'hoppin john', 'champagne'],
+    courses:[['apps', 'Party food', 'apps', ['party appetizers', 'dip', 'sliders']], ['main', 'Traditions', '', ['pozole', 'black eyed peas', 'menudo']], ['drinks', 'Drinks', 'drinks', ['champagne cocktail', 'party punch']]]},
+  {id:'gameday', name:'Super Bowl', emoji:'🏈', a:'#3E8E4E', b:'#163A20', date:y => HOL_NTH(y, 1, 0, 2), days:1,
+    kw:['super bowl', 'game day', 'gameday', 'tailgate', 'tailgating'],
+    courses:[['apps', 'Snacks', 'apps', ['game day wings', 'game day dip', 'nachos', 'sliders']], ['main', 'Mains', 'main', ['chili', 'pulled pork']], ['desserts', 'Desserts', 'desserts', ['brownies', 'cookie bars']]]},
+  {id:'valentines', name:'Valentine’s Day', emoji:'💘', a:'#E8507A', b:'#7A1438', date:y => new Date(y, 1, 14), days:1,
+    kw:['valentine', 'valentines', 'galentine', 'galentines', 'date night'],
+    courses:[['main', 'Dinner', 'main', ['steak dinner', 'date night dinner', 'shrimp pasta']], ['desserts', 'Desserts', 'desserts', ['chocolate dessert', 'chocolate covered strawberries', 'red velvet']], ['drinks', 'Drinks', 'drinks', ['valentines cocktail']]]},
+  {id:'stpatricks', name:'St. Patrick’s Day', emoji:'☘️', a:'#3FA65A', b:'#145028', date:y => new Date(y, 2, 17), days:1,
+    kw:['st patrick', 'st patricks', 'saint patrick', 'irish', 'corned beef', 'soda bread', 'shepherds pie', 'guinness', 'colcannon'],
+    courses:[['main', 'Mains', 'main', ['corned beef', 'shepherds pie', 'irish stew']], ['sides', 'Sides', '', ['colcannon', 'irish soda bread']], ['desserts', 'Desserts', 'desserts', ['guinness chocolate cake']]]},
+  {id:'easter', name:'Easter', emoji:'🐣', a:'#E9A6D8', b:'#7C4FA8', date:holEaster, days:1,
+    kw:['easter', 'hot cross buns', 'resurrection rolls'],
+    courses:[['main', 'Mains', 'main', ['easter ham', 'leg of lamb']], ['sides', 'Sides', '', ['deviled eggs', 'scalloped potatoes', 'dinner rolls']], ['breakfast', 'Brunch', 'breakfast', ['easter brunch', 'breakfast casserole']], ['desserts', 'Desserts', 'desserts', ['easter dessert', 'carrot cake']]]},
+  {id:'cincodemayo', name:'Cinco de Mayo', emoji:'🪅', a:'#F2A33A', b:'#B0361C', date:y => new Date(y, 4, 5), days:1,
+    kw:['cinco de mayo'],
+    courses:[['main', 'Mains', 'main', ['tacos', 'enchiladas', 'carne asada']], ['apps', 'Starters', 'apps', ['guacamole', 'queso dip', 'salsa']], ['drinks', 'Drinks', 'drinks', ['margarita', 'agua fresca']], ['desserts', 'Desserts', 'desserts', ['churros', 'tres leches']]]},
+  {id:'mothersday', name:'Mother’s Day', emoji:'💐', a:'#F28FAD', b:'#9C3A64', date:y => HOL_NTH(y, 4, 0, 2), days:1,
+    kw:['mothers day', 'mother s day'],
+    courses:[['breakfast', 'Brunch', 'breakfast', ['mothers day brunch', 'quiche', 'french toast']], ['desserts', 'Desserts', 'desserts', ['strawberry cake', 'lemon dessert']], ['drinks', 'Drinks', 'drinks', ['mimosa']]]},
+  {id:'memorialday', name:'Memorial Day', emoji:'🇺🇸', a:'#3E6FC8', b:'#8E1B2B', date:y => HOL_NTH(y, 4, 1, -1), days:1,
+    kw:['memorial day'],
+    courses:[['main', 'Off the grill', 'main', ['burgers', 'bbq chicken', 'ribs']], ['sides', 'Sides', '', ['potato salad', 'pasta salad', 'baked beans']], ['desserts', 'Desserts', 'desserts', ['berry dessert']]]},
+  {id:'fathersday', name:'Father’s Day', emoji:'🥩', a:'#4F86C6', b:'#1E3A5F', date:y => HOL_NTH(y, 5, 0, 3), days:1,
+    kw:['fathers day', 'father s day'],
+    courses:[['main', 'Mains', 'main', ['grilled steak', 'bbq ribs', 'smoked brisket']], ['sides', 'Sides', '', ['grilled corn', 'mac and cheese']], ['desserts', 'Desserts', 'desserts', ['peach cobbler']]]},
+  {id:'july4', name:'Fourth of July', emoji:'🎇', a:'#3E6FC8', b:'#B3263A', date:y => new Date(y, 6, 4), days:1,
+    kw:['4th of july', 'fourth of july', 'july 4th', 'independence day', 'red white and blue', 'patriotic'],
+    courses:[['main', 'Off the grill', 'main', ['burgers', 'hot dogs', 'bbq']], ['sides', 'Sides', '', ['potato salad', 'coleslaw', 'corn on the cob']], ['desserts', 'Desserts', 'desserts', ['red white and blue dessert', 'strawberry shortcake']], ['drinks', 'Drinks', 'drinks', ['lemonade']]]},
+  {id:'laborday', name:'Labor Day', emoji:'🍔', a:'#E0913A', b:'#7A3A14', date:y => HOL_NTH(y, 8, 1, 1), days:1,
+    kw:['labor day'],
+    courses:[['main', 'Off the grill', 'main', ['grilled chicken', 'bbq', 'burgers']], ['sides', 'Sides', '', ['corn salad', 'pasta salad']], ['desserts', 'Desserts', 'desserts', ['peach cobbler']]]},
+  {id:'mexindependence', name:'Mexican Independence Day', emoji:'🇲🇽', a:'#3FA65A', b:'#B3263A', date:y => new Date(y, 8, 15), days:2,
+    kw:['fiestas patrias', 'dia de la independencia', 'el grito', '16 de septiembre', 'chiles en nogada'],
+    courses:[['main', 'Mains', 'main', ['pozole', 'chiles en nogada', 'enchiladas']], ['apps', 'Antojitos', 'apps', ['elote', 'tostadas']], ['drinks', 'Drinks', 'drinks', ['agua fresca', 'horchata']], ['desserts', 'Desserts', 'desserts', ['tres leches', 'flan']]]},
+  {id:'halloween', name:'Halloween', emoji:'🎃', a:'#F28A2E', b:'#3A1F4F', date:y => new Date(y, 9, 31), days:1,
+    kw:['halloween', 'spooky', 'jack o lantern', 'candy corn', 'mummy', 'mummies', 'witch', 'witches', 'monster', 'trick or treat'],
+    courses:[['apps', 'Party food', 'apps', ['halloween appetizers', 'halloween party food']], ['main', 'Dinner', 'main', ['halloween dinner', 'chili']], ['desserts', 'Treats', 'desserts', ['halloween treats', 'halloween cookies']], ['drinks', 'Drinks', 'drinks', ['halloween punch']]]},
+  {id:'muertos', name:'Día de los Muertos', emoji:'💀', a:'#F2A33A', b:'#7A1E6A', date:y => new Date(y, 10, 1), days:2,
+    kw:['dia de los muertos', 'dia de muertos', 'day of the dead', 'pan de muerto', 'calavera', 'calaveras'],
+    courses:[['desserts', 'Pan & sweets', '', ['pan de muerto', 'sugar skull cookies']], ['main', 'Mains', 'main', ['mole', 'tamales']], ['drinks', 'Drinks', 'drinks', ['champurrado', 'atole']]]},
+  {id:'thanksgiving', name:'Thanksgiving', emoji:'🦃', a:'#E8963B', b:'#8A3A14', date:y => HOL_NTH(y, 10, 4, 4), days:1,
+    kw:['thanksgiving', 'friendsgiving', 'roast turkey', 'turkey breast', 'whole turkey', 'smoked turkey', 'turkey gravy', 'leftover turkey', 'stuffing', 'cornbread dressing', 'cranberry sauce', 'pumpkin pie', 'pecan pie', 'sweet potato casserole', 'green bean casserole', 'candied yams'],
+    courses:[['main', 'Turkey & mains', 'main', ['thanksgiving turkey', 'turkey breast', 'holiday ham']], ['sides', 'Sides', '', ['stuffing', 'mashed potatoes', 'green bean casserole', 'sweet potato casserole']], ['desserts', 'Pies & desserts', 'desserts', ['pumpkin pie', 'pecan pie', 'apple pie']], ['leftovers', 'Leftovers', '', ['leftover turkey']]]},
+  {id:'hanukkah', name:'Hanukkah', emoji:'🕎', a:'#4F86D6', b:'#1C2E6A', date:y => HOL_HANUKKAH[y] ? new Date(y, HOL_HANUKKAH[y][0], HOL_HANUKKAH[y][1]) : null, days:8,
+    kw:['hanukkah', 'chanukah', 'latkes', 'sufganiyot', 'rugelach'],
+    courses:[['main', 'Mains', 'main', ['brisket']], ['sides', 'Latkes & sides', '', ['latkes']], ['desserts', 'Desserts', 'desserts', ['sufganiyot', 'rugelach']]]},
+  {id:'christmas', name:'Christmas', emoji:'🎄', a:'#3FA65A', b:'#8E1B1B', date:y => new Date(y, 11, 24), days:2,
+    kw:['christmas', 'xmas', 'nochebuena', 'noche buena', 'navidad', 'prime rib', 'holiday ham', 'gingerbread', 'eggnog', 'ponche', 'bunuelos', 'buñuelos', 'yule log', 'candy cane'],
+    courses:[['main', 'Mains', 'main', ['prime rib', 'christmas ham', 'tamales']], ['sides', 'Sides', '', ['holiday side dish', 'scalloped potatoes', 'dinner rolls']], ['desserts', 'Cookies & desserts', 'desserts', ['christmas cookies', 'bunuelos', 'gingerbread']], ['drinks', 'Drinks', 'drinks', ['ponche navideno', 'eggnog', 'champurrado']], ['breakfast', 'Christmas morning', 'breakfast', ['christmas breakfast casserole', 'cinnamon rolls']]]}
+];
+// seasons start on these days (month 0-11, day) and last until the next one starts
+const HOL_SEASONS = [
+  {id:'spring', name:'Spring', emoji:'🌷', a:'#7CC46A', b:'#2C7A3E', start:[2, 20], kw:['spring', 'asparagus', 'strawberry', 'strawberries', 'lemon', 'peas', 'rhubarb'],
+    courses:[['all', 'Spring', '', ['asparagus', 'strawberry dessert', 'lemon chicken', 'spring salad']]]},
+  {id:'summer', name:'Summer', emoji:'☀️', a:'#F7B733', b:'#D0561C', start:[5, 21], kw:['summer', 'grilled', 'grill', 'bbq', 'no bake', 'watermelon', 'popsicle', 'popsicles', 'corn on the cob', 'peach', 'peaches', 'zucchini', 'agua fresca'],
+    courses:[['all', 'Summer', '', ['grilled chicken', 'no bake dessert', 'summer salad', 'grilled corn']]]},
+  {id:'fall', name:'Fall', emoji:'🍂', a:'#E0913A', b:'#8A3A14', start:[8, 22], kw:['fall', 'autumn', 'pumpkin', 'apple', 'apples', 'butternut', 'squash', 'maple', 'cinnamon', 'pot roast', 'chili', 'cider', 'pecan'],
+    courses:[['all', 'Fall', '', ['pumpkin', 'apple dessert', 'butternut squash', 'pot roast']]]},
+  {id:'winter', name:'Winter', emoji:'❄️', a:'#6FA8DC', b:'#1E3A6A', start:[11, 21], kw:['winter', 'soup', 'stew', 'chili', 'pozole', 'menudo', 'pot pie', 'hot chocolate', 'hot cocoa', 'casserole', 'slow cooker', 'crock pot', 'champurrado', 'caldo'],
+    courses:[['all', 'Winter', '', ['soup', 'chili', 'stew', 'pot pie']]]}
+];
+const holById = id => HOLIDAYS.find(h => h.id === id) || HOL_SEASONS.find(s => s.id === id) || null;
+const holDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+// the next time it comes around: {start, end, days} (days = 0 while it's on), or null when there's no date for it
+function holNext(h, now){
+  const today = holDay(now || new Date());
+  for (let y = today.getFullYear() - 1; y <= today.getFullYear() + 1; y++) {
+    const s = h.date(y); if (!s) continue;
+    const end = new Date(s.getFullYear(), s.getMonth(), s.getDate() + (h.days || 1) - 1);
+    if (end >= today) return {start:s, end:end, days:Math.max(0, Math.round((holDay(s) - today) / 864e5))};
+  }
+  return null;
+}
+// the season it is now, and the day the next one starts
+function holSeason(now){
+  const t = holDay(now || new Date()), y = t.getFullYear();
+  const starts = [];
+  for (let k = y - 1; k <= y + 1; k++) HOL_SEASONS.forEach(s => starts.push({s:s, d:new Date(k, s.start[0], s.start[1])}));
+  starts.sort((a, b) => a.d - b.d);
+  let i = starts.length - 1; while (i > 0 && starts[i].d > t) i--;
+  return {season:starts[i].s, until:new Date(starts[i + 1].d.getFullYear(), starts[i + 1].d.getMonth(), starts[i + 1].d.getDate() - 1), next:starts[i + 1].s};
+}
+// holidays coming up within `within` days (today and ones going on now count), soonest first
+function holUpcoming(now, within){
+  return HOLIDAYS.map(h => ({h:h, n:holNext(h, now)})).filter(x => x.n && x.n.days <= (within == null ? 45 : within)).sort((a, b) => a.n.start - b.n.start);
+}
+// "Today", "Tomorrow", "Thursday", "In 12 days"
+function holWhen(n, now){
+  if (!n) return '';
+  if (n.days === 0) return holDay(now || new Date()) > holDay(n.start) ? 'Going on now' : 'Today';
+  if (n.days === 1) return 'Tomorrow';
+  if (n.days < 7) return n.start.toLocaleDateString('en-US', {weekday:'long'});
+  return 'In ' + n.days + ' days';
+}
+function holText(r){
+  return (' ' + [r.title, (r.tags || []).join(' ')].join(' ').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/[’']/g, '').replace(/[^a-z0-9]+/g, ' ') + ' ');
+}
+const holKw = k => ' ' + k.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[’']/g, '').replace(/[^a-z0-9]+/g, ' ').trim() + ' ';
+// does a saved recipe belong to this holiday or season? (saved from that holiday's ideas (r.hols), or its name or tags say so)
+function holMatch(r, h){
+  if (Array.isArray(r.hols) && r.hols.indexOf(h.id) >= 0) return true;
+  const T = holText(r);
+  return h.kw.some(k => { const w = holKw(k); return T.indexOf(w) >= 0 || T.indexOf(w.replace(/ $/, 's ')) >= 0; });
+}
+// searches for a holiday's ideas: one from each course for All, else that course's
+function holQueries(h, course){
+  const c = h.courses.find(x => x[0] === course) || (h.courses.length === 1 ? h.courses[0] : null);
+  if (c) return c[3].slice(0, 4);
+  return h.courses.map(x => x[3][0]).concat(h.courses.length < 3 ? h.courses.map(x => x[3][1]).filter(Boolean) : []).slice(0, 4);
+}
+/* ---- end holidays ---- */
 
 /* ---------- add / edit ---------- */
 let F = null;
@@ -6250,6 +6480,8 @@ const A = {
   cookwmore: () => { const r = cur(); r.wshown = (r.wshown || 12) + 12; redrawCook(); },
   cookretry: () => loadCook(true),
   catretry: () => loadFeed('k:' + cur().key, true),
+  holretry: () => loadFeed(holKey(cur()), true),
+  holmore: () => { const r = cur(); r.mshown = (r.mshown || 12) + 12; refresh(); },
   cloudon: () => openCloudOn(),
   cloudstart: () => cloudStart(),
   cloudnow: async () => { const ok = await cloudBackup(true); toast(ok ? 'Synced · ' + plural(CLOUD.lastCount, 'recipe') : CLOUD.err === 'setup' ? 'Waiting on the storage in Vercel' : 'The sync didn\'t go through'); },
